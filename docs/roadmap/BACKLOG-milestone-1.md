@@ -96,6 +96,8 @@ helper-owned snapshots, but it can never change or control the game.
 
 ### M1-001 — Select the golden target and objective
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** S  
 **Dependencies:** M1-000
@@ -106,11 +108,27 @@ defeat.
 
 #### Acceptance criteria
 
-- [ ] Target character ID and display name are recorded.
-- [ ] The target can be found in the configured save.
-- [ ] The player's preferred weapon and victory objective are recorded.
-- [ ] The target's expected critical mechanic is manually documented.
-- [ ] A manually verified baseline loadout is available for comparison.
+- [x] Target character ID and display name are recorded.
+- [x] The target can be found in the configured save.
+- [x] The player's preferred weapon and victory objective are recorded.
+- [x] The target's expected critical mechanic is manually documented.
+- [x] A manually verified baseline loadout is available for comparison.
+
+#### Current evidence
+
+- [Golden-target candidate assessment](../scenarios/M1-001-golden-target-selection.md).
+- The player confirmed character `16317` as the 52-year-old 樂器奇書.
+- The confirmed setup uses 刀 with a `Safe` objective: survive 失神 and
+  心韻激盪, control 正練魔音, then defeat the target reliably.
+- The current snapshot has no equipped target skills, so that limitation is
+  retained for later snapshot and threat-analysis work.
+- The configured save hash remained unchanged during all inspections.
+- The [current player loadout](../scenarios/evidence/M1-001-current-player-loadout.png)
+  is preserved with its capacities, skill costs, and practice directions
+  transcribed in the scenario document.
+- The empty `6/2/2/2/2` capacities and an individual 內功 capacity tooltip are
+  preserved separately, so later calculations distinguish base capacity from
+  capacity granted by selected 內功 and allocated 萬用 slots.
 
 ### M1-002 — Capture the golden save and evidence metadata
 
