@@ -56,6 +56,8 @@ reclassified.
 
 ### M1-000 — Enforce absolute game non-interference
 
+**Status:** Completed
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** None
@@ -66,20 +68,29 @@ helper-owned snapshots, but it can never change or control the game.
 
 #### Acceptance criteria
 
-- [ ] The architecture decision record lists permitted read operations and
+- [x] The architecture decision record lists permitted read operations and
       forbidden mutation or control operations.
-- [ ] Domain and Application ports expose queries only; no game-data command
+- [x] Domain and Application ports expose queries only; no game-data command
       abstraction exists.
-- [ ] Infrastructure does not expose mutation-capable `GameData` objects to
+- [x] Infrastructure does not expose mutation-capable `GameData` objects to
       other layers.
-- [ ] Source files are opened read-only wherever access mode is controlled by
+- [x] Source files are opened read-only wherever access mode is controlled by
       the helper.
-- [ ] No code writes into the game installation or save directories.
-- [ ] No code injects, hooks, patches, attaches to, automates input for, or
+- [x] No code writes into the game installation or save directories.
+- [x] No code injects, hooks, patches, attaches to, automates input for, or
       writes memory in the running game process.
-- [ ] API responses contain recommendations only and cannot execute them.
-- [ ] Architecture and unit tests fail if a game mutation contract or
+- [x] API responses contain recommendations only and cannot execute them.
+- [x] Architecture and unit tests fail if a game mutation contract or
       command-style endpoint is introduced.
+
+#### Evidence
+
+- [ADR-0001: Absolute game non-interference](../architecture/ADR-0001-absolute-game-non-interference.md).
+- `IReadOnlyGameDataSource` marks query-only game-data ports.
+- Save reads capture read-only SHA-256 fingerprints before and after loading.
+- `TaiWu.Architecture.Tests` enforces the dependency, API, file-access, and
+  process-control boundaries.
+- `dotnet test TaiWu.slnx --no-restore`: 11 tests passed.
 
 ## Slice 1: Golden scenario
 

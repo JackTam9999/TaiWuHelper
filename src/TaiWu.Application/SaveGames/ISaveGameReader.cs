@@ -1,8 +1,9 @@
+using TaiWu.Application.GameData;
 using TaiWu.Domain.SaveGames;
 
 namespace TaiWu.Application.SaveGames;
 
-public interface ISaveGameReader
+public interface ISaveGameReader : IReadOnlyGameDataSource
 {
     Task<SaveGameReport> ReadAsync(
         SaveGameReadRequest request,

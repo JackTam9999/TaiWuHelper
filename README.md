@@ -20,6 +20,9 @@ are carried out manually by the player.
 Dependencies point inward: API and Infrastructure depend on Application, while
 Application depends only on Domain.
 
+The permanent safety boundary is documented in
+[ADR-0001: Absolute game non-interference](docs/architecture/ADR-0001-absolute-game-non-interference.md).
+
 ## Requirements
 
 - .NET 10 SDK

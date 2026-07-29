@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Committed |
+| Status | In progress |
 | Milestone | 1 |
 | Target release | TBD |
 | Last updated | 2026-07-29 |

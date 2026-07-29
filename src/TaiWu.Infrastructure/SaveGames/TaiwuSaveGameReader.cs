@@ -27,7 +27,27 @@ internal sealed class TaiwuSaveGameReader : ISaveGameReader
         await ReaderLock.WaitAsync(cancellationToken);
         try
         {
-            return ReadCore(saveFilePath, request.TargetCharacterId, cancellationToken);
+            var fingerprintBefore = await ReadOnlyFileFingerprint.CaptureAsync(
+                saveFilePath,
+                cancellationToken);
+
+            var report = ReadCore(
+                saveFilePath,
+                request.TargetCharacterId,
+                cancellationToken);
+
+            var fingerprintAfter = await ReadOnlyFileFingerprint.CaptureAsync(
+                saveFilePath,
+                cancellationToken);
+
+            if (fingerprintBefore != fingerprintAfter)
+            {
+                throw new InvalidDataException(
+                    "The Taiwu save changed while it was being read. "
+                    + "The result was discarded; retry after the save is stable.");
+            }
+
+            return report;
         }
         finally
         {
