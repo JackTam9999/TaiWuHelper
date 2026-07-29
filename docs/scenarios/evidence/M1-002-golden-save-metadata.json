@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "M1-001",
+  "targetCharacterId": 16317,
+  "capturedAtUtc": "2026-07-29T22:26:37.0091432+00:00",
+  "save": {
+    "sourcePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\The Scroll Of Taiwu\\SaveGames\\world_1\\local.sav",
+    "lengthBytes": 208538049,
+    "lastWriteTimeUtc": "2026-07-28T22:38:08.0960649Z",
+    "sha256": "B9E86B80B564035CBE7D15F2C5F297AF3ACDE5470509B0550D930ED91DDF1930",
+    "sha256AfterCapture": "B9E86B80B564035CBE7D15F2C5F297AF3ACDE5470509B0550D930ED91DDF1930",
+    "unchangedDuringCapture": true
+  },
+  "gameData": {
+    "sourcePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\The Scroll Of Taiwu\\Backend\\GameData.dll",
+    "lengthBytes": 8891904,
+    "lastWriteTimeUtc": "2026-07-25T17:28:51.6662610Z",
+    "assemblyVersion": "1.0.0.0",
+    "fileVersion": "1.0.0.0",
+    "productVersion": "1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a",
+    "sha256": "32478DF92B2ED6E44CC5524E7F980B99B633059DE971626E117ED78840D6A860"
+  },
+  "containsSaveContent": false,
+  "containsGameBinaryContent": false
+}

@@ -39,6 +39,9 @@ GameData*.exe
 GameData*.pdb
 steam_api64.dll
 
+# Proprietary Taiwu save files
+*.sav
+
 # Local-only container experiment
 TaiWuAPI/Dockerfile
 

@@ -193,6 +193,28 @@ public sealed partial class ArchitectureBoundaryTests
             + string.Join(Environment.NewLine, violations));
     }
 
+    [Fact]
+    public void Repository_tree_contains_no_proprietary_save_or_game_binaries()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var violations = Directory
+            .EnumerateFiles(
+                repositoryRoot,
+                "*",
+                SearchOption.AllDirectories)
+            .Where(path => !IsBuildOutput(path))
+            .Where(IsProprietaryGameArtifact)
+            .Select(path => Path.GetRelativePath(repositoryRoot, path))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(
+            violations.Length == 0,
+            "Proprietary save or game runtime files were found:"
+            + Environment.NewLine
+            + string.Join(Environment.NewLine, violations));
+    }
+
     private static void AssertHasNoReferences(
         Assembly assembly,
         params string[] forbiddenPrefixes)
@@ -341,6 +363,34 @@ public sealed partial class ArchitectureBoundaryTests
             StringSplitOptions.RemoveEmptyEntries);
         return segments.Contains("bin", StringComparer.OrdinalIgnoreCase)
             || segments.Contains("obj", StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool IsProprietaryGameArtifact(string path)
+    {
+        var fileName = Path.GetFileName(path);
+        var extension = Path.GetExtension(path);
+
+        if (extension.Equals(".sav", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (fileName.Equals(
+                "steam_api64.dll",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var isRuntimeExtension =
+            extension.Equals(".dll", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".exe", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".pdb", StringComparison.OrdinalIgnoreCase);
+
+        return fileName.StartsWith(
+                   "GameData",
+                   StringComparison.OrdinalIgnoreCase)
+               && isRuntimeExtension;
     }
 
     private static string FindRepositoryRoot()

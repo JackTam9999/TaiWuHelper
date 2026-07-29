@@ -132,6 +132,8 @@ defeat.
 
 ### M1-002 — Capture the golden save and evidence metadata
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** S  
 **Dependencies:** M1-000, M1-001
@@ -141,11 +143,21 @@ committing the save or game binaries.
 
 #### Acceptance criteria
 
-- [ ] Save hash, modified time, and snapshot time are recorded.
-- [ ] Installed `GameData` version is recorded.
-- [ ] No save or proprietary binary is added to Git.
-- [ ] Any current-screen observations are documented separately and affect
+- [x] Save hash, modified time, and snapshot time are recorded.
+- [x] Installed `GameData` version is recorded.
+- [x] No save or proprietary binary is added to Git.
+- [x] Any current-screen observations are documented separately and affect
       analysis only.
+
+#### Evidence
+
+- [Golden-save evidence metadata](../scenarios/M1-002-golden-save-evidence.md).
+- [Machine-readable metadata record](../scenarios/evidence/M1-002-golden-save-metadata.json).
+- The save SHA-256 was identical before and after metadata capture.
+- `.gitignore` excludes `.sav` files and known proprietary game-runtime
+  artifacts.
+- `TaiWu.Architecture.Tests` rejects proprietary save and GameData runtime
+  files in the repository source tree.
 
 ## Slice 2: Typed combat snapshot
 
