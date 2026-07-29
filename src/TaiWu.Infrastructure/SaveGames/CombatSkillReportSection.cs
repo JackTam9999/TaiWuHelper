@@ -320,12 +320,12 @@ internal static class CombatSkillReportSection
     private static void WriteSkillSummary(
         LegacyReportWriter writer,
         int total,
-        IReadOnlyList<int> skillCountByGrade,
-        IReadOnlyList<int> fullPowerByGrade,
-        IReadOnlyList<int> activatedByGrade)
+        int[] skillCountByGrade,
+        int[] fullPowerByGrade,
+        int[] activatedByGrade)
     {
         writer.Write("SKILLSUMMARY|total={0}", total);
-        for (var grade = 0; grade < skillCountByGrade.Count; grade++)
+        for (var grade = 0; grade < skillCountByGrade.Length; grade++)
         {
             writer.Write(
                 "SKILLGRADE|grade={0}|count={1}|fullPower={2}|activated={3}",

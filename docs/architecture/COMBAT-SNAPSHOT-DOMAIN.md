@@ -89,3 +89,21 @@ calculation.
 These are construction invariants only. Later Domain services remain
 responsible for ownership, effect availability, proposed-loadout feasibility,
 and combat activation requirements.
+
+## Application read port
+
+`ICombatSnapshotReader` is the Application boundary for obtaining the
+aggregate. Its only operation is:
+
+```csharp
+Task<CombatSnapshot> ReadAsync(
+    CombatSnapshotReadRequest request,
+    CancellationToken cancellationToken = default);
+```
+
+The request requires a save-file path and target character ID. The return type
+contains source metadata and warnings as part of the immutable aggregate.
+
+The port inherits `IReadOnlyGameDataSource`, uses query-only naming, supports
+cancellation, and exposes no `GameData` type. The legacy line-report reader
+remains a separate diagnostic port.

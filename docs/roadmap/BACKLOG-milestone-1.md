@@ -194,6 +194,8 @@ legendary-book modifiers.
 
 ### M1-004 — Add structured snapshot reader port
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** S  
 **Dependencies:** M1-003
@@ -203,11 +205,23 @@ legacy line report.
 
 #### Acceptance criteria
 
-- [ ] Application does not reference `GameData`.
-- [ ] The port accepts save path and target character ID.
-- [ ] The port exposes query operations only.
-- [ ] Cancellation is supported.
-- [ ] Snapshot warnings and source metadata are returned.
+- [x] Application does not reference `GameData`.
+- [x] The port accepts save path and target character ID.
+- [x] The port exposes query operations only.
+- [x] Cancellation is supported.
+- [x] Snapshot warnings and source metadata are returned.
+
+#### Evidence
+
+- `CombatSnapshotReadRequest` requires a non-blank save path and positive
+  target character ID.
+- `ICombatSnapshotReader.ReadAsync` returns the immutable `CombatSnapshot`,
+  which includes `CombatSnapshotMetadata` and snapshot warnings.
+- The port inherits `IReadOnlyGameDataSource` and accepts a
+  `CancellationToken`.
+- Application and architecture xUnit v3 tests verify the contract and
+  query-only boundary.
+- `dotnet test TaiWu.slnx --no-restore`: 36 tests passed.
 
 ### M1-005 — Implement the GameData snapshot adapter
 

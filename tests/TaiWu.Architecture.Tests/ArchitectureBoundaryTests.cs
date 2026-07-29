@@ -334,8 +334,8 @@ public sealed partial class ArchitectureBoundaryTests
 
     private static void ScanSource(
         string root,
-        IEnumerable<(string Description, Regex Pattern)> rules,
-        ICollection<string> violations,
+        (string Description, Regex Pattern)[] rules,
+        List<string> violations,
         string repositoryRoot)
     {
         foreach (var file in Directory.EnumerateFiles(
