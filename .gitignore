@@ -33,6 +33,15 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Proprietary Taiwu/Steam runtime binaries
+GameData*.dll
+GameData*.exe
+GameData*.pdb
+steam_api64.dll
+
+# Local-only container experiment
+TaiWuAPI/Dockerfile
+
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 # Uncomment if you have tasks that create the project's static files in wwwroot

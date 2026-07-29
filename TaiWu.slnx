@@ -1,3 +1,11 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TaiWu.Application/TaiWu.Application.csproj" />
+    <Project Path="src/TaiWu.Domain/TaiWu.Domain.csproj" />
+    <Project Path="src/TaiWu.Infrastructure/TaiWu.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TaiWu.Application.UnitTests/TaiWu.Application.UnitTests.csproj" />
+  </Folder>
   <Project Path="TaiWuAPI/TaiWuAPI.csproj" />
 </Solution>
