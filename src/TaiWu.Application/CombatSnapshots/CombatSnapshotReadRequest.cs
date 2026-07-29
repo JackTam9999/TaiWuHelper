@@ -1,10 +1,13 @@
+using TaiWu.Domain.CombatSnapshots;
+
 namespace TaiWu.Application.CombatSnapshots;
 
 public sealed record CombatSnapshotReadRequest
 {
     public CombatSnapshotReadRequest(
         string saveFilePath,
-        int targetCharacterId)
+        int targetCharacterId,
+        PlayerLoadoutObservation? currentLoadoutObservation = null)
     {
         if (string.IsNullOrWhiteSpace(saveFilePath))
         {
@@ -23,9 +26,12 @@ public sealed record CombatSnapshotReadRequest
 
         SaveFilePath = saveFilePath;
         TargetCharacterId = targetCharacterId;
+        CurrentLoadoutObservation = currentLoadoutObservation;
     }
 
     public string SaveFilePath { get; }
 
     public int TargetCharacterId { get; }
+
+    public PlayerLoadoutObservation? CurrentLoadoutObservation { get; }
 }

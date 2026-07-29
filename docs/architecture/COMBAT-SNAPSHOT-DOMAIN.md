@@ -136,3 +136,32 @@ It deliberately does not call `Character.GetCombatSkillGridCost`, because that
 method enters `SpecialEffectDomain.ModifyData` and requires a live combat
 runtime. Consequently, saved category capacity remains available while used
 and remaining capacity are unavailable until verified cost rules are applied.
+
+## Current-screen observations
+
+`CombatSnapshotReadRequest` can carry one immutable
+`PlayerLoadoutObservation`. It is helper-owned input containing:
+
+- Observation time and an evidence reference.
+- Equipped skill IDs grouped by category.
+- Generic-slot allocation.
+- Optional slot budgets read directly from the displayed screen.
+
+`CombatSnapshotObservationMerger.Merge` returns a new aggregate and never
+changes the disk-derived snapshot. Before merging, every observed skill must be
+learned by the player and reported under its configured category. An
+observation whose timestamp is not newer than the save modified time is not
+used and produces a warning. If the save timestamp is unavailable, explicit
+current-screen source precedence is used with a warning.
+
+Every replaced aggregate field receives a `SnapshotFieldSource` entry with a
+stable field path, `CurrentScreenObservation` source, observation time, and
+evidence reference. The current paths are:
+
+- `player.equippedSkills`
+- `player.genericSlotAllocation`
+- `player.slotBudgets` when displayed budgets were reported
+
+Observation data exists only in Domain/Application memory and the returned
+snapshot. The merge operation has no persistence, file, process, input, or
+game-control dependency.

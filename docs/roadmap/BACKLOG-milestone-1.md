@@ -272,6 +272,8 @@ Retain the existing line report as a separate diagnostic capability.
 
 ### M1-006 — Add snapshot freshness and observation handling
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-005
@@ -282,12 +284,36 @@ only; it is never written to the game or save.
 
 #### Acceptance criteria
 
-- [ ] Response includes save hash and read time.
-- [ ] Request can report observed equipped skills and generic-grid allocation.
-- [ ] Observations are validated before use.
-- [ ] Response identifies each field sourced from an observation.
-- [ ] Observations exist only in helper-owned request/snapshot data.
-- [ ] No disk data or live game state is changed.
+- [x] Response includes save hash and read time.
+- [x] Request can report observed equipped skills and generic-grid allocation.
+- [x] Observations are validated before use.
+- [x] Response identifies each field sourced from an observation.
+- [x] Observations exist only in helper-owned request/snapshot data.
+- [x] No disk data or live game state is changed.
+
+#### Evidence
+
+- `PlayerLoadoutObservation` is an immutable Domain value accepted optionally
+  by `CombatSnapshotReadRequest`.
+- Observations carry a UTC observation time, evidence reference, categorized
+  equipped skills, generic allocation, and optional displayed slot budgets.
+- `CombatSnapshotObservationMerger.Merge` verifies that observed skills are
+  learned and assigned to their configured categories before returning a new
+  snapshot.
+- An observation at or before the save modified time is not applied and emits
+  `CURRENT_SCREEN_OBSERVATION_NOT_NEWER`.
+- `SnapshotFieldSource` identifies each replaced field as
+  `CurrentScreenObservation` with its evidence and capture time.
+- Save hash, save modified time, and snapshot read time remain unchanged
+  metadata from the disk read; observation provenance cannot masquerade as save
+  data.
+- A real two-read smoke test returned zero observation sources for the disk
+  snapshot and two for the merged snapshot. The save SHA-256 remained
+  `B9E86B80B564035CBE7D15F2C5F297AF3ACDE5470509B0550D930ED91DDF1930`
+  before and after.
+- Architecture tests verify that the observation contract is an immutable
+  helper value and exposes only the pure `Merge` operation.
+- `dotnet test TaiWu.slnx --no-restore`: 68 tests passed.
 
 ## Slice 3: Feasibility
 

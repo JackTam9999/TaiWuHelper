@@ -19,10 +19,18 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
 
         return TaiwuArchiveReadSession.ReadAsync(
             request.SaveFilePath,
-            context => ProjectSnapshot(
-                context,
-                request.TargetCharacterId,
-                cancellationToken),
+            context =>
+            {
+                var snapshot = ProjectSnapshot(
+                    context,
+                    request.TargetCharacterId,
+                    cancellationToken);
+                return request.CurrentLoadoutObservation is null
+                    ? snapshot
+                    : CombatSnapshotObservationMerger.Merge(
+                        snapshot,
+                        request.CurrentLoadoutObservation);
+            },
             cancellationToken);
     }
 

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using TaiWu.Application.GameData;
 using TaiWu.Application.SaveGames;
+using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.SaveGames;
 using TaiWu.Infrastructure;
 using TaiWuAPI.Controllers;
@@ -104,6 +105,28 @@ public sealed partial class ArchitectureBoundaryTests
             "Infrastructure exposes GameData types:"
             + Environment.NewLine
             + string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void Current_screen_observation_is_an_immutable_helper_value()
+    {
+        var observationType = typeof(PlayerLoadoutObservation);
+
+        Assert.Equal(typeof(CombatSnapshot).Assembly, observationType.Assembly);
+        Assert.All(
+            observationType.GetProperties(),
+            property => Assert.False(property.CanWrite));
+
+        var mergerMethods = typeof(CombatSnapshotObservationMerger)
+            .GetMethods(
+                BindingFlags.Public
+                | BindingFlags.Static
+                | BindingFlags.DeclaredOnly);
+        var merger = Assert.Single(mergerMethods);
+        Assert.Equal(
+            nameof(CombatSnapshotObservationMerger.Merge),
+            merger.Name);
+        Assert.Equal(typeof(CombatSnapshot), merger.ReturnType);
     }
 
     [Fact]

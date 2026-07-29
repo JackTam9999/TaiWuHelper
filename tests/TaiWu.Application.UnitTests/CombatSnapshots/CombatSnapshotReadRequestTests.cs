@@ -20,6 +20,22 @@ public sealed class CombatSnapshotReadRequestTests
         Assert.Equal(16317, request.TargetCharacterId);
     }
 
+    [Fact]
+    public void Request_preserves_helper_owned_loadout_observation()
+    {
+        var observation = new PlayerLoadoutObservation(
+            DateTimeOffset.UtcNow,
+            "sha256:screenshot",
+            new CombatLoadoutSnapshot([], [], [], [], []),
+            new GenericSlotAllocation(0, 0, 0, 0, 0));
+        var request = new CombatSnapshotReadRequest(
+            "local.sav",
+            16317,
+            observation);
+
+        Assert.Same(observation, request.CurrentLoadoutObservation);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("  ")]
