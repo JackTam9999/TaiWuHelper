@@ -258,10 +258,9 @@ Retain the existing line report as a separate diagnostic capability.
 - `TaiwuArchiveReadSession` shares one lock and one-time configuration
   initialization between the structured and diagnostic readers, and clears
   monitored handlers before every load.
-- Two consecutive structured reads completed in one process. The save SHA-256
-  remained
-  `B9E86B80B564035CBE7D15F2C5F297AF3ACDE5470509B0550D930ED91DDF1930`
-  before, during, and after both reads.
+- Two consecutive structured reads completed in one process. The locally
+  checked save fingerprint matched before, during, and after both reads; the
+  fingerprint itself is not committed.
 - The adapter does not call `Character.GetCombatSkillGridCost` or
   `SpecialEffectDomain.ModifyData`. Configured cost and mastery remain
   separate; effective used capacity is explicitly unavailable where the
@@ -296,7 +295,8 @@ only; it is never written to the game or save.
 - `PlayerLoadoutObservation` is an immutable Domain value accepted optionally
   by `CombatSnapshotReadRequest`.
 - Observations carry a UTC observation time, evidence reference, categorized
-  equipped skills, generic allocation, and optional displayed slot budgets.
+  equipped skills, generic allocation, optional displayed slot budgets, and
+  optional legendary-book slots plus current assignments.
 - `CombatSnapshotObservationMerger.Merge` verifies that observed skills are
   learned and assigned to their configured categories before returning a new
   snapshot.
@@ -308,9 +308,8 @@ only; it is never written to the game or save.
   metadata from the disk read; observation provenance cannot masquerade as save
   data.
 - A real two-read smoke test returned zero observation sources for the disk
-  snapshot and two for the merged snapshot. The save SHA-256 remained
-  `B9E86B80B564035CBE7D15F2C5F297AF3ACDE5470509B0550D930ED91DDF1930`
-  before and after.
+  snapshot and two for the merged snapshot. The locally checked save
+  fingerprint matched before and after and is not committed.
 - Architecture tests verify that the observation contract is an immutable
   helper value and exposes only the pure `Merge` operation.
 - `dotnet test TaiWu.slnx --no-restore`: 68 tests passed.
@@ -326,7 +325,7 @@ only; it is never written to the game or save.
 **Dependencies:** M1-003
 
 Calculate effective cost from actual `GridCost`, confirmed mastery, and
-confirmed legendary-book modifiers.
+confirmed legendary-book assignments.
 
 #### Acceptance criteria
 
@@ -357,23 +356,28 @@ confirmed legendary-book modifiers.
 - Effects from unowned books remain unverified and unavailable; the helper
   neither invents them nor blocks current-player recommendations waiting for
   unobtainable screenshots.
-- `LegendaryBookModifier.ForSkill` creates a new immutable helper-side value
-  for proposed assignments. It does not alter the current snapshot or game.
-- Every legendary-book fixed-cost modifier records its source and evidence
-  reference. A skill cannot receive multiple fixed-cost modifiers.
+- `LegendaryBookCostSlot` separates verified ownership and effect identity from
+  `LegendaryBookCostAssignment`; empty owned slots remain available for
+  proposals without changing current cost.
+- `ProposeForSkill` creates a new helper-only `Proposed` assignment with its
+  own evidence reference. It does not alter the current snapshot or game.
+- Every rule and assignment records its provenance. A slot can have only one
+  current assignment, and a skill cannot receive multiple fixed-cost
+  assignments.
 - `用極`, `專解`, and `絕旨` are excluded because they change power or
   requirements. `大盈` and `大成` are reserved for M1-008 because they change
   category/generic slot contributions, not occupied cost.
-- Missing `GridCost` or unconfirmed mastery leaves effective cost unavailable;
-  an applicable derived `收置` reduction is unavailable for the same reason.
+- Missing `GridCost` or unconfirmed mastery leaves the ordinary effective cost
+  unavailable. A verified `收置` assignment still has exact effective cost
+  one, while its derived reduction remains unavailable.
 - Boundary tests cover the minimum cost, mastery, fixed-cost composition,
-  unrelated skills, category mismatch, duplicate modifiers, missing inputs,
+  unassigned slots, category mismatch, duplicate assignments, missing inputs,
   snapshot lookup, and unlearned skills.
 - Screenshot evidence and SHA-256 hashes are recorded in
   `docs/scenarios/M1-007-effective-skill-cost-evidence.md`.
 - The calculation reads and writes no save, game file, process, input, or live
   game state.
-- `dotnet test TaiWu.slnx --no-restore`: 84 tests passed.
+- `dotnet test --no-restore`: 88 tests passed.
 
 ### M1-008 — Implement slot-budget calculation
 

@@ -3,6 +3,7 @@ using GameData.Domains;
 using GameData.Domains.Character;
 using GameData.Domains.CombatSkill;
 using GameData.Domains.Item;
+using GameData.Utilities;
 using System.Reflection;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Domain.CombatSnapshots;
@@ -102,6 +103,9 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
         var loadout = MapLoadout(equipment);
         var learnedSkills = MapPlayerSkills(characterId, warnings);
         var learnedById = learnedSkills.ToDictionary(skill => skill.SkillId);
+        var legendaryBookCosts = MapLegendaryBookCosts(
+            learnedById,
+            warnings);
 
         return new PlayerCombatSnapshot(
             characterId,
@@ -117,7 +121,8 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
                 loadout,
                 learnedById,
                 warnings),
-            MapLegendaryBookModifiers(warnings));
+            legendaryBookCosts.Slots,
+            legendaryBookCosts.Assignments);
     }
 
     private static TargetCombatSnapshot MapTarget(
@@ -479,27 +484,90 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
             $"Weapon template {item.TemplateId} has no configured name.");
     }
 
-    private static List<LegendaryBookModifier> MapLegendaryBookModifiers(
+    private static LegendaryBookCostState MapLegendaryBookCosts(
+        Dictionary<int, CombatSkillSnapshot> learnedById,
         List<SnapshotWarning> warnings)
     {
-        var presetIndex =
-            DomainManager.LegendaryBook.GetCurrentUsingPresetIndex();
-        var preset =
-            DomainManager.LegendaryBook
-                .GetElement_LegendaryBookSkillPresetSlot(presetIndex);
-        if (preset.Items is null
-            || preset.Items.All(skillId => skillId < 0))
+        List<LegendaryBookCostSlot> slots = [];
+        List<LegendaryBookCostAssignment> assignments = [];
+        HashSet<int> assignedSkillIds = [];
+
+        for (sbyte skillType = 0; skillType < 5; skillType++)
         {
-            return [];
+            if (!DomainManager.Extra.TryGetElement_LegendaryBookSkillSlot(
+                    skillType,
+                    out ShortList source)
+                || source.Items is null)
+            {
+                continue;
+            }
+
+            CombatSnapshotMapping.TryMapSkillCategory(
+                skillType,
+                out var category);
+            for (var slotIndex = 0;
+                 slotIndex < source.Items.Count;
+                 slotIndex++)
+            {
+                var skillId = source.Items[slotIndex];
+                if (skillId < 0)
+                {
+                    continue;
+                }
+
+                if (!learnedById.TryGetValue(skillId, out var skill))
+                {
+                    warnings.Add(
+                        new SnapshotWarning(
+                            "LEGENDARY_BOOK_SKILL_UNLEARNED",
+                            $"Legendary-book cost slot references unlearned "
+                            + $"skill {skillId}; the assignment was omitted."));
+                    continue;
+                }
+
+                if (skill.Category != category)
+                {
+                    warnings.Add(
+                        new SnapshotWarning(
+                            "LEGENDARY_BOOK_SKILL_CATEGORY_MISMATCH",
+                            $"Legendary-book cost slot reports skill {skillId} "
+                            + $"under {category}, not {skill.Category}; the "
+                            + "assignment was omitted."));
+                    continue;
+                }
+
+                if (!assignedSkillIds.Add(skillId))
+                {
+                    warnings.Add(
+                        new SnapshotWarning(
+                            "LEGENDARY_BOOK_SKILL_DUPLICATED",
+                            $"Skill {skillId} appears in more than one "
+                            + "legendary-book fixed-cost slot; later "
+                            + "assignments were omitted."));
+                    continue;
+                }
+
+                var slotReference =
+                    $"save:legendary-book:shouzhi:{skillType}:{slotIndex}";
+                var slot = new LegendaryBookCostSlot(
+                    slotReference,
+                    new LegendaryBookCostRule(
+                        LegendaryBookCostEffect.Shouzhi,
+                        SnapshotDataSource.CurrentScreenObservation,
+                        "docs/scenarios/"
+                        + "M1-007-effective-skill-cost-evidence.md"));
+                slots.Add(slot);
+                assignments.Add(
+                    new LegendaryBookCostAssignment(
+                        slot,
+                        skillId,
+                        category,
+                        LegendaryBookAssignmentOrigin.Save,
+                        slotReference));
+            }
         }
 
-        warnings.Add(
-            new SnapshotWarning(
-                "LEGENDARY_BOOK_REDUCTION_UNCONFIRMED",
-                "The save contains legendary-book skill slots, but their "
-                + "effective reductions were not inferred without explicit "
-                + "mechanic evidence."));
-        return [];
+        return new LegendaryBookCostState(slots, assignments);
     }
 
     private static SnapshotValue<string> MapDisplayName(Character character)
@@ -544,3 +612,7 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
             "The loaded GameData assembly has no version metadata.");
     }
 }
+
+internal sealed record LegendaryBookCostState(
+    IReadOnlyList<LegendaryBookCostSlot> Slots,
+    IReadOnlyList<LegendaryBookCostAssignment> Assignments);

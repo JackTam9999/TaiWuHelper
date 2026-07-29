@@ -6,12 +6,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <PlatformTarget>x64</PlatformTarget>
     <UserSecretsId>7dc746a7-43c1-4645-90b5-26d28f7f76d5</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\TaiWu.Application\TaiWu.Application.csproj" />
     <ProjectReference Include="..\src\TaiWu.Infrastructure\TaiWu.Infrastructure.csproj" />
   </ItemGroup>
+
+  <Target
+    Name="PreventProprietaryRuntimePublication"
+    BeforeTargets="PrepareForPublish">
+    <Error
+      Text="Publishing TaiWu Helper is disabled because local GameData and Steam runtime binaries are proprietary and must not be redistributed. Run the API from source against a legally installed local game." />
+  </Target>
 
 </Project>

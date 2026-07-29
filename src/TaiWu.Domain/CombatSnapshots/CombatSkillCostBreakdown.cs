@@ -6,12 +6,14 @@ public sealed record CombatSkillCostBreakdown
 {
     internal CombatSkillCostBreakdown(
         CombatSkillSnapshot skill,
-        IEnumerable<LegendaryBookModifier> appliedLegendaryBookModifiers,
+        IEnumerable<LegendaryBookCostAssignment> appliedAssignments,
+        SnapshotValue<int> masteryReduction,
         SnapshotValue<int> legendaryBookReduction,
         SnapshotValue<int> effectiveCost)
     {
         ArgumentNullException.ThrowIfNull(skill);
-        ArgumentNullException.ThrowIfNull(appliedLegendaryBookModifiers);
+        ArgumentNullException.ThrowIfNull(appliedAssignments);
+        ArgumentNullException.ThrowIfNull(masteryReduction);
         ArgumentNullException.ThrowIfNull(legendaryBookReduction);
         ArgumentNullException.ThrowIfNull(effectiveCost);
 
@@ -19,10 +21,8 @@ public sealed record CombatSkillCostBreakdown
         Category = skill.Category;
         BaseCost = skill.GridCost;
         Mastered = skill.Mastered;
-        MasteryReduction =
-            skill.Mastered.IsAvailable && skill.Mastered.Value ? 1 : 0;
-        AppliedLegendaryBookModifiers =
-            [.. appliedLegendaryBookModifiers];
+        MasteryReduction = masteryReduction;
+        AppliedLegendaryBookCostAssignments = [.. appliedAssignments];
         LegendaryBookReduction = legendaryBookReduction;
         EffectiveCost = effectiveCost;
     }
@@ -35,12 +35,12 @@ public sealed record CombatSkillCostBreakdown
 
     public SnapshotValue<bool> Mastered { get; }
 
-    public int MasteryReduction { get; }
+    public SnapshotValue<int> MasteryReduction { get; }
 
     public SnapshotValue<int> LegendaryBookReduction { get; }
 
-    public ImmutableArray<LegendaryBookModifier>
-        AppliedLegendaryBookModifiers
+    public ImmutableArray<LegendaryBookCostAssignment>
+        AppliedLegendaryBookCostAssignments
     {
         get;
     }

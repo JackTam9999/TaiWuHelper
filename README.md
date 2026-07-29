@@ -3,6 +3,9 @@
 A local .NET 10 API for reading data from *The Scroll of Taiwu* save files and
 providing recommendations.
 
+This is an unofficial community project. It is not affiliated with, endorsed
+by, or sponsored by the game developer or publisher.
+
 TaiWu Helper is an information-only system. It never modifies saves, game
 files, configuration, runtime memory, runtime state, or in-game data; it never
 injects into, hooks, patches, automates, or controls the game. Recommendations
@@ -40,7 +43,21 @@ For another installation directory:
 dotnet build -p:TaiwuGameDirectory="D:\SteamLibrary\steamapps\common\The Scroll Of Taiwu"
 ```
 
+The proprietary `GameData` and Steam runtime binaries are loaded from the
+user's own game installation for local builds. They are excluded from Git and
+must not be redistributed. `dotnet publish` is intentionally blocked until a
+distribution design can run without packaging those files.
+
 ## Read a save
+
+Store the local save path in .NET user secrets. This keeps machine-specific
+paths out of Git:
+
+```powershell
+dotnet user-secrets set --project .\TaiWuAPI `
+  "SaveGames:DefaultSaveFilePath" `
+  "C:\Program Files (x86)\Steam\steamapps\common\The Scroll Of Taiwu\SaveGames\world_1\local.sav"
+```
 
 Run the API:
 
@@ -48,17 +65,7 @@ Run the API:
 dotnet run --project .\TaiWuAPI --launch-profile http
 ```
 
-Send a request:
-
-```http
-POST /api/save-games/read
-```
-
-When running with the `http` development launch profile, the default save is
-configured in `TaiWuAPI/appsettings.Development.json`. No request body is
-required.
-
-The configured save can also be read with GET:
+Read the configured save:
 
 ```http
 GET /api/save-games/read
@@ -70,18 +77,10 @@ To inspect a target character while using the configured save:
 GET /api/save-games/read?targetCharacterId=12345
 ```
 
-To read another save or inspect a target character, supply either value
-explicitly:
-
-```http
-POST /api/save-games/read
-Content-Type: application/json
-
-{
-  "saveFilePath": "D:\\...\\SaveGames\\world_2\\local.sav",
-  "targetCharacterId": 12345
-}
-```
+The API deliberately has no request field for a filesystem path. To switch
+saves, update the local user-secret configuration and restart the API. Kestrel
+binds only to localhost on port `5056`; the helper is not a remotely exposed
+service.
 
 The response contains `lines`, preserving the original reader's diagnostic
 format.

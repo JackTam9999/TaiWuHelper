@@ -6,309 +6,295 @@ namespace TaiWu.Domain.UnitTests.CombatSnapshots;
 public sealed class CombatSkillCostCalculatorTests
 {
     [Fact]
-    public void Configured_grid_cost_is_the_base_cost()
+    public void Configured_grid_cost_is_the_effective_cost_without_assignment()
     {
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+
         var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 3, mastered: false),
-            legendaryBookModifiers: []);
+            CreatePlayer([skill]),
+            skill.SkillId);
 
         Assert.Equal(3, result.BaseCost.Value);
-        Assert.Equal(0, result.MasteryReduction);
+        Assert.Equal(0, result.MasteryReduction.Value);
         Assert.Equal(0, result.LegendaryBookReduction.Value);
         Assert.Equal(3, result.EffectiveCost.Value);
     }
 
     [Fact]
-    public void Owned_but_unassigned_shouzhi_does_not_change_cost()
+    public void Mastery_reduces_cost_by_one_but_never_below_one()
     {
+        var skill = CreateSkill(gridCost: 1, mastered: true);
+
         var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 3, mastered: false),
-            legendaryBookModifiers: []);
+            CreatePlayer([skill]),
+            skill.SkillId);
 
-        Assert.Empty(result.AppliedLegendaryBookModifiers);
-        Assert.Equal(0, result.LegendaryBookReduction.Value);
-        Assert.Equal(3, result.EffectiveCost.Value);
-    }
-
-    [Fact]
-    public void Confirmed_mastery_reduces_cost_by_one()
-    {
-        var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 3, mastered: true),
-            legendaryBookModifiers: []);
-
-        Assert.Equal(1, result.MasteryReduction);
-        Assert.Equal(2, result.EffectiveCost.Value);
-    }
-
-    [Fact]
-    public void Mastery_never_reduces_cost_below_one()
-    {
-        var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 1, mastered: true),
-            legendaryBookModifiers: []);
-
+        Assert.Equal(0, result.MasteryReduction.Value);
         Assert.Equal(
             CombatSkillCostCalculator.MinimumEffectiveCost,
             result.EffectiveCost.Value);
     }
 
     [Fact]
-    public void Evidence_backed_shouzhi_sets_occupied_cost_to_one()
+    public void Current_shouzhi_assignment_sets_effective_cost_to_one()
     {
-        var modifier = CreateModifier(
-            fixedCost: 1,
-            evidence: "screen:fuxin-wuzijue:shouzhi");
+        var skill = CreateSkill(gridCost: 3, mastered: true);
+        var slot = CreateSlot();
+        var assignment = CreateAssignment(slot, skill);
 
         var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 3, mastered: false),
-            [modifier]);
+            CreatePlayer([skill], [slot], [assignment]),
+            skill.SkillId);
 
-        Assert.Equal(2, result.LegendaryBookReduction.Value);
-        Assert.Equal(1, result.EffectiveCost.Value);
-        Assert.Same(
-            modifier,
-            Assert.Single(result.AppliedLegendaryBookModifiers));
-    }
-
-    [Fact]
-    public void Shouzhi_fixed_cost_applies_to_the_agility_category()
-    {
-        var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(
-                gridCost: 3,
-                mastered: false,
-                category: SkillCategory.Agility),
-            [
-                CreateModifier(
-                    fixedCost: 1,
-                    evidence: "screen:baiyi-xinghua-ji:shouzhi",
-                    category: SkillCategory.Agility)
-            ]);
-
-        Assert.Equal(SkillCategory.Agility, result.Category);
-        Assert.Equal(2, result.LegendaryBookReduction.Value);
-        Assert.Equal(1, result.EffectiveCost.Value);
-    }
-
-    [Fact]
-    public void Proposed_shouzhi_assignment_is_a_new_helper_value()
-    {
-        var currentAssignment = CreateModifier(
-            fixedCost: 1,
-            evidence: "screen:legendary-book:shouzhi",
-            category: SkillCategory.Attack);
-        var proposedAssignment = currentAssignment.ForSkill(
-            skillId: 605,
-            category: SkillCategory.Assistance);
-
-        var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(
-                gridCost: 3,
-                mastered: false,
-                category: SkillCategory.Assistance,
-                skillId: 605),
-            [proposedAssignment]);
-
-        Assert.Equal(604, currentAssignment.SkillId);
-        Assert.Equal(SkillCategory.Attack, currentAssignment.Category);
-        Assert.NotSame(currentAssignment, proposedAssignment);
-        Assert.Equal(605, proposedAssignment.SkillId);
-        Assert.Equal(SkillCategory.Assistance, proposedAssignment.Category);
-        Assert.Equal(1, result.EffectiveCost.Value);
-    }
-
-    [Fact]
-    public void Mastery_is_applied_before_shouzhi_fixed_cost()
-    {
-        var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 3, mastered: true),
-            [CreateModifier(1, "screen:fuxin-wuzijue:shouzhi")]);
-
-        Assert.Equal(1, result.MasteryReduction);
+        Assert.Equal(1, result.MasteryReduction.Value);
         Assert.Equal(1, result.LegendaryBookReduction.Value);
         Assert.Equal(1, result.EffectiveCost.Value);
+        Assert.Same(
+            assignment,
+            Assert.Single(result.AppliedLegendaryBookCostAssignments));
     }
 
     [Fact]
-    public void Shouzhi_never_increases_a_cost_already_at_one()
+    public void Owned_but_unassigned_shouzhi_slot_does_not_change_cost()
     {
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+
         var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 1, mastered: true),
-            [CreateModifier(1, "screen:fuxin-wuzijue:shouzhi")]);
+            CreatePlayer([skill], [CreateSlot()]),
+            skill.SkillId);
 
-        Assert.Equal(0, result.LegendaryBookReduction.Value);
-        Assert.Equal(1, result.EffectiveCost.Value);
-    }
-
-    [Fact]
-    public void More_than_one_fixed_cost_modifier_is_rejected()
-    {
-        var exception = Assert.Throws<ArgumentException>(
-            () => CombatSkillCostCalculator.Calculate(
-                CreateSkill(gridCost: 3, mastered: false),
-                [
-                    CreateModifier(1, "screen:book-slot:1"),
-                    CreateModifier(1, "screen:book-slot:2")
-                ]));
-
-        Assert.Contains("more than one", exception.Message);
-    }
-
-    [Fact]
-    public void Modifier_for_another_skill_is_not_applied()
-    {
-        var result = CombatSkillCostCalculator.Calculate(
-            CreateSkill(gridCost: 3, mastered: false),
-            [
-                new LegendaryBookModifier(
-                    skillId: 999,
-                    SkillCategory.Attack,
-                    fixedCost: 1,
-                    SnapshotDataSource.Save,
-                    "save:other-skill")
-            ]);
-
-        Assert.Empty(result.AppliedLegendaryBookModifiers);
+        Assert.Empty(result.AppliedLegendaryBookCostAssignments);
         Assert.Equal(0, result.LegendaryBookReduction.Value);
         Assert.Equal(3, result.EffectiveCost.Value);
     }
 
     [Fact]
-    public void Unavailable_grid_cost_keeps_effective_cost_unavailable()
+    public void Exact_shouzhi_cost_remains_known_when_grid_cost_is_unknown()
     {
         var skill = CreateSkill(
-            SnapshotValue<int>.Unavailable(
-                "Game configuration did not contain GridCost."),
+            SnapshotValue<int>.Unavailable("GridCost was not available."),
             SnapshotValue<bool>.Available(false));
-
-        var result = CombatSkillCostCalculator.Calculate(skill, []);
-
-        Assert.False(result.EffectiveCost.IsAvailable);
-        Assert.Contains(
-            "GridCost",
-            result.EffectiveCost.UnavailableReason);
-        Assert.True(result.LegendaryBookReduction.IsAvailable);
-        Assert.Equal(0, result.LegendaryBookReduction.Value);
-    }
-
-    [Fact]
-    public void Shouzhi_reduction_is_unavailable_when_grid_cost_is_unavailable()
-    {
-        var skill = CreateSkill(
-            SnapshotValue<int>.Unavailable(
-                "Game configuration did not contain GridCost."),
-            SnapshotValue<bool>.Available(false));
+        var slot = CreateSlot();
 
         var result = CombatSkillCostCalculator.Calculate(
-            skill,
-            [CreateModifier(1, "screen:fuxin-wuzijue:shouzhi")]);
+            CreatePlayer(
+                [skill],
+                [slot],
+                [CreateAssignment(slot, skill)]),
+            skill.SkillId);
 
+        Assert.False(result.MasteryReduction.IsAvailable);
         Assert.False(result.LegendaryBookReduction.IsAvailable);
-        Assert.Contains(
-            "GridCost",
-            result.LegendaryBookReduction.UnavailableReason);
+        Assert.True(result.EffectiveCost.IsAvailable);
+        Assert.Equal(1, result.EffectiveCost.Value);
     }
 
     [Fact]
-    public void Unconfirmed_mastery_keeps_effective_cost_unavailable()
+    public void Exact_shouzhi_cost_remains_known_when_mastery_is_unknown()
     {
         var skill = CreateSkill(
             SnapshotValue<int>.Available(3),
-            SnapshotValue<bool>.Unavailable(
-                "Mastery could not be read."));
-
-        var result = CombatSkillCostCalculator.Calculate(skill, []);
-
-        Assert.Equal(0, result.MasteryReduction);
-        Assert.False(result.EffectiveCost.IsAvailable);
-        Assert.Contains(
-            "mastery",
-            result.EffectiveCost.UnavailableReason);
-    }
-
-    [Fact]
-    public void Shouzhi_reduction_is_unavailable_when_mastery_is_unconfirmed()
-    {
-        var skill = CreateSkill(
-            SnapshotValue<int>.Available(3),
-            SnapshotValue<bool>.Unavailable(
-                "Mastery could not be read."));
+            SnapshotValue<bool>.Unavailable("Mastery was not available."));
+        var slot = CreateSlot();
 
         var result = CombatSkillCostCalculator.Calculate(
-            skill,
-            [CreateModifier(1, "screen:fuxin-wuzijue:shouzhi")]);
+            CreatePlayer(
+                [skill],
+                [slot],
+                [CreateAssignment(slot, skill)]),
+            skill.SkillId);
 
+        Assert.False(result.MasteryReduction.IsAvailable);
         Assert.False(result.LegendaryBookReduction.IsAvailable);
-        Assert.Contains(
-            "mastery",
-            result.LegendaryBookReduction.UnavailableReason);
+        Assert.Equal(1, result.EffectiveCost.Value);
     }
 
     [Fact]
-    public void Category_mismatched_modifier_is_rejected()
+    public void Proposal_uses_owned_slot_without_changing_current_assignment()
     {
-        var modifier = new LegendaryBookModifier(
-            skillId: 604,
+        var currentSkill = CreateSkill(
+            gridCost: 3,
+            mastered: false,
+            skillId: 604);
+        var proposedSkill = CreateSkill(
+            gridCost: 3,
+            mastered: false,
+            skillId: 605);
+        var slot = CreateSlot();
+        var current = CreateAssignment(slot, currentSkill);
+        var proposed = current.ProposeForSkill(
+            proposedSkill.SkillId,
+            proposedSkill.Category,
+            "proposal:move-shouzhi-to-605");
+
+        var result = CombatSkillCostCalculator.CalculateProposed(
+            CreatePlayer(
+                [currentSkill, proposedSkill],
+                [slot],
+                [current]),
+            proposed);
+
+        Assert.Equal(604, current.SkillId);
+        Assert.Equal(LegendaryBookAssignmentOrigin.Save, current.Origin);
+        Assert.Equal(605, proposed.SkillId);
+        Assert.Equal(
+            LegendaryBookAssignmentOrigin.Proposed,
+            proposed.Origin);
+        Assert.Equal(
+            "proposal:move-shouzhi-to-605",
+            proposed.AssignmentEvidenceReference);
+        Assert.Equal(1, result.EffectiveCost.Value);
+    }
+
+    [Fact]
+    public void Proposal_cannot_use_an_unowned_slot()
+    {
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+        var proposed = CreateAssignment(
+            CreateSlot("book:unowned"),
+            skill,
+            LegendaryBookAssignmentOrigin.Proposed,
+            "proposal:unowned");
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => CombatSkillCostCalculator.CalculateProposed(
+                CreatePlayer([skill]),
+                proposed));
+
+        Assert.Contains("unavailable slot", exception.Message);
+    }
+
+    [Fact]
+    public void Proposal_requires_proposed_origin()
+    {
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+        var slot = CreateSlot();
+        var current = CreateAssignment(slot, skill);
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => CombatSkillCostCalculator.CalculateProposed(
+                CreatePlayer([skill], [slot], [current]),
+                current));
+
+        Assert.Contains("proposed assignment", exception.Message);
+    }
+
+    [Fact]
+    public void Player_rejects_assignment_for_unlearned_skill()
+    {
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+        var slot = CreateSlot();
+        var assignment = new LegendaryBookCostAssignment(
+            slot,
+            skillId: 999,
+            SkillCategory.Attack,
+            LegendaryBookAssignmentOrigin.Save,
+            "save:unknown-skill");
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => CreatePlayer([skill], [slot], [assignment]));
+
+        Assert.Contains("unlearned", exception.Message);
+    }
+
+    [Fact]
+    public void Player_rejects_assignment_with_mismatched_category()
+    {
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+        var slot = CreateSlot();
+        var assignment = new LegendaryBookCostAssignment(
+            slot,
+            skill.SkillId,
             SkillCategory.Defense,
-            fixedCost: 1,
-            SnapshotDataSource.Save,
+            LegendaryBookAssignmentOrigin.Save,
             "save:wrong-category");
 
         var exception = Assert.Throws<ArgumentException>(
-            () => CombatSkillCostCalculator.Calculate(
-                CreateSkill(gridCost: 3, mastered: false),
-                [modifier]));
+            () => CreatePlayer([skill], [slot], [assignment]));
 
         Assert.Contains("not Attack", exception.Message);
     }
 
     [Fact]
-    public void Duplicate_evidence_cannot_apply_fixed_cost_twice()
+    public void Player_rejects_duplicate_slot_assignments()
     {
+        var first = CreateSkill(
+            gridCost: 3,
+            mastered: false,
+            skillId: 604);
+        var second = CreateSkill(
+            gridCost: 3,
+            mastered: false,
+            skillId: 605);
+        var slot = CreateSlot();
+
         var exception = Assert.Throws<ArgumentException>(
-            () => CombatSkillCostCalculator.Calculate(
-                CreateSkill(gridCost: 3, mastered: false),
+            () => CreatePlayer(
+                [first, second],
+                [slot],
                 [
-                    CreateModifier(1, "save:same-evidence"),
-                    CreateModifier(1, "save:same-evidence")
+                    CreateAssignment(slot, first),
+                    CreateAssignment(slot, second)
+                ]));
+
+        Assert.Contains("more than one current assignment", exception.Message);
+    }
+
+    [Fact]
+    public void Player_rejects_duplicate_fixed_cost_assignments_for_skill()
+    {
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+        var firstSlot = CreateSlot("book:slot:one");
+        var secondSlot = CreateSlot("book:slot:two");
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => CreatePlayer(
+                [skill],
+                [firstSlot, secondSlot],
+                [
+                    CreateAssignment(firstSlot, skill),
+                    CreateAssignment(secondSlot, skill)
                 ]));
 
         Assert.Contains("more than one", exception.Message);
     }
 
     [Fact]
-    public void Player_calculation_uses_only_snapshot_modifiers()
+    public void Current_snapshot_rejects_proposed_assignment()
     {
-        var skill = CreateSkill(gridCost: 3, mastered: true);
-        var player = CreatePlayer(
+        var skill = CreateSkill(gridCost: 3, mastered: false);
+        var slot = CreateSlot();
+        var proposal = CreateAssignment(
+            slot,
             skill,
-            [CreateModifier(1, "save:confirmed-slot")]);
+            LegendaryBookAssignmentOrigin.Proposed,
+            "proposal:test");
 
-        var result = CombatSkillCostCalculator.Calculate(
-            player,
-            skill.SkillId);
+        var exception = Assert.Throws<ArgumentException>(
+            () => CreatePlayer([skill], [slot], [proposal]));
 
-        Assert.Equal(1, result.EffectiveCost.Value);
-        Assert.Throws<KeyNotFoundException>(
-            () => CombatSkillCostCalculator.Calculate(player, 999));
+        Assert.Contains("cannot contain proposed", exception.Message);
     }
 
     [Fact]
-    public void Player_rejects_modifier_for_unlearned_skill()
+    public void Shouzhi_rule_has_only_its_evidence_backed_fixed_cost()
     {
-        var skill = CreateSkill(gridCost: 3, mastered: false);
-        var modifier = new LegendaryBookModifier(
-            skillId: 999,
-            SkillCategory.Attack,
-            fixedCost: 1,
-            SnapshotDataSource.Save,
-            "save:unknown-skill");
+        var rule = new LegendaryBookCostRule(
+            LegendaryBookCostEffect.Shouzhi,
+            SnapshotDataSource.CurrentScreenObservation,
+            "docs/evidence/shouzhi.md");
 
-        var exception = Assert.Throws<ArgumentException>(
-            () => CreatePlayer(skill, [modifier]));
+        Assert.Equal(1, rule.FixedCost);
+    }
 
-        Assert.Contains("unlearned", exception.Message);
+    [Fact]
+    public void Player_calculation_rejects_unknown_skill()
+    {
+        var player = CreatePlayer(
+            [CreateSkill(gridCost: 3, mastered: false)]);
+
+        Assert.Throws<KeyNotFoundException>(
+            () => CombatSkillCostCalculator.Calculate(player, 999));
     }
 
     private static CombatSkillSnapshot CreateSkill(
@@ -332,7 +318,7 @@ public sealed class CombatSkillCostCalculatorTests
     {
         return new CombatSkillSnapshot(
             skillId,
-            SnapshotValue<string>.Available("金猊鎮魔刀"),
+            SnapshotValue<string>.Available($"Skill {skillId}"),
             category,
             gridCost,
             mastered,
@@ -343,30 +329,44 @@ public sealed class CombatSkillCostCalculatorTests
             SnapshotValue<int>.Available(339));
     }
 
-    private static LegendaryBookModifier CreateModifier(
-        int fixedCost,
-        string evidence,
-        SkillCategory category = SkillCategory.Attack)
+    private static LegendaryBookCostSlot CreateSlot(
+        string slotReference = "book:slot:shouzhi")
     {
-        return new LegendaryBookModifier(
-            skillId: 604,
-            category,
-            fixedCost,
-            SnapshotDataSource.CurrentScreenObservation,
+        return new LegendaryBookCostSlot(
+            slotReference,
+            new LegendaryBookCostRule(
+                LegendaryBookCostEffect.Shouzhi,
+                SnapshotDataSource.CurrentScreenObservation,
+                "docs/evidence/shouzhi.md"));
+    }
+
+    private static LegendaryBookCostAssignment CreateAssignment(
+        LegendaryBookCostSlot slot,
+        CombatSkillSnapshot skill,
+        LegendaryBookAssignmentOrigin origin =
+            LegendaryBookAssignmentOrigin.Save,
+        string evidence = "save:legendary-book:shouzhi")
+    {
+        return new LegendaryBookCostAssignment(
+            slot,
+            skill.SkillId,
+            skill.Category,
+            origin,
             evidence);
     }
 
     private static PlayerCombatSnapshot CreatePlayer(
-        CombatSkillSnapshot skill,
-        IEnumerable<LegendaryBookModifier> modifiers)
+        IEnumerable<CombatSkillSnapshot> skills,
+        IEnumerable<LegendaryBookCostSlot>? slots = null,
+        IEnumerable<LegendaryBookCostAssignment>? assignments = null)
     {
         return new PlayerCombatSnapshot(
-            characterId: 21396,
-            SnapshotValue<string>.Available("太吾"),
-            learnedSkills: [skill],
+            characterId: 1,
+            SnapshotValue<string>.Available("Taiwu"),
+            learnedSkills: skills,
             equippedSkills: new CombatLoadoutSnapshot(
                 neigongSkillIds: [],
-                attackSkillIds: [skill.SkillId],
+                attackSkillIds: [],
                 agilitySkillIds: [],
                 defenseSkillIds: [],
                 assistanceSkillIds: []),
@@ -374,13 +374,14 @@ public sealed class CombatSkillCostCalculatorTests
             slotBudgets: new SlotBudgetSet(
             [
                 new SlotBudget(SkillCategory.Neigong, 0, 6),
-                new SlotBudget(SkillCategory.Attack, 3, 10),
+                new SlotBudget(SkillCategory.Attack, 0, 10),
                 new SlotBudget(SkillCategory.Agility, 0, 8),
                 new SlotBudget(SkillCategory.Defense, 0, 8),
                 new SlotBudget(SkillCategory.Assistance, 0, 2)
             ]),
             genericSlotAllocation:
                 new GenericSlotAllocation(0, 0, 0, 0, 0),
-            legendaryBookModifiers: modifiers);
+            legendaryBookCostSlots: slots ?? [],
+            legendaryBookCostAssignments: assignments ?? []);
     }
 }

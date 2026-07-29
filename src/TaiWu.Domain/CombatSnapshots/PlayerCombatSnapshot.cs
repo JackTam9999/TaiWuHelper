@@ -12,7 +12,9 @@ public sealed record PlayerCombatSnapshot
         IEnumerable<EquipmentSnapshot> equipment,
         SlotBudgetSet slotBudgets,
         GenericSlotAllocation genericSlotAllocation,
-        IEnumerable<LegendaryBookModifier> legendaryBookModifiers)
+        IEnumerable<LegendaryBookCostSlot> legendaryBookCostSlots,
+        IEnumerable<LegendaryBookCostAssignment>
+            legendaryBookCostAssignments)
     {
         if (characterId <= 0)
         {
@@ -28,7 +30,8 @@ public sealed record PlayerCombatSnapshot
         ArgumentNullException.ThrowIfNull(equipment);
         ArgumentNullException.ThrowIfNull(slotBudgets);
         ArgumentNullException.ThrowIfNull(genericSlotAllocation);
-        ArgumentNullException.ThrowIfNull(legendaryBookModifiers);
+        ArgumentNullException.ThrowIfNull(legendaryBookCostSlots);
+        ArgumentNullException.ThrowIfNull(legendaryBookCostAssignments);
 
         CharacterId = characterId;
         DisplayName = displayName;
@@ -37,8 +40,11 @@ public sealed record PlayerCombatSnapshot
         Equipment = CopyUniqueEquipment(equipment);
         SlotBudgets = slotBudgets;
         GenericSlotAllocation = genericSlotAllocation;
-        LegendaryBookModifiers = CopyLegendaryBookModifiers(
-            legendaryBookModifiers,
+        LegendaryBookCostSlots = CopyLegendaryBookCostSlots(
+            legendaryBookCostSlots);
+        LegendaryBookCostAssignments = CopyLegendaryBookCostAssignments(
+            legendaryBookCostAssignments,
+            LegendaryBookCostSlots,
             LearnedSkills);
     }
 
@@ -56,7 +62,16 @@ public sealed record PlayerCombatSnapshot
 
     public GenericSlotAllocation GenericSlotAllocation { get; }
 
-    public ImmutableArray<LegendaryBookModifier> LegendaryBookModifiers { get; }
+    public ImmutableArray<LegendaryBookCostSlot> LegendaryBookCostSlots
+    {
+        get;
+    }
+
+    public ImmutableArray<LegendaryBookCostAssignment>
+        LegendaryBookCostAssignments
+    {
+        get;
+    }
 
     private static ImmutableArray<CombatSkillSnapshot> CopyUniqueSkills(
         IEnumerable<CombatSkillSnapshot> skills)
@@ -106,49 +121,116 @@ public sealed record PlayerCombatSnapshot
         return values;
     }
 
-    private static ImmutableArray<LegendaryBookModifier>
-        CopyLegendaryBookModifiers(
-            IEnumerable<LegendaryBookModifier> modifiers,
-            ImmutableArray<CombatSkillSnapshot> learnedSkills)
+    private static ImmutableArray<LegendaryBookCostSlot>
+        CopyLegendaryBookCostSlots(
+            IEnumerable<LegendaryBookCostSlot> slots)
     {
-        var values = modifiers.ToImmutableArray();
-        if (values.Any(modifier => modifier is null))
+        var values = slots.ToImmutableArray();
+        if (values.Any(slot => slot is null))
         {
             throw new ArgumentException(
-                "Legendary-book modifiers cannot contain null entries.",
-                nameof(modifiers));
+                "Legendary-book cost slots cannot contain null entries.",
+                nameof(slots));
         }
 
+        var duplicateSlot = values
+            .GroupBy(
+                slot => slot.SlotReference,
+                StringComparer.Ordinal)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicateSlot is not null)
+        {
+            throw new ArgumentException(
+                $"Duplicate legendary-book cost slot "
+                + $"'{duplicateSlot.Key}'.",
+                nameof(slots));
+        }
+
+        return values;
+    }
+
+    private static ImmutableArray<LegendaryBookCostAssignment>
+        CopyLegendaryBookCostAssignments(
+            IEnumerable<LegendaryBookCostAssignment> assignments,
+            ImmutableArray<LegendaryBookCostSlot> slots,
+            ImmutableArray<CombatSkillSnapshot> learnedSkills)
+    {
+        var values = assignments.ToImmutableArray();
+        if (values.Any(assignment => assignment is null))
+        {
+            throw new ArgumentException(
+                "Legendary-book cost assignments cannot contain null entries.",
+                nameof(assignments));
+        }
+
+        var slotsByReference = slots.ToImmutableDictionary(
+            slot => slot.SlotReference,
+            StringComparer.Ordinal);
         var learnedById =
             learnedSkills.ToImmutableDictionary(skill => skill.SkillId);
-        foreach (var modifier in values)
+        foreach (var assignment in values)
         {
-            if (!learnedById.TryGetValue(modifier.SkillId, out var skill))
+            if (assignment.Origin == LegendaryBookAssignmentOrigin.Proposed)
             {
                 throw new ArgumentException(
-                    $"Legendary-book modifier references unlearned skill "
-                    + $"{modifier.SkillId}.",
-                    nameof(modifiers));
+                    "A current player snapshot cannot contain proposed "
+                    + "legendary-book assignments.",
+                    nameof(assignments));
             }
 
-            if (modifier.Category != skill.Category)
+            if (!slotsByReference.TryGetValue(
+                    assignment.Slot.SlotReference,
+                    out var knownSlot)
+                || knownSlot != assignment.Slot)
             {
                 throw new ArgumentException(
-                    $"Legendary-book modifier for skill {modifier.SkillId} "
-                    + $"uses {modifier.Category}, not {skill.Category}.",
-                    nameof(modifiers));
+                    $"Legendary-book assignment references unknown or "
+                    + $"mismatched slot '{assignment.Slot.SlotReference}'.",
+                    nameof(assignments));
             }
+
+            if (!learnedById.TryGetValue(
+                    assignment.SkillId,
+                    out var skill))
+            {
+                throw new ArgumentException(
+                    $"Legendary-book assignment references unlearned skill "
+                    + $"{assignment.SkillId}.",
+                    nameof(assignments));
+            }
+
+            if (assignment.Category != skill.Category)
+            {
+                throw new ArgumentException(
+                    $"Legendary-book assignment for skill "
+                    + $"{assignment.SkillId} uses {assignment.Category}, "
+                    + $"not {skill.Category}.",
+                    nameof(assignments));
+            }
+        }
+
+        var duplicateSlot = values
+            .GroupBy(
+                assignment => assignment.Slot.SlotReference,
+                StringComparer.Ordinal)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicateSlot is not null)
+        {
+            throw new ArgumentException(
+                $"Legendary-book cost slot '{duplicateSlot.Key}' has more "
+                + "than one current assignment.",
+                nameof(assignments));
         }
 
         var duplicateSkill = values
-            .GroupBy(modifier => modifier.SkillId)
+            .GroupBy(assignment => assignment.SkillId)
             .FirstOrDefault(group => group.Count() > 1);
         if (duplicateSkill is not null)
         {
             throw new ArgumentException(
                 $"Skill {duplicateSkill.Key} has more than one "
-                + "legendary-book fixed-cost modifier.",
-                nameof(modifiers));
+                + "legendary-book fixed-cost assignment.",
+                nameof(assignments));
         }
 
         return values;

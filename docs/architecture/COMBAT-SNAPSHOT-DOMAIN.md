@@ -17,7 +17,7 @@ boundary.
 |---|---|
 | `CombatSnapshot` | Root containing metadata, one player, one target, and warnings |
 | `CombatSnapshotMetadata` | Save path, SHA-256, capture time, save modified time, and GameData version |
-| `PlayerCombatSnapshot` | Learned skills, equipped loadout, equipment, slot budgets, generic allocation, and legendary-book modifiers |
+| `PlayerCombatSnapshot` | Learned skills, equipped loadout, equipment, slot budgets, generic allocation, owned legendary-book cost slots, and current assignments |
 | `TargetCombatSnapshot` | Identity, age, features, learned skills, optionally available equipped loadout, and equipment |
 | `CharacterFeatureSnapshot` | Target feature ID, configured display name, and level |
 | `CombatSkillSnapshot` | Skill identity, category, actual grid cost, mastery, practice direction, slot contribution, and direct/reverse effect IDs |
@@ -75,9 +75,10 @@ contain its equipped skill loadout.
 ### Evidence source
 
 `SnapshotDataSource` distinguishes save data, local game configuration, and a
-current-screen observation. `LegendaryBookModifier` requires an evidence
-reference and source so an unverified fixed cost cannot enter later cost
-calculation.
+current-screen observation. `LegendaryBookCostRule` requires an evidence
+reference and source. `LegendaryBookCostSlot` gives an owned effect a stable
+identity, while `LegendaryBookCostAssignment` separately records the current
+or proposed selected skill and its provenance.
 
 ## Construction invariants
 
@@ -89,8 +90,12 @@ calculation.
 - Generic slots cannot be allocated more than once.
 - A skill cannot appear twice in one equipped loadout.
 - Learned skills and equipment slots cannot be duplicated.
-- Legendary-book fixed costs must be at least one and evidence-backed.
-- A skill can have at most one legendary-book fixed-cost modifier.
+- Legendary-book fixed costs come only from named, evidence-backed rules.
+- A current assignment must reference an owned slot and a learned skill in the
+  same category.
+- A slot can have at most one current assignment, and a skill can have at most
+  one fixed-cost assignment.
+- Proposed assignments cannot be stored in a current player snapshot.
 - Snapshot SHA-256 values contain exactly 64 hexadecimal characters.
 - Missing data always carries a non-blank reason.
 
@@ -147,6 +152,8 @@ and remaining capacity are unavailable until verified cost rules are applied.
 - Equipped skill IDs grouped by category.
 - Generic-slot allocation.
 - Optional slot budgets read directly from the displayed screen.
+- Optional legendary-book cost slots and current assignments, supplied
+  together.
 
 `CombatSnapshotObservationMerger.Merge` returns a new aggregate and never
 changes the disk-derived snapshot. Before merging, every observed skill must be
@@ -162,6 +169,8 @@ evidence reference. The current paths are:
 - `player.equippedSkills`
 - `player.genericSlotAllocation`
 - `player.slotBudgets` when displayed budgets were reported
+- `player.legendaryBookCostSlots` and
+  `player.legendaryBookCostAssignments` when book state was reported
 
 Observation data exists only in Domain/Application memory and the returned
 snapshot. The merge operation has no persistence, file, process, input, or
@@ -171,7 +180,7 @@ game-control dependency.
 
 `CombatSkillCostCalculator` is a pure Domain service. It returns a
 `CombatSkillCostBreakdown` containing configured base cost, confirmed mastery,
-the applied evidence-backed legendary-book modifier, the derived reduction,
+the applied evidence-backed legendary-book assignment, the derived reduction,
 and effective cost.
 
 The calculation order is:
@@ -179,25 +188,27 @@ The calculation order is:
 1. Use configured `GridCost` as the base.
 2. Reduce it by one only when mastery is available and confirmed.
 3. Keep the mastery-adjusted result at or above one.
-4. If one confirmed `收置` modifier applies, cap the occupied cost at its
+4. If one confirmed `收置` assignment applies, set the occupied cost to its
    evidence-backed fixed cost of one.
 
 `收置` is modelled as a fixed cost rather than an additive reduction. Its
-reported reduction is derived from the mastery-adjusted cost. A missing
-`GridCost` or unknown mastery leaves effective cost unavailable; if `收置`
-applies, its derived reduction is unavailable for the same reason. Multiple
-fixed-cost modifiers for one skill are rejected rather than stacked.
+reported reduction is derived from the mastery-adjusted cost. Without a
+`收置` assignment, a missing `GridCost` or unknown mastery leaves effective
+cost unavailable. With a verified assignment, the exact cost of one remains
+available while the derived reduction stays unavailable. Multiple fixed-cost
+assignments for one skill are rejected rather than stacked.
 
 The skill shown as `生效功法` is a replaceable assignment, not part of the
-effect definition. `LegendaryBookModifier.ForSkill` returns a new immutable
-helper value for evaluating a proposed assignment while preserving the current
-value. This is an in-memory recommendation calculation only; it has no game,
+effect definition. `LegendaryBookCostAssignment.ProposeForSkill` returns a new
+`Proposed` helper value with a new proposal reference. The calculator accepts
+it only when the referenced slot is owned and the learned skill category
+matches. This is an in-memory recommendation calculation only; it has no game,
 save, process, input, or persistence dependency.
 
-Owning a legendary book does not itself create a cost modifier. An unassigned
-`收置` slot is represented by the absence of a modifier and leaves cost
-unchanged. Effects from books outside the player's verified owned set remain
-unknown; they are never guessed or treated as available.
+Owning a legendary book does not itself change any skill cost. An unassigned
+`收置` slot is represented explicitly by an owned slot with no assignment and
+leaves cost unchanged. Effects from books outside the player's verified owned
+set remain unknown; they are never guessed or treated as available.
 
 The separate `大盈` and `大成` category/generic-grid trade-offs are deliberately
 not cost modifiers. They belong to slot-budget calculation in M1-008. The

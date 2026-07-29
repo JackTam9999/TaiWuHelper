@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 using TaiWu.Application.SaveGames;
 using TaiWu.Domain.SaveGames;
@@ -23,24 +22,6 @@ public sealed class SaveGamesController(
             options.Value.DefaultSaveFilePath,
             targetCharacterId,
             cancellationToken);
-
-    [HttpPost("read")]
-    [ProducesResponseType<SaveGameReport>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    public Task<ActionResult<SaveGameReport>> ReadOverride(
-        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)]
-        ReadSaveGameBody? body,
-        CancellationToken cancellationToken)
-    {
-        var saveFilePath = string.IsNullOrWhiteSpace(body?.SaveFilePath)
-            ? options.Value.DefaultSaveFilePath
-            : body.SaveFilePath;
-
-        return Read(
-            saveFilePath,
-            body?.TargetCharacterId,
-            cancellationToken);
-    }
 
     private async Task<ActionResult<SaveGameReport>> Read(
         string saveFilePath,
@@ -68,7 +49,3 @@ public sealed class SaveGamesController(
         }
     }
 }
-
-public sealed record ReadSaveGameBody(
-    string? SaveFilePath = null,
-    int? TargetCharacterId = null);

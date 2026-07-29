@@ -1,6 +1,6 @@
 @TaiWu_HostAddress = http://localhost:5056
 
-GET {{TaiWu_HostAddress}}/weatherforecast/
+GET {{TaiWu_HostAddress}}/api/save-games/read
 Accept: application/json
 
 ###

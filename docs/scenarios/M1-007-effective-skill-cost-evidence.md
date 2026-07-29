@@ -14,8 +14,10 @@ skill cost:
   that cost.
 
 The cost calculator therefore starts with configured `GridCost`, applies the
-confirmed mastery reduction with a minimum of one, and then caps the result at
-the evidence-backed `收置` fixed cost of one.
+confirmed mastery reduction with a minimum of one, and then replaces the
+occupied cost with the evidence-backed `收置` fixed cost of one. Because the
+rule is exact, that final cost remains known even when the ordinary grid cost
+or mastery value is unavailable; only the amount reduced is then unknown.
 
 ## Replaceable active-skill assignments
 
@@ -27,11 +29,13 @@ The helper therefore separates the verified effect from the selected skill in
 its behaviour:
 
 - A current snapshot applies `收置` only to the skill currently assigned to it.
-- A recommendation may evaluate a different learned skill by producing a new
-  immutable helper-side modifier with the same evidence-backed fixed-cost
-  rule.
-- `LegendaryBookModifier.ForSkill` returns that new value and leaves the
-  current snapshot value unchanged.
+- A verified book effect is an owned `LegendaryBookCostSlot`; its current
+  selected skill is a separate `LegendaryBookCostAssignment`.
+- A recommendation may evaluate a different learned skill by calling
+  `ProposeForSkill`, which creates a `Proposed` helper-side assignment with
+  its own proposal evidence.
+- Proposed evaluation requires an owned slot and leaves the current snapshot
+  assignment unchanged.
 - The helper only reports the proposed manual change. It does not change the
   save, game process, or live selection.
 
@@ -112,8 +116,9 @@ local-only `M1-007-blade-shouzhi-fixed-cost-empty.png` evidence contains the
 same fixed one-slot and 50% requirement wording.
 
 The visible “+” means no skill is assigned to that effect at capture time.
-Ownership makes the slot available for a proposal, but an empty `收置` produces
-no modifier in the current cost calculation.
+Ownership is represented by the slot even while its assignment is absent. It
+makes the slot available for a proposal, but an empty `收置` produces no change
+in the current cost calculation.
 
 Its other shown effects are not occupied-cost modifiers:
 

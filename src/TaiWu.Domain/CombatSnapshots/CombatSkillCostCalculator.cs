@@ -10,106 +10,160 @@ public static class CombatSkillCostCalculator
     {
         ArgumentNullException.ThrowIfNull(player);
 
-        var skill = player.LearnedSkills.FirstOrDefault(
+        var skill = FindLearnedSkill(player, skillId);
+        var assignments = player.LegendaryBookCostAssignments
+            .Where(assignment => assignment.SkillId == skillId)
+            .ToArray();
+
+        return CalculateCore(skill, assignments);
+    }
+
+    public static CombatSkillCostBreakdown CalculateProposed(
+        PlayerCombatSnapshot player,
+        LegendaryBookCostAssignment proposedAssignment)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(proposedAssignment);
+
+        if (proposedAssignment.Origin
+            != LegendaryBookAssignmentOrigin.Proposed)
+        {
+            throw new ArgumentException(
+                "A proposed calculation requires a proposed assignment.",
+                nameof(proposedAssignment));
+        }
+
+        var knownSlot = player.LegendaryBookCostSlots.FirstOrDefault(
+            slot => string.Equals(
+                slot.SlotReference,
+                proposedAssignment.Slot.SlotReference,
+                StringComparison.Ordinal));
+        if (knownSlot is null || knownSlot != proposedAssignment.Slot)
+        {
+            throw new ArgumentException(
+                $"Proposed assignment references unavailable slot "
+                + $"'{proposedAssignment.Slot.SlotReference}'.",
+                nameof(proposedAssignment));
+        }
+
+        var skill = FindLearnedSkill(player, proposedAssignment.SkillId);
+        if (skill.Category != proposedAssignment.Category)
+        {
+            throw new ArgumentException(
+                $"Proposed assignment for skill {skill.SkillId} uses "
+                + $"{proposedAssignment.Category}, not {skill.Category}.",
+                nameof(proposedAssignment));
+        }
+
+        return CalculateCore(skill, [proposedAssignment]);
+    }
+
+    private static CombatSkillSnapshot FindLearnedSkill(
+        PlayerCombatSnapshot player,
+        int skillId)
+    {
+        return player.LearnedSkills.FirstOrDefault(
             candidate => candidate.SkillId == skillId)
             ?? throw new KeyNotFoundException(
                 $"Player has not learned combat skill {skillId}.");
-
-        return Calculate(skill, player.LegendaryBookModifiers);
     }
 
-    public static CombatSkillCostBreakdown Calculate(
+    private static CombatSkillCostBreakdown CalculateCore(
         CombatSkillSnapshot skill,
-        IEnumerable<LegendaryBookModifier> legendaryBookModifiers)
+        LegendaryBookCostAssignment[] assignments)
     {
-        ArgumentNullException.ThrowIfNull(skill);
-        ArgumentNullException.ThrowIfNull(legendaryBookModifiers);
-
-        var modifiers = legendaryBookModifiers.ToArray();
-        if (modifiers.Any(modifier => modifier is null))
+        if (assignments.Length > 1)
         {
             throw new ArgumentException(
-                "Legendary-book modifiers cannot contain null entries.",
-                nameof(legendaryBookModifiers));
+                $"Skill {skill.SkillId} has more than one legendary-book "
+                + "fixed-cost assignment.",
+                nameof(assignments));
         }
 
-        var appliedModifiers = modifiers
-            .Where(modifier => modifier.SkillId == skill.SkillId)
-            .ToArray();
-
-        var categoryMismatch = appliedModifiers.FirstOrDefault(
-            modifier => modifier.Category != skill.Category);
-        if (categoryMismatch is not null)
+        var assignment = assignments.SingleOrDefault();
+        if (assignment is not null && assignment.Category != skill.Category)
         {
             throw new ArgumentException(
-                $"Legendary-book modifier for skill {skill.SkillId} "
-                + $"uses {categoryMismatch.Category}, not {skill.Category}.",
-                nameof(legendaryBookModifiers));
+                $"Legendary-book assignment for skill {skill.SkillId} "
+                + $"uses {assignment.Category}, not {skill.Category}.",
+                nameof(assignments));
         }
 
-        if (appliedModifiers.Length > 1)
-        {
-            throw new ArgumentException(
-                $"Skill {skill.SkillId} has more than one confirmed "
-                + "legendary-book fixed-cost modifier.",
-                nameof(legendaryBookModifiers));
-        }
+        var masteryReduction = CalculateMasteryReduction(skill);
+        var masteryAdjustedCost = CalculateMasteryAdjustedCost(
+            skill,
+            masteryReduction);
 
         SnapshotValue<int> legendaryBookReduction;
         SnapshotValue<int> effectiveCost;
-        if (!skill.GridCost.IsAvailable)
+        if (assignment is null)
         {
-            legendaryBookReduction = CreateUnavailableLegendaryBookReduction(
-                appliedModifiers,
-                "GridCost is unavailable");
-            effectiveCost = SnapshotValue<int>.Unavailable(
-                "Effective cost is unavailable because GridCost is "
-                + $"unavailable: {skill.GridCost.UnavailableReason}");
-        }
-        else if (!skill.Mastered.IsAvailable)
-        {
-            legendaryBookReduction = CreateUnavailableLegendaryBookReduction(
-                appliedModifiers,
-                "mastery is unavailable");
-            effectiveCost = SnapshotValue<int>.Unavailable(
-                "Effective cost is unavailable because mastery is "
-                + $"unavailable: {skill.Mastered.UnavailableReason}");
+            legendaryBookReduction = SnapshotValue<int>.Available(0);
+            effectiveCost = masteryAdjustedCost;
         }
         else
         {
-            var masteryReduction = skill.Mastered.Value ? 1 : 0;
-            var masteryAdjustedCost = Math.Max(
-                MinimumEffectiveCost,
-                skill.GridCost.Value - masteryReduction);
-            var calculatedCost = appliedModifiers.Length == 0
-                ? masteryAdjustedCost
-                : Math.Min(
-                    masteryAdjustedCost,
-                    appliedModifiers[0].FixedCost);
-
-            calculatedCost = Math.Max(
-                MinimumEffectiveCost,
-                calculatedCost);
-            legendaryBookReduction = SnapshotValue<int>.Available(
-                masteryAdjustedCost - calculatedCost);
-            effectiveCost = SnapshotValue<int>.Available(calculatedCost);
+            var fixedCost = assignment.Slot.Rule.FixedCost;
+            effectiveCost = SnapshotValue<int>.Available(fixedCost);
+            legendaryBookReduction = masteryAdjustedCost.IsAvailable
+                ? SnapshotValue<int>.Available(
+                    Math.Max(0, masteryAdjustedCost.Value - fixedCost))
+                : SnapshotValue<int>.Unavailable(
+                    "Legendary-book reduction is unavailable because the "
+                    + "mastery-adjusted base cost is unavailable.");
         }
 
         return new CombatSkillCostBreakdown(
             skill,
-            appliedModifiers,
+            assignments,
+            masteryReduction,
             legendaryBookReduction,
             effectiveCost);
     }
 
-    private static SnapshotValue<int> CreateUnavailableLegendaryBookReduction(
-        LegendaryBookModifier[] appliedModifiers,
-        string reason)
+    private static SnapshotValue<int> CalculateMasteryReduction(
+        CombatSkillSnapshot skill)
     {
-        return appliedModifiers.Length == 0
-            ? SnapshotValue<int>.Available(0)
-            : SnapshotValue<int>.Unavailable(
-                "Legendary-book reduction is unavailable because "
-                + $"{reason}.");
+        if (!skill.GridCost.IsAvailable)
+        {
+            return SnapshotValue<int>.Unavailable(
+                "Mastery reduction is unavailable because GridCost is "
+                + $"unavailable: {skill.GridCost.UnavailableReason}");
+        }
+
+        if (!skill.Mastered.IsAvailable)
+        {
+            return SnapshotValue<int>.Unavailable(
+                "Mastery reduction is unavailable because mastery is "
+                + $"unavailable: {skill.Mastered.UnavailableReason}");
+        }
+
+        var masteryAdjustedCost = Math.Max(
+            MinimumEffectiveCost,
+            skill.GridCost.Value - (skill.Mastered.Value ? 1 : 0));
+        return SnapshotValue<int>.Available(
+            skill.GridCost.Value - masteryAdjustedCost);
+    }
+
+    private static SnapshotValue<int> CalculateMasteryAdjustedCost(
+        CombatSkillSnapshot skill,
+        SnapshotValue<int> masteryReduction)
+    {
+        if (!skill.GridCost.IsAvailable)
+        {
+            return SnapshotValue<int>.Unavailable(
+                "Effective cost is unavailable because GridCost is "
+                + $"unavailable: {skill.GridCost.UnavailableReason}");
+        }
+
+        if (!masteryReduction.IsAvailable)
+        {
+            return SnapshotValue<int>.Unavailable(
+                "Effective cost is unavailable because mastery reduction is "
+                + $"unavailable: {masteryReduction.UnavailableReason}");
+        }
+
+        return SnapshotValue<int>.Available(
+            skill.GridCost.Value - masteryReduction.Value);
     }
 }

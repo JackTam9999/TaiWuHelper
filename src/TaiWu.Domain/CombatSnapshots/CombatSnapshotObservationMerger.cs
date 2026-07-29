@@ -11,6 +11,12 @@ public static class CombatSnapshotObservationMerger
     public const string PlayerSlotBudgetsField =
         "player.slotBudgets";
 
+    public const string PlayerLegendaryBookCostSlotsField =
+        "player.legendaryBookCostSlots";
+
+    public const string PlayerLegendaryBookCostAssignmentsField =
+        "player.legendaryBookCostAssignments";
+
     public static CombatSnapshot Merge(
         CombatSnapshot snapshot,
         PlayerLoadoutObservation observation)
@@ -41,7 +47,10 @@ public static class CombatSnapshotObservationMerger
             observation.DisplayedSlotBudgets
                 ?? snapshot.Player.SlotBudgets,
             observation.GenericSlotAllocation,
-            snapshot.Player.LegendaryBookModifiers);
+            observation.LegendaryBookCostSlots
+                ?? snapshot.Player.LegendaryBookCostSlots,
+            observation.LegendaryBookCostAssignments
+                ?? snapshot.Player.LegendaryBookCostAssignments);
 
         var observedFields = new List<string>
         {
@@ -51,6 +60,12 @@ public static class CombatSnapshotObservationMerger
         if (observation.DisplayedSlotBudgets is not null)
         {
             observedFields.Add(PlayerSlotBudgetsField);
+        }
+
+        if (observation.LegendaryBookCostSlots is not null)
+        {
+            observedFields.Add(PlayerLegendaryBookCostSlotsField);
+            observedFields.Add(PlayerLegendaryBookCostAssignmentsField);
         }
 
         var retainedSources = snapshot.FieldSources

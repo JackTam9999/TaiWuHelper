@@ -170,6 +170,66 @@ public sealed class CombatSnapshotObservationMergerTests
                 new GenericSlotAllocation(0, 0, 0, 0, 0)));
     }
 
+    [Fact]
+    public void Observation_can_replace_legendary_book_slots_and_assignments()
+    {
+        var snapshot = CreateSnapshot();
+        var skill = snapshot.Player.LearnedSkills.Single(
+            value => value.SkillId == 21);
+        var slot = new LegendaryBookCostSlot(
+            "screen:book:shouzhi",
+            new LegendaryBookCostRule(
+                LegendaryBookCostEffect.Shouzhi,
+                SnapshotDataSource.CurrentScreenObservation,
+                "docs/evidence/shouzhi.md"));
+        var assignment = new LegendaryBookCostAssignment(
+            slot,
+            skill.SkillId,
+            skill.Category,
+            LegendaryBookAssignmentOrigin.CurrentScreenObservation,
+            "screen:book:shouzhi:skill-21");
+        var observation = new PlayerLoadoutObservation(
+            SaveModifiedAt.AddHours(1),
+            "screen:current-loadout",
+            CreateLoadout(skill.SkillId),
+            new GenericSlotAllocation(0, 0, 0, 0, 0),
+            legendaryBookCostSlots: [slot],
+            legendaryBookCostAssignments: [assignment]);
+
+        var result = CombatSnapshotObservationMerger.Merge(
+            snapshot,
+            observation);
+
+        Assert.Same(slot, Assert.Single(
+            result.Player.LegendaryBookCostSlots));
+        Assert.Same(assignment, Assert.Single(
+            result.Player.LegendaryBookCostAssignments));
+        Assert.Contains(
+            result.FieldSources,
+            source => source.FieldPath
+                == CombatSnapshotObservationMerger
+                    .PlayerLegendaryBookCostSlotsField);
+    }
+
+    [Fact]
+    public void Observation_requires_slots_and_assignments_together()
+    {
+        var exception = Assert.Throws<ArgumentException>(
+            () => new PlayerLoadoutObservation(
+                SaveModifiedAt.AddHours(1),
+                "screen:current-loadout",
+                CreateLoadout(21),
+                new GenericSlotAllocation(0, 0, 0, 0, 0),
+                legendaryBookCostSlots: [new LegendaryBookCostSlot(
+                    "screen:book:shouzhi",
+                    new LegendaryBookCostRule(
+                        LegendaryBookCostEffect.Shouzhi,
+                        SnapshotDataSource.CurrentScreenObservation,
+                        "docs/evidence/shouzhi.md"))]));
+
+        Assert.Contains("observed together", exception.Message);
+    }
+
     private static CombatSnapshot CreateSnapshot(
         bool saveTimestampAvailable = true)
     {
@@ -186,7 +246,8 @@ public sealed class CombatSnapshotObservationMergerTests
             slotBudgets: CreateBudgets(attackCapacity: 9),
             genericSlotAllocation:
                 new GenericSlotAllocation(0, 0, 0, 0, 0),
-            legendaryBookModifiers: []);
+            legendaryBookCostSlots: [],
+            legendaryBookCostAssignments: []);
         var target = new TargetCombatSnapshot(
             characterId: 16317,
             SnapshotValue<string>.Available("樂器奇書（52歲）"),

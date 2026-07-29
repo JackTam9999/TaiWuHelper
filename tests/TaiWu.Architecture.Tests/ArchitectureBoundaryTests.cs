@@ -183,6 +183,48 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Save_game_api_reads_only_the_configured_path_with_get()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var actions = typeof(SaveGamesController).GetMethods(
+                BindingFlags.Instance
+                | BindingFlags.Public
+                | BindingFlags.DeclaredOnly)
+            .Select(method => new
+            {
+                Method = method,
+                HttpAttributes = method
+                    .GetCustomAttributes()
+                    .OfType<HttpMethodAttribute>()
+                    .ToArray()
+            })
+            .Where(item => item.HttpAttributes.Length > 0)
+            .ToArray();
+
+        var action = Assert.Single(actions);
+        Assert.Equal("ReadConfigured", action.Method.Name);
+        Assert.All(
+            action.HttpAttributes.SelectMany(value => value.HttpMethods),
+            method => Assert.Equal("GET", method));
+        Assert.DoesNotContain(
+            action.Method.GetParameters(),
+            parameter => parameter.ParameterType == typeof(string));
+
+        var program = File.ReadAllText(
+            Path.Combine(repositoryRoot, "TaiWuAPI", "Program.cs"));
+        Assert.Contains("ListenLocalhost(", program);
+        Assert.Contains("ValidateOnStart()", program);
+
+        var developmentSettings = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "appsettings.Development.json"));
+        Assert.DoesNotContain("Program Files", developmentSettings);
+        Assert.DoesNotContain("SaveGames\\\\world_", developmentSettings);
+    }
+
+    [Fact]
     public void Production_source_has_no_save_write_or_game_control_apis()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -230,6 +272,94 @@ public sealed partial class ArchitectureBoundaryTests
 
         Assert.DoesNotContain("GetCombatSkillGridCost(", source);
         Assert.DoesNotContain("ModifyData(", source);
+    }
+
+    [Fact]
+    public void Snapshot_adapter_reads_legendary_book_cost_assignments()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var source = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "TaiwuCombatSnapshotReader.cs"));
+
+        Assert.Contains(
+            "TryGetElement_LegendaryBookSkillSlot",
+            source);
+        Assert.Contains("new LegendaryBookCostSlot(", source);
+        Assert.Contains("new LegendaryBookCostAssignment(", source);
+    }
+
+    [Fact]
+    public void Publishing_is_blocked_and_game_binaries_are_not_publish_items()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var apiProject = File.ReadAllText(
+            Path.Combine(repositoryRoot, "TaiWuAPI", "TaiWuAPI.csproj"));
+        var infrastructureProject = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "TaiWu.Infrastructure.csproj"));
+
+        Assert.Contains(
+            "PreventProprietaryRuntimePublication",
+            apiProject);
+        Assert.Contains(
+            "Publishing TaiWu Helper is disabled",
+            apiProject);
+        Assert.Contains(
+            "BeforeTargets=\"PrepareForPublish\"",
+            apiProject);
+        Assert.DoesNotContain(
+            "CopyToPublishDirectory=\"PreserveNewest\"",
+            infrastructureProject);
+        Assert.Contains(
+            "<CopyToPublishDirectory>Never</CopyToPublishDirectory>",
+            infrastructureProject);
+    }
+
+    [Fact]
+    public void Committed_evidence_metadata_is_sanitized()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var metadata = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "docs",
+                "scenarios",
+                "evidence",
+                "M1-002-golden-save-metadata.json"));
+
+        Assert.DoesNotContain("sourcePath", metadata);
+        Assert.DoesNotContain("targetCharacterId", metadata);
+        Assert.DoesNotContain("capturedAtUtc", metadata);
+        Assert.DoesNotContain("lastWriteTimeUtc", metadata);
+        Assert.DoesNotContain("sha256", metadata);
+    }
+
+    [Fact]
+    public void Repository_has_no_tracked_docker_configuration()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        Assert.False(
+            File.Exists(Path.Combine(repositoryRoot, ".dockerignore")));
+
+        var apiProject = File.ReadAllText(
+            Path.Combine(repositoryRoot, "TaiWuAPI", "TaiWuAPI.csproj"));
+        var launchSettings = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Properties",
+                "launchSettings.json"));
+
+        Assert.DoesNotContain("Docker", apiProject);
+        Assert.DoesNotContain("Docker", launchSettings);
     }
 
     [Fact]

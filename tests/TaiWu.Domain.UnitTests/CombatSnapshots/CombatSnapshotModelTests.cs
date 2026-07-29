@@ -184,7 +184,8 @@ public sealed class CombatSnapshotModelTests
                 new SlotBudget(SkillCategory.Assistance, 0, 2)
             ]),
             new GenericSlotAllocation(6, 4, 2, 0, 0),
-            legendaryBookModifiers: []);
+            legendaryBookCostSlots: [],
+            legendaryBookCostAssignments: []);
     }
 
     private static CombatSkillSnapshot CreateSkill(

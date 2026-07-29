@@ -18,27 +18,28 @@
     <Reference Include="@(TaiwuGameAssembly)">
       <HintPath>%(TaiwuGameAssembly.Identity)</HintPath>
       <Private>true</Private>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Reference>
     <None
       Include="$(TaiwuBackendDirectory)\GameData.ActionPlanning.ActionImpl.dll"
       Link="GameData.ActionPlanning.ActionImpl.dll"
       CopyToOutputDirectory="PreserveNewest"
-      CopyToPublishDirectory="PreserveNewest" />
+      CopyToPublishDirectory="Never" />
     <None
       Include="$(TaiwuBackendDirectory)\0Harmony.dll"
       Link="0Harmony.dll"
       CopyToOutputDirectory="PreserveNewest"
-      CopyToPublishDirectory="PreserveNewest" />
+      CopyToPublishDirectory="Never" />
     <None
       Include="$(TaiwuBackendDirectory)\e_sqlite3.dll"
       Link="e_sqlite3.dll"
       CopyToOutputDirectory="PreserveNewest"
-      CopyToPublishDirectory="PreserveNewest" />
+      CopyToPublishDirectory="Never" />
     <None
       Include="$(TaiwuBackendDirectory)\steam_api64.dll"
       Link="steam_api64.dll"
       CopyToOutputDirectory="PreserveNewest"
-      CopyToPublishDirectory="PreserveNewest" />
+      CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <Target Name="ValidateTaiwuGameDirectory" BeforeTargets="ResolveReferences">
