@@ -88,14 +88,9 @@ internal sealed class TaiwuSaveGameReader : ISaveGameReader
         cancellationToken.ThrowIfCancellationRequested();
 
         var taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
-        var taiwu = DomainManager.Taiwu.GetTaiwu();
-        if (taiwu is null)
-        {
-            throw new InvalidDataException(
+        var taiwu = DomainManager.Taiwu.GetTaiwu() ?? throw new InvalidDataException(
                 "The archive stopped loading before the Taiwu character was available. "
                 + writer.Build().ToLegacyText());
-        }
-
         var equipment = taiwu.GetCombatSkillEquipment();
         HashSet<short> equippedSkillIds = [];
         equipment.GetValidSkills(equippedSkillIds);

@@ -1,5 +1,4 @@
 using GameData.Domains.Character;
-using GameData.Domains.CombatSkill;
 
 namespace TaiWu.Infrastructure.SaveGames;
 

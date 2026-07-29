@@ -40,9 +40,7 @@ public sealed record SlotBudgetSet
                 nameof(budgets));
         }
 
-        Values = values
-            .OrderBy(budget => budget.Category)
-            .ToImmutableArray();
+        Values = [.. values.OrderBy(budget => budget.Category)];
         _byCategory = Values.ToImmutableDictionary(
             budget => budget.Category);
     }
