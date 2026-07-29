@@ -3,6 +3,17 @@ namespace TaiWu.Domain.CombatSnapshots;
 public sealed record SlotBudget
 {
     public SlotBudget(SkillCategory category, int used, int capacity)
+        : this(
+            category,
+            SnapshotValue<int>.Available(used),
+            capacity)
+    {
+    }
+
+    public SlotBudget(
+        SkillCategory category,
+        SnapshotValue<int> used,
+        int capacity)
     {
         if (!Enum.IsDefined(category))
         {
@@ -12,7 +23,9 @@ public sealed record SlotBudget
                 "Unknown skill category.");
         }
 
-        if (used < 0)
+        ArgumentNullException.ThrowIfNull(used);
+
+        if (used.IsAvailable && used.Value < 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(used),
@@ -28,7 +41,7 @@ public sealed record SlotBudget
                 "Slot capacity cannot be negative.");
         }
 
-        if (used > capacity)
+        if (used.IsAvailable && used.Value > capacity)
         {
             throw new ArgumentException(
                 "Used slots cannot exceed capacity.",
@@ -42,9 +55,13 @@ public sealed record SlotBudget
 
     public SkillCategory Category { get; }
 
-    public int Used { get; }
+    public SnapshotValue<int> Used { get; }
 
     public int Capacity { get; }
 
-    public int Remaining => Capacity - Used;
+    public SnapshotValue<int> Remaining => Used.IsAvailable
+        ? SnapshotValue<int>.Available(Capacity - Used.Value)
+        : SnapshotValue<int>.Unavailable(
+            Used.UnavailableReason
+            ?? "Slot usage is unavailable.");
 }

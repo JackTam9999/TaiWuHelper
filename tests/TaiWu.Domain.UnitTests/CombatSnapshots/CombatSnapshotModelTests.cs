@@ -55,6 +55,7 @@ public sealed class CombatSnapshotModelTests
             characterId: 16317,
             SnapshotValue<string>.Available("樂器奇書（52歲）"),
             SnapshotValue<int>.Available(52),
+            features: [],
             learnedSkills: [],
             SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
                 "The current save contains no equipped target skills."),
@@ -64,6 +65,33 @@ public sealed class CombatSnapshotModelTests
         Assert.Contains(
             "no equipped target skills",
             target.EquippedSkills.UnavailableReason);
+    }
+
+    [Fact]
+    public void Target_copies_feature_collection()
+    {
+        var features = new List<CharacterFeatureSnapshot>
+        {
+            new(
+                1001,
+                SnapshotValue<string>.Available("百花修行"),
+                SnapshotValue<int>.Available(2))
+        };
+        var target = new TargetCombatSnapshot(
+            characterId: 16317,
+            SnapshotValue<string>.Available("樂器奇書（52歲）"),
+            SnapshotValue<int>.Available(52),
+            features,
+            learnedSkills: [],
+            SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
+                "The current save contains no equipped target skills."),
+            equipment: []);
+
+        features.Clear();
+
+        var feature = Assert.Single(target.Features);
+        Assert.Equal(1001, feature.FeatureId);
+        Assert.Equal(2, feature.Level.Value);
     }
 
     [Fact]
@@ -123,6 +151,7 @@ public sealed class CombatSnapshotModelTests
             16317,
             SnapshotValue<string>.Available("樂器奇書（52歲）"),
             SnapshotValue<int>.Available(52),
+            features: [],
             learnedSkills: [],
             SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
                 "No equipped target skills in this snapshot."),

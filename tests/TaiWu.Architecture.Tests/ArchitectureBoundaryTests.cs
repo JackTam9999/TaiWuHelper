@@ -194,6 +194,45 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Snapshot_adapter_avoids_standalone_unsafe_cost_calculations()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var source = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "TaiwuCombatSnapshotReader.cs"));
+
+        Assert.DoesNotContain("GetCombatSkillGridCost(", source);
+        Assert.DoesNotContain("ModifyData(", source);
+    }
+
+    [Fact]
+    public void Archive_session_clears_handlers_before_each_load()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var source = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "TaiwuArchiveReadSession.cs"));
+
+        var clearHandlers = source.IndexOf(
+            "ClearMonitoredData()",
+            StringComparison.Ordinal);
+        var loadArchive = source.IndexOf(
+            "archive.Load()",
+            StringComparison.Ordinal);
+
+        Assert.True(clearHandlers >= 0);
+        Assert.True(loadArchive > clearHandlers);
+    }
+
+    [Fact]
     public void Repository_tree_contains_no_proprietary_save_or_game_binaries()
     {
         var repositoryRoot = FindRepositoryRoot();

@@ -2,7 +2,10 @@ using System.Security.Cryptography;
 
 namespace TaiWu.Infrastructure.SaveGames;
 
-internal sealed record ReadOnlyFileFingerprint(long Length, string Sha256)
+internal sealed record ReadOnlyFileFingerprint(
+    long Length,
+    string Sha256,
+    DateTimeOffset LastWriteTimeUtc)
 {
     public static async Task<ReadOnlyFileFingerprint> CaptureAsync(
         string path,
@@ -21,6 +24,7 @@ internal sealed record ReadOnlyFileFingerprint(long Length, string Sha256)
 
         return new ReadOnlyFileFingerprint(
             stream.Length,
-            Convert.ToHexString(hash));
+            Convert.ToHexString(hash),
+            File.GetLastWriteTimeUtc(path));
     }
 }

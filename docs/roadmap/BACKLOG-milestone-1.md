@@ -225,6 +225,8 @@ legacy line report.
 
 ### M1-005 — Implement the GameData snapshot adapter
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** L  
 **Dependencies:** M1-004
@@ -234,16 +236,39 @@ Retain the existing line report as a separate diagnostic capability.
 
 #### Acceptance criteria
 
-- [ ] Player identity and learned skills are mapped.
-- [ ] Current equipped skills are mapped by category.
-- [ ] Actual `GridCost`, mastery, direction, and grid bonuses are mapped.
-- [ ] Target features, equipped skills, relevant learned skills, and equipment
+- [x] Player identity and learned skills are mapped.
+- [x] Current equipped skills are mapped by category.
+- [x] Actual `GridCost`, mastery, direction, and grid bonuses are mapped.
+- [x] Target features, equipped skills, relevant learned skills, and equipment
       are mapped.
-- [ ] Saves and all other game-owned files remain byte-for-byte unchanged.
-- [ ] No mutation-capable `GameData` object or operation crosses the adapter
+- [x] Saves and all other game-owned files remain byte-for-byte unchanged.
+- [x] No mutation-capable `GameData` object or operation crosses the adapter
       boundary.
-- [ ] Repeated reads do not duplicate GameData handlers.
-- [ ] Unsupported runtime calculations are not invoked.
+- [x] Repeated reads do not duplicate GameData handlers.
+- [x] Unsupported runtime calculations are not invoked.
+
+#### Evidence
+
+- `TaiwuCombatSnapshotReader` returns only immutable
+  `TaiWu.Domain.CombatSnapshots` types through `ICombatSnapshotReader`.
+- Player `21396` and target `16317` were mapped from the golden save with 411
+  player skills, 50 relevant target skills, and 12 target features.
+- The target's absent disk loadout remains an explicit unavailable value and
+  warning; it is not replaced by the newer screenshot until M1-006.
+- `TaiwuArchiveReadSession` shares one lock and one-time configuration
+  initialization between the structured and diagnostic readers, and clears
+  monitored handlers before every load.
+- Two consecutive structured reads completed in one process. The save SHA-256
+  remained
+  `B9E86B80B564035CBE7D15F2C5F297AF3ACDE5470509B0550D930ED91DDF1930`
+  before, during, and after both reads.
+- The adapter does not call `Character.GetCombatSkillGridCost` or
+  `SpecialEffectDomain.ModifyData`. Configured cost and mastery remain
+  separate; effective used capacity is explicitly unavailable where the
+  standalone runtime cannot safely establish it.
+- Architecture tests reject save-write/game-control APIs and any public
+  `GameData` type exposure.
+- `dotnet test TaiWu.slnx --no-restore`: 59 tests passed.
 
 ### M1-006 — Add snapshot freshness and observation handling
 

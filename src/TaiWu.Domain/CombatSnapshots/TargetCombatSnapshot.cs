@@ -8,6 +8,7 @@ public sealed record TargetCombatSnapshot
         int characterId,
         SnapshotValue<string> displayName,
         SnapshotValue<int> age,
+        IEnumerable<CharacterFeatureSnapshot> features,
         IEnumerable<CombatSkillSnapshot> learnedSkills,
         SnapshotValue<CombatLoadoutSnapshot> equippedSkills,
         IEnumerable<EquipmentSnapshot> equipment)
@@ -22,6 +23,7 @@ public sealed record TargetCombatSnapshot
 
         ArgumentNullException.ThrowIfNull(displayName);
         ArgumentNullException.ThrowIfNull(age);
+        ArgumentNullException.ThrowIfNull(features);
         ArgumentNullException.ThrowIfNull(learnedSkills);
         ArgumentNullException.ThrowIfNull(equippedSkills);
         ArgumentNullException.ThrowIfNull(equipment);
@@ -31,6 +33,24 @@ public sealed record TargetCombatSnapshot
             throw new ArgumentOutOfRangeException(
                 nameof(age),
                 "An available age cannot be negative.");
+        }
+
+        var featureValues = features.ToImmutableArray();
+        if (featureValues.Any(feature => feature is null))
+        {
+            throw new ArgumentException(
+                "Features cannot contain null entries.",
+                nameof(features));
+        }
+
+        var duplicateFeature = featureValues
+            .GroupBy(feature => feature.FeatureId)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicateFeature is not null)
+        {
+            throw new ArgumentException(
+                $"Duplicate feature {duplicateFeature.Key}.",
+                nameof(features));
         }
 
         var skillValues = learnedSkills.ToImmutableArray();
@@ -72,6 +92,7 @@ public sealed record TargetCombatSnapshot
         CharacterId = characterId;
         DisplayName = displayName;
         Age = age;
+        Features = featureValues;
         LearnedSkills = skillValues;
         EquippedSkills = equippedSkills;
         Equipment = equipmentValues;
@@ -82,6 +103,8 @@ public sealed record TargetCombatSnapshot
     public SnapshotValue<string> DisplayName { get; }
 
     public SnapshotValue<int> Age { get; }
+
+    public ImmutableArray<CharacterFeatureSnapshot> Features { get; }
 
     public ImmutableArray<CombatSkillSnapshot> LearnedSkills { get; }
 

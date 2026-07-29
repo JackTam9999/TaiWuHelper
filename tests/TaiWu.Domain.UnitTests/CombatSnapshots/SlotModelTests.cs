@@ -19,7 +19,7 @@ public sealed class SlotModelTests
 
         Assert.Equal(5, budgets.Values.Length);
         Assert.Equal(10, budgets[SkillCategory.Attack].Capacity);
-        Assert.Equal(0, budgets[SkillCategory.Attack].Remaining);
+        Assert.Equal(0, budgets[SkillCategory.Attack].Remaining.Value);
     }
 
     [Fact]
@@ -27,6 +27,20 @@ public sealed class SlotModelTests
     {
         Assert.Throws<ArgumentException>(
             () => new SlotBudget(SkillCategory.Assistance, 3, 2));
+    }
+
+    [Fact]
+    public void Slot_budget_preserves_unavailable_usage()
+    {
+        var budget = new SlotBudget(
+            SkillCategory.Attack,
+            SnapshotValue<int>.Unavailable(
+                "Runtime cost modifiers were not evaluated."),
+            capacity: 9);
+
+        Assert.False(budget.Used.IsAvailable);
+        Assert.False(budget.Remaining.IsAvailable);
+        Assert.Equal(9, budget.Capacity);
     }
 
     [Fact]

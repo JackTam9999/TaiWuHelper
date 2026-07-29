@@ -24,6 +24,7 @@ public sealed class ReadOnlyFileFingerprintTests
                 cancellationToken);
 
             Assert.Equal(bytesBefore.Length, fingerprint.Length);
+            Assert.Equal(modifiedBefore, fingerprint.LastWriteTimeUtc);
             Assert.Equal(
                 bytesBefore,
                 await File.ReadAllBytesAsync(fixture.Path, cancellationToken));
