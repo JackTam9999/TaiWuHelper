@@ -7,6 +7,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/TaiWu.Application.UnitTests/TaiWu.Application.UnitTests.csproj" />
     <Project Path="tests/TaiWu.Architecture.Tests/TaiWu.Architecture.Tests.csproj" />
+    <Project Path="tests/TaiWu.Domain.UnitTests/TaiWu.Domain.UnitTests.csproj" />
   </Folder>
   <Project Path="TaiWuAPI/TaiWuAPI.csproj" />
 </Solution>

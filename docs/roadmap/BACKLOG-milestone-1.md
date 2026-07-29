@@ -163,6 +163,8 @@ committing the save or game binaries.
 
 ### M1-003 — Define combat snapshot Domain models
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-001
@@ -173,11 +175,22 @@ legendary-book modifiers.
 
 #### Acceptance criteria
 
-- [ ] Models contain no `GameData` types.
-- [ ] Practice direction is a Domain value rather than an unexplained integer.
-- [ ] Slot categories are represented explicitly.
-- [ ] Unavailable values have an explicit representation.
-- [ ] Domain invariants are unit tested.
+- [x] Models contain no `GameData` types.
+- [x] Practice direction is a Domain value rather than an unexplained integer.
+- [x] Slot categories are represented explicitly.
+- [x] Unavailable values have an explicit representation.
+- [x] Domain invariants are unit tested.
+
+#### Evidence
+
+- [Combat snapshot Domain model](../architecture/COMBAT-SNAPSHOT-DOMAIN.md).
+- `TaiWu.Domain.CombatSnapshots` contains immutable metadata, player, target,
+  learned-skill, equipment, slot-budget, generic-allocation, direction, and
+  legendary-book modifier models.
+- `SnapshotValue<T>` represents available and unavailable values explicitly.
+- `TaiWu.Domain.UnitTests` uses xUnit v3 to verify construction invariants and
+  collection immutability.
+- `dotnet test TaiWu.slnx --no-restore`: 30 tests passed.
 
 ### M1-004 — Add structured snapshot reader port
 
