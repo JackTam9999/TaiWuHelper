@@ -1,8 +1,12 @@
 # TaiWu Helper
 
-A local .NET 10 API for reading data from *The Scroll of Taiwu* save files.
-The reader is read-only and retains the line-oriented output of the original
-`太吾存檔武功讀取器.cs`.
+A local .NET 10 API for reading data from *The Scroll of Taiwu* save files and
+providing recommendations.
+
+TaiWu Helper is an information-only system. It never modifies saves, game
+files, configuration, runtime memory, runtime state, or in-game data; it never
+injects into, hooks, patches, automates, or controls the game. Recommendations
+are carried out manually by the player.
 
 ## Architecture
 
@@ -63,7 +67,8 @@ To inspect a target character while using the configured save:
 GET /api/save-games/read?targetCharacterId=12345
 ```
 
-To read another save or inspect a target character, override either value:
+To read another save or inspect a target character, supply either value
+explicitly:
 
 ```http
 POST /api/save-games/read
@@ -83,3 +88,9 @@ format.
 ```powershell
 dotnet test
 ```
+
+## Roadmap
+
+- [Milestone 1 epic: Target-specific combat-skill recommendations](docs/roadmap/EPIC-001-combat-skill-recommendation.md)
+- [Milestone 1 engineering backlog](docs/roadmap/BACKLOG-milestone-1.md)
+- [Combat-recommendation UI layout](docs/roadmap/UI-001-combat-recommendation-layout.md)
