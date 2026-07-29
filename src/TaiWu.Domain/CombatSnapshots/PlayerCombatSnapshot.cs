@@ -37,7 +37,9 @@ public sealed record PlayerCombatSnapshot
         Equipment = CopyUniqueEquipment(equipment);
         SlotBudgets = slotBudgets;
         GenericSlotAllocation = genericSlotAllocation;
-        LegendaryBookModifiers = [.. legendaryBookModifiers];
+        LegendaryBookModifiers = CopyLegendaryBookModifiers(
+            legendaryBookModifiers,
+            LearnedSkills);
     }
 
     public int CharacterId { get; }
@@ -99,6 +101,54 @@ public sealed record PlayerCombatSnapshot
             throw new ArgumentException(
                 $"Duplicate equipment slot {duplicate.Key}.",
                 nameof(equipment));
+        }
+
+        return values;
+    }
+
+    private static ImmutableArray<LegendaryBookModifier>
+        CopyLegendaryBookModifiers(
+            IEnumerable<LegendaryBookModifier> modifiers,
+            ImmutableArray<CombatSkillSnapshot> learnedSkills)
+    {
+        var values = modifiers.ToImmutableArray();
+        if (values.Any(modifier => modifier is null))
+        {
+            throw new ArgumentException(
+                "Legendary-book modifiers cannot contain null entries.",
+                nameof(modifiers));
+        }
+
+        var learnedById =
+            learnedSkills.ToImmutableDictionary(skill => skill.SkillId);
+        foreach (var modifier in values)
+        {
+            if (!learnedById.TryGetValue(modifier.SkillId, out var skill))
+            {
+                throw new ArgumentException(
+                    $"Legendary-book modifier references unlearned skill "
+                    + $"{modifier.SkillId}.",
+                    nameof(modifiers));
+            }
+
+            if (modifier.Category != skill.Category)
+            {
+                throw new ArgumentException(
+                    $"Legendary-book modifier for skill {modifier.SkillId} "
+                    + $"uses {modifier.Category}, not {skill.Category}.",
+                    nameof(modifiers));
+            }
+        }
+
+        var duplicateSkill = values
+            .GroupBy(modifier => modifier.SkillId)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicateSkill is not null)
+        {
+            throw new ArgumentException(
+                $"Skill {duplicateSkill.Key} has more than one "
+                + "legendary-book fixed-cost modifier.",
+                nameof(modifiers));
         }
 
         return values;

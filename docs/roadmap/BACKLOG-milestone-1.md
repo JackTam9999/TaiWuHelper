@@ -123,7 +123,7 @@ defeat.
 - The current snapshot has no equipped target skills, so that limitation is
   retained for later snapshot and threat-analysis work.
 - The configured save hash remained unchanged during all inspections.
-- The [current player loadout](../scenarios/evidence/M1-001-current-player-loadout.png)
+- The local-only `M1-001-current-player-loadout.png` evidence
   is preserved with its capacities, skill costs, and practice directions
   transcribed in the scenario document.
 - The empty `6/2/2/2/2` capacities and an individual 內功 capacity tooltip are
@@ -319,6 +319,8 @@ only; it is never written to the game or save.
 
 ### M1-007 — Implement effective skill-cost calculation
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-003
@@ -328,11 +330,50 @@ confirmed legendary-book modifiers.
 
 #### Acceptance criteria
 
-- [ ] Actual `GridCost` is the base value.
-- [ ] Mastery reduction applies only when confirmed.
-- [ ] Cost never falls below the verified minimum.
-- [ ] Legendary-book reductions require explicit snapshot evidence.
-- [ ] Boundary and combination cases are unit tested.
+- [x] Actual `GridCost` is the base value.
+- [x] Mastery reduction applies only when confirmed.
+- [x] Cost never falls below the verified minimum.
+- [x] Legendary-book reductions require explicit snapshot evidence.
+- [x] Boundary and combination cases are unit tested.
+
+#### Evidence
+
+- `CombatSkillCostCalculator` is a pure Domain service returning a
+  `CombatSkillCostBreakdown`; Infrastructure no longer owns a partial mastery
+  cost calculation.
+- Configured `GridCost` is retained as the base. Confirmed mastery reduces it
+  by one, with a minimum effective cost of one.
+- The supplied `內功·浮心無字訣` screenshots establish that `收置` fixes a
+  placed skill's occupied cost at one. The implementation models that fixed
+  cost instead of inventing an additive reduction.
+- Independent `身法·白衣行化笈` evidence confirms the same `收置` fixed-cost
+  rule for an agility skill, and a cross-category unit test covers it.
+- A third assistance-book screenshot confirms the same rule for `玲瓏九竅`.
+  Displayed `生效功法` values are treated as current replaceable selections,
+  not permanent effect-to-skill bindings.
+- The user confirmed that the four supplied books are the complete currently
+  owned set. `刀法·十余魔羅錄` supplies a fourth `收置` confirmation and also
+  shows an empty assignment, which produces no current cost modifier.
+- Effects from unowned books remain unverified and unavailable; the helper
+  neither invents them nor blocks current-player recommendations waiting for
+  unobtainable screenshots.
+- `LegendaryBookModifier.ForSkill` creates a new immutable helper-side value
+  for proposed assignments. It does not alter the current snapshot or game.
+- Every legendary-book fixed-cost modifier records its source and evidence
+  reference. A skill cannot receive multiple fixed-cost modifiers.
+- `用極`, `專解`, and `絕旨` are excluded because they change power or
+  requirements. `大盈` and `大成` are reserved for M1-008 because they change
+  category/generic slot contributions, not occupied cost.
+- Missing `GridCost` or unconfirmed mastery leaves effective cost unavailable;
+  an applicable derived `收置` reduction is unavailable for the same reason.
+- Boundary tests cover the minimum cost, mastery, fixed-cost composition,
+  unrelated skills, category mismatch, duplicate modifiers, missing inputs,
+  snapshot lookup, and unlearned skills.
+- Screenshot evidence and SHA-256 hashes are recorded in
+  `docs/scenarios/M1-007-effective-skill-cost-evidence.md`.
+- The calculation reads and writes no save, game file, process, input, or live
+  game state.
+- `dotnet test TaiWu.slnx --no-restore`: 84 tests passed.
 
 ### M1-008 — Implement slot-budget calculation
 

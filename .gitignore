@@ -42,6 +42,9 @@ steam_api64.dll
 # Proprietary Taiwu save files
 *.sav
 
+# Local-only Taiwu game UI evidence
+docs/scenarios/evidence/*.png
+
 # Local-only container experiment
 TaiWuAPI/Dockerfile
 

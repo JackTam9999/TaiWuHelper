@@ -61,21 +61,6 @@ internal static class CombatSnapshotMapping
             generic: genericGrid);
     }
 
-    public static int CalculateMasteryAdjustedGridCost(
-        int configuredGridCost,
-        bool mastered)
-    {
-        if (configuredGridCost <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(configuredGridCost),
-                configuredGridCost,
-                "Configured grid cost must be greater than zero.");
-        }
-
-        return Math.Max(1, configuredGridCost - (mastered ? 1 : 0));
-    }
-
     public static EquipmentKind MapEquipmentKind(sbyte itemType)
     {
         return itemType switch

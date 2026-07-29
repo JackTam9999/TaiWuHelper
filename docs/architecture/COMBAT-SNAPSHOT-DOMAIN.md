@@ -76,7 +76,7 @@ contain its equipped skill loadout.
 
 `SnapshotDataSource` distinguishes save data, local game configuration, and a
 current-screen observation. `LegendaryBookModifier` requires an evidence
-reference and source so an unverified cost reduction cannot enter later cost
+reference and source so an unverified fixed cost cannot enter later cost
 calculation.
 
 ## Construction invariants
@@ -89,7 +89,8 @@ calculation.
 - Generic slots cannot be allocated more than once.
 - A skill cannot appear twice in one equipped loadout.
 - Learned skills and equipment slots cannot be duplicated.
-- Legendary-book reductions must be positive and evidence-backed.
+- Legendary-book fixed costs must be at least one and evidence-backed.
+- A skill can have at most one legendary-book fixed-cost modifier.
 - Snapshot SHA-256 values contain exactly 64 hexadecimal characters.
 - Missing data always carries a non-blank reason.
 
@@ -165,3 +166,40 @@ evidence reference. The current paths are:
 Observation data exists only in Domain/Application memory and the returned
 snapshot. The merge operation has no persistence, file, process, input, or
 game-control dependency.
+
+## Effective skill cost
+
+`CombatSkillCostCalculator` is a pure Domain service. It returns a
+`CombatSkillCostBreakdown` containing configured base cost, confirmed mastery,
+the applied evidence-backed legendary-book modifier, the derived reduction,
+and effective cost.
+
+The calculation order is:
+
+1. Use configured `GridCost` as the base.
+2. Reduce it by one only when mastery is available and confirmed.
+3. Keep the mastery-adjusted result at or above one.
+4. If one confirmed `收置` modifier applies, cap the occupied cost at its
+   evidence-backed fixed cost of one.
+
+`收置` is modelled as a fixed cost rather than an additive reduction. Its
+reported reduction is derived from the mastery-adjusted cost. A missing
+`GridCost` or unknown mastery leaves effective cost unavailable; if `收置`
+applies, its derived reduction is unavailable for the same reason. Multiple
+fixed-cost modifiers for one skill are rejected rather than stacked.
+
+The skill shown as `生效功法` is a replaceable assignment, not part of the
+effect definition. `LegendaryBookModifier.ForSkill` returns a new immutable
+helper value for evaluating a proposed assignment while preserving the current
+value. This is an in-memory recommendation calculation only; it has no game,
+save, process, input, or persistence dependency.
+
+Owning a legendary book does not itself create a cost modifier. An unassigned
+`收置` slot is represented by the absence of a modifier and leaves cost
+unchanged. Effects from books outside the player's verified owned set remain
+unknown; they are never guessed or treated as available.
+
+The separate `大盈` and `大成` category/generic-grid trade-offs are deliberately
+not cost modifiers. They belong to slot-budget calculation in M1-008. The
+verified screenshots and their hashes are recorded in
+`docs/scenarios/M1-007-effective-skill-cost-evidence.md`.

@@ -5,7 +5,7 @@ public sealed record LegendaryBookModifier
     public LegendaryBookModifier(
         int skillId,
         SkillCategory category,
-        int costReduction,
+        int fixedCost,
         SnapshotDataSource source,
         string evidenceReference)
     {
@@ -25,12 +25,12 @@ public sealed record LegendaryBookModifier
                 "Unknown skill category.");
         }
 
-        if (costReduction <= 0)
+        if (fixedCost < 1)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(costReduction),
-                costReduction,
-                "A legendary-book modifier must reduce cost by at least one.");
+                nameof(fixedCost),
+                fixedCost,
+                "A legendary-book fixed cost must be at least one.");
         }
 
         if (!Enum.IsDefined(source))
@@ -50,7 +50,7 @@ public sealed record LegendaryBookModifier
 
         SkillId = skillId;
         Category = category;
-        CostReduction = costReduction;
+        FixedCost = fixedCost;
         Source = source;
         EvidenceReference = evidenceReference.Trim();
     }
@@ -59,9 +59,21 @@ public sealed record LegendaryBookModifier
 
     public SkillCategory Category { get; }
 
-    public int CostReduction { get; }
+    public int FixedCost { get; }
 
     public SnapshotDataSource Source { get; }
 
     public string EvidenceReference { get; }
+
+    public LegendaryBookModifier ForSkill(
+        int skillId,
+        SkillCategory category)
+    {
+        return new LegendaryBookModifier(
+            skillId,
+            category,
+            FixedCost,
+            Source,
+            EvidenceReference);
+    }
 }

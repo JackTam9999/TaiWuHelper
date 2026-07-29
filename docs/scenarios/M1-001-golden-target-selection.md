@@ -103,7 +103,7 @@ hypothesis until the exact equipped target skill is confirmed.
 ## Verified player baseline
 
 The player supplied a current in-game 運功 screenshot on 2026-07-29. The
-[populated loadout image](evidence/M1-001-current-player-loadout.png) is the
+local-only `M1-001-current-player-loadout.png` evidence is the
 authoritative baseline because it is newer than the disk save.
 
 The screenshot has SHA-256
@@ -111,7 +111,7 @@ The screenshot has SHA-256
 
 ### Capacity model
 
-The [empty configuration](evidence/M1-001-empty-capacities.png) proves that the
+The local-only `M1-001-empty-capacities.png` evidence proves that the
 unmodified capacities are:
 
 | 內功 | 摧破 | 輕靈 | 護體 | 奇竅 |
@@ -124,7 +124,7 @@ Its SHA-256 is
 Equipped 內功 consumes the six 內功 slots and modifies the four outer-category
 capacities through each skill's 功法欄位 values. It can also generate 萬用
 slots, which increase a category only after allocation. The
-[鐵鼎金身功 tooltip](evidence/M1-001-inner-power-capacity-example.png), for
+local-only `M1-001-inner-power-capacity-example.png` evidence, for
 example, proves a cost of one 內功 slot and contributions of 摧破 `+1`,
 輕靈 `+0`, 護體 `+2`, 奇竅 `+0`, and 萬用 `+0`.
 

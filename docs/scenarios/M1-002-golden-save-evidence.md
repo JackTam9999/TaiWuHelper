@@ -50,9 +50,9 @@ disk save:
 
 | Observation | Evidence | Analysis effect |
 |---|---|---|
-| Populated player loadout | [Current loadout](./evidence/M1-001-current-player-loadout.png) | Overrides stale equipped-card membership and final displayed capacities in the helper's analysis snapshot only |
-| Empty slot capacities | [Empty configuration](./evidence/M1-001-empty-capacities.png) | Establishes the `6/2/2/2/2` unmodified capacity baseline |
-| Individual 內功 contribution | [鐵鼎金身功 tooltip](./evidence/M1-001-inner-power-capacity-example.png) | Establishes its cost and category-slot contributions |
+| Populated player loadout | Local-only `M1-001-current-player-loadout.png` | Overrides stale equipped-card membership and final displayed capacities in the helper's analysis snapshot only |
+| Empty slot capacities | Local-only `M1-001-empty-capacities.png` | Establishes the `6/2/2/2/2` unmodified capacity baseline |
+| Individual 內功 contribution | Local-only `M1-001-inner-power-capacity-example.png` | Establishes its cost and category-slot contributions |
 
 These observations cannot write to the save, game files, running process, or
 in-game state. They do not change the recorded save hash or masquerade as data

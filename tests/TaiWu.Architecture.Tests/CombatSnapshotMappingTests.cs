@@ -77,22 +77,6 @@ public sealed class CombatSnapshotMappingTests
     }
 
     [Theory]
-    [InlineData(3, false, 3)]
-    [InlineData(3, true, 2)]
-    [InlineData(1, true, 1)]
-    public void Mastery_adjustment_never_reduces_cost_below_one(
-        int configuredCost,
-        bool mastered,
-        int expected)
-    {
-        Assert.Equal(
-            expected,
-            CombatSnapshotMapping.CalculateMasteryAdjustedGridCost(
-                configuredCost,
-                mastered));
-    }
-
-    [Theory]
     [InlineData(0, EquipmentKind.Weapon)]
     [InlineData(1, EquipmentKind.Armor)]
     [InlineData(2, EquipmentKind.Accessory)]
