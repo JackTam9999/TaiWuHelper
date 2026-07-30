@@ -14,3 +14,8 @@ Content-Type: application/json
 }
 
 ###
+
+GET {{TaiWu_HostAddress}}/api/targets?query=何春石
+Accept: application/json
+
+###

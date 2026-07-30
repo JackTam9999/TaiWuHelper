@@ -1026,6 +1026,8 @@ Add `POST /api/combat-recommendations`.
 
 ### M1-022 — Add target lookup endpoint
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-005
@@ -1034,9 +1036,35 @@ Allow clients to find valid target IDs by name and snapshot context.
 
 #### Acceptance criteria
 
-- [ ] Search does not require parsing diagnostic lines.
-- [ ] Results include ID, name, location, and enough context to disambiguate.
-- [ ] Missing and ambiguous targets are handled explicitly.
+- [x] Search does not require parsing diagnostic lines.
+- [x] Results include ID, name, location, and enough context to disambiguate.
+- [x] Missing and ambiguous targets are handled explicitly.
+
+#### Evidence
+
+- `ITargetLookupReader` is a query-only Application port returning immutable
+  `TargetLookupEntry` values rather than legacy report text.
+- `TaiwuTargetLookupReader` reuses `TaiwuArchiveReadSession`, enumerates the
+  loaded read-only `CharacterDomain.Characters` view, excludes Taiwu, and maps
+  character ID, display name, age, area ID, and block ID.
+- The archive session retains its before/after read-only file fingerprint and
+  serialized reader lock. Target lookup has no separate archive load path.
+- `FindTargets` supports exact positive character IDs and
+  case-insensitive name fragments. Exact-name matches sort first, followed by
+  deterministic name, location, and ID ordering.
+- Results explicitly use `Found`, `NotFound`, or `Ambiguous`; `totalMatches`
+  remains accurate when the returned list is limited.
+- `GET /api/targets?query=...` always uses the configured save path and returns
+  typed match, location, warning, capture-time, and GameData-version fields
+  with stable target/location references.
+- Eight Application xUnit v3 cases cover ID and name matching, ambiguity,
+  missing targets, result limits, validation, cancellation, reader failures,
+  and the query-only port. Seven API cases cover structured results,
+  configured-path use, validation/failure problems, stable references, and
+  the GET-only surface.
+- No result can select a target in the game, start combat, write a save, or
+  control the runtime.
+- `dotnet test --no-restore`: 236 tests passed.
 
 ## Slice 7: Automated verification
 

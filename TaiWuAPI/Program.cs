@@ -1,5 +1,6 @@
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.CombatRecommendations;
+using TaiWu.Application.Targets;
 using TaiWu.Infrastructure;
 using TaiWuAPI.Configuration;
 using System.Text.Json.Serialization;
@@ -19,6 +20,7 @@ builder.Services.AddScoped<ReadSaveGame>();
 builder.Services.AddScoped<
     IRecommendCombatLoadout,
     RecommendCombatLoadout>();
+builder.Services.AddScoped<IFindTargets, FindTargets>();
 builder.Services.AddTaiwuInfrastructure();
 builder.Services
     .AddOptions<SaveGameOptions>()
