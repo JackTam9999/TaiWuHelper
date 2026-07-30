@@ -1200,6 +1200,8 @@ models used by the local UI.
 
 ### M1-027 — Add the local Blazor shell and recommendation controls
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-021, M1-022, M1-026
@@ -1209,15 +1211,46 @@ and implement the recommendation input workflow.
 
 #### Acceptance criteria
 
-- [ ] The UI runs in the existing local .NET 10 process.
-- [ ] The player can search for and select a target.
-- [ ] The player can choose a preferred style and optional weapon.
-- [ ] Current-screen observations are clearly identified as analysis input
+- [x] The UI runs in the existing local .NET 10 process.
+- [x] The player can search for and select a target.
+- [x] The player can choose a preferred style and optional weapon.
+- [x] Current-screen observations are clearly identified as analysis input
       only.
-- [ ] Snapshot read time, freshness, and game version are visible.
-- [ ] A persistent `Information only` badge is visible.
-- [ ] Request cancellation and repeated requests are handled safely.
-- [ ] No separate Node-based frontend toolchain is required.
+- [x] Snapshot read time, freshness, and game version are visible.
+- [x] A persistent `Information only` badge is visible.
+- [x] Request cancellation and repeated requests are handled safely.
+- [x] No separate Node-based frontend toolchain is required.
+
+#### Evidence
+
+- The existing ASP.NET Core host now registers Blazor Interactive Server
+  components and maps the page alongside the unchanged API controllers.
+- `/` provides target search and selection using `IFindTargets`, including
+  character name, age, ID, area, and block context.
+- Controls expose Safe/Balanced/Aggressive style selection and an optional
+  visible 刀 preference. The preference is explicitly described as UI context;
+  it does not bypass verified feasibility rules.
+- The optional observation panel accepts equipped skill IDs for all five
+  categories plus 萬用 allocation and maps them to `PlayerLoadoutObservation`.
+  It is labelled analysis input only and cannot write to the game.
+- Successful results display snapshot read time, source age at capture,
+  GameData version, warnings, and all three styles without rereading when the
+  visible style tab changes.
+- The sticky application header and result area both display
+  `Information only`; the page states that the helper cannot change the save,
+  equip skills, or control the game.
+- Search and recommendation operations use separate cancellation sources and
+  monotonic request versions. Repeated requests cancel and supersede stale
+  work, and component disposal cancels outstanding reads.
+- Responsive local CSS uses the existing Web SDK only. No package manifest,
+  Node dependency, frontend build, or deployment configuration was added.
+- A local smoke run returned HTTP 200 for `/` with the app title, information
+  boundary, and Blazor boot script.
+- An architecture test verifies local hosting, Interactive Server wiring,
+  query use cases, cancellation, analysis-only copy, and absence of mutation
+  controls or Node manifests.
+- Default `dotnet test --no-restore`: 254 tests discovered, 253 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ### M1-028 — Build the threat and recommended-loadout layout
 

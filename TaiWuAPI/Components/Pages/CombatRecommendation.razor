@@ -1,0 +1,527 @@
+@page "/"
+@implements IAsyncDisposable
+@using Microsoft.Extensions.Options
+@using TaiWu.Application.CombatRecommendations
+@using TaiWu.Application.Targets
+@using TaiWu.Domain.CombatRecommendations
+@using TaiWu.Domain.CombatSnapshots
+@using TaiWuAPI.Configuration
+@using TaiWuAPI.Presentation
+@inject IFindTargets FindTargets
+@inject IRecommendCombatLoadout RecommendCombatLoadout
+@inject IOptions<SaveGameOptions> SaveOptions
+
+<PageTitle>TaiWu Helper · Combat recommendation</PageTitle>
+
+<section class="hero">
+    <div>
+        <p class="eyebrow">Read-only combat planning</p>
+        <h1>Prepare for the fight before it starts.</h1>
+        <p class="hero-copy">
+            Search the configured save, choose a target and compare three
+            evidence-backed loadout styles. Every instruction is performed
+            manually by you in the game.
+        </p>
+    </div>
+    <div class="boundary-card" role="note">
+        <strong>Information only</strong>
+        <span>TaiWu Helper cannot change the save, equip skills, or control the game.</span>
+    </div>
+</section>
+
+<section class="control-panel" aria-labelledby="recommendation-controls">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Recommendation controls</p>
+            <h2 id="recommendation-controls">Choose the encounter</h2>
+        </div>
+        @if (_isSearching || _isRecommending)
+        {
+            <span class="working-status" role="status">Reading the configured save…</span>
+        }
+    </div>
+
+    <div class="control-grid">
+        <div class="control-group target-control">
+            <label for="target-search">Target name or character ID</label>
+            <div class="inline-control">
+                <input id="target-search"
+                       @bind="_targetQuery"
+                       @bind:event="oninput"
+                       placeholder="For example: 16317"
+                       autocomplete="off" />
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="SearchTargetsAsync"
+                        disabled="@(_isSearching || string.IsNullOrWhiteSpace(_targetQuery))">
+                    Search
+                </button>
+            </div>
+
+            @if (_targetMatches.Count > 0)
+            {
+                <div class="target-results" aria-label="Target search results">
+                    @foreach (var target in _targetMatches)
+                    {
+                        <button type="button"
+                                class="@TargetResultClass(target.CharacterId)"
+                                @onclick="() => SelectTarget(target)">
+                            <strong>@target.DisplayName</strong>
+                            <span>@target.Age years · ID @target.CharacterId</span>
+                            <small>Area @target.AreaId · Block @target.BlockId</small>
+                        </button>
+                    }
+                </div>
+            }
+            else if (_searchCompleted)
+            {
+                <p class="field-message">No target matched this search.</p>
+            }
+        </div>
+
+        <div class="control-group">
+            <label for="style-select">Preferred style</label>
+            <select id="style-select" @bind="_form.Policy">
+                @foreach (var policy in Enum.GetValues<RecommendationPolicy>())
+                {
+                    <option value="@policy">@policy</option>
+                }
+            </select>
+            <small>Safe prioritizes survival; Aggressive accepts more risk.</small>
+        </div>
+
+        <div class="control-group">
+            <label for="weapon-select">Preferred weapon (optional)</label>
+            <select id="weapon-select" @bind="_form.PreferredWeapon">
+                <option value="">No preference</option>
+                <option value="刀">刀</option>
+            </select>
+            <small>
+                A visible player preference only; verified rules still decide
+                whether a loadout is feasible.
+            </small>
+        </div>
+    </div>
+
+    <details class="observation-panel">
+        <summary>Optional current-screen observation</summary>
+        <p>
+            Analysis input only. These values refine this recommendation and
+            are never sent to or applied in the game.
+        </p>
+        <label class="check-control">
+            <input type="checkbox" @bind="_form.IncludeObservation" />
+            Use manually entered equipped-skill IDs
+        </label>
+
+        @if (_form.IncludeObservation)
+        {
+            <div class="observation-grid">
+                <label>
+                    內功 IDs
+                    <input @bind="_form.NeigongSkillIds" placeholder="101, 102" />
+                </label>
+                <label>
+                    摧破 IDs
+                    <input @bind="_form.AttackSkillIds" placeholder="604" />
+                </label>
+                <label>
+                    輕靈 IDs
+                    <input @bind="_form.AgilitySkillIds" />
+                </label>
+                <label>
+                    護體 IDs
+                    <input @bind="_form.DefenseSkillIds" />
+                </label>
+                <label>
+                    奇竅 IDs
+                    <input @bind="_form.AssistanceSkillIds" />
+                </label>
+            </div>
+            <div class="generic-grid">
+                <label>
+                    萬用 total
+                    <input type="number" min="0" @bind="_form.GenericTotal" />
+                </label>
+                <label>
+                    摧破
+                    <input type="number" min="0" @bind="_form.GenericAttack" />
+                </label>
+                <label>
+                    輕靈
+                    <input type="number" min="0" @bind="_form.GenericAgility" />
+                </label>
+                <label>
+                    護體
+                    <input type="number" min="0" @bind="_form.GenericDefense" />
+                </label>
+                <label>
+                    奇竅
+                    <input type="number" min="0" @bind="_form.GenericAssistance" />
+                </label>
+            </div>
+        }
+    </details>
+
+    <div class="request-row">
+        <div>
+            @if (_selectedTarget is not null)
+            {
+                <strong>Selected: @_selectedTarget.DisplayName</strong>
+                <span>ID @_selectedTarget.CharacterId · @_selectedTarget.Age years</span>
+            }
+            else
+            {
+                <span>Select a target before requesting a recommendation.</span>
+            }
+        </div>
+        <button type="button"
+                class="primary-button"
+                @onclick="GetRecommendationAsync"
+                disabled="@(_selectedTarget is null || _isRecommending)">
+            @(_isRecommending ? "Calculating…" : "Get recommendation")
+        </button>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <section class="message-card error-message" role="alert">
+        <strong>Could not complete the read</strong>
+        <span>@_errorMessage</span>
+    </section>
+}
+
+@if (_model is not null)
+{
+    <section class="snapshot-strip" aria-label="Snapshot metadata">
+        <div>
+            <span>Snapshot read</span>
+            <strong>@_model.CapturedAtUtc.ToLocalTime().ToString("g")</strong>
+        </div>
+        <div>
+            <span>Source freshness</span>
+            <strong>@FreshnessText(_model)</strong>
+        </div>
+        <div>
+            <span>GameData</span>
+            <strong>@(_model.GameDataVersion ?? "Unavailable")</strong>
+        </div>
+        <div>
+            <span>Weapon preference</span>
+            <strong>@(string.IsNullOrWhiteSpace(_form.PreferredWeapon) ? "None" : _form.PreferredWeapon)</strong>
+        </div>
+    </section>
+
+    @if (_model.Warnings.Count > 0)
+    {
+        <section class="message-card warning-message" aria-labelledby="warning-heading">
+            <strong id="warning-heading">Warnings and unavailable information</strong>
+            <ul>
+                @foreach (var warning in _model.Warnings)
+                {
+                    <li><span>@warning.Code</span> @warning.Message</li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="result-shell">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Same snapshot · three policies</p>
+                <h2>Recommendation ready</h2>
+            </div>
+            <span class="information-badge">Information only</span>
+        </div>
+
+        <div class="style-tabs" role="tablist" aria-label="Recommendation styles">
+            @foreach (var style in _model.Styles)
+            {
+                <button type="button"
+                        role="tab"
+                        aria-selected="@(style.Style == _visibleStyle)"
+                        class="@(style.Style == _visibleStyle ? "active" : null)"
+                        @onclick="() => _visibleStyle = style.Style">
+                    @style.Style
+                </button>
+            }
+        </div>
+
+        @{
+            var visible = _model.Styles.Single(style => style.Style == _visibleStyle);
+        }
+        <div class="result-summary">
+            @if (visible.HasRecommendation)
+            {
+                <div>
+                    <span>Known-constraint score</span>
+                    <strong>@visible.TotalScore?.ToString("0.##")</strong>
+                    <small>This is not a win probability.</small>
+                </div>
+                <div>
+                    <span>Threats identified</span>
+                    <strong>@_model.Threats.Count</strong>
+                </div>
+                <div>
+                    <span>Manual changes</span>
+                    <strong>@visible.ManualChanges.Count</strong>
+                </div>
+                <div>
+                    <span>Conditional caveats</span>
+                    <strong>@visible.Caveats.Count</strong>
+                </div>
+            }
+            else
+            {
+                <p>@(visible.Diagnostic ?? "No feasible recommendation was produced.")</p>
+            }
+        </div>
+
+        <p class="next-slice-note">
+            Detailed threats, category cards, manual checklist, and battle plan
+            are structured and ready for the next layout slice.
+        </p>
+    </section>
+}
+
+@code {
+    private readonly RecommendationForm _form = new();
+    private readonly List<TargetLookupEntry> _targetMatches = [];
+    private CancellationTokenSource? _searchCancellation;
+    private CancellationTokenSource? _recommendationCancellation;
+    private string _targetQuery = string.Empty;
+    private TargetLookupEntry? _selectedTarget;
+    private CombatRecommendationViewModel? _model;
+    private RecommendationPolicy _visibleStyle = RecommendationPolicy.Balanced;
+    private string? _errorMessage;
+    private bool _isSearching;
+    private bool _isRecommending;
+    private bool _searchCompleted;
+    private long _searchVersion;
+    private long _recommendationVersion;
+
+    private async Task SearchTargetsAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_targetQuery))
+        {
+            return;
+        }
+
+        var version = ++_searchVersion;
+        var cancellation = ReplaceCancellation(ref _searchCancellation);
+        _isSearching = true;
+        _searchCompleted = false;
+        _errorMessage = null;
+
+        try
+        {
+            var result = await FindTargets.ExecuteAsync(
+                new FindTargetsRequest(
+                    SaveOptions.Value.DefaultSaveFilePath,
+                    _targetQuery),
+                cancellation.Token);
+            if (version != _searchVersion)
+            {
+                return;
+            }
+
+            _targetMatches.Clear();
+            _targetMatches.AddRange(result.Matches);
+            _searchCompleted = true;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException
+                  or FileNotFoundException
+                  or InvalidDataException)
+        {
+            _errorMessage = exception.Message;
+            _searchCompleted = true;
+        }
+        finally
+        {
+            if (version == _searchVersion)
+            {
+                _isSearching = false;
+            }
+        }
+    }
+
+    private void SelectTarget(TargetLookupEntry target)
+    {
+        _selectedTarget = target;
+        _model = null;
+        _errorMessage = null;
+    }
+
+    private async Task GetRecommendationAsync()
+    {
+        if (_selectedTarget is null)
+        {
+            return;
+        }
+
+        var version = ++_recommendationVersion;
+        var cancellation = ReplaceCancellation(
+            ref _recommendationCancellation);
+        _isRecommending = true;
+        _errorMessage = null;
+
+        try
+        {
+            var observation = CreateObservation();
+            var recommendation = await RecommendCombatLoadout.ExecuteAsync(
+                new RecommendCombatLoadoutRequest(
+                    SaveOptions.Value.DefaultSaveFilePath,
+                    _selectedTarget.CharacterId,
+                    _form.Policy,
+                    observation),
+                cancellation.Token);
+            if (version != _recommendationVersion)
+            {
+                return;
+            }
+
+            _model = CombatRecommendationViewModelMapper.Map(recommendation);
+            _visibleStyle = _form.Policy;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException
+                  or FileNotFoundException
+                  or InvalidDataException
+                  or FormatException
+                  or OverflowException)
+        {
+            _errorMessage = exception.Message;
+        }
+        finally
+        {
+            if (version == _recommendationVersion)
+            {
+                _isRecommending = false;
+            }
+        }
+    }
+
+    private PlayerLoadoutObservation? CreateObservation()
+    {
+        if (!_form.IncludeObservation)
+        {
+            return null;
+        }
+
+        return new PlayerLoadoutObservation(
+            DateTimeOffset.UtcNow,
+            "ui:manual-current-screen-observation",
+            new CombatLoadoutSnapshot(
+                ParseSkillIds(_form.NeigongSkillIds),
+                ParseSkillIds(_form.AttackSkillIds),
+                ParseSkillIds(_form.AgilitySkillIds),
+                ParseSkillIds(_form.DefenseSkillIds),
+                ParseSkillIds(_form.AssistanceSkillIds)),
+            new GenericSlotAllocation(
+                _form.GenericTotal,
+                _form.GenericAttack,
+                _form.GenericAgility,
+                _form.GenericDefense,
+                _form.GenericAssistance));
+    }
+
+    private static int[] ParseSkillIds(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return [];
+        }
+
+        return value
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(int.Parse)
+            .ToArray();
+    }
+
+    private string TargetResultClass(int characterId) =>
+        _selectedTarget?.CharacterId == characterId
+            ? "target-result selected"
+            : "target-result";
+
+    private static string FreshnessText(CombatRecommendationViewModel model)
+    {
+        if (!model.SaveLastWriteTimeUtc.HasValue)
+        {
+            return "Unavailable";
+        }
+
+        var age = model.CapturedAtUtc - model.SaveLastWriteTimeUtc.Value;
+        if (age < TimeSpan.Zero)
+        {
+            return "Source timestamp is newer than the read";
+        }
+
+        if (age <= TimeSpan.FromMinutes(15))
+        {
+            return $"{Math.Max(0, age.TotalMinutes):0} min old at read";
+        }
+
+        if (age < TimeSpan.FromHours(2))
+        {
+            return $"{age.TotalMinutes:0} min old at read";
+        }
+
+        return $"{age.TotalHours:0.0} h old at read";
+    }
+
+    private static CancellationTokenSource ReplaceCancellation(
+        ref CancellationTokenSource? cancellation)
+    {
+        cancellation?.Cancel();
+        cancellation?.Dispose();
+        cancellation = new CancellationTokenSource();
+        return cancellation;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _searchCancellation?.Cancel();
+        _searchCancellation?.Dispose();
+        _recommendationCancellation?.Cancel();
+        _recommendationCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private sealed class RecommendationForm
+    {
+        public RecommendationPolicy Policy { get; set; } =
+            RecommendationPolicy.Balanced;
+
+        public string PreferredWeapon { get; set; } = string.Empty;
+
+        public bool IncludeObservation { get; set; }
+
+        public string NeigongSkillIds { get; set; } = string.Empty;
+
+        public string AttackSkillIds { get; set; } = string.Empty;
+
+        public string AgilitySkillIds { get; set; } = string.Empty;
+
+        public string DefenseSkillIds { get; set; } = string.Empty;
+
+        public string AssistanceSkillIds { get; set; } = string.Empty;
+
+        public int GenericTotal { get; set; }
+
+        public int GenericAttack { get; set; }
+
+        public int GenericAgility { get; set; }
+
+        public int GenericDefense { get; set; }
+
+        public int GenericAssistance { get; set; }
+    }
+}

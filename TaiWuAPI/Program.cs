@@ -2,6 +2,7 @@ using TaiWu.Application.SaveGames;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.Targets;
 using TaiWu.Infrastructure;
+using TaiWuAPI.Components;
 using TaiWuAPI.Configuration;
 using System.Text.Json.Serialization;
 
@@ -16,6 +17,9 @@ builder.Services
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter()));
+builder.Services
+    .AddRazorComponents()
+    .AddInteractiveServerComponents();
 builder.Services.AddScoped<ReadSaveGame>();
 builder.Services.AddScoped<
     IRecommendCombatLoadout,
@@ -37,6 +41,10 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseAntiforgery();
+app.MapStaticAssets();
 app.MapControllers();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();

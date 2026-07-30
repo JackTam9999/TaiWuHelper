@@ -214,6 +214,46 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Blazor_shell_is_local_cancellable_and_information_only()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var program = File.ReadAllText(
+            Path.Combine(repositoryRoot, "TaiWuAPI", "Program.cs"));
+        var page = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Components",
+                "Pages",
+                "CombatRecommendation.razor"));
+        var layout = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Components",
+                "Layout",
+                "MainLayout.razor"));
+
+        Assert.Contains("ListenLocalhost(", program);
+        Assert.Contains("AddRazorComponents()", program);
+        Assert.Contains("AddInteractiveServerComponents()", program);
+        Assert.Contains("MapRazorComponents<App>()", program);
+        Assert.Contains("@page \"/\"", page);
+        Assert.Contains("FindTargets.ExecuteAsync(", page);
+        Assert.Contains("RecommendCombatLoadout.ExecuteAsync(", page);
+        Assert.Contains("CancellationTokenSource", page);
+        Assert.Contains("Analysis input only", page);
+        Assert.Contains("Information only", layout);
+        Assert.DoesNotContain(">Apply<", page);
+        Assert.DoesNotContain("Equip automatically", page);
+        Assert.False(
+            File.Exists(Path.Combine(repositoryRoot, "package.json")));
+        Assert.False(
+            File.Exists(
+                Path.Combine(repositoryRoot, "TaiWuAPI", "package.json")));
+    }
+
+    [Fact]
     public void Save_game_api_reads_only_the_configured_path_with_get()
     {
         var repositoryRoot = FindRepositoryRoot();
