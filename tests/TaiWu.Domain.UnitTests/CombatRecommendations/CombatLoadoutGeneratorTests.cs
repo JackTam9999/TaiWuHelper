@@ -213,6 +213,59 @@ public sealed class CombatLoadoutGeneratorTests
     }
 
     [Fact]
+    public void Matching_verified_effect_is_accepted()
+    {
+        var skill = CreateSkill(100);
+        var option = new CombatLoadoutOption(
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Direct),
+            requirements: [],
+            threatCodes: ["THREAT"],
+            isCurrentlyEquipped: false,
+            evidenceReference: "local-config:effect-expected",
+            CombatCounterStrength.HardCounter,
+            CombatCounterActivationTiming.ActiveAttack,
+            expectedEffectId: skill.DirectEffectId.Value);
+
+        var result = Generate(CreatePlayer([skill]), [option]);
+
+        var candidate = Assert.Single(result.Candidates);
+        Assert.Equal(
+            skill.SkillId,
+            Assert.Single(candidate.SelectedOptions).Candidate.SkillId);
+    }
+
+    [Fact]
+    public void Request_rejects_duplicate_options_and_out_of_range_bounds()
+    {
+        var skill = CreateSkill(100);
+        var player = CreatePlayer([skill]);
+        var option = Option(skill);
+
+        Assert.Throws<ArgumentException>(
+            () => new CombatLoadoutGenerationRequest(
+                player,
+                [option, option],
+                CreateContext(),
+                player.GenericSlotAllocation));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CombatLoadoutGenerationRequest(
+                player,
+                [option],
+                CreateContext(),
+                player.GenericSlotAllocation,
+                maxExploredCombinations: 0));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CombatLoadoutGenerationRequest(
+                player,
+                [option],
+                CreateContext(),
+                player.GenericSlotAllocation,
+                maxResults: CombatLoadoutGenerationRequest.MaximumResults + 1));
+    }
+
+    [Fact]
     public void Conflicting_active_agility_options_are_not_emitted()
     {
         var first = CreateSkill(100, SkillCategory.Agility);

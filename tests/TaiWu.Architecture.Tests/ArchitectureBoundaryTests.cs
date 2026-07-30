@@ -386,6 +386,30 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Domain_rule_tests_do_not_require_the_installed_game()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var testRoot = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "TaiWu.Domain.UnitTests");
+        var project = File.ReadAllText(
+            Path.Combine(testRoot, "TaiWu.Domain.UnitTests.csproj"));
+        var source = string.Join(
+            Environment.NewLine,
+            Directory
+                .EnumerateFiles(testRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(path => !IsBuildOutput(path))
+                .Select(File.ReadAllText));
+
+        Assert.DoesNotContain("TaiWu.Infrastructure", project);
+        Assert.DoesNotContain("GameData", project);
+        Assert.DoesNotContain("Program Files", source);
+        Assert.DoesNotContain("Steam\\steamapps", source);
+        Assert.DoesNotContain("using GameData", source);
+    }
+
+    [Fact]
     public void Repository_tree_contains_no_proprietary_save_or_game_binaries()
     {
         var repositoryRoot = FindRepositoryRoot();

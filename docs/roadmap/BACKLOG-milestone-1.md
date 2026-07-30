@@ -1070,6 +1070,8 @@ Allow clients to find valid target IDs by name and snapshot context.
 
 ### M1-023 — Add Domain rule test suite
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** L  
 **Dependencies:** M1-007 through M1-019
@@ -1079,11 +1081,29 @@ threats, candidate validation, and scoring.
 
 #### Acceptance criteria
 
-- [ ] Every hard constraint has positive and negative tests.
-- [ ] Boundary conditions cover exact capacity and one-over-capacity.
-- [ ] Determinism is tested.
-- [ ] No test requires the installed game unless explicitly categorized as an
+- [x] Every hard constraint has positive and negative tests.
+- [x] Boundary conditions cover exact capacity and one-over-capacity.
+- [x] Determinism is tested.
+- [x] No test requires the installed game unless explicitly categorized as an
       integration test.
+
+#### Evidence
+
+- `docs/testing/DOMAIN-RULE-COVERAGE.md` traces ownership, mastery, direction,
+  exact effect, requirement, role, proposal, slot, legendary-book, version,
+  signature, and determinism rules to xUnit v3 cases.
+- Each supported hard requirement type has a satisfied case and an explicit
+  rejection case.
+- A five-case boundary theory accepts exact capacity and rejects one over for
+  Neigong 6 and Attack/Agility/Defense/Assistance 2.
+- Duplicate generation options and duplicate equipped skills are rejected
+  before recommendation scoring.
+- Generator input order, score tie-breaking, threat order, explanations, and
+  manual plans retain deterministic output.
+- An architecture test verifies the Domain test project has no Infrastructure
+  or GameData dependency and no installed-game path or namespace dependency.
+- Domain tests operate on immutable in-memory snapshots only.
+- `dotnet test --no-restore`: 247 tests passed.
 
 ### M1-024 — Add opt-in local GameData integration tests
 

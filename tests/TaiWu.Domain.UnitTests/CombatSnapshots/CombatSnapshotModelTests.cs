@@ -49,6 +49,20 @@ public sealed class CombatSnapshotModelTests
     }
 
     [Fact]
+    public void Loadout_rejects_a_skill_equipped_more_than_once()
+    {
+        var exception = Assert.Throws<ArgumentException>(
+            () => new CombatLoadoutSnapshot(
+                neigongSkillIds: [],
+                attackSkillIds: [604],
+                agilitySkillIds: [],
+                defenseSkillIds: [604],
+                assistanceSkillIds: []));
+
+        Assert.Contains("equipped more than once", exception.Message);
+    }
+
+    [Fact]
     public void Target_can_explicitly_report_unavailable_equipped_skills()
     {
         var target = new TargetCombatSnapshot(

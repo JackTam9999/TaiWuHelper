@@ -191,6 +191,50 @@ public sealed class CombatSlotBudgetCalculatorTests
         Assert.Equal(2, attackBudget.Capacity);
     }
 
+    [Theory]
+    [InlineData(SkillCategory.Neigong, 6)]
+    [InlineData(SkillCategory.Attack, 2)]
+    [InlineData(SkillCategory.Agility, 2)]
+    [InlineData(SkillCategory.Defense, 2)]
+    [InlineData(SkillCategory.Assistance, 2)]
+    public void Exact_capacity_is_valid_and_one_over_is_rejected(
+        SkillCategory category,
+        int capacity)
+    {
+        var skills = Enumerable.Range(200, capacity + 1)
+            .Select(skillId => CreateSkill(
+                skillId,
+                category,
+                gridCost: 1))
+            .ToArray();
+        var exactIds = skills
+            .Take(capacity)
+            .Select(skill => skill.SkillId)
+            .ToArray();
+        var exactResult = CombatSlotBudgetCalculator.Calculate(
+            CreatePlayer(
+                skills,
+                CreateLoadoutFor(category, exactIds)));
+
+        AssertBudget(
+            exactResult,
+            category,
+            used: capacity,
+            capacity: capacity,
+            remaining: 0);
+
+        var overIds = skills
+            .Select(skill => skill.SkillId)
+            .ToArray();
+        var exception = Assert.Throws<ArgumentException>(
+            () => CombatSlotBudgetCalculator.Calculate(
+                CreatePlayer(
+                    skills,
+                    CreateLoadoutFor(category, overIds))));
+
+        Assert.Contains("exceed capacity", exception.Message);
+    }
+
     [Fact]
     public void Over_budget_loadout_is_rejected()
     {
@@ -323,6 +367,21 @@ public sealed class CombatSlotBudgetCalculatorTests
             agility ?? [],
             defense ?? [],
             assistance ?? []);
+    }
+
+    private static CombatLoadoutSnapshot CreateLoadoutFor(
+        SkillCategory category,
+        int[] skillIds)
+    {
+        return category switch
+        {
+            SkillCategory.Neigong => CreateLoadout(neigong: skillIds),
+            SkillCategory.Attack => CreateLoadout(attack: skillIds),
+            SkillCategory.Agility => CreateLoadout(agility: skillIds),
+            SkillCategory.Defense => CreateLoadout(defense: skillIds),
+            SkillCategory.Assistance => CreateLoadout(assistance: skillIds),
+            _ => throw new ArgumentOutOfRangeException(nameof(category))
+        };
     }
 
     private static PlayerCombatSnapshot CreatePlayer(

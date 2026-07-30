@@ -118,6 +118,71 @@ public sealed class CombatRequirementEvaluatorTests
     }
 
     [Fact]
+    public void Every_supported_hard_requirement_has_a_rejection_case()
+    {
+        var cases = new (CombatRequirement Requirement,
+            CombatRequirementContext Context)[]
+        {
+            (
+                new WeaponRequirement(
+                    BladeWeaponType,
+                    CombatRequirementCriticality.Hard,
+                    Evidence),
+                CreateContext()),
+            (
+                new TrickRequirement(
+                    BladeTrickType,
+                    minimumCount: 3,
+                    CombatRequirementCriticality.Hard,
+                    Evidence),
+                CreateContext(
+                    trickCounts: [new CombatTrickCount(BladeTrickType, 2)])),
+            (
+                new RangeRequirement(
+                    minimumInclusive: 3,
+                    maximumInclusive: 7,
+                    CombatRequirementCriticality.Hard,
+                    Evidence),
+                CreateContext(distance: SnapshotValue<int>.Available(8))),
+            (
+                new ResourceRequirement(
+                    CombatResourceKind.Neili,
+                    minimumAmount: 10,
+                    CombatRequirementCriticality.Hard,
+                    Evidence),
+                CreateContext(
+                    resources: [Resource(CombatResourceKind.Neili, 9)])),
+            (
+                new WeaponUnlockRequirement(
+                    BladeWeaponType,
+                    CombatRequirementCriticality.Hard,
+                    Evidence),
+                CreateContext()),
+            (
+                new SkillActivationRequirement(
+                    LaoJunSkill,
+                    SkillActivationState.EquippedPassive,
+                    CombatRequirementCriticality.Hard,
+                    Evidence),
+                CreateContext())
+        };
+
+        foreach (var (requirement, context) in cases)
+        {
+            var result = CombatRequirementEvaluator.Evaluate(
+                [requirement],
+                context);
+
+            Assert.False(result.IsAccepted);
+            var rejection = Assert.Single(result.Rejections);
+            Assert.Same(requirement, rejection.Requirement);
+            Assert.Equal(
+                CombatRequirementStatus.Unsatisfied,
+                rejection.Status);
+        }
+    }
+
+    [Fact]
     public void Unsatisfied_conditional_requirement_becomes_warning()
     {
         var requirement = new WeaponUnlockRequirement(

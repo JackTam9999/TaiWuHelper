@@ -249,6 +249,21 @@ public sealed class CombatSkillCandidateValidatorTests
     }
 
     [Fact]
+    public void Required_mastery_accepts_mastered_skill()
+    {
+        var skill = CreateSkill(
+            mastered: SnapshotValue<bool>.Available(true));
+
+        var result = CombatSkillCandidateValidator.Validate(
+            CreatePlayer([skill]),
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiresMastery: true));
+
+        Assert.True(result.IsAccepted);
+    }
+
+    [Fact]
     public void Required_mastery_rejects_unavailable_mastery_status()
     {
         var skill = CreateSkill(
