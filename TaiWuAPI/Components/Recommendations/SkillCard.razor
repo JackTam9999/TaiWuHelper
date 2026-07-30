@@ -1,0 +1,157 @@
+@using TaiWu.Domain.CombatRecommendations
+@using TaiWu.Domain.CombatCounters
+@using TaiWu.Domain.CombatSnapshots
+@using TaiWuAPI.Presentation
+
+<article class="@(Highlighted ? "skill-card threat-highlight" : "skill-card")">
+    <div class="skill-card-heading">
+        <div>
+            <span class="skill-id">#@Skill.SkillId</span>
+            <h4>@(Skill.Name ?? $"Skill {Skill.SkillId}")</h4>
+        </div>
+        <span class="change-badge">@ManualStatus()</span>
+    </div>
+
+    <div class="skill-facts">
+        <span>
+            <small>Practice</small>
+            <strong>@DirectionLabel()</strong>
+        </span>
+        <span>
+            <small>Actual cost</small>
+            <strong>@CostLabel(Skill.Cost.ActualCost, Skill.Cost.ActualCostUnavailableReason)</strong>
+        </span>
+        <span>
+            <small>Effective cost</small>
+            <strong>@CostLabel(Skill.Cost.EffectiveCost, Skill.Cost.EffectiveCostUnavailableReason)</strong>
+        </span>
+        <span>
+            <small>Activation</small>
+            <strong>@TimingLabel()</strong>
+        </span>
+    </div>
+
+    @if (Skill.Reasons.Count > 0)
+    {
+        <div class="skill-reasons">
+            @foreach (var reason in Skill.Reasons)
+            {
+                <p>
+                    <span aria-hidden="true">↳</span>
+                    @reason.Summary
+                </p>
+            }
+        </div>
+    }
+
+    @if (Skill.Conditions.Count > 0)
+    {
+        <div class="condition-list" aria-label="Skill requirements">
+            @foreach (var condition in Skill.Conditions)
+            {
+                <span class="@($"condition {condition.Status.ToString().ToLowerInvariant()}")">
+                    <strong>@condition.Kind</strong>
+                    @condition.Evaluation
+                </span>
+            }
+        </div>
+    }
+
+    <details class="skill-evidence">
+        <summary>Evidence and linked threats</summary>
+        <div>
+            @foreach (var reference in Skill.ThreatReferences)
+            {
+                <code>@reference</code>
+            }
+            @foreach (var reference in Skill.Cost.EvidenceReferences)
+            {
+                <code>@reference</code>
+            }
+            @if (Skill.Counter.EvidenceReference is not null)
+            {
+                <code>@Skill.Counter.EvidenceReference</code>
+            }
+            @foreach (var condition in Skill.Conditions)
+            {
+                <code>@condition.EvidenceReference</code>
+            }
+        </div>
+    </details>
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public RecommendedSkillViewModel Skill { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ManualLoadoutChangeViewModel> ManualChanges { get; set; } = [];
+
+    [Parameter]
+    public bool Highlighted { get; set; }
+
+    private string ManualStatus()
+    {
+        var changes = ManualChanges
+            .Where(change => change.SkillId == Skill.SkillId)
+            .Select(change => change.Kind)
+            .ToHashSet();
+        if (changes.Contains(ManualLoadoutChangeKind.Add)
+            && changes.Contains(ManualLoadoutChangeKind.ChangeDirection))
+        {
+            return "Add · change direction";
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.ChangeDirection))
+        {
+            return "Change direction";
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.Add))
+        {
+            return "Add manually";
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.Retain))
+        {
+            return "Keep";
+        }
+
+        return Skill.RequiresManualDirectionChange
+            ? "Change direction"
+            : "Recommended";
+    }
+
+    private string DirectionLabel()
+    {
+        var direction = Skill.RequiredDirection ?? Skill.CurrentDirection;
+        return direction switch
+        {
+            PracticeDirection.Direct => "正練 · Direct",
+            PracticeDirection.Reverse => "逆練 · Reverse",
+            PracticeDirection.Neutral => "中性 · Neutral",
+            _ => "Unavailable"
+        };
+    }
+
+    private static string CostLabel(int? value, string? unavailableReason) =>
+        value?.ToString() ?? (string.IsNullOrWhiteSpace(unavailableReason)
+            ? "Unavailable"
+            : "Unavailable · see warning");
+
+    private string TimingLabel()
+    {
+        return Skill.Counter.ActivationTiming switch
+        {
+            CombatCounterActivationTiming.CombatStartPassive =>
+                "Combat-start passive",
+            CombatCounterActivationTiming.EquippedPassive =>
+                "Equipped passive",
+            CombatCounterActivationTiming.ActiveAttack => "Active attack",
+            CombatCounterActivationTiming.ActiveDefense => "Active defense",
+            CombatCounterActivationTiming.ActiveAgility => "Active agility",
+            null => "No counter timing",
+            _ => Skill.Counter.ActivationTiming.ToString()!
+        };
+    }
+}

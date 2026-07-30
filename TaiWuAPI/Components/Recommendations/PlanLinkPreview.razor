@@ -1,0 +1,38 @@
+@using TaiWuAPI.Presentation
+
+<section class="plan-preview" aria-labelledby="linked-plan-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Linked tactics</p>
+            <h3 id="linked-plan-heading">Opening and switch cues</h3>
+        </div>
+    </div>
+
+    <ol>
+        @foreach (var step in Steps)
+        {
+            <li class="@(AddressesSelectedThreat(step) ? "threat-highlight" : null)">
+                <span>@step.Kind</span>
+                <strong>@step.Condition</strong>
+                @if (step.Reason.ThreatReferences.Count > 0)
+                {
+                    <small>@string.Join(" · ", step.Reason.ThreatReferences)</small>
+                }
+            </li>
+        }
+    </ol>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<BattlePlanStepViewModel> Steps { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedThreatReference { get; set; }
+
+    private bool AddressesSelectedThreat(BattlePlanStepViewModel step) =>
+        SelectedThreatReference is not null
+        && step.Reason.ThreatReferences.Contains(
+            SelectedThreatReference,
+            StringComparer.Ordinal);
+}

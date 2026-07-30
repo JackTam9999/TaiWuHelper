@@ -1254,6 +1254,8 @@ and implement the recommendation input workflow.
 
 ### M1-028 — Build the threat and recommended-loadout layout
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** L  
 **Dependencies:** M1-026, M1-027
@@ -1263,16 +1265,43 @@ Implement the primary two-column pre-fight briefing described by
 
 #### Acceptance criteria
 
-- [ ] Critical and moderate target threats are ordered by severity.
-- [ ] Selecting a threat highlights its countering skills and plan steps.
-- [ ] Skills are grouped as 內功, 摧破, 輕靈, 護體, and 奇竅.
-- [ ] Each category shows used capacity, available capacity, and generic-slot
+- [x] Critical and moderate target threats are ordered by severity.
+- [x] Selecting a threat highlights its countering skills and plan steps.
+- [x] Skills are grouped as 內功, 摧破, 輕靈, 護體, and 奇竅.
+- [x] Each category shows used capacity, available capacity, and generic-slot
       allocation.
-- [ ] Every skill card shows its Chinese in-game name, direction, effective
+- [x] Every skill card shows its Chinese in-game name, direction, effective
       cost, manual-change status, reason, activation timing, and requirements.
-- [ ] Safe, balanced, and aggressive tabs switch between results from the same
+- [x] Safe, balanced, and aggressive tabs switch between results from the same
       snapshot.
-- [ ] Known-constraint validation is not presented as a win probability.
+- [x] Known-constraint validation is not presented as a win probability.
+
+#### Evidence
+
+- `ThreatPanel` orders groups by descending `TargetThreatSeverity`, preserves
+  deterministic code order within a group, and exposes keyboard-accessible
+  pressed-state buttons.
+- `RecommendationSelectionState` retains one immutable recommendation while
+  switching policies and toggles one validated threat reference.
+- Selecting a threat highlights only skill cards and opening/switch cues whose
+  structured threat references match the selection.
+- The loadout renders all five presentation categories using the Chinese
+  in-game labels 內功, 摧破, 輕靈, 護體, and 奇竅.
+- `CapacityBar` shows used/capacity values, remaining availability through its
+  accessible progress state, and non-zero 萬用 allocation.
+- Each skill card presents Chinese name where available, current/required
+  direction, actual/effective cost, add/retain/direction status, counter
+  timing, reasons, conditions, linked threats, and expandable evidence.
+- Policy tabs use the existing three style results and never issue another
+  save read. A visible disclaimer states that the known-constraint score is
+  not a win probability.
+- Three xUnit v3 cases cover same-snapshot style switching, threat-linked
+  highlighting and toggle behavior, and rejection of unknown selections.
+- An architecture test verifies the severity ordering, linked components,
+  cost/direction/timing/condition/evidence fields, generic slots, and
+  non-probability wording.
+- Default `dotnet test --no-restore`: 258 tests discovered, 257 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ### M1-029 — Add the manual setup checklist and battle plan
 

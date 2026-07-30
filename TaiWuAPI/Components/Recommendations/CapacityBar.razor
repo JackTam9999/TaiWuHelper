@@ -1,0 +1,51 @@
+@using System.Globalization
+@using TaiWuAPI.Presentation
+
+<div class="capacity">
+    <div class="capacity-copy">
+        <span>
+            @if (Category.UsedSlots.HasValue)
+            {
+                <strong>@Category.UsedSlots</strong><text>/@Category.Capacity slots</text>
+            }
+            else
+            {
+                <strong>Usage unavailable</strong>
+            }
+        </span>
+        @if (Category.GenericSlots > 0)
+        {
+            <small>+@Category.GenericSlots 萬用</small>
+        }
+    </div>
+    <div class="capacity-track"
+         role="progressbar"
+         aria-label="@($"{Category.DisplayName} slot use")"
+         aria-valuemin="0"
+         aria-valuemax="@Category.Capacity"
+         aria-valuenow="@Category.UsedSlots">
+        <span style="@($"width: {Percentage().ToString("0.##", CultureInfo.InvariantCulture)}%")"></span>
+    </div>
+    @if (!Category.UsedSlots.HasValue)
+    {
+        <small class="unavailable-copy">@Category.UsedSlotsUnavailableReason</small>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public LoadoutCategoryViewModel Category { get; set; } = default!;
+
+    private decimal Percentage()
+    {
+        if (!Category.UsedSlots.HasValue || Category.Capacity == 0)
+        {
+            return 0;
+        }
+
+        return Math.Clamp(
+            (decimal)Category.UsedSlots.Value / Category.Capacity * 100,
+            0,
+            100);
+    }
+}

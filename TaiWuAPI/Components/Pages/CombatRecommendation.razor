@@ -240,16 +240,16 @@
             {
                 <button type="button"
                         role="tab"
-                        aria-selected="@(style.Style == _visibleStyle)"
-                        class="@(style.Style == _visibleStyle ? "active" : null)"
-                        @onclick="() => _visibleStyle = style.Style">
+                        aria-selected="@(style.Style == _selection.VisibleStyle)"
+                        class="@(style.Style == _selection.VisibleStyle ? "active" : null)"
+                        @onclick="() => ShowStyle(style.Style)">
                     @style.Style
                 </button>
             }
         </div>
 
         @{
-            var visible = _model.Styles.Single(style => style.Style == _visibleStyle);
+            var visible = _selection.VisibleRecommendation!;
         }
         <div class="result-summary">
             @if (visible.HasRecommendation)
@@ -278,22 +278,61 @@
             }
         </div>
 
-        <p class="next-slice-note">
-            Detailed threats, category cards, manual checklist, and battle plan
-            are structured and ready for the next layout slice.
-        </p>
+        <div class="briefing-grid">
+            <ThreatPanel Threats="_model.Threats"
+                         SelectedReference="_selection.SelectedThreatReference"
+                         SelectedReferenceChanged="SelectThreat" />
+
+            <section class="loadout-panel" aria-labelledby="recommended-loadout-heading">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">Manual configuration</p>
+                        <h3 id="recommended-loadout-heading">Recommended loadout</h3>
+                    </div>
+                    <span class="validation-label">Known constraints validated</span>
+                </div>
+
+                @if (visible.HasRecommendation)
+                {
+                    @foreach (var category in visible.Categories)
+                    {
+                        <LoadoutCategory Category="category"
+                                         ManualChanges="visible.ManualChanges"
+                                         SelectedThreatReference="_selection.SelectedThreatReference" />
+                    }
+                }
+                else
+                {
+                    <p class="empty-category">
+                        @(visible.Diagnostic ?? "No feasible recommendation was produced.")
+                    </p>
+                }
+            </section>
+        </div>
+
+        @if (visible.HasRecommendation)
+        {
+            var planSteps = visible.OpeningActions
+                .Concat(visible.SwitchingConditions)
+                .ToArray();
+            @if (planSteps.Length > 0)
+            {
+                <PlanLinkPreview Steps="planSteps"
+                                 SelectedThreatReference="_selection.SelectedThreatReference" />
+            }
+        }
     </section>
 }
 
 @code {
     private readonly RecommendationForm _form = new();
     private readonly List<TargetLookupEntry> _targetMatches = [];
+    private readonly RecommendationSelectionState _selection = new();
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _recommendationCancellation;
     private string _targetQuery = string.Empty;
     private TargetLookupEntry? _selectedTarget;
     private CombatRecommendationViewModel? _model;
-    private RecommendationPolicy _visibleStyle = RecommendationPolicy.Balanced;
     private string? _errorMessage;
     private bool _isSearching;
     private bool _isRecommending;
@@ -354,6 +393,7 @@
     {
         _selectedTarget = target;
         _model = null;
+        _selection.Clear();
         _errorMessage = null;
     }
 
@@ -386,7 +426,7 @@
             }
 
             _model = CombatRecommendationViewModelMapper.Map(recommendation);
-            _visibleStyle = _form.Policy;
+            _selection.Load(_model, _form.Policy);
         }
         catch (OperationCanceledException)
         {
@@ -450,6 +490,16 @@
         _selectedTarget?.CharacterId == characterId
             ? "target-result selected"
             : "target-result";
+
+    private void ShowStyle(RecommendationPolicy style)
+    {
+        _selection.ShowStyle(style);
+    }
+
+    private void SelectThreat(string? threatReference)
+    {
+        _selection.SelectThreat(threatReference);
+    }
 
     private static string FreshnessText(CombatRecommendationViewModel model)
     {

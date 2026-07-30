@@ -517,6 +517,387 @@ select {
     margin: 18px 0 0;
 }
 
+.briefing-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.8fr);
+    gap: 18px;
+    align-items: start;
+    margin-top: 18px;
+}
+
+.threat-panel,
+.loadout-panel,
+.plan-preview {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(9, 23, 23, 0.56);
+}
+
+.threat-panel {
+    position: sticky;
+    top: 94px;
+    padding: 22px;
+}
+
+.loadout-panel,
+.plan-preview {
+    padding: 24px;
+}
+
+.panel-heading,
+.category-heading,
+.skill-card-heading,
+.capacity-copy {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.panel-heading h3,
+.category-heading h3,
+.skill-card h4 {
+    margin: 0;
+}
+
+.panel-heading h3 {
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 1.45rem;
+    font-weight: 500;
+}
+
+.text-button {
+    padding: 4px;
+    border: 0;
+    color: var(--gold);
+    background: transparent;
+    font-size: 0.76rem;
+    text-decoration: underline;
+}
+
+.threat-group {
+    margin-top: 24px;
+}
+
+.threat-group h4 {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.threat-card {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    padding: 15px;
+    border: 1px solid transparent;
+    border-top-color: var(--line);
+    color: var(--ink);
+    text-align: left;
+    background: transparent;
+}
+
+.threat-card:hover,
+.threat-card.selected {
+    border-color: rgba(215, 182, 107, 0.52);
+    background: var(--gold-soft);
+}
+
+.threat-card > span:not(.severity-marker) {
+    color: #bac9c4;
+    font-size: 0.87rem;
+    line-height: 1.55;
+}
+
+.threat-card small,
+.panel-hint {
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.severity-marker {
+    width: fit-content;
+    color: var(--gold);
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.panel-hint {
+    margin: 20px 0 0;
+    font-size: 0.78rem;
+}
+
+.validation-label {
+    color: #9edbc9;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.loadout-category {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.category-heading {
+    align-items: center;
+}
+
+.category-heading h3 {
+    color: var(--gold);
+    font-family: "Microsoft JhengHei", Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+}
+
+.category-heading small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.capacity {
+    width: min(260px, 48%);
+}
+
+.capacity-copy {
+    align-items: baseline;
+    margin-bottom: 7px;
+    color: var(--muted);
+    font-size: 0.73rem;
+}
+
+.capacity-copy strong {
+    color: var(--ink);
+}
+
+.capacity-copy small {
+    color: var(--jade);
+}
+
+.capacity-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(221, 234, 226, 0.1);
+}
+
+.capacity-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--jade), var(--gold));
+}
+
+.unavailable-copy {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    text-align: right;
+}
+
+.skill-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.skill-card {
+    padding: 16px;
+    border: 1px solid rgba(205, 221, 211, 0.12);
+    border-radius: 3px;
+    background: rgba(24, 45, 43, 0.66);
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.skill-card.threat-highlight,
+.plan-preview li.threat-highlight {
+    border-color: rgba(215, 182, 107, 0.82);
+    box-shadow: 0 0 0 2px rgba(215, 182, 107, 0.12);
+}
+
+.skill-card.threat-highlight {
+    transform: translateY(-2px);
+}
+
+.skill-card-heading {
+    align-items: center;
+}
+
+.skill-card h4 {
+    margin-top: 3px;
+    font-family: "Microsoft JhengHei", Georgia, serif;
+    font-size: 1.02rem;
+}
+
+.skill-id {
+    color: var(--muted);
+    font-size: 0.67rem;
+    letter-spacing: 0.08em;
+}
+
+.change-badge {
+    max-width: 130px;
+    padding: 4px 7px;
+    border: 1px solid rgba(101, 182, 162, 0.38);
+    border-radius: 999px;
+    color: #bce4d8;
+    font-size: 0.64rem;
+    font-weight: 800;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.skill-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.skill-facts > span {
+    display: grid;
+    gap: 3px;
+    padding: 9px;
+    background: rgba(5, 16, 16, 0.35);
+}
+
+.skill-facts small {
+    color: var(--muted);
+    font-size: 0.63rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.skill-facts strong {
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.skill-reasons {
+    margin-top: 13px;
+}
+
+.skill-reasons p {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px;
+    margin: 7px 0 0;
+    color: #c7d2cd;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.skill-reasons p span {
+    color: var(--gold);
+}
+
+.condition-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 13px;
+}
+
+.condition {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    padding: 7px 9px;
+    border-left: 2px solid var(--gold);
+    color: #c7d2cd;
+    background: rgba(215, 182, 107, 0.07);
+    font-size: 0.72rem;
+    line-height: 1.45;
+}
+
+.condition.satisfied {
+    border-left-color: var(--jade);
+}
+
+.skill-evidence {
+    margin-top: 13px;
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.skill-evidence summary {
+    cursor: pointer;
+}
+
+.skill-evidence > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+.skill-evidence code {
+    max-width: 100%;
+    padding: 3px 5px;
+    overflow: hidden;
+    color: #b8d8cf;
+    background: #0b1818;
+    font-size: 0.64rem;
+    text-overflow: ellipsis;
+}
+
+.empty-category {
+    margin: 14px 0 0;
+    padding: 13px;
+    color: var(--muted);
+    background: rgba(5, 16, 16, 0.25);
+    font-size: 0.82rem;
+}
+
+.plan-preview {
+    margin-top: 18px;
+}
+
+.plan-preview ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.plan-preview li {
+    display: grid;
+    gap: 7px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    background: rgba(24, 45, 43, 0.48);
+}
+
+.plan-preview li > span {
+    color: var(--gold);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.plan-preview li strong {
+    font-size: 0.83rem;
+    line-height: 1.5;
+}
+
+.plan-preview li small {
+    color: var(--muted);
+    font-size: 0.65rem;
+}
+
 .empty-state {
     max-width: 720px;
     padding: 100px 0;
@@ -528,7 +909,8 @@ select {
     }
 
     .hero,
-    .control-grid {
+    .control-grid,
+    .briefing-grid {
         grid-template-columns: 1fr;
     }
 
@@ -545,6 +927,10 @@ select {
     .snapshot-strip,
     .result-summary {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .threat-panel {
+        position: static;
     }
 }
 
@@ -581,8 +967,19 @@ select {
     .observation-grid,
     .generic-grid,
     .snapshot-strip,
-    .result-summary {
+    .result-summary,
+    .skill-list,
+    .plan-preview ol {
         grid-template-columns: 1fr;
+    }
+
+    .category-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .capacity {
+        width: 100%;
     }
 
     .snapshot-strip > div {

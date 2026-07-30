@@ -254,6 +254,51 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Recommendation_layout_exposes_linked_read_only_details()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var componentRoot = Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "Components");
+        var page = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Pages",
+                "CombatRecommendation.razor"));
+        var threatPanel = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "ThreatPanel.razor"));
+        var skillCard = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "SkillCard.razor"));
+        var capacity = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "CapacityBar.razor"));
+
+        Assert.Contains("OrderByDescending(threat => threat.Severity)", threatPanel);
+        Assert.Contains("<ThreatPanel", page);
+        Assert.Contains("<LoadoutCategory", page);
+        Assert.Contains("<PlanLinkPreview", page);
+        Assert.Contains("SelectedThreatReference", page);
+        Assert.Contains("Actual cost", skillCard);
+        Assert.Contains("Effective cost", skillCard);
+        Assert.Contains("Practice", skillCard);
+        Assert.Contains("Activation", skillCard);
+        Assert.Contains("Skill.Conditions", skillCard);
+        Assert.Contains("Skill.Cost.EvidenceReferences", skillCard);
+        Assert.Contains("Category.GenericSlots", capacity);
+        Assert.Contains("This is not a win probability.", page);
+        Assert.DoesNotContain(">Apply<", page);
+    }
+
+    [Fact]
     public void Save_game_api_reads_only_the_configured_path_with_get()
     {
         var repositoryRoot = FindRepositoryRoot();
