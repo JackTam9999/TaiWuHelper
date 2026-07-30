@@ -519,6 +519,111 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Presentation_events_are_read_only_or_helper_local()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var apiRoot = Path.Combine(repositoryRoot, "TaiWuAPI");
+        var componentRoot = Path.Combine(apiRoot, "Components");
+        var uiFiles = Directory
+            .EnumerateFiles(apiRoot, "*", SearchOption.AllDirectories)
+            .Where(path => !IsBuildOutput(path))
+            .Where(path => Path.GetExtension(path) is ".cs" or ".razor" or ".js")
+            .ToArray();
+        var violations = new List<string>();
+        foreach (var file in uiFiles)
+        {
+            var source = File.ReadAllText(file);
+            foreach (var (description, pattern) in
+                     SaveAdapterForbiddenApis.Concat(
+                         GameControlForbiddenApis))
+            {
+                if (pattern.IsMatch(source))
+                {
+                    violations.Add(
+                        $"{Path.GetRelativePath(repositoryRoot, file)}: "
+                        + description);
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            "Presentation code contains a file-write or game-control API:"
+            + Environment.NewLine
+            + string.Join(Environment.NewLine, violations));
+
+        var componentSource = string.Join(
+            Environment.NewLine,
+            Directory
+                .EnumerateFiles(
+                    componentRoot,
+                    "*.razor",
+                    SearchOption.AllDirectories)
+                .Select(File.ReadAllText));
+        var eventHandlers = UiEventHandlerPattern()
+            .Matches(componentSource)
+            .Select(match => match.Groups[1].Value)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        var expectedHandlers = new[]
+        {
+            "() => SelectTarget(target)",
+            "() => SelectedReferenceChanged.InvokeAsync(null)",
+            "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
+            "() => ShowStyle(style.Style)",
+            "() => Toggle(item.Reference)",
+            "CopyAsync",
+            "GetRecommendationAsync",
+            "PrintAsync",
+            "RetryRead",
+            "SearchTargetsAsync"
+        }.Order(StringComparer.Ordinal);
+
+        Assert.Equal(expectedHandlers, eventHandlers);
+
+        var page = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Pages",
+                "CombatRecommendation.razor"));
+        Assert.Contains("FindTargets.ExecuteAsync(", page);
+        Assert.Contains("RecommendCombatLoadout.ExecuteAsync(", page);
+        Assert.Contains(
+            "PageReadOperation.TargetSearch => SearchTargetsAsync()",
+            page);
+        Assert.Contains(
+            "PageReadOperation.Recommendation => GetRecommendationAsync()",
+            page);
+        Assert.DoesNotContain("ISaveGameReader", page);
+        Assert.DoesNotContain("using GameData", page);
+        Assert.DoesNotContain("GameData.", page);
+
+        var checklist = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "ManualChecklist.razor"));
+        Assert.Contains("_state.Toggle(reference)", checklist);
+        Assert.DoesNotContain("IRecommendCombatLoadout", checklist);
+        Assert.DoesNotContain("IFindTargets", checklist);
+
+        var helperScript = File.ReadAllText(
+            Path.Combine(apiRoot, "wwwroot", "helper.js"));
+        Assert.Contains("navigator.clipboard.writeText(text)", helperScript);
+        Assert.Contains("window.print()", helperScript);
+        Assert.DoesNotMatch(ClientPersistencePattern(), helperScript);
+        Assert.DoesNotMatch(ClientNetworkPattern(), helperScript);
+
+        Assert.DoesNotContain(">Apply<", componentSource);
+        Assert.DoesNotContain(">Equip<", componentSource);
+        Assert.DoesNotContain(">Execute<", componentSource);
+        Assert.DoesNotContain(">Repair<", componentSource);
+        Assert.DoesNotContain(">Patch<", componentSource);
+        Assert.DoesNotContain(">Control game<", componentSource);
+    }
+
+    [Fact]
     public void Snapshot_adapter_avoids_standalone_unsafe_cost_calculations()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -963,4 +1068,19 @@ public sealed partial class ArchitectureBoundaryTests
         @"^(?:(?:Apply|Equip).*(?:Loadout|Skill)|(?:Write|Save|Modify|Update|Delete|Repair|Replace|Patch).*(?:Save|Game|Character|Skill|Loadout)|Inject|Hook|Automate|Control|SendInput|Trainer|Cheat)",
         RegexOptions.IgnoreCase)]
     private static partial Regex GameMutationActionPattern();
+
+    [GeneratedRegex(
+        @"@on(?:click|change)\s*=\s*""([^""]+)""",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex UiEventHandlerPattern();
+
+    [GeneratedRegex(
+        @"\b(?:localStorage|sessionStorage|indexedDB|showSaveFilePicker|createObjectURL)\b|\bdownload\s*=",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex ClientPersistencePattern();
+
+    [GeneratedRegex(
+        @"\b(?:fetch|XMLHttpRequest|WebSocket|EventSource)\s*(?:\(|\.)",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex ClientNetworkPattern();
 }

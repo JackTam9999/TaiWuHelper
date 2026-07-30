@@ -1509,6 +1509,8 @@ handling with xUnit v3 and NSubstitute where a use case substitute is needed.
 
 ### M1-033 — Perform the presentation non-interference review
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** S  
 **Dependencies:** M1-000, M1-027, M1-028, M1-029, M1-030, M1-031, M1-032
@@ -1517,14 +1519,34 @@ Audit the completed UI against the permanent game non-interference boundary.
 
 #### Acceptance criteria
 
-- [ ] No `Apply`, `Equip`, `Execute`, repair, patch, or game-control action
+- [x] No `Apply`, `Equip`, `Execute`, repair, patch, or game-control action
       exists.
-- [ ] No UI event calls a game-data mutation or process-control operation.
-- [ ] Copy, print, and export operations write only helper-owned
+- [x] No UI event calls a game-data mutation or process-control operation.
+- [x] Copy, print, and export operations write only helper-owned
       recommendation content outside game-owned storage.
-- [ ] Refresh performs a read-only snapshot request.
-- [ ] Manual instructions cannot be confused with automated actions.
-- [ ] The review result is recorded before manual in-game verification.
+- [x] Refresh performs a read-only snapshot request.
+- [x] Manual instructions cannot be confused with automated actions.
+- [x] The review result is recorded before manual in-game verification.
+
+#### Evidence
+
+- The completed review is recorded in
+  `docs/reviews/M1-033-presentation-non-interference.md`, including the
+  permanent boundary, complete UI event inventory, checks, and findings.
+- All ten explicit `onclick`/`onchange` expressions are allowlisted by an
+  architecture test. They resolve only to read use cases, component-local
+  state, clipboard copy, or browser print.
+- Presentation C#, Razor, and JavaScript are scanned for save/file writes,
+  destructive file operations, archive saves, process control/memory access,
+  injection, hooks, automated input, and Harmony patching.
+- Client regression checks prohibit network calls, browser persistence, file
+  pickers, object URLs, and download operations. The current helper script
+  contains only `navigator.clipboard.writeText` and `window.print`.
+- Retry/refresh dispatches only `SearchTargetsAsync` or
+  `GetRecommendationAsync`; both call read-only Application ports.
+- The audit found no violation and no open remediation item before M1-025.
+- Default `dotnet test --no-restore`: 297 tests discovered, 296 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ## Slice 9: Manual verification and release
 
