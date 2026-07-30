@@ -309,6 +309,12 @@ public sealed partial class ArchitectureBoundaryTests
             "Recommendations");
         var checklist = File.ReadAllText(
             Path.Combine(componentRoot, "ManualChecklist.razor"));
+        var checklistState = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Presentation",
+                "ManualChecklistState.cs"));
         var battlePlan = File.ReadAllText(
             Path.Combine(componentRoot, "BattlePlan.razor"));
         var helperScript = File.ReadAllText(
@@ -328,7 +334,10 @@ public sealed partial class ArchitectureBoundaryTests
             "TaiWu Helper cannot perform these steps.",
             checklist);
         Assert.Contains("type=\"checkbox\"", checklist);
-        Assert.Contains("HashSet<string>", checklist);
+        Assert.Contains("ManualChecklistState", checklist);
+        Assert.Contains("HashSet<string>", checklistState);
+        Assert.DoesNotContain("TaiWu.Application", checklistState);
+        Assert.DoesNotContain("TaiWu.Infrastructure", checklistState);
         Assert.DoesNotContain("IRecommendCombatLoadout", checklist);
         Assert.DoesNotContain("IFindTargets", checklist);
         Assert.Contains("Reason and evidence", checklist);
@@ -658,6 +667,30 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("Program Files", source);
         Assert.DoesNotContain("Steam\\steamapps", source);
         Assert.DoesNotContain("using GameData", source);
+    }
+
+    [Fact]
+    public void Presentation_tests_do_not_require_the_installed_game()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var testRoot = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "TaiWu.API.UnitTests");
+        var source = string.Join(
+            Environment.NewLine,
+            Directory
+                .EnumerateFiles(testRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(path => !IsBuildOutput(path))
+                .Select(File.ReadAllText));
+
+        Assert.DoesNotContain("Program Files", source);
+        Assert.DoesNotContain("Steam\\steamapps", source);
+        Assert.DoesNotContain("TAIWU_INTEGRATION_SAVE_PATH", source);
+        Assert.DoesNotContain("using GameData", source);
+        Assert.DoesNotContain("File.Open", source);
+        Assert.DoesNotContain("File.Read", source);
+        Assert.DoesNotContain("File.Write", source);
     }
 
     [Fact]

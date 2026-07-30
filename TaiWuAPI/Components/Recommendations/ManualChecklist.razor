@@ -35,7 +35,7 @@
                 <li>
                     <label>
                         <input type="checkbox"
-                               checked="@_completed.Contains(item.Reference)"
+                               checked="@_state.IsCompleted(item.Reference)"
                                @onchange="() => Toggle(item.Reference)" />
                         <span>
                             <strong>@ItemLabel(item.Kind)</strong>
@@ -65,8 +65,7 @@
 </section>
 
 @code {
-    private readonly HashSet<string> _completed =
-        new(StringComparer.Ordinal);
+    private readonly ManualChecklistState _state = new();
     private string? _copyStatus;
 
     [Parameter, EditorRequired]
@@ -74,18 +73,12 @@
 
     protected override void OnParametersSet()
     {
-        var current = Items
-            .Select(item => item.Reference)
-            .ToHashSet(StringComparer.Ordinal);
-        _completed.RemoveWhere(reference => !current.Contains(reference));
+        _state.Synchronize(Items);
     }
 
     private void Toggle(string reference)
     {
-        if (!_completed.Add(reference))
-        {
-            _completed.Remove(reference);
-        }
+        _state.Toggle(reference);
     }
 
     private async Task CopyAsync()

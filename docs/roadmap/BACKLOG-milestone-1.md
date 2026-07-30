@@ -1464,6 +1464,8 @@ desktop and narrow-window sizes.
 
 ### M1-032 — Add Presentation test coverage
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-027, M1-028, M1-029, M1-030, M1-031
@@ -1473,13 +1475,37 @@ handling with xUnit v3 and NSubstitute where a use case substitute is needed.
 
 #### Acceptance criteria
 
-- [ ] Tests cover all three recommendation styles.
-- [ ] Tests cover capacity, direction, cost, timing, conditions, and manual
+- [x] Tests cover all three recommendation styles.
+- [x] Tests cover capacity, direction, cost, timing, conditions, and manual
       change rendering.
-- [ ] Tests cover loading, warning, empty, ambiguous, and failure states.
-- [ ] Tests verify that checklist interaction remains helper-local.
-- [ ] Tests verify the persistent information-only message.
-- [ ] Tests do not require the installed game.
+- [x] Tests cover loading, warning, empty, ambiguous, and failure states.
+- [x] Tests verify that checklist interaction remains helper-local.
+- [x] Tests verify the persistent information-only message.
+- [x] Tests do not require the installed game.
+
+#### Evidence
+
+- A three-case xUnit v3 theory proves Safe, Balanced, and Aggressive can each
+  become visible while retaining the same loaded snapshot.
+- Framework-native `HtmlRenderer` tests render the actual Razor components
+  without a browser-test dependency. The loadout test asserts visible
+  capacity, 萬用 allocation, 正逆 direction, actual/effective cost, activation
+  timing, condition status, manual change, linked threat, and evidence text.
+- Five rendered state cases cover loading, success-with-warning, empty,
+  ambiguous-target, and failure output, including status/alert semantics and
+  read-only recovery wording.
+- `ManualChecklistState` contains only helper-local in-memory completion flags.
+  Tests cover toggle and synchronization behavior, and architecture tests
+  ensure it has no Application, Infrastructure, save, or game dependency.
+- A rendered checklist test verifies the manual-only boundary and native
+  checkbox, while the rendered layout test verifies the persistent
+  `Information only` message and skip link.
+- The presentation test project uses xUnit v3 and NSubstitute and operates on
+  deterministic in-memory models/substitutes. An architecture test rejects
+  installed-game paths, integration-test environment variables, GameData
+  imports, and file I/O from this test suite.
+- Default `dotnet test --no-restore`: 296 tests discovered, 295 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ### M1-033 — Perform the presentation non-interference review
 

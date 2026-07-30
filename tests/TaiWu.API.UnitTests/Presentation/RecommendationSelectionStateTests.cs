@@ -7,6 +7,24 @@ namespace TaiWu.API.UnitTests.Presentation;
 
 public sealed class RecommendationSelectionStateTests
 {
+    [Theory]
+    [InlineData(RecommendationPolicy.Safe)]
+    [InlineData(RecommendationPolicy.Balanced)]
+    [InlineData(RecommendationPolicy.Aggressive)]
+    public void Every_recommendation_style_can_be_selected(
+        RecommendationPolicy style)
+    {
+        var model = Model();
+        var state = new RecommendationSelectionState();
+        state.Load(model, RecommendationPolicy.Balanced);
+
+        state.ShowStyle(style);
+
+        Assert.Equal(style, state.VisibleStyle);
+        Assert.Equal(style, state.VisibleRecommendation?.Style);
+        Assert.Same(model, state.Recommendation);
+    }
+
     [Fact]
     public void Style_changes_reuse_the_loaded_snapshot()
     {
