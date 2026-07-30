@@ -111,6 +111,51 @@ public sealed class CombatSkillCandidateValidatorTests
         Assert.Contains("Direct", result.Rejections[0].Reason);
     }
 
+    [Theory]
+    [InlineData(PracticeDirection.Neutral)]
+    [InlineData(PracticeDirection.Reverse)]
+    public void Explicit_manual_direction_change_can_satisfy_candidate(
+        PracticeDirection currentDirection)
+    {
+        var skill = CreateSkill(
+            direction: SnapshotValue<PracticeDirection>.Available(
+                currentDirection));
+
+        var result = CombatSkillCandidateValidator.Validate(
+            CreatePlayer([skill]),
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Direct,
+                allowDirectionChange: true));
+
+        Assert.True(result.IsAccepted);
+        Assert.Equal(
+            PracticeDirection.Direct,
+            result.RequiredDirectionChange);
+    }
+
+    [Fact]
+    public void Direction_change_still_requires_verified_target_effect()
+    {
+        var skill = CreateSkill(
+            direction: SnapshotValue<PracticeDirection>.Available(
+                PracticeDirection.Reverse),
+            directEffectId: SnapshotValue<int>.Unavailable(
+                "Direct effect was absent."));
+
+        var result = CombatSkillCandidateValidator.Validate(
+            CreatePlayer([skill]),
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Direct,
+                allowDirectionChange: true));
+
+        AssertRejected(
+            result,
+            CombatSkillCandidateRejectionCode.DirectEffectUnavailable);
+        Assert.Null(result.RequiredDirectionChange);
+    }
+
     [Fact]
     public void Unavailable_practice_direction_is_rejected_with_reason()
     {

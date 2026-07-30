@@ -443,7 +443,9 @@ effects.
 #### Evidence
 
 - `CombatSkillCandidate` records a learned-skill ID plus optional mastery and
-  direction-specific-effect requirements.
+  direction-specific-effect requirements. It may explicitly permit a manual
+  direction-change proposal; strict current-direction validation remains the
+  default.
 - `CombatSkillCandidateValidator` returns a
   `CombatSkillCandidateValidationResult`; expected rejection never uses an
   exception as control flow.
@@ -452,7 +454,11 @@ effects.
   direction, and unavailable Direct/Reverse effects.
 - Direction-independent candidates may use Neutral skills, while Neutral can
   never satisfy a Direct, Reverse, or purported Neutral directional-effect
-  requirement.
+  requirement in the current snapshot. An explicit proposed direction change
+  may target Direct or Reverse only and still requires that exact effect to be
+  available.
+- Accepted proposed changes expose `RequiredDirectionChange`; the validator
+  never performs that change.
 - All independently detectable mastery, direction, and effect failures are
   returned together.
 - Fourteen focused xUnit v3 tests cover accepted Direct, accepted Reverse,
@@ -736,6 +742,8 @@ skills, equipment, or tactical responses.
 
 ### M1-016 — Generate feasible candidate loadouts
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** L  
 **Dependencies:** M1-011, M1-015
@@ -744,11 +752,45 @@ Generate candidate loadouts using hard filters before exploring combinations.
 
 #### Acceptance criteria
 
-- [ ] Every emitted candidate passes the feasibility validator.
-- [ ] Required combat-start counters are considered first.
-- [ ] Search is bounded and deterministic.
-- [ ] Existing equipped skills are retained when equally suitable.
-- [ ] Candidate-generation diagnostics can explain exclusions.
+- [x] Every emitted candidate passes the feasibility validator.
+- [x] Required combat-start counters are considered first.
+- [x] Search is bounded and deterministic.
+- [x] Existing equipped skills are retained when equally suitable.
+- [x] Candidate-generation diagnostics can explain exclusions.
+
+#### Evidence
+
+- `CombatLoadoutGenerator` hard-filters option ownership, mastery, required
+  direction/effect availability, and expected raw effect identity before
+  exploring combinations.
+- Options are ordered by combat-start counter, hard-counter strength, threat
+  coverage, current equipment, and skill ID. Include-first traversal therefore
+  considers required opening counters first.
+- Every combination builds a complete `ProposedCombatLoadout` and is emitted
+  only from `CombatLoadoutFeasibilityValidator.FeasibleLoadout`.
+- Multiple active agility or defense choices are rejected before feasibility;
+  all selected passive, active, and combat requirements are evaluated in the
+  proposed context.
+- Search is capped at 24 options, 65,536 explored combinations, and 256
+  results, with lower per-request limits supported. Exploration and result
+  truncation are visible diagnostics.
+- Pre-scoring order is deterministic: combat-start counters, hard counters,
+  distinct threat coverage, fewer selected skills, more retained current
+  skills, then stable categorized skill key.
+- Ineligible options, active-role conflicts, every infeasible combination,
+  exploration truncation, and result truncation retain explicit diagnostics;
+  feasibility diagnostics include all underlying failures.
+- Explicit helper-side direction changes allow neutral 金猊 to be proposed as
+  Reverse and reverse 墨玉 as Direct. The exact target effect must exist and
+  match verified evidence; the result only records a manual change.
+- Ten focused generator xUnit v3 tests cover feasibility, over-budget
+  exclusion, opening priority, bounds, determinism, retention, option/effect
+  diagnostics, active-role conflicts, and manual direction changes. Three
+  candidate-validation cases cover opt-in direction changes and missing
+  effects.
+- Generation is pure Domain work and cannot equip skills, change directions,
+  write a save, or control the game.
+- `dotnet test --no-restore`: 184 tests passed.
 
 ### M1-017 — Implement recommendation scoring
 

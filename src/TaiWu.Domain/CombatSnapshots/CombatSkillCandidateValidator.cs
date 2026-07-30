@@ -100,21 +100,27 @@ public static class CombatSkillCandidateValidator
         }
         else if (skill.Direction.Value == PracticeDirection.Neutral)
         {
-            rejections.Add(
-                Reject(
-                    CombatSkillCandidateRejectionCode
-                        .NeutralDirectionCannotActivateEffect,
-                    $"Skill {skill.SkillId} is Neutral and cannot activate "
-                    + $"its {requiredDirection} effect."));
+            if (!candidate.AllowDirectionChange)
+            {
+                rejections.Add(
+                    Reject(
+                        CombatSkillCandidateRejectionCode
+                            .NeutralDirectionCannotActivateEffect,
+                        $"Skill {skill.SkillId} is Neutral and cannot "
+                        + $"activate its {requiredDirection} effect."));
+            }
         }
         else if (skill.Direction.Value != requiredDirection)
         {
-            rejections.Add(
-                Reject(
-                    CombatSkillCandidateRejectionCode.DirectionMismatch,
-                    $"Skill {skill.SkillId} is "
-                    + $"{skill.Direction.Value}, not "
-                    + $"{requiredDirection}."));
+            if (!candidate.AllowDirectionChange)
+            {
+                rejections.Add(
+                    Reject(
+                        CombatSkillCandidateRejectionCode.DirectionMismatch,
+                        $"Skill {skill.SkillId} is "
+                        + $"{skill.Direction.Value}, not "
+                        + $"{requiredDirection}."));
+            }
         }
 
         ValidateDirectionEffect(

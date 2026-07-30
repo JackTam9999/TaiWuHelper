@@ -5,7 +5,8 @@ public sealed record CombatSkillCandidate
     public CombatSkillCandidate(
         int skillId,
         bool requiresMastery = false,
-        PracticeDirection? requiredDirection = null)
+        PracticeDirection? requiredDirection = null,
+        bool allowDirectionChange = false)
     {
         if (skillId < 0)
         {
@@ -27,6 +28,7 @@ public sealed record CombatSkillCandidate
         SkillId = skillId;
         RequiresMastery = requiresMastery;
         RequiredDirection = requiredDirection;
+        AllowDirectionChange = allowDirectionChange;
     }
 
     public int SkillId { get; }
@@ -34,4 +36,6 @@ public sealed record CombatSkillCandidate
     public bool RequiresMastery { get; }
 
     public PracticeDirection? RequiredDirection { get; }
+
+    public bool AllowDirectionChange { get; }
 }

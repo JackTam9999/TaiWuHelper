@@ -260,14 +260,24 @@ The validator applies these rules:
   value. Skills that do not depend on mastery are not rejected merely because
   they are unmastered.
 - A direction-independent candidate may use a Neutral skill.
-- A Direct requirement needs current Direct practice and an available
+- A strict Direct requirement needs current Direct practice and an available
   `DirectEffectId`.
-- A Reverse requirement needs current Reverse practice and an available
+- A strict Reverse requirement needs current Reverse practice and an available
   `ReverseEffectId`.
 - Neutral means the direct and reverse counts are tied; it activates neither
   direction-specific effect.
 - Unknown direction, an opposite direction, and unavailable effect data are
   separate rejection reasons.
+
+A candidate may opt in to `AllowDirectionChange` for a helper-side proposal.
+In that mode, an available current Neutral or opposite direction can be
+accepted for a Direct or Reverse recommendation, but the requested
+direction-specific effect must still be available. Unknown current direction
+and a requested Neutral effect remain invalid.
+
+An accepted mismatch is exposed as `RequiredDirectionChange` in the validation
+result. This is manual recommendation data for later presentation, not a game
+operation.
 
 Expected ineligibility is returned as
 `CombatSkillCandidateRejection`, not thrown as control flow. Each rejection has
