@@ -8,6 +8,7 @@ using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.SaveGames;
 using TaiWu.Infrastructure;
 using TaiWuAPI.Controllers;
+using TaiWuAPI.Presentation;
 using Xunit;
 
 namespace TaiWu.Architecture.Tests;
@@ -180,6 +181,36 @@ public sealed partial class ArchitectureBoundaryTests
             "The API must remain information-only:"
             + Environment.NewLine
             + string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void Presentation_models_expose_no_GameData_or_game_commands()
+    {
+        var presentationTypes = typeof(CombatRecommendationViewModel)
+            .Assembly
+            .GetExportedTypes()
+            .Where(type => type.Namespace == "TaiWuAPI.Presentation")
+            .ToArray();
+        var gameDataTypes = presentationTypes
+            .SelectMany(GetPublicSignatureTypes)
+            .Where(IsGameDataType)
+            .Select(type => type.FullName ?? type.Name)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        var gameCommands = presentationTypes
+            .SelectMany(type => type.GetMethods(
+                BindingFlags.Instance
+                | BindingFlags.Public
+                | BindingFlags.DeclaredOnly))
+            .Where(method => GameMutationActionPattern().IsMatch(method.Name))
+            .Select(method => $"{method.DeclaringType?.Name}.{method.Name}")
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.NotEmpty(presentationTypes);
+        Assert.Empty(gameDataTypes);
+        Assert.Empty(gameCommands);
     }
 
     [Fact]

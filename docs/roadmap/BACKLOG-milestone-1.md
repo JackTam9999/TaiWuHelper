@@ -1153,6 +1153,8 @@ Verify the adapter against the locally installed game and configured save.
 
 ### M1-026 — Define recommendation presentation view models
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-019, M1-021
@@ -1162,16 +1164,39 @@ models used by the local UI.
 
 #### Acceptance criteria
 
-- [ ] Safe, balanced, and aggressive recommendations are returned from the
+- [x] Safe, balanced, and aggressive recommendations are returned from the
       same immutable snapshot.
-- [ ] The requested style identifies the initially selected recommendation.
-- [ ] Threats, skill reasons, manual changes, and battle-plan steps have stable
+- [x] The requested style identifies the initially selected recommendation.
+- [x] Threats, skill reasons, manual changes, and battle-plan steps have stable
       references.
-- [ ] Direction, actual and effective cost, capacity, generic allocation,
+- [x] Direction, actual and effective cost, capacity, generic allocation,
       timing, conditions, evidence, and warnings are represented explicitly.
-- [ ] Presentation view models contain no `GameData` types.
-- [ ] No response or view-model operation can execute a recommendation.
-- [ ] Contract and mapping behavior is covered by xUnit v3 tests.
+- [x] Presentation view models contain no `GameData` types.
+- [x] No response or view-model operation can execute a recommendation.
+- [x] Contract and mapping behavior is covered by xUnit v3 tests.
+
+#### Evidence
+
+- `CombatRecommendationViewModelMapper` maps all Safe, Balanced, and Aggressive
+  results from one `CombatLoadoutRecommendation` and repeats the source
+  snapshot reference on every style.
+- The requested policy produces exactly one `IsInitiallySelected` style and a
+  stable `InitiallySelectedStyleReference`.
+- Presentation records explicitly model threats, scores, five Chinese-named
+  skill categories, capacity, remaining and generic slots, skill direction,
+  actual/effective cost, reductions, counter timing, conditions, evidence,
+  manual changes, battle-plan steps, caveats, and warnings.
+- Stable references cover styles, threats, categories, skills, reasons,
+  conditions, score rows, manual changes, plan steps, caveats, and warnings.
+- Every model carries the persistent information-only notice that the helper
+  cannot apply, equip, or execute a recommendation.
+- Three API-layer xUnit v3 cases cover style selection, shared snapshot
+  identity, non-zero generic allocation, costs, direction, timing, conditions,
+  evidence, warnings, stable mapping, and the non-interference notice.
+- An architecture test reflects every public Presentation signature and
+  rejects GameData types or game-mutation operation names.
+- Default `dotnet test --no-restore`: 253 tests discovered, 252 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ### M1-027 — Add the local Blazor shell and recommendation controls
 
