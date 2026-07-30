@@ -87,3 +87,38 @@ The player's observed reset at 36 defeat marks resembles reverse 九色玉蟬法
 but the current snapshot does not prove that the target equipped that source
 effect. It therefore remains an unknown-mechanic warning until new target
 evidence confirms it.
+
+## Deterministic target analysis
+
+`TargetThreatAnalyzer` combines an immutable `CombatSnapshot` with a
+versioned `TargetThreatRuleSet`. A rule signature contains an exact skill ID,
+Direct or Reverse direction, and raw effect ID. Analysis stops with a warning
+when the snapshot GameData version is unavailable or does not exactly match
+the rule set.
+
+Candidate skills are traversed in this order:
+
+1. equipped skills in category and loadout order;
+2. remaining learned skills in ascending skill-ID order.
+
+Every finding retains all matching `TargetThreatSource` values and labels them
+as `Equipped` or `LearnedUnequipped`. Final findings are sorted by descending
+severity, source scope, and ordinal stable code. Reordering the rules therefore
+cannot change the result.
+
+An unavailable target loadout does not become an empty equipped loadout. The
+analyzer emits `TARGET_EQUIPPED_SKILLS_UNAVAILABLE` and may still report
+learned-skill evidence with the weaker `LearnedUnequipped` scope.
+
+The golden rules cover all 16 type-13 magic-sound skill IDs and their verified
+Direct effect IDs. The current target snapshot contains eight matching Direct
+skills (`719`, `721`, `722`, `724`, `725`, `727`, `731`, and `733`) but no
+equipped-skill evidence. Its ordered output is:
+
+1. `DISTRACTION_MARK_ACCUMULATION` — Critical;
+2. `MIND_RESONANCE_CASCADE` — Critical; and
+3. `POSITIVE_MAGIC_SOUND_MIND_DAMAGE` — High.
+
+Unknown directions, missing effect IDs, changed effect IDs, missing learned
+records for equipped skills, and unresolved rule mechanics remain warnings.
+The analyzer does not infer an equipped loadout or invoke any game behavior.

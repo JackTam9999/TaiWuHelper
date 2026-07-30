@@ -636,6 +636,8 @@ evidence.
 
 ### M1-014 — Implement target threat analyzer
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-005, M1-013
@@ -644,11 +646,43 @@ Analyze the target snapshot and return ordered threats.
 
 #### Acceptance criteria
 
-- [ ] Equipped target skills are analyzed before unequipped learned skills.
-- [ ] Combat-start and always-equipped effects are distinguished from active
+- [x] Equipped target skills are analyzed before unequipped learned skills.
+- [x] Combat-start and always-equipped effects are distinguished from active
       effects.
-- [ ] Critical threat ranking is deterministic.
-- [ ] Golden-target output matches manual analysis.
+- [x] Critical threat ranking is deterministic.
+- [x] Golden-target output matches manual analysis.
+
+#### Evidence
+
+- `TargetThreatAnalyzer` accepts only the immutable `CombatSnapshot` and a
+  versioned `TargetThreatRuleSet`; it has no Infrastructure or GameData
+  dependency.
+- Candidate traversal records equipped sources first and then learned,
+  unequipped sources in skill-ID order. Multiple sources for one threat remain
+  visible in that same order.
+- Activation timing remains typed as Always, CombatStart, OnSkillUse, OnHit,
+  OnMarkApplied, Threshold, or Unknown, so passive/opening effects are not
+  collapsed into active effects.
+- Threats sort by descending severity, equipped-before-learned source scope,
+  and stable ordinal threat code.
+- GameData version, skill ID, practice direction, and raw effect ID must all
+  match the verified rule signature. Missing or changed facts become warnings.
+- The golden rules cover type-13 skills `718`–`733`. The current snapshot
+  matches eight Direct-practice skills: `719`, `721`, `722`, `724`, `725`,
+  `727`, `731`, and `733`.
+- Golden output is deterministically `DISTRACTION_MARK_ACCUMULATION`,
+  `MIND_RESONANCE_CASCADE`, then
+  `POSITIVE_MAGIC_SOUND_MIND_DAMAGE`, matching the manual analysis.
+- Because target `16317` has no equipped-skill list in the disk snapshot, all
+  matched sources are explicitly `LearnedUnequipped` and a
+  `TARGET_EQUIPPED_SKILLS_UNAVAILABLE` warning is returned. The unconfirmed
+  36-mark reset warning is also retained.
+- The fingerprint-checked inspection reported the save unchanged; no save,
+  report output, path, or fingerprint is committed.
+- Nine focused xUnit v3 tests cover source precedence, activation timing,
+  deterministic ranking, missing loadout fallback, unknown and Neutral
+  effects, version invalidation, golden output, and invalid rules.
+- `dotnet test --no-restore`: 162 tests passed.
 
 ### M1-015 — Define counter rules for the golden target
 
