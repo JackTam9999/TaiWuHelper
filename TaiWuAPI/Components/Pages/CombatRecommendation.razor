@@ -215,15 +215,7 @@
 
     @if (_model.Warnings.Count > 0)
     {
-        <section class="message-card warning-message" aria-labelledby="warning-heading">
-            <strong id="warning-heading">Warnings and unavailable information</strong>
-            <ul>
-                @foreach (var warning in _model.Warnings)
-                {
-                    <li><span>@warning.Code</span> @warning.Message</li>
-                }
-            </ul>
-        </section>
+        <WarningBanner Warnings="_model.Warnings" />
     }
 
     <section class="result-shell">
@@ -314,11 +306,14 @@
         {
             var checklist = ManualSetupChecklistBuilder.Build(visible);
             var battlePlan = BattlePlanViewModelBuilder.Build(visible);
+            var supportingDetails =
+                RecommendationSupportingDetailsBuilder.Build(_model, visible);
             <div class="manual-plan-grid">
                 <ManualChecklist Items="checklist" />
                 <BattlePlan Phases="battlePlan"
                             SelectedThreatReference="_selection.SelectedThreatReference" />
             </div>
+            <SupportingDetails Details="supportingDetails" />
         }
     </section>
 }

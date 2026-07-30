@@ -111,6 +111,30 @@ public sealed class CombatRecommendationViewModelMapperTests
             step => Assert.False(string.IsNullOrWhiteSpace(step.Reference)));
     }
 
+    [Fact]
+    public async Task Supporting_details_include_alternatives_scores_and_evidence()
+    {
+        var recommendation = await RecommendAsync(
+            RecommendationPolicy.Safe);
+        var model = CombatRecommendationViewModelMapper.Map(recommendation);
+        var selected = model.Styles.Single(
+            style => style.Style == RecommendationPolicy.Safe);
+
+        var details = RecommendationSupportingDetailsBuilder.Build(
+            model,
+            selected);
+
+        Assert.Equal(2, details.Alternatives.Count);
+        Assert.NotEmpty(details.Scores);
+        Assert.NotEmpty(details.EvidenceReferences);
+        Assert.Contains("never replaces", details.UnknownValuePolicy);
+        Assert.Equal(
+            details.EvidenceReferences.Count,
+            details.EvidenceReferences
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+    }
+
     private static async Task<CombatLoadoutRecommendation> RecommendAsync(
         RecommendationPolicy policy)
     {

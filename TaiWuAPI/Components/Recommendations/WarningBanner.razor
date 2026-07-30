@@ -1,0 +1,67 @@
+@using TaiWuAPI.Presentation
+
+<section class="warning-banner"
+         aria-labelledby="warning-heading"
+         aria-live="polite">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Review before setup</p>
+            <h2 id="warning-heading">Warnings and unavailable information</h2>
+        </div>
+        @if (Warnings.Any(warning => warning.IsCritical))
+        {
+            <span class="critical-label">Critical review required</span>
+        }
+    </div>
+
+    <div class="warning-list">
+        @foreach (var warning in Warnings
+            .OrderByDescending(value => value.IsCritical)
+            .ThenBy(value => value.Kind)
+            .ThenBy(value => value.Reference, StringComparer.Ordinal))
+        {
+            <article class="@(warning.IsCritical ? "warning-item critical" : "warning-item")">
+                <div>
+                    <span class="warning-kind">@WarningKindLabel(warning.Kind)</span>
+                    @if (warning.IsCritical)
+                    {
+                        <strong>Critical</strong>
+                    }
+                </div>
+                <h3>@warning.Code</h3>
+                <p>@warning.Message</p>
+                <p class="warning-effect">
+                    <strong>Effect on recommendation:</strong>
+                    @warning.EffectOnRecommendation
+                </p>
+                @if (warning.EvidenceReferences.Count > 0)
+                {
+                    <div class="warning-evidence" aria-label="Warning evidence">
+                        @foreach (var evidence in warning.EvidenceReferences)
+                        {
+                            <code>@evidence</code>
+                        }
+                    </div>
+                }
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<RecommendationWarningViewModel> Warnings { get; set; } = [];
+
+    private static string WarningKindLabel(
+        PresentationWarningKind kind) => kind switch
+    {
+        PresentationWarningKind.StaleData => "Stale data",
+        PresentationWarningKind.ObservationDifference =>
+            "Observation difference",
+        PresentationWarningKind.UnavailableValue => "Unavailable value",
+        PresentationWarningKind.UnverifiedMechanic => "Unverified mechanic",
+        PresentationWarningKind.CandidateSearch => "Candidate search",
+        PresentationWarningKind.General => "General",
+        _ => kind.ToString()
+    };
+}

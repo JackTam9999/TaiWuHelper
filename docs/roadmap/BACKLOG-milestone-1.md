@@ -1359,6 +1359,8 @@ show the evidence-backed combat sequence.
 
 ### M1-030 — Add warnings, alternatives, assumptions, and evidence
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-019, M1-028
@@ -1368,13 +1370,43 @@ primary recommendation.
 
 #### Acceptance criteria
 
-- [ ] Critical warnings appear above the loadout and are not collapsed.
-- [ ] Stale data, observation differences, unavailable values, unverified
+- [x] Critical warnings appear above the loadout and are not collapsed.
+- [x] Stale data, observation differences, unavailable values, unverified
       mechanics, and conditional requirements are distinguishable.
-- [ ] Alternatives, assumptions, score contributions, and detailed evidence
+- [x] Alternatives, assumptions, score contributions, and detailed evidence
       use accessible supporting panels.
-- [ ] Each warning explains its effect on the recommendation.
-- [ ] Unknown values are never silently replaced with estimates.
+- [x] Each warning explains its effect on the recommendation.
+- [x] Unknown values are never silently replaced with estimates.
+
+#### Evidence
+
+- `RecommendationWarningPresentation` classifies warnings as StaleData,
+  ObservationDifference, UnavailableValue, UnverifiedMechanic,
+  CandidateSearch, or General and assigns explicit criticality.
+- Every warning receives an `EffectOnRecommendation` statement. Unavailable
+  values explicitly remain unavailable and are never replaced by estimates.
+- `WarningBanner` is rendered before the result/loadout shell, orders critical
+  warnings first, and uses no collapsed disclosure for warning content.
+- Critical status and warning kind are written as text in addition to visual
+  styling.
+- `RecommendationSupportingDetailsBuilder` maps the two unselected styles as
+  alternatives, separates assumption and unavailable-data caveats, lists
+  conditional requirements, retains all score components, and deduplicates
+  detailed evidence references.
+- Alternatives, assumptions/unavailable data, conditional requirements, score
+  contributions, and evidence use keyboard-accessible native `details`
+  panels; none depends on hover.
+- The supporting section repeats the policy:
+  `Unknown values remain unavailable. TaiWu Helper never replaces them with
+  estimates.`
+- Seven warning-classification theory cases/facts and one supporting-details
+  mapper case cover category, criticality, effect text, alternatives, scores,
+  evidence, deduplication, and the no-estimate policy.
+- An architecture test verifies warning placement above the loadout,
+  uncollapsed critical content, explicit effects, all supporting panels, and
+  uncertainty wording.
+- Default `dotnet test --no-restore`: 271 tests discovered, 270 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ### M1-031 — Implement responsive, accessible, and failure states
 

@@ -345,6 +345,42 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Warning_and_supporting_details_keep_uncertainty_explicit()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var componentRoot = Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "Components",
+            "Recommendations");
+        var page = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Components",
+                "Pages",
+                "CombatRecommendation.razor"));
+        var warnings = File.ReadAllText(
+            Path.Combine(componentRoot, "WarningBanner.razor"));
+        var supporting = File.ReadAllText(
+            Path.Combine(componentRoot, "SupportingDetails.razor"));
+
+        Assert.True(
+            page.IndexOf("<WarningBanner", StringComparison.Ordinal)
+            < page.IndexOf("<section class=\"result-shell\"", StringComparison.Ordinal));
+        Assert.DoesNotContain("<details", warnings);
+        Assert.Contains("Effect on recommendation:", warnings);
+        Assert.Contains("warning.IsCritical", warnings);
+        Assert.Contains("Alternatives", supporting);
+        Assert.Contains("Assumptions and unavailable data", supporting);
+        Assert.Contains("Conditional requirements", supporting);
+        Assert.Contains("Score contributions", supporting);
+        Assert.Contains("Detailed evidence", supporting);
+        Assert.Contains("Details.UnknownValuePolicy", supporting);
+        Assert.DoesNotContain("win probability", supporting);
+    }
+
+    [Fact]
     public void Save_game_api_reads_only_the_configured_path_with_get()
     {
         var repositoryRoot = FindRepositoryRoot();

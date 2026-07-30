@@ -287,29 +287,26 @@ public static class CombatRecommendationViewModelMapper
         CombatLoadoutRecommendation recommendation)
     {
         var snapshotWarnings = recommendation.SnapshotWarnings
-            .Select((warning, index) =>
-                new RecommendationWarningViewModel(
-                    $"warning:snapshot:{warning.Code}:{index + 1}",
-                    "Snapshot",
-                    warning.Code,
-                    warning.Message,
-                    EvidenceReferences: Array.Empty<string>()));
+            .Select((warning, index) => MapWarning(
+                $"warning:snapshot:{warning.Code}:{index + 1}",
+                "Snapshot",
+                warning.Code,
+                warning.Message,
+                evidenceReferences: []));
         var threatWarnings = recommendation.ThreatAnalysis.Warnings
-            .Select((warning, index) =>
-                new RecommendationWarningViewModel(
-                    $"warning:threat:{warning.Code}:{index + 1}",
-                    "ThreatAnalysis",
-                    warning.Code,
-                    warning.Message,
-                    [warning.Mechanic.EvidenceReference]));
+            .Select((warning, index) => MapWarning(
+                $"warning:threat:{warning.Code}:{index + 1}",
+                "ThreatAnalysis",
+                warning.Code,
+                warning.Message,
+                [warning.Mechanic.EvidenceReference]));
         var generationWarnings = recommendation.Generation.Diagnostics
-            .Select((warning, index) =>
-                new RecommendationWarningViewModel(
-                    $"warning:generation:{warning.Code}:{index + 1}",
-                    "CandidateGeneration",
-                    warning.Code.ToString(),
-                    warning.Reason,
-                    EvidenceReferences: Array.Empty<string>()));
+            .Select((warning, index) => MapWarning(
+                $"warning:generation:{warning.Code}:{index + 1}",
+                "CandidateGeneration",
+                warning.Code.ToString(),
+                warning.Reason,
+                evidenceReferences: []));
 
         return
         [
@@ -317,6 +314,26 @@ public static class CombatRecommendationViewModelMapper
             .. threatWarnings,
             .. generationWarnings
         ];
+    }
+
+    private static RecommendationWarningViewModel MapWarning(
+        string reference,
+        string source,
+        string code,
+        string message,
+        IReadOnlyList<string> evidenceReferences)
+    {
+        var classification =
+            RecommendationWarningPresentation.Classify(source, code);
+        return new RecommendationWarningViewModel(
+            reference,
+            source,
+            code,
+            classification.Kind,
+            classification.IsCritical,
+            message,
+            classification.EffectOnRecommendation,
+            evidenceReferences);
     }
 
     private static string CategoryDisplayName(

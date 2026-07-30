@@ -1,0 +1,146 @@
+@using TaiWuAPI.Presentation
+
+<section class="supporting-details recommendation-only"
+         aria-labelledby="supporting-details-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Supporting detail</p>
+            <h3 id="supporting-details-heading">Verify the recommendation</h3>
+        </div>
+    </div>
+
+    <p class="unknown-policy">@Details.UnknownValuePolicy</p>
+
+    <div class="supporting-panels">
+        <details>
+            <summary>
+                Alternatives
+                <span>@Details.Alternatives.Count</span>
+            </summary>
+            <div class="alternative-list">
+                @foreach (var alternative in Details.Alternatives)
+                {
+                    <article>
+                        <strong>@alternative.Style</strong>
+                        @if (alternative.HasRecommendation)
+                        {
+                            <span>
+                                Score @alternative.TotalScore?.ToString("0.##") ·
+                                @alternative.ManualChangeCount manual changes ·
+                                @alternative.CaveatCount caveats
+                            </span>
+                        }
+                        else
+                        {
+                            <span>@alternative.Diagnostic</span>
+                        }
+                    </article>
+                }
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                Assumptions and unavailable data
+                <span>@(Details.Assumptions.Count + Details.UnavailableData.Count)</span>
+            </summary>
+            <div class="support-list">
+                @foreach (var caveat in Details.Assumptions)
+                {
+                    <article>
+                        <strong>Assumption · @caveat.Code</strong>
+                        <span>@caveat.Explanation</span>
+                    </article>
+                }
+                @foreach (var caveat in Details.UnavailableData)
+                {
+                    <article>
+                        <strong>Unavailable · @caveat.Code</strong>
+                        <span>@caveat.Explanation</span>
+                    </article>
+                }
+                @if (Details.Assumptions.Count == 0
+                     && Details.UnavailableData.Count == 0)
+                {
+                    <p>No additional assumption or unavailable-data caveat was produced.</p>
+                }
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                Conditional requirements
+                <span>@Details.ConditionalRequirements.Count</span>
+            </summary>
+            <div class="support-list">
+                @foreach (var requirement in Details.ConditionalRequirements)
+                {
+                    <article>
+                        <strong>@requirement.SkillName · @requirement.Condition.Kind</strong>
+                        <span>@requirement.Condition.Evaluation</span>
+                        <code>@requirement.Condition.EvidenceReference</code>
+                    </article>
+                }
+                @if (Details.ConditionalRequirements.Count == 0)
+                {
+                    <p>No conditional requirement was selected for this style.</p>
+                }
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                Score contributions
+                <span>@Details.Scores.Count</span>
+            </summary>
+            <div class="score-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Component</th>
+                            <th scope="col">Weight</th>
+                            <th scope="col">Score</th>
+                            <th scope="col">Points</th>
+                            <th scope="col">Explanation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var score in Details.Scores)
+                        {
+                            <tr>
+                                <th scope="row">@score.Component</th>
+                                <td>@score.Weight</td>
+                                <td>@score.Score?.ToString("0.##")</td>
+                                <td>@score.WeightedPoints?.ToString("0.##")</td>
+                                <td>@score.Explanation</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                Detailed evidence
+                <span>@Details.EvidenceReferences.Count</span>
+            </summary>
+            <div class="evidence-list">
+                @foreach (var evidence in Details.EvidenceReferences)
+                {
+                    <code>@evidence</code>
+                }
+                @if (Details.EvidenceReferences.Count == 0)
+                {
+                    <p>No evidence reference was available.</p>
+                }
+            </div>
+        </details>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public RecommendationSupportingDetailsViewModel Details { get; set; } =
+        default!;
+}

@@ -133,9 +133,22 @@ public sealed record RecommendationCaveatViewModel(
     int? SkillId,
     IReadOnlyList<string> EvidenceReferences);
 
+public enum PresentationWarningKind
+{
+    StaleData,
+    ObservationDifference,
+    UnavailableValue,
+    UnverifiedMechanic,
+    CandidateSearch,
+    General
+}
+
 public sealed record RecommendationWarningViewModel(
     string Reference,
     string Source,
     string Code,
+    PresentationWarningKind Kind,
+    bool IsCritical,
     string Message,
+    string EffectOnRecommendation,
     IReadOnlyList<string> EvidenceReferences);
