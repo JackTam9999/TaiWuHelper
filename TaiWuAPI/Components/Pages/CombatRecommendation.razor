@@ -312,14 +312,13 @@
 
         @if (visible.HasRecommendation)
         {
-            var planSteps = visible.OpeningActions
-                .Concat(visible.SwitchingConditions)
-                .ToArray();
-            @if (planSteps.Length > 0)
-            {
-                <PlanLinkPreview Steps="planSteps"
-                                 SelectedThreatReference="_selection.SelectedThreatReference" />
-            }
+            var checklist = ManualSetupChecklistBuilder.Build(visible);
+            var battlePlan = BattlePlanViewModelBuilder.Build(visible);
+            <div class="manual-plan-grid">
+                <ManualChecklist Items="checklist" />
+                <BattlePlan Phases="battlePlan"
+                            SelectedThreatReference="_selection.SelectedThreatReference" />
+            </div>
         }
     </section>
 }

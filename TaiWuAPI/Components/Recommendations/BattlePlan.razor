@@ -1,0 +1,64 @@
+@using TaiWuAPI.Presentation
+
+<section class="battle-plan recommendation-only"
+         aria-labelledby="battle-plan-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Fight reference</p>
+            <h3 id="battle-plan-heading">Battle plan</h3>
+        </div>
+    </div>
+
+    <div class="battle-phases">
+        @foreach (var phase in Phases)
+        {
+            <section class="battle-phase">
+                <h4>@phase.Title</h4>
+                @if (phase.Items.Count == 0)
+                {
+                    <p>No separate evidence-backed instruction is available for this phase.</p>
+                }
+                else
+                {
+                    <ol>
+                        @foreach (var item in phase.Items)
+                        {
+                            <li class="@(AddressesSelectedThreat(item) ? "threat-highlight" : null)">
+                                <strong>@item.Instruction</strong>
+                                @if (item.SkillId.HasValue)
+                                {
+                                    <span>Skill @item.SkillId</span>
+                                }
+                                <details>
+                                    <summary>Reason and evidence</summary>
+                                    @if (item.ReasonReference is not null)
+                                    {
+                                        <code>@item.ReasonReference</code>
+                                    }
+                                    @foreach (var evidence in item.EvidenceReferences)
+                                    {
+                                        <code>@evidence</code>
+                                    }
+                                </details>
+                            </li>
+                        }
+                    </ol>
+                }
+            </section>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<BattlePlanPhaseViewModel> Phases { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedThreatReference { get; set; }
+
+    private bool AddressesSelectedThreat(BattlePlanItemViewModel item) =>
+        SelectedThreatReference is not null
+        && item.ThreatReferences.Contains(
+            SelectedThreatReference,
+            StringComparer.Ordinal);
+}

@@ -1305,6 +1305,8 @@ Implement the primary two-column pre-fight briefing described by
 
 ### M1-029 — Add the manual setup checklist and battle plan
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-018, M1-028
@@ -1314,14 +1316,46 @@ show the evidence-backed combat sequence.
 
 #### Acceptance criteria
 
-- [ ] The checklist includes manual add, remove, retain, direction, generic
+- [x] The checklist includes manual add, remove, retain, direction, generic
       allocation, weapon, and Neili steps where relevant.
-- [ ] Checklist completion changes helper UI state only.
-- [ ] The battle plan covers before-combat, opening, normal execution,
+- [x] Checklist completion changes helper UI state only.
+- [x] The battle plan covers before-combat, opening, normal execution,
       trigger-based reactions, and switching conditions when available.
-- [ ] Every checklist and plan item links to its reason or evidence.
-- [ ] The section states that TaiWu Helper cannot perform the instructions.
-- [ ] Copy and print operations contain recommendations only.
+- [x] Every checklist and plan item links to its reason or evidence.
+- [x] The section states that TaiWu Helper cannot perform the instructions.
+- [x] Copy and print operations contain recommendations only.
+
+#### Evidence
+
+- `ManualSetupChecklistBuilder` deterministically maps Remove, Add, Retain, and
+  ChangeDirection instructions, non-zero 萬用 allocations, and verified Weapon
+  or Resource requirements into stable checklist items.
+- Resource requirements retain their evaluated text, including Neili
+  thresholds where present, rather than inventing unavailable values.
+- Checklist completion is an in-component `HashSet` keyed by stable item
+  reference. It invokes no Application use case, API, save reader, or game
+  service and is discarded with the helper UI session.
+- `BattlePlanViewModelBuilder` always presents Before combat, Opening, Normal
+  execution, Trigger-based reactions, and Switching conditions, populating
+  only instructions supported by the selected style's structured plan and
+  counter timing.
+- Every checklist and battle-plan item carries a reason reference or evidence
+  reference. Selecting a threat highlights linked battle-plan items through
+  their structured threat references.
+- The checklist permanently states
+  `Instructions only: TaiWu Helper cannot perform these steps.`
+- Copy sends only the numbered recommendation checklist and non-interference
+  notice to the clipboard. Print CSS hides target controls, source metadata,
+  navigation, and interactive actions, leaving recommendation content only.
+- The small M1-028 preview was removed after the full battle plan superseded
+  it, avoiding two competing plan presentations.
+- Three xUnit v3 cases cover every checklist kind, all five populated plan
+  phases, reason/evidence linkage, Neili wording, and deterministic references.
+- An architecture test verifies helper-local checkbox state, reason/evidence
+  display, clipboard/print-only JavaScript, print isolation, and absence of
+  network or mutation operations.
+- Default `dotnet test --no-restore`: 262 tests discovered, 261 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ### M1-030 — Add warnings, alternatives, assumptions, and evidence
 

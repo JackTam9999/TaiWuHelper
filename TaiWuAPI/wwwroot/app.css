@@ -249,8 +249,7 @@ h2 {
 }
 
 .control-group small,
-.target-result small,
-.next-slice-note {
+.target-result small {
     color: var(--muted);
     line-height: 1.45;
 }
@@ -513,10 +512,6 @@ select {
     color: var(--muted);
 }
 
-.next-slice-note {
-    margin: 18px 0 0;
-}
-
 .briefing-grid {
     display: grid;
     grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.8fr);
@@ -526,8 +521,7 @@ select {
 }
 
 .threat-panel,
-.loadout-panel,
-.plan-preview {
+.loadout-panel {
     border: 1px solid var(--line);
     border-radius: 4px;
     background: rgba(9, 23, 23, 0.56);
@@ -539,8 +533,7 @@ select {
     padding: 22px;
 }
 
-.loadout-panel,
-.plan-preview {
+.loadout-panel {
     padding: 24px;
 }
 
@@ -720,8 +713,7 @@ select {
     transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
-.skill-card.threat-highlight,
-.plan-preview li.threat-highlight {
+.skill-card.threat-highlight {
     border-color: rgba(215, 182, 107, 0.82);
     box-shadow: 0 0 0 2px rgba(215, 182, 107, 0.12);
 }
@@ -859,43 +851,173 @@ select {
     font-size: 0.82rem;
 }
 
-.plan-preview {
+.manual-plan-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.4fr);
+    gap: 18px;
+    align-items: start;
     margin-top: 18px;
 }
 
-.plan-preview ol {
+.manual-checklist,
+.battle-plan {
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(9, 23, 23, 0.56);
+}
+
+.recommendation-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.manual-boundary {
+    margin: 16px 0;
+    padding: 12px 14px;
+    border-left: 3px solid var(--jade);
+    color: #c8e7de;
+    background: rgba(101, 182, 162, 0.1);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.checklist-items {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin: 18px 0 0;
+    gap: 9px;
+    margin: 0;
     padding: 0;
     list-style: none;
+    counter-reset: checklist;
 }
 
-.plan-preview li {
-    display: grid;
-    gap: 7px;
-    padding: 14px;
+.checklist-items > li {
+    padding: 12px;
     border: 1px solid var(--line);
-    background: rgba(24, 45, 43, 0.48);
+    background: rgba(24, 45, 43, 0.46);
+    counter-increment: checklist;
 }
 
-.plan-preview li > span {
+.checklist-items label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+    cursor: pointer;
+}
+
+.checklist-items input {
+    width: 18px;
+    min-height: 18px;
+    margin-top: 2px;
+}
+
+.checklist-items label > span {
+    color: #c7d2cd;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.checklist-items label strong {
+    display: inline-block;
+    min-width: 62px;
+    margin-right: 5px;
     color: var(--gold);
-    font-size: 0.66rem;
-    font-weight: 800;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.checklist-items input:checked + span {
+    color: var(--muted);
+    text-decoration: line-through;
+}
+
+.checklist-items details,
+.battle-phase details {
+    margin: 8px 0 0 28px;
+    color: var(--muted);
+    font-size: 0.68rem;
+}
+
+.checklist-items details code,
+.battle-phase details code {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 5px;
+    overflow: hidden;
+    color: #b8d8cf;
+    text-overflow: ellipsis;
+}
+
+.copy-status {
+    margin: 12px 0 0;
+    color: var(--jade);
+    font-size: 0.78rem;
+}
+
+.battle-phases {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.battle-phase {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+
+.battle-phase h4 {
+    margin: 0;
+    color: var(--gold);
+    font-size: 0.74rem;
     letter-spacing: 0.07em;
     text-transform: uppercase;
 }
 
-.plan-preview li strong {
-    font-size: 0.83rem;
+.battle-phase > p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
     line-height: 1.5;
 }
 
-.plan-preview li small {
+.battle-phase ol {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.battle-phase li {
+    display: grid;
+    gap: 5px;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    background: rgba(24, 45, 43, 0.46);
+}
+
+.battle-phase li.threat-highlight {
+    border-color: rgba(215, 182, 107, 0.82);
+    box-shadow: 0 0 0 2px rgba(215, 182, 107, 0.12);
+}
+
+.battle-phase li > strong {
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.battle-phase li > span {
     color: var(--muted);
-    font-size: 0.65rem;
+    font-size: 0.68rem;
 }
 
 .empty-state {
@@ -910,7 +1032,8 @@ select {
 
     .hero,
     .control-grid,
-    .briefing-grid {
+    .briefing-grid,
+    .manual-plan-grid {
         grid-template-columns: 1fr;
     }
 
@@ -968,8 +1091,7 @@ select {
     .generic-grid,
     .snapshot-strip,
     .result-summary,
-    .skill-list,
-    .plan-preview ol {
+    .skill-list {
         grid-template-columns: 1fr;
     }
 
@@ -982,6 +1104,10 @@ select {
         width: 100%;
     }
 
+    .battle-phase {
+        grid-template-columns: 1fr;
+    }
+
     .snapshot-strip > div {
         border-right: 0;
         border-bottom: 1px solid var(--line);
@@ -989,5 +1115,67 @@ select {
 
     .snapshot-strip > div:last-child {
         border-bottom: 0;
+    }
+}
+
+@media print {
+    :root {
+        color-scheme: light;
+        background: #fff;
+        color: #111;
+    }
+
+    body,
+    html {
+        background: #fff;
+        color: #111;
+    }
+
+    .app-shell {
+        width: 100%;
+        padding: 0;
+    }
+
+    .app-header,
+    .hero,
+    .control-panel,
+    .message-card,
+    .snapshot-strip,
+    .style-tabs,
+    .result-summary,
+    .threat-panel,
+    .recommendation-actions,
+    .skill-evidence {
+        display: none !important;
+    }
+
+    .result-shell,
+    .loadout-panel,
+    .manual-checklist,
+    .battle-plan {
+        border: 0;
+        color: #111;
+        background: #fff;
+        box-shadow: none;
+    }
+
+    .briefing-grid,
+    .manual-plan-grid {
+        display: block;
+    }
+
+    .skill-card,
+    .checklist-items > li,
+    .battle-phase li {
+        break-inside: avoid;
+        border-color: #bbb;
+        color: #111;
+        background: #fff;
+    }
+
+    .loadout-panel,
+    .manual-checklist,
+    .battle-plan {
+        page-break-after: auto;
     }
 }

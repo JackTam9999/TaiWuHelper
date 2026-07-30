@@ -285,7 +285,7 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("OrderByDescending(threat => threat.Severity)", threatPanel);
         Assert.Contains("<ThreatPanel", page);
         Assert.Contains("<LoadoutCategory", page);
-        Assert.Contains("<PlanLinkPreview", page);
+        Assert.Contains("<BattlePlan", page);
         Assert.Contains("SelectedThreatReference", page);
         Assert.Contains("Actual cost", skillCard);
         Assert.Contains("Effective cost", skillCard);
@@ -296,6 +296,52 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("Category.GenericSlots", capacity);
         Assert.Contains("This is not a win probability.", page);
         Assert.DoesNotContain(">Apply<", page);
+    }
+
+    [Fact]
+    public void Manual_workflow_changes_helper_state_only()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var componentRoot = Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "Components",
+            "Recommendations");
+        var checklist = File.ReadAllText(
+            Path.Combine(componentRoot, "ManualChecklist.razor"));
+        var battlePlan = File.ReadAllText(
+            Path.Combine(componentRoot, "BattlePlan.razor"));
+        var helperScript = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "wwwroot",
+                "helper.js"));
+        var styles = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "wwwroot",
+                "app.css"));
+
+        Assert.Contains(
+            "TaiWu Helper cannot perform these steps.",
+            checklist);
+        Assert.Contains("type=\"checkbox\"", checklist);
+        Assert.Contains("HashSet<string>", checklist);
+        Assert.DoesNotContain("IRecommendCombatLoadout", checklist);
+        Assert.DoesNotContain("IFindTargets", checklist);
+        Assert.Contains("Reason and evidence", checklist);
+        Assert.Contains("Reason and evidence", battlePlan);
+        Assert.Contains("navigator.clipboard.writeText", helperScript);
+        Assert.Contains("window.print()", helperScript);
+        Assert.DoesNotContain("fetch(", helperScript);
+        Assert.DoesNotContain("XMLHttpRequest", helperScript);
+        Assert.DoesNotContain("WebSocket", helperScript);
+        Assert.Contains("@media print", styles);
+        Assert.Contains(".control-panel", styles);
+        Assert.DoesNotContain(">Apply<", checklist);
+        Assert.DoesNotContain(">Execute<", checklist);
     }
 
     [Fact]

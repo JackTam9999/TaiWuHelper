@@ -1,0 +1,124 @@
+@using Microsoft.JSInterop
+@using TaiWuAPI.Presentation
+@inject IJSRuntime JavaScript
+
+<section class="manual-checklist recommendation-only"
+         aria-labelledby="manual-checklist-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Manual setup</p>
+            <h3 id="manual-checklist-heading">Setup checklist</h3>
+        </div>
+        <div class="recommendation-actions no-print">
+            <button type="button" class="text-button" @onclick="CopyAsync">
+                Copy checklist
+            </button>
+            <button type="button" class="text-button" @onclick="PrintAsync">
+                Print recommendation
+            </button>
+        </div>
+    </div>
+
+    <p class="manual-boundary">
+        Instructions only: TaiWu Helper cannot perform these steps.
+    </p>
+
+    @if (Items.Count == 0)
+    {
+        <p class="empty-category">No manual setup differences were produced.</p>
+    }
+    else
+    {
+        <ol class="checklist-items">
+            @foreach (var item in Items)
+            {
+                <li>
+                    <label>
+                        <input type="checkbox"
+                               checked="@_completed.Contains(item.Reference)"
+                               @onchange="() => Toggle(item.Reference)" />
+                        <span>
+                            <strong>@ItemLabel(item.Kind)</strong>
+                            @item.Instruction
+                        </span>
+                    </label>
+                    <details>
+                        <summary>Reason and evidence</summary>
+                        @if (item.ReasonReference is not null)
+                        {
+                            <code>@item.ReasonReference</code>
+                        }
+                        @foreach (var evidence in item.EvidenceReferences)
+                        {
+                            <code>@evidence</code>
+                        }
+                    </details>
+                </li>
+            }
+        </ol>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_copyStatus))
+    {
+        <p class="copy-status" role="status">@_copyStatus</p>
+    }
+</section>
+
+@code {
+    private readonly HashSet<string> _completed =
+        new(StringComparer.Ordinal);
+    private string? _copyStatus;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ManualChecklistItemViewModel> Items { get; set; } = [];
+
+    protected override void OnParametersSet()
+    {
+        var current = Items
+            .Select(item => item.Reference)
+            .ToHashSet(StringComparer.Ordinal);
+        _completed.RemoveWhere(reference => !current.Contains(reference));
+    }
+
+    private void Toggle(string reference)
+    {
+        if (!_completed.Add(reference))
+        {
+            _completed.Remove(reference);
+        }
+    }
+
+    private async Task CopyAsync()
+    {
+        var text = string.Join(
+            Environment.NewLine,
+            new[]
+            {
+                "TaiWu Helper recommendation — information only",
+                "TaiWu Helper cannot perform these steps.",
+                string.Empty
+            }.Concat(
+                Items.Select((item, index) =>
+                    $"{index + 1}. {item.Instruction}")));
+        await JavaScript.InvokeVoidAsync("taiwuHelper.copyText", text);
+        _copyStatus = "Recommendation checklist copied.";
+    }
+
+    private async Task PrintAsync()
+    {
+        await JavaScript.InvokeVoidAsync("taiwuHelper.printRecommendation");
+    }
+
+    private static string ItemLabel(
+        ManualChecklistItemKind kind) => kind switch
+    {
+        ManualChecklistItemKind.RemoveSkill => "Remove",
+        ManualChecklistItemKind.AddSkill => "Add",
+        ManualChecklistItemKind.RetainSkill => "Keep",
+        ManualChecklistItemKind.ChangeDirection => "Direction",
+        ManualChecklistItemKind.AllocateGenericSlots => "萬用",
+        ManualChecklistItemKind.ConfirmWeapon => "Weapon",
+        ManualChecklistItemKind.ConfirmResource => "Resource",
+        _ => kind.ToString()
+    };
+}
