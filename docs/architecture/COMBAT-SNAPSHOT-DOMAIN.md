@@ -214,3 +214,34 @@ The separate `大盈` and `大成` category/generic-grid trade-offs are delibera
 not cost modifiers. They belong to slot-budget calculation in M1-008. The
 verified screenshots and their hashes are recorded in
 `docs/scenarios/M1-007-effective-skill-cost-evidence.md`.
+
+## Slot-budget calculation
+
+`CombatSlotBudgetCalculator` is a pure Domain service for the current immutable
+player snapshot. It uses the verified empty-loadout capacities:
+
+- Neigong: 6
+- Attack, agility, defense, and assistance: 2 each
+
+Only equipped Neigong skills contribute their configured
+`SkillSlotContribution` values to the four outer category capacities.
+Unequipped Neigong and non-Neigong contributions do not affect capacity.
+`GenericSlotAllocation` then adds each assigned generic slot to exactly one
+outer category; generic slots cannot be assigned to Neigong or allocated more
+than their available total.
+
+Used slots are the sum of `CombatSkillCostCalculator` results for the equipped
+skills in that category. This composes configured cost, mastery, and verified
+current `收置` assignments without duplicating cost rules. If any equipped
+skill has unavailable effective cost, the category's used and remaining values
+remain explicitly unavailable while its capacity stays available.
+
+For a valid loadout the service returns a complete `SlotBudgetSet`, including
+used, capacity, and remaining values for all five categories. Unknown skills,
+wrong-category placement, negative derived capacity, and used capacity above
+the calculated limit produce Domain validation errors.
+
+`大盈` and `大成` remain evidence-backed contribution transformations rather
+than occupied-cost rules. The budget calculator consumes the resulting
+`SkillSlotContribution`; it does not infer either transformation unless an
+upstream snapshot source can prove the current assignment.

@@ -381,6 +381,8 @@ confirmed legendary-book assignments.
 
 ### M1-008 — Implement slot-budget calculation
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-003, M1-007
@@ -390,11 +392,34 @@ generic allocation.
 
 #### Acceptance criteria
 
-- [ ] Neigong, attack, agility, defense, and assistance are separate budgets.
-- [ ] Specific bonuses affect only their category.
-- [ ] Generic slots cannot be allocated more than once.
-- [ ] Used and remaining capacity are returned.
-- [ ] Invalid allocations produce Domain validation errors.
+- [x] Neigong, attack, agility, defense, and assistance are separate budgets.
+- [x] Specific bonuses affect only their category.
+- [x] Generic slots cannot be allocated more than once.
+- [x] Used and remaining capacity are returned.
+- [x] Invalid allocations produce Domain validation errors.
+
+#### Evidence
+
+- `CombatSlotBudgetCalculator` is a pure Domain service over
+  `PlayerCombatSnapshot`.
+- The verified empty capacities are explicit: Neigong 6 and each outer
+  category 2.
+- Only equipped Neigong skills add their category-specific
+  `SkillSlotContribution`; unequipped and non-Neigong contributions are
+  ignored.
+- `GenericSlotAllocation` adds only the slots assigned to each outer category
+  and continues to reject negative or duplicate allocation.
+- Used values sum `CombatSkillCostCalculator` results, including mastery and
+  current evidence-backed `收置` fixed costs.
+- Missing effective-cost evidence preserves unavailable used and remaining
+  values instead of guessing.
+- Unknown skills, category mismatches, negative derived capacity, and
+  over-budget loadouts are rejected.
+- Ten focused xUnit v3 tests cover capacity composition, category isolation,
+  generic allocation, 收置 composition, unavailable costs, and invalid inputs.
+- The service reads and writes no save, game file, process, input, or live game
+  state.
+- `dotnet test --no-restore`: 98 tests passed.
 
 ### M1-009 — Validate ownership, mastery, and practice direction
 

@@ -34,6 +34,19 @@ public sealed record SkillSlotContribution
 
     public int Generic { get; }
 
+    public int GetSpecific(SkillCategory category) => category switch
+    {
+        SkillCategory.Neigong => 0,
+        SkillCategory.Attack => Attack,
+        SkillCategory.Agility => Agility,
+        SkillCategory.Defense => Defense,
+        SkillCategory.Assistance => Assistance,
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(category),
+            category,
+            "Unknown skill category.")
+    };
+
     public static SkillSlotContribution None { get; } =
         new(0, 0, 0, 0, 0);
 }
