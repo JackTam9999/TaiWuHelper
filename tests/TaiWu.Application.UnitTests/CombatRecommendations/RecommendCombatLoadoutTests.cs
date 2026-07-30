@@ -43,6 +43,13 @@ public sealed class RecommendCombatLoadoutTests
         Assert.NotEmpty(result.Scoring.RankedCandidates);
         Assert.True(result.ManualPlan.HasPlan);
         Assert.NotNull(result.Explanation);
+        Assert.Equal(3, result.Styles.Length);
+        Assert.Equal(
+            Enum.GetValues<RecommendationPolicy>(),
+            result.Styles.Select(style => style.Policy));
+        Assert.Equal(
+            RecommendationPolicy.Safe,
+            result.SelectedStyle.Policy);
         Assert.Equal(
             RecommendationPolicy.Safe,
             result.Scoring.Weights.Policy);

@@ -7,6 +7,7 @@ using TaiWu.Domain.CombatThreats;
 namespace TaiWu.Application.CombatRecommendations;
 
 public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
+    : IRecommendCombatLoadout
 {
     public async Task<CombatLoadoutRecommendation> ExecuteAsync(
         RecommendCombatLoadoutRequest request,
@@ -40,26 +41,47 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
                 snapshot.Player.GenericSlotAllocation));
         cancellationToken.ThrowIfCancellationRequested();
 
-        var scoring = CombatRecommendationScorer.Score(
-            new CombatRecommendationScoringRequest(
+        List<CombatRecommendationStyleResult> styles = [];
+        foreach (var policy in Enum.GetValues<RecommendationPolicy>())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            styles.Add(
+                BuildStyle(
                 snapshot.Player,
                 threats,
-                generation.Candidates,
-                request.Policy));
-        var manualPlan = ManualCombatPlanBuilder.Build(
-            snapshot.Player,
-            scoring);
-        var explanation = manualPlan.Plan is null
-            ? null
-            : CombatRecommendationExplanationBuilder.Build(
-                snapshot.Player,
-                threats,
-                manualPlan.Plan);
+                generation,
+                policy));
+        }
 
         return new CombatLoadoutRecommendation(
             snapshot,
             threatAnalysis,
             generation,
+            request.Policy,
+            styles);
+    }
+
+    private static CombatRecommendationStyleResult BuildStyle(
+        PlayerCombatSnapshot player,
+        TargetThreat[] threats,
+        CombatLoadoutGenerationResult generation,
+        RecommendationPolicy policy)
+    {
+        var scoring = CombatRecommendationScorer.Score(
+            new CombatRecommendationScoringRequest(
+                player,
+                threats,
+                generation.Candidates,
+                policy));
+        var manualPlan = ManualCombatPlanBuilder.Build(player, scoring);
+        var explanation = manualPlan.Plan is null
+            ? null
+            : CombatRecommendationExplanationBuilder.Build(
+                player,
+                threats,
+                manualPlan.Plan);
+        return new CombatRecommendationStyleResult(
+            policy,
             scoring,
             manualPlan,
             explanation);

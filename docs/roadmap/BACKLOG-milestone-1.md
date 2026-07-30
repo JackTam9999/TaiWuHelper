@@ -975,6 +975,8 @@ validation, scoring, and explanation.
 
 ### M1-021 — Add combat-recommendation endpoint
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-020
@@ -983,16 +985,44 @@ Add `POST /api/combat-recommendations`.
 
 #### Acceptance criteria
 
-- [ ] Target character ID is required.
-- [ ] Objective supports safe, balanced, and aggressive.
-- [ ] Configured save path is used by default.
-- [ ] Current-screen observations are optional and affect analysis only.
-- [ ] Validation errors return appropriate problem responses.
-- [ ] Response is typed JSON rather than line-oriented text.
-- [ ] Available styles are returned from the same immutable snapshot.
-- [ ] Threats, skill reasons, manual changes, and battle-plan steps have stable
+- [x] Target character ID is required.
+- [x] Objective supports safe, balanced, and aggressive.
+- [x] Configured save path is used by default.
+- [x] Current-screen observations are optional and affect analysis only.
+- [x] Validation errors return appropriate problem responses.
+- [x] Response is typed JSON rather than line-oriented text.
+- [x] Available styles are returned from the same immutable snapshot.
+- [x] Threats, skill reasons, manual changes, and battle-plan steps have stable
       references.
-- [ ] The endpoint cannot execute a recommendation or mutate game state.
+- [x] The endpoint cannot execute a recommendation or mutate game state.
+
+#### Evidence
+
+- `POST /api/combat-recommendations` accepts a required positive
+  `targetCharacterId`, a string-enum Safe/Balanced/Aggressive objective, and an
+  optional helper-owned current-screen loadout observation.
+- The request has no save-path field. `SaveGames:DefaultSaveFilePath` is always
+  supplied to the Application use case from validated configuration.
+- One snapshot read is shared by all three policy scores and plans.
+  `snapshotReference` is repeated on every style result, and `requestedStyle`
+  identifies the initially selected result.
+- The response uses typed records for threats, component scores, selected
+  skills, reasons, manual changes, plan steps, caveats, and warnings. It does
+  not return line-oriented diagnostic text as the primary contract.
+- Threat, candidate, skill, reason, change, plan-step, caveat, and warning
+  objects receive deterministic references.
+- Missing/invalid targets, invalid objectives or observations, missing save
+  files, and invalid save data return RFC problem responses with status 400.
+- JSON enum serialization uses names, so clients send and receive `Safe`,
+  `Balanced`, and `Aggressive` instead of implementation-specific integers.
+- Eight API xUnit v3 cases cover the typed success response, one-read
+  multi-style behavior, configured path, optional observations, target and
+  objective validation, expected reader failures, stable references, and the
+  single POST-only surface.
+- The controller depends on the Application input port and configuration only.
+  It exposes no execute/apply/equip/write operation and cannot mutate the game
+  or save.
+- `dotnet test --no-restore`: 221 tests passed.
 
 ### M1-022 — Add target lookup endpoint
 

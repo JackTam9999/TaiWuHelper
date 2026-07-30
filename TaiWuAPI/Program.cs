@@ -1,6 +1,8 @@
 using TaiWu.Application.SaveGames;
+using TaiWu.Application.CombatRecommendations;
 using TaiWu.Infrastructure;
 using TaiWuAPI.Configuration;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,8 +10,15 @@ builder.WebHost.ConfigureKestrel(
     options => options.ListenLocalhost(5056));
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter()));
 builder.Services.AddScoped<ReadSaveGame>();
+builder.Services.AddScoped<
+    IRecommendCombatLoadout,
+    RecommendCombatLoadout>();
 builder.Services.AddTaiwuInfrastructure();
 builder.Services
     .AddOptions<SaveGameOptions>()

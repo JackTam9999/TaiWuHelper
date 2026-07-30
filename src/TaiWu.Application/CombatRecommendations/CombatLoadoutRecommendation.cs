@@ -11,16 +11,16 @@ public sealed record CombatLoadoutRecommendation
         CombatSnapshot snapshot,
         TargetThreatAnalysis threatAnalysis,
         CombatLoadoutGenerationResult generation,
-        CombatRecommendationScoringResult scoring,
-        ManualCombatPlanResult manualPlan,
-        CombatRecommendationExplanation? explanation)
+        RecommendationPolicy requestedPolicy,
+        IEnumerable<CombatRecommendationStyleResult> styles)
     {
         Snapshot = snapshot;
         ThreatAnalysis = threatAnalysis;
         Generation = generation;
-        Scoring = scoring;
-        ManualPlan = manualPlan;
-        Explanation = explanation;
+        RequestedPolicy = requestedPolicy;
+        Styles = [.. styles];
+        SelectedStyle = Styles.Single(style =>
+            style.Policy == requestedPolicy);
     }
 
     public CombatSnapshot Snapshot { get; }
@@ -32,9 +32,18 @@ public sealed record CombatLoadoutRecommendation
 
     public CombatLoadoutGenerationResult Generation { get; }
 
-    public CombatRecommendationScoringResult Scoring { get; }
+    public RecommendationPolicy RequestedPolicy { get; }
 
-    public ManualCombatPlanResult ManualPlan { get; }
+    public ImmutableArray<CombatRecommendationStyleResult> Styles { get; }
 
-    public CombatRecommendationExplanation? Explanation { get; }
+    public CombatRecommendationStyleResult SelectedStyle { get; }
+
+    public CombatRecommendationScoringResult Scoring =>
+        SelectedStyle.Scoring;
+
+    public ManualCombatPlanResult ManualPlan =>
+        SelectedStyle.ManualPlan;
+
+    public CombatRecommendationExplanation? Explanation =>
+        SelectedStyle.Explanation;
 }

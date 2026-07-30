@@ -4,3 +4,13 @@ GET {{TaiWu_HostAddress}}/api/save-games/read
 Accept: application/json
 
 ###
+
+POST {{TaiWu_HostAddress}}/api/combat-recommendations
+Content-Type: application/json
+
+{
+  "targetCharacterId": 16317,
+  "objective": "Safe"
+}
+
+###
