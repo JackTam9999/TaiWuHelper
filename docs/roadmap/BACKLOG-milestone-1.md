@@ -794,6 +794,8 @@ Generate candidate loadouts using hard filters before exploring combinations.
 
 ### M1-017 — Implement recommendation scoring
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-014, M1-016
@@ -803,11 +805,39 @@ damage, opportunity cost, and conditional risk.
 
 #### Acceptance criteria
 
-- [ ] Score components are individually visible.
-- [ ] Hard constraints are not represented merely as score penalties.
-- [ ] Stable tie-breaking produces deterministic results.
-- [ ] Safe, balanced, and aggressive policies use documented weight sets.
-- [ ] Golden-target ranking is manually reviewed.
+- [x] Score components are individually visible.
+- [x] Hard constraints are not represented merely as score penalties.
+- [x] Stable tie-breaking produces deterministic results.
+- [x] Safe, balanced, and aggressive policies use documented weight sets.
+- [x] Golden-target ranking is manually reviewed.
+
+#### Evidence
+
+- `CombatRecommendationScorer` returns seven individually visible components:
+  threat coverage, survival, execution reliability, current-loadout
+  compatibility, damage potential, opportunity cost, and conditional risk.
+  Every component includes its policy weight, explanation, and evidence
+  reference.
+- The scorer only accepts `GeneratedCombatLoadout` values. Their internal
+  construction is owned by `CombatLoadoutGenerator` and wraps an accepted-only
+  `FeasibleCombatLoadout`, so invalid ownership, effect, direction, slot, and
+  requirement combinations never enter scoring as low-scored alternatives.
+- Missing damage evidence remains an explicit unavailable component and is
+  excluded from normalization. The scorer does not invent a damage estimate.
+- Safe, Balanced, and Aggressive weights are fixed, sum to 100, and are
+  documented in `docs/architecture/RECOMMENDATION-SCORING.md`.
+- Ranking is deterministic by total score, threat-coverage score, retained
+  current-skill count, and the candidate stable key.
+- The golden threat fixture was manually reviewed under Safe policy: verified
+  hard coverage for the critical mind-resonance threat ranks above mitigation
+  alone. This is a structural review of the verified threat/counter model, not
+  a claim of simulated win probability.
+- Eight focused xUnit v3 tests cover component visibility, unknown damage,
+  policy weights and priorities, deterministic ties, conditional risk,
+  golden hard-counter ranking, and damage-evidence validation.
+- Scoring is pure Domain work and cannot equip skills, change directions,
+  write a save, or control the game.
+- `dotnet test --no-restore`: 192 tests passed.
 
 ### M1-018 — Produce suggested manual loadout changes and battle plan
 
