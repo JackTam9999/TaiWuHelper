@@ -551,6 +551,8 @@ Create a pure Domain service that validates a complete proposed loadout.
 
 ### M1-012 — Create a versioned combat-effect catalog
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** L  
 **Dependencies:** M1-002, M1-005
@@ -560,11 +562,35 @@ scenario's effects into typed mechanics.
 
 #### Acceptance criteria
 
-- [ ] Catalog records the matching GameData version.
-- [ ] Direct and reverse effects remain distinct.
-- [ ] Raw effect ID and source text are preserved as evidence.
-- [ ] Unrecognized effects remain visible and are not guessed.
-- [ ] No proprietary configuration data is committed wholesale.
+- [x] Catalog records the matching GameData version.
+- [x] Direct and reverse effects remain distinct.
+- [x] Raw effect ID and source text are preserved as evidence.
+- [x] Unrecognized effects remain visible and are not guessed.
+- [x] No proprietary configuration data is committed wholesale.
+
+#### Evidence
+
+- `CombatEffectCatalog` requires an exact GameData version and immutable,
+  unique skill/direction entries.
+- `VerifiedCombatEffectCatalogs.GoldenAntiMagic` matches installed GameData
+  product version
+  `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a`.
+- Twelve deliberately selected entries cover the Direct and Reverse effects
+  of 金猊镇魔刀, 老君拂尘功, 万花听雨式, 墨玉功, 伏龙刀法, and 鬼庖丁刀法.
+- Each entry retains the raw effect ID, exact local source text, and individual
+  source key alongside a small typed-mechanic set.
+- Resolution reports `Unrecognized`, `VersionMismatch`, or
+  `EffectIdMismatch` without substituting a likely meaning. An unmapped entry
+  can retain source text while exposing no typed mechanics.
+- Only the 12 golden-scenario records are committed; the local mapping and
+  language files, GameData assemblies, save, and generated inspection output
+  are excluded.
+- The read-only inspection verified the save fingerprint was unchanged; the
+  fingerprint itself is not committed.
+- Ten focused xUnit v3 tests cover version binding, Direct/Reverse separation,
+  raw evidence, unknown and unmapped effects, mismatches, uniqueness, and
+  invalid observations.
+- `dotnet test --no-restore`: 144 tests passed.
 
 ### M1-013 — Define target-threat taxonomy
 
