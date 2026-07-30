@@ -771,7 +771,7 @@ Generate candidate loadouts using hard filters before exploring combinations.
 - Multiple active agility or defense choices are rejected before feasibility;
   all selected passive, active, and combat requirements are evaluated in the
   proposed context.
-- Search is capped at 24 options, 65,536 explored combinations, and 256
+- Search is capped at 40 options, 65,536 explored combinations, and 256
   results, with lower per-request limits supported. Exploration and result
   truncation are visible diagnostics.
 - Pre-scoring order is deterministic: combat-start counters, hard counters,
@@ -931,6 +931,8 @@ language presentation.
 
 ### M1-020 — Implement `RecommendCombatLoadout` use case
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-005, M1-014, M1-016, M1-017
@@ -940,10 +942,36 @@ validation, scoring, and explanation.
 
 #### Acceptance criteria
 
-- [ ] Application depends on ports and Domain services only.
-- [ ] Cancellation is propagated.
-- [ ] Snapshot warnings are preserved.
-- [ ] NSubstitute tests verify orchestration and failure paths.
+- [x] Application depends on ports and Domain services only.
+- [x] Cancellation is propagated.
+- [x] Snapshot warnings are preserved.
+- [x] NSubstitute tests verify orchestration and failure paths.
+
+#### Evidence
+
+- `RecommendCombatLoadout` depends only on `ICombatSnapshotReader` and invokes
+  the Domain threat analyzer, bounded candidate generator, feasibility
+  validation, scorer, manual-plan builder, and explanation builder in order.
+- The use case selects only verified counter rules that address analyzed
+  threats, retains currently equipped non-counter skills as candidate options,
+  and never converts names or guesses into combat rules.
+- The exact `CancellationToken` is passed to the snapshot reader. Cancellation
+  is checked before the read and between the synchronous Domain stages.
+- `CombatLoadoutRecommendation` returns the immutable source snapshot and
+  exposes its original warning collection unchanged alongside threat,
+  generation, scoring, plan, and explanation results.
+- No-threat/no-option input returns generation diagnostics and an empty manual
+  plan instead of inventing a recommendation.
+- The curated-option bound is now 40, while exploration and result bounds stay
+  at 65,536 and 256. This accommodates the observed full loadout plus the
+  verified counter set without removing the deterministic search guard.
+- Five NSubstitute/xUnit v3 use-case tests cover successful orchestration,
+  observation and policy forwarding, cancellation, reader failure, empty
+  results, and request validation. A Domain boundary test covers the revised
+  option limit.
+- The Application layer has no Infrastructure or GameData dependency and
+  exposes no operation capable of changing a save or controlling the game.
+- `dotnet test --no-restore`: 213 tests passed.
 
 ### M1-021 — Add combat-recommendation endpoint
 

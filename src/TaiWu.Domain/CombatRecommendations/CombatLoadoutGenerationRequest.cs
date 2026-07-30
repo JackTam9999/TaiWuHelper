@@ -5,7 +5,7 @@ namespace TaiWu.Domain.CombatRecommendations;
 
 public sealed record CombatLoadoutGenerationRequest
 {
-    public const int MaximumOptions = 24;
+    public const int MaximumOptions = 40;
 
     public const int MaximumExploredCombinations = 65_536;
 

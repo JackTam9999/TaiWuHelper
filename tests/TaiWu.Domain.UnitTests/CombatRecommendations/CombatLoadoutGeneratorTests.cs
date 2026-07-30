@@ -96,6 +96,36 @@ public sealed class CombatLoadoutGeneratorTests
     }
 
     [Fact]
+    public void Curated_option_limit_supports_a_full_observed_loadout()
+    {
+        var skills = Enumerable
+            .Range(100, CombatLoadoutGenerationRequest.MaximumOptions + 1)
+            .Select(skillId => CreateSkill(skillId))
+            .ToArray();
+        var player = CreatePlayer(skills);
+        var acceptedOptions = skills
+            .Take(CombatLoadoutGenerationRequest.MaximumOptions)
+            .Select(skill => Option(skill))
+            .ToArray();
+
+        var accepted = new CombatLoadoutGenerationRequest(
+            player,
+            acceptedOptions,
+            CreateContext(),
+            player.GenericSlotAllocation);
+
+        Assert.Equal(
+            CombatLoadoutGenerationRequest.MaximumOptions,
+            accepted.Options.Length);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CombatLoadoutGenerationRequest(
+                player,
+                skills.Select(skill => Option(skill)),
+                CreateContext(),
+                player.GenericSlotAllocation));
+    }
+
+    [Fact]
     public void Input_order_does_not_change_candidate_order()
     {
         var skills = Enumerable.Range(100, 3)

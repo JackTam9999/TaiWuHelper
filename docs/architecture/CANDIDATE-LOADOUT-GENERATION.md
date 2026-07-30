@@ -57,7 +57,7 @@ Hard limits prevent combinatorial growth:
 
 | Bound | Maximum |
 |---|---:|
-| Curated options | 24 |
+| Curated options | 40 |
 | Explored combinations | 65,536 |
 | Emitted results | 256 |
 
