@@ -11,6 +11,11 @@ public static class DependencyInjection
     public static IServiceCollection AddTaiwuInfrastructure(
         this IServiceCollection services)
     {
+        services.AddSingleton<
+            IReadOnlyFileFingerprintProvider,
+            ReadOnlyFileFingerprintProvider>();
+        services.AddSingleton<ITaiwuArchiveLoader, TaiwuArchiveLoader>();
+        services.AddSingleton<TaiwuArchiveReadSession>();
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<ITargetLookupReader, TaiwuTargetLookupReader>();

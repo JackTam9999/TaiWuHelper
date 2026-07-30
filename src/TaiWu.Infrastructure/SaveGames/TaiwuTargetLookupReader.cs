@@ -6,7 +6,8 @@ using TaiWu.Application.Targets;
 
 namespace TaiWu.Infrastructure.SaveGames;
 
-internal sealed class TaiwuTargetLookupReader : ITargetLookupReader
+internal sealed class TaiwuTargetLookupReader(
+    TaiwuArchiveReadSession readSession) : ITargetLookupReader
 {
     public Task<TargetLookupSnapshot> ReadAsync(
         TargetLookupReadRequest request,
@@ -14,9 +15,9 @@ internal sealed class TaiwuTargetLookupReader : ITargetLookupReader
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return TaiwuArchiveReadSession.ReadAsync(
+        return readSession.ReadAsync(
             request.SaveFilePath,
-            context => ProjectTargets(context, cancellationToken),
+            ProjectTargets,
             cancellationToken);
     }
 
@@ -29,9 +30,9 @@ internal sealed class TaiwuTargetLookupReader : ITargetLookupReader
         {
             warnings.Add(
                 new TargetLookupWarning(
-                    "STANDALONE_EVENT_RUNTIME_UNAVAILABLE",
+                    readContext.LoadWarning.Code,
                     "The archive reached the expected standalone "
-                    + $"event-runtime boundary: {readContext.LoadWarning}"));
+                    + $"event-runtime boundary: {readContext.LoadWarning.Detail}"));
         }
 
         var taiwuId = DomainManager.Taiwu.GetTaiwuCharId();

@@ -750,7 +750,7 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void Archive_session_clears_handlers_before_each_load()
+    public void Archive_loader_clears_handlers_before_each_load()
     {
         var repositoryRoot = FindRepositoryRoot();
         var source = File.ReadAllText(
@@ -759,7 +759,7 @@ public sealed partial class ArchitectureBoundaryTests
                 "src",
                 "TaiWu.Infrastructure",
                 "SaveGames",
-                "TaiwuArchiveReadSession.cs"));
+                "TaiwuArchiveLoader.cs"));
 
         var clearHandlers = source.IndexOf(
             "ClearMonitoredData()",

@@ -5,9 +5,19 @@ namespace TaiWu.Infrastructure.SaveGames;
 internal sealed record ReadOnlyFileFingerprint(
     long Length,
     string Sha256,
-    DateTimeOffset LastWriteTimeUtc)
+    DateTimeOffset LastWriteTimeUtc);
+
+internal interface IReadOnlyFileFingerprintProvider
 {
-    public static async Task<ReadOnlyFileFingerprint> CaptureAsync(
+    Task<ReadOnlyFileFingerprint> CaptureAsync(
+        string path,
+        CancellationToken cancellationToken = default);
+}
+
+internal sealed class ReadOnlyFileFingerprintProvider
+    : IReadOnlyFileFingerprintProvider
+{
+    public async Task<ReadOnlyFileFingerprint> CaptureAsync(
         string path,
         CancellationToken cancellationToken = default)
     {

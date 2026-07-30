@@ -1,10 +1,12 @@
 using TaiWu.Infrastructure.SaveGames;
 using Xunit;
 
-namespace TaiWu.Architecture.Tests;
+namespace TaiWu.Infrastructure.UnitTests;
 
 public sealed class ReadOnlyFileFingerprintTests
 {
+    private readonly ReadOnlyFileFingerprintProvider _provider = new();
+
     [Fact]
     public async Task CaptureAsync_ReadsFileWithoutChangingIt()
     {
@@ -19,7 +21,7 @@ public sealed class ReadOnlyFileFingerprintTests
                 cancellationToken);
             var modifiedBefore = File.GetLastWriteTimeUtc(fixture.Path);
 
-            var fingerprint = await ReadOnlyFileFingerprint.CaptureAsync(
+            var fingerprint = await _provider.CaptureAsync(
                 fixture.Path,
                 cancellationToken);
 
@@ -42,7 +44,7 @@ public sealed class ReadOnlyFileFingerprintTests
         {
             File.SetAttributes(fixture.Path, FileAttributes.ReadOnly);
 
-            var fingerprint = await ReadOnlyFileFingerprint.CaptureAsync(
+            var fingerprint = await _provider.CaptureAsync(
                 fixture.Path,
                 TestContext.Current.CancellationToken);
 
@@ -58,7 +60,7 @@ public sealed class ReadOnlyFileFingerprintTests
             TestContext.Current.CancellationToken);
         await using (fixture)
         {
-            var before = await ReadOnlyFileFingerprint.CaptureAsync(
+            var before = await _provider.CaptureAsync(
                 fixture.Path,
                 TestContext.Current.CancellationToken);
 
@@ -67,7 +69,7 @@ public sealed class ReadOnlyFileFingerprintTests
                 [9, 10, 12],
                 TestContext.Current.CancellationToken);
 
-            var after = await ReadOnlyFileFingerprint.CaptureAsync(
+            var after = await _provider.CaptureAsync(
                 fixture.Path,
                 TestContext.Current.CancellationToken);
 
@@ -93,7 +95,7 @@ public sealed class ReadOnlyFileFingerprintTests
         {
             var directory = System.IO.Path.Combine(
                 System.IO.Path.GetTempPath(),
-                "TaiWu.Architecture.Tests",
+                "TaiWu.Infrastructure.UnitTests",
                 Guid.NewGuid().ToString("N"));
             System.IO.Directory.CreateDirectory(directory);
 

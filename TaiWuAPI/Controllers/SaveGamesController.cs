@@ -21,44 +21,18 @@ public sealed class SaveGamesController(
     {
         try
         {
-            return await Read(
-                options.Value.DefaultSaveFilePath,
-                targetCharacterId,
-                cancellationToken);
-        }
-        catch (OptionsValidationException exception)
-        {
-            return Problem(
-                detail: exception.Message,
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-    }
-
-    private async Task<ActionResult<SaveGameReport>> Read(
-        string saveFilePath,
-        int? targetCharacterId,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
             var report = await readSaveGame.ExecuteAsync(
-                new SaveGameReadRequest(saveFilePath, targetCharacterId),
+                new SaveGameReadRequest(
+                    options.Value.DefaultSaveFilePath,
+                    targetCharacterId),
                 cancellationToken);
             return Ok(report);
         }
-        catch (ArgumentException exception)
-        {
-            return Problem(
-                detail: exception.Message,
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-        catch (FileNotFoundException exception)
-        {
-            return Problem(
-                detail: exception.Message,
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-        catch (InvalidDataException exception)
+        catch (Exception exception)
+            when (exception is ArgumentException
+                or FileNotFoundException
+                or InvalidDataException
+                or OptionsValidationException)
         {
             return Problem(
                 detail: exception.Message,

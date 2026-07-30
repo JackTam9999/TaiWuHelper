@@ -4,7 +4,8 @@ using TaiWu.Domain.SaveGames;
 
 namespace TaiWu.Infrastructure.SaveGames;
 
-internal sealed class TaiwuSaveGameReader : ISaveGameReader
+internal sealed class TaiwuSaveGameReader(
+    TaiwuArchiveReadSession readSession) : ISaveGameReader
 {
     public Task<SaveGameReport> ReadAsync(
         SaveGameReadRequest request,
@@ -12,12 +13,12 @@ internal sealed class TaiwuSaveGameReader : ISaveGameReader
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return TaiwuArchiveReadSession.ReadAsync(
+        return readSession.ReadAsync(
             request.SaveFilePath,
-            context => ReadLoadedArchive(
+            (context, token) => ReadLoadedArchive(
                 context,
                 request.TargetCharacterId,
-                cancellationToken),
+                token),
             cancellationToken);
     }
 
@@ -32,7 +33,7 @@ internal sealed class TaiwuSaveGameReader : ISaveGameReader
         {
             writer.Write(
                 "LOADWARNING|{0}",
-                readContext.LoadWarning);
+                readContext.LoadWarning.Detail);
         }
 
         cancellationToken.ThrowIfCancellationRequested();

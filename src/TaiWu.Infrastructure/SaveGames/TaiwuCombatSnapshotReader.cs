@@ -10,7 +10,8 @@ using TaiWu.Domain.CombatSnapshots;
 
 namespace TaiWu.Infrastructure.SaveGames;
 
-internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
+internal sealed class TaiwuCombatSnapshotReader(
+    TaiwuArchiveReadSession readSession) : ICombatSnapshotReader
 {
     public Task<CombatSnapshot> ReadAsync(
         CombatSnapshotReadRequest request,
@@ -18,14 +19,14 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return TaiwuArchiveReadSession.ReadAsync(
+        return readSession.ReadAsync(
             request.SaveFilePath,
-            context =>
+            (context, token) =>
             {
                 var snapshot = ProjectSnapshot(
                     context,
                     request.TargetCharacterId,
-                    cancellationToken);
+                    token);
                 return request.CurrentLoadoutObservation is null
                     ? snapshot
                     : CombatSnapshotObservationMerger.Merge(
@@ -47,9 +48,9 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
         {
             warnings.Add(
                 new SnapshotWarning(
-                    "STANDALONE_EVENT_RUNTIME_UNAVAILABLE",
+                    readContext.LoadWarning.Code,
                     "The archive reached the expected standalone event-runtime "
-                    + $"boundary: {readContext.LoadWarning}"));
+                    + $"boundary: {readContext.LoadWarning.Detail}"));
         }
 
         warnings.Add(
