@@ -44,10 +44,22 @@ A client may report a newer loadout visible in the game UI:
       "agility": 0,
       "defense": 0,
       "assistance": 0
+    },
+    "displayedSlotBudgets": {
+      "neigong": { "used": 6, "capacity": 6 },
+      "attack": { "used": 10, "capacity": 10 },
+      "agility": { "used": 8, "capacity": 8 },
+      "defense": { "used": 8, "capacity": 8 },
+      "assistance": { "used": 2, "capacity": 2 }
     }
   }
 }
 ```
+
+`displayedSlotBudgets` is optional. Supply all five used/capacity pairs when
+the current game screen shows exact values; these override configured
+capacities whose runtime modifiers cannot be evaluated safely by the
+standalone reader.
 
 This observation is helper input only. The snapshot adapter may merge it when
 it is newer than the disk save, and the recommendation pipeline then analyzes

@@ -176,6 +176,36 @@ public sealed partial class RecommendationComponentRenderingTests
     }
 
     [Fact]
+    public async Task Aggregated_warning_renders_one_occurrence_summary()
+    {
+        var warning = new RecommendationWarningViewModel(
+            "warning:generation:CombinationInfeasible:1",
+            "CandidateGeneration",
+            "CombinationInfeasible",
+            PresentationWarningKind.CandidateSearch,
+            IsCritical: false,
+            Occurrences: 2236,
+            "Used slots cannot exceed capacity. Occurred in 2236 explored "
+            + "combinations.",
+            "The affected options were excluded.",
+            []);
+
+        var html = await RenderAsync<WarningBanner>(
+            new Dictionary<string, object?>
+            {
+                [nameof(WarningBanner.Warnings)] =
+                    new RecommendationWarningViewModel[] { warning }
+            });
+        var text = VisibleText(html);
+
+        Assert.Single(
+            WarningOccurrencePattern().Matches(text).Cast<Match>());
+        Assert.Contains(
+            "Aggregated from 2236 evaluated combinations.",
+            text);
+    }
+
+    [Fact]
     public async Task Layout_always_renders_information_only_message()
     {
         RenderFragment body = builder =>
@@ -249,4 +279,7 @@ public sealed partial class RecommendationComponentRenderingTests
 
     [GeneratedRegex("\\s+")]
     private static partial Regex WhitespacePattern();
+
+    [GeneratedRegex("CombinationInfeasible")]
+    private static partial Regex WarningOccurrencePattern();
 }

@@ -149,6 +149,7 @@ public sealed record RecommendationWarningViewModel(
     string Code,
     PresentationWarningKind Kind,
     bool IsCritical,
+    int Occurrences,
     string Message,
     string EffectOnRecommendation,
     IReadOnlyList<string> EvidenceReferences);

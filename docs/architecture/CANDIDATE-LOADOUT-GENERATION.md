@@ -21,9 +21,10 @@ Each `CombatLoadoutOption` contains:
 - optional counter strength and activation timing; and
 - optional expected raw effect ID.
 
-`FromCounterRule` creates a direction-change-capable option using the exact
-verified catalog effect. `RetainCurrentSkill` creates a direction-independent
-option for an existing selection.
+`FromCounterRule` creates a direction-strict option using the exact verified
+catalog effect. A caller may enable a manual direction change only when it has
+separate evidence that the player can make that change. `RetainCurrentSkill`
+creates a direction-independent option for an existing selection.
 
 Options are curated inputs. Candidate generation does not enumerate every
 learned skill or invent counters from names.
@@ -39,6 +40,9 @@ Before combination search, each option must pass:
 5. exact raw effect ID when the option comes from a verified counter.
 
 Rejected options remain in diagnostics and are not included in the search.
+When a rejected counter option is already equipped, it falls back to a plain
+retention option so that an unusable direction-specific effect does not
+silently remove the player's current skill.
 
 Each explored combination must then:
 
@@ -64,12 +68,20 @@ Hard limits prevent combinatorial growth:
 Requests may choose smaller exploration and result limits. Hitting either
 limit creates a diagnostic.
 
-Options are normalized before include-first traversal:
+Equipped Neigong options are required because they can contribute category
+capacity. Other plain current-skill options are treated as retention options.
+The bounded include-first traversal enumerates only strategic counter and
+replacement options; for each strategic combination it greedily retains every
+current skill that remains feasible, considering lower-cost skills first.
+This keeps the bounded search focused on tactical choices without silently
+emptying unrelated categories.
+
+Strategic options are normalized before include-first traversal:
 
 1. combat-start counter first;
 2. hard counter first;
 3. greater threat coverage;
-4. currently equipped first; and
+4. currently equipped counter first; and
 5. ascending skill ID.
 
 Feasible results use a deterministic pre-scoring order:
@@ -77,8 +89,8 @@ Feasible results use a deterministic pre-scoring order:
 1. more combat-start counters;
 2. more hard counters;
 3. more distinct covered threats;
-4. fewer selected skills;
-5. more retained current skills; and
+4. more retained current skills;
+5. fewer selected skills; and
 6. stable categorized skill key.
 
 M1-017 applies policy scoring after this stage. The ordering here guarantees
@@ -86,6 +98,9 @@ repeatable candidate production and preserves current skills when otherwise
 equally suitable; it does not claim which feasible loadout is tactically best.
 
 ## Diagnostics
+
+Candidates with the same stable categorized loadout key are deduplicated
+before result limiting.
 
 Diagnostics distinguish:
 
@@ -96,5 +111,7 @@ Diagnostics distinguish:
 - result-limit truncation; and
 - an empty eligible-option pool.
 
-This lets later API and UI layers explain why a skill or complete loadout was
-not emitted without treating expected invalidity as an exception.
+Repeated identical diagnostics are aggregated with an occurrence count. This
+lets later API and UI layers explain why a skill or complete loadout was not
+emitted without returning thousands of duplicate warnings or treating
+expected invalidity as an exception.

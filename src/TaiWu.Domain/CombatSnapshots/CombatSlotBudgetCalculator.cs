@@ -6,6 +6,39 @@ public static class CombatSlotBudgetCalculator
 
     public const int BaseOuterCategoryCapacity = 2;
 
+    public static int CalculateConfiguredCapacity(
+        SkillCategory category,
+        IEnumerable<CombatSkillSnapshot> equippedNeigong,
+        GenericSlotAllocation genericSlotAllocation)
+    {
+        if (!Enum.IsDefined(category))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(category),
+                category,
+                "Unknown skill category.");
+        }
+
+        ArgumentNullException.ThrowIfNull(equippedNeigong);
+        ArgumentNullException.ThrowIfNull(genericSlotAllocation);
+        var values = equippedNeigong.ToArray();
+        if (values.Any(skill => skill is null))
+        {
+            throw new ArgumentException(
+                "Equipped Neigong cannot contain null entries.",
+                nameof(equippedNeigong));
+        }
+
+        if (values.Any(skill => skill.Category != SkillCategory.Neigong))
+        {
+            throw new ArgumentException(
+                "Only Neigong skills can contribute configured capacity.",
+                nameof(equippedNeigong));
+        }
+
+        return GetCapacity(category, values, genericSlotAllocation);
+    }
+
     public static SlotBudgetSet Calculate(PlayerCombatSnapshot player)
     {
         ArgumentNullException.ThrowIfNull(player);
@@ -14,28 +47,84 @@ public static class CombatSlotBudgetCalculator
             skill => skill.SkillId);
         ValidateEquippedSkills(player.EquippedSkills, learnedById);
 
-        var equippedNeigong = player.EquippedSkills.NeigongSkillIds
-            .Select(skillId => learnedById[skillId])
-            .ToArray();
+        var equippedNeigong = GetEquippedNeigong(
+            player.EquippedSkills,
+            learnedById);
 
         return new SlotBudgetSet(
             Enum.GetValues<SkillCategory>().Select(
                 category => CalculateCategory(
                     player,
+                    player.EquippedSkills,
                     category,
-                    equippedNeigong)));
+                    CalculateConfiguredCapacity(
+                        category,
+                        equippedNeigong,
+                        player.GenericSlotAllocation))));
+    }
+
+    public static SlotBudgetSet CalculateProposed(
+        PlayerCombatSnapshot player,
+        CombatLoadoutSnapshot proposedLoadout,
+        GenericSlotAllocation proposedGenericSlotAllocation)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(proposedLoadout);
+        ArgumentNullException.ThrowIfNull(proposedGenericSlotAllocation);
+
+        var learnedById = player.LearnedSkills.ToDictionary(
+            skill => skill.SkillId);
+        ValidateEquippedSkills(player.EquippedSkills, learnedById);
+        ValidateEquippedSkills(proposedLoadout, learnedById);
+
+        var currentNeigong = GetEquippedNeigong(
+            player.EquippedSkills,
+            learnedById);
+        var proposedNeigong = GetEquippedNeigong(
+            proposedLoadout,
+            learnedById);
+
+        return new SlotBudgetSet(
+            Enum.GetValues<SkillCategory>().Select(category =>
+            {
+                var configuredCurrentCapacity = CalculateConfiguredCapacity(
+                    category,
+                    currentNeigong,
+                    player.GenericSlotAllocation);
+                var observedCapacityAdjustment = checked(
+                    player.SlotBudgets[category].Capacity
+                    - configuredCurrentCapacity);
+                var configuredProposedCapacity = CalculateConfiguredCapacity(
+                    category,
+                    proposedNeigong,
+                    proposedGenericSlotAllocation);
+                var proposedCapacity = checked(
+                    configuredProposedCapacity
+                    + observedCapacityAdjustment);
+                return CalculateCategory(
+                    player,
+                    proposedLoadout,
+                    category,
+                    proposedCapacity);
+            }));
+    }
+
+    private static CombatSkillSnapshot[] GetEquippedNeigong(
+        CombatLoadoutSnapshot loadout,
+        Dictionary<int, CombatSkillSnapshot> learnedById)
+    {
+        return loadout.NeigongSkillIds
+            .Select(skillId => learnedById[skillId])
+            .ToArray();
     }
 
     private static SlotBudget CalculateCategory(
         PlayerCombatSnapshot player,
+        CombatLoadoutSnapshot loadout,
         SkillCategory category,
-        CombatSkillSnapshot[] equippedNeigong)
+        int capacity)
     {
-        var capacity = GetCapacity(
-            category,
-            equippedNeigong,
-            player.GenericSlotAllocation);
-        var used = GetUsed(player, category);
+        var used = GetUsed(player, loadout, category);
 
         return new SlotBudget(category, used, capacity);
     }
@@ -60,10 +149,11 @@ public static class CombatSlotBudgetCalculator
 
     private static SnapshotValue<int> GetUsed(
         PlayerCombatSnapshot player,
+        CombatLoadoutSnapshot loadout,
         SkillCategory category)
     {
         var used = 0;
-        foreach (var skillId in player.EquippedSkills.Get(category))
+        foreach (var skillId in loadout.Get(category))
         {
             var cost = CombatSkillCostCalculator.Calculate(
                 player,

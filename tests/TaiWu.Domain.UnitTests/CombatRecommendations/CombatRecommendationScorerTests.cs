@@ -187,6 +187,38 @@ public sealed class CombatRecommendationScorerTests
     }
 
     [Fact]
+    public void Compatibility_measures_share_of_current_loadout_retained()
+    {
+        var retained = CreateSkill(100);
+        var removed = CreateSkill(101);
+        var player = CreatePlayer(
+            [retained, removed],
+            new CombatLoadoutSnapshot(
+                neigongSkillIds: [],
+                attackSkillIds: [retained.SkillId, removed.SkillId],
+                agilitySkillIds: [],
+                defenseSkillIds: [],
+                assistanceSkillIds: []));
+        var candidate = GenerateSingleton(
+            player,
+            Option(retained, isCurrentlyEquipped: true));
+
+        var result = Score(
+            player,
+            targetThreats: [],
+            [candidate],
+            RecommendationPolicy.Balanced);
+
+        Assert.Equal(
+            50,
+            result.RankedCandidates[0]
+                .Get(
+                    RecommendationScoreComponentKind
+                        .CurrentLoadoutCompatibility)
+                .Score);
+    }
+
+    [Fact]
     public void Safe_golden_ranking_prefers_verified_hard_coverage()
     {
         var fixture = CreateFixture();
@@ -317,13 +349,14 @@ public sealed class CombatRecommendationScorerTests
         CombatSkillSnapshot skill,
         string[]? threatCodes = null,
         CombatCounterStrength? strength = null,
-        CombatRequirement[]? requirements = null)
+        CombatRequirement[]? requirements = null,
+        bool isCurrentlyEquipped = false)
     {
         return new CombatLoadoutOption(
             new CombatSkillCandidate(skill.SkillId),
             requirements ?? [],
             threatCodes ?? [],
-            isCurrentlyEquipped: false,
+            isCurrentlyEquipped,
             $"snapshot:skill:{skill.SkillId}",
             strength,
             strength.HasValue
@@ -358,13 +391,14 @@ public sealed class CombatRecommendationScorerTests
     }
 
     private static PlayerCombatSnapshot CreatePlayer(
-        CombatSkillSnapshot[] skills)
+        CombatSkillSnapshot[] skills,
+        CombatLoadoutSnapshot? loadout = null)
     {
         return new PlayerCombatSnapshot(
             characterId: 1,
             SnapshotValue<string>.Available("Taiwu"),
             skills,
-            new CombatLoadoutSnapshot([], [], [], [], []),
+            loadout ?? new CombatLoadoutSnapshot([], [], [], [], []),
             equipment: [],
             new SlotBudgetSet(
             [

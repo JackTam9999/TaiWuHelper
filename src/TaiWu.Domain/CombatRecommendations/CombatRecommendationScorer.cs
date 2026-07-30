@@ -63,9 +63,9 @@ public static class CombatRecommendationScorer
             Available(
                 RecommendationScoreComponentKind
                     .CurrentLoadoutCompatibility,
-                CompatibilityScore(candidate),
-                "Share of selected skills retained from the current "
-                + "loadout.",
+                CompatibilityScore(request.Player, candidate),
+                "Share of current equipped skills retained in the "
+                + "candidate.",
                 "snapshot:player:equipped-skills"),
             DamageComponent(candidate, damageByCandidate),
             Available(
@@ -171,13 +171,15 @@ public static class CombatRecommendationScorer
     }
 
     private static decimal CompatibilityScore(
+        PlayerCombatSnapshot player,
         GeneratedCombatLoadout candidate)
     {
-        return candidate.SelectedOptions.IsEmpty
+        var currentSkillCount = Enum
+            .GetValues<SkillCategory>()
+            .Sum(category => player.EquippedSkills.Get(category).Length);
+        return currentSkillCount == 0
             ? 100
-            : Percent(
-                candidate.RetainedCurrentSkillCount,
-                candidate.SelectedOptions.Length);
+            : Percent(candidate.RetainedCurrentSkillCount, currentSkillCount);
     }
 
     private static RecommendationScoreComponent DamageComponent(

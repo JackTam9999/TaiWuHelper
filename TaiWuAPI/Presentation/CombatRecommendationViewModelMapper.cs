@@ -36,7 +36,7 @@ public static class CombatRecommendationViewModelMapper
             recommendation.RequestedPolicy,
             StyleReference(snapshotReference, recommendation.RequestedPolicy),
             InformationOnlyNotice,
-            recommendation.ThreatAnalysis.Threats
+            [.. recommendation.ThreatAnalysis.Threats
                 .Select(value => new ThreatViewModel(
                     ThreatReference(value.Threat.Code),
                     value.Threat.Code,
@@ -45,10 +45,7 @@ public static class CombatRecommendationViewModelMapper
                     value.Threat.Kind,
                     value.Threat.Severity,
                     value.Threat.ActivationTiming,
-                    value.Threat.Evidence
-                        .Select(evidence => evidence.Reference)
-                        .ToArray()))
-                .ToArray(),
+                    [.. value.Threat.Evidence.Select(evidence => evidence.Reference)]))],
             styles,
             MapWarnings(recommendation));
     }
@@ -94,7 +91,7 @@ public static class CombatRecommendationViewModelMapper
             HasRecommendation: true,
             candidateReference,
             plan.SelectedRecommendation.TotalScore,
-            plan.SelectedRecommendation.Components
+            [.. plan.SelectedRecommendation.Components
                 .Select(component => new RecommendationScoreViewModel(
                     $"{candidateReference}:score:{component.Kind}",
                     component.Kind,
@@ -102,33 +99,27 @@ public static class CombatRecommendationViewModelMapper
                     component.Score,
                     component.WeightedPoints,
                     component.Explanation,
-                    component.EvidenceReference))
-                .ToArray(),
+                    component.EvidenceReference))],
             MapCategories(candidateReference, candidate, skills),
-            plan.LoadoutChanges
-                .Select(change => MapChange(candidateReference, change))
-                .ToArray(),
-            plan.OpeningActions
+            [.. plan.LoadoutChanges.Select(change => MapChange(candidateReference, change))],
+            [.. plan.OpeningActions
                 .Select(action => MapStep(
                     candidateReference,
                     "opening",
-                    action))
-                .ToArray(),
-            plan.SwitchingConditions
+                    action))],
+            [.. plan.SwitchingConditions
                 .Select(action => MapStep(
                     candidateReference,
                     "switch",
-                    action))
-                .ToArray(),
-            explanation.Caveats
+                    action))],
+            [.. explanation.Caveats
                 .Select((caveat, index) => new RecommendationCaveatViewModel(
                     $"{candidateReference}:caveat:{caveat.Code}:{index + 1}",
                     caveat.Kind,
                     caveat.Code,
                     caveat.Explanation,
                     caveat.SkillId,
-                    caveat.EvidenceReferences))
-                .ToArray(),
+                    caveat.EvidenceReferences))],
             Diagnostic: null);
     }
 
@@ -138,7 +129,7 @@ public static class CombatRecommendationViewModelMapper
         RecommendedSkillViewModel[] skills)
     {
         var proposal = candidate.FeasibleLoadout.Proposal;
-        return Enum.GetValues<SkillCategory>()
+        return [.. Enum.GetValues<SkillCategory>()
             .Select(category =>
             {
                 var budget = candidate.FeasibleLoadout.SlotBudgets[category];
@@ -159,11 +150,8 @@ public static class CombatRecommendationViewModelMapper
                     category == SkillCategory.Neigong
                         ? 0
                         : proposal.GenericSlotAllocation.Get(category),
-                    skills
-                        .Where(skill => skill.Category == category)
-                        .ToArray());
-            })
-            .ToArray();
+                    [.. skills.Where(skill => skill.Category == category)]);
+            })];
     }
 
     private static RecommendedSkillViewModel MapSkill(
@@ -211,10 +199,8 @@ public static class CombatRecommendationViewModelMapper
                 skill.Counter.ActivationTiming,
                 skill.Counter.EvidenceReference,
                 skill.Counter.UnavailableReason),
-            skill.Threats
-                .Select(threat => ThreatReference(threat.Code))
-                .ToArray(),
-            skill.Conditions
+            [.. skill.Threats.Select(threat => ThreatReference(threat.Code))],
+            [.. skill.Conditions
                 .Select((condition, index) =>
                     new SkillConditionViewModel(
                         $"{skillReference}:condition:"
@@ -223,14 +209,12 @@ public static class CombatRecommendationViewModelMapper
                         condition.Criticality,
                         condition.Status,
                         condition.Evaluation,
-                        condition.EvidenceReference))
-                .ToArray(),
-            skill.Reasons
+                        condition.EvidenceReference))],
+            [.. skill.Reasons
                 .Select(reason => MapReason(
                     candidateReference,
                     skill.SkillId,
-                    reason))
-                .ToArray());
+                    reason))]);
     }
 
     private static ManualLoadoutChangeViewModel MapChange(
@@ -280,7 +264,7 @@ public static class CombatRecommendationViewModelMapper
             reason.Code,
             reason.Summary,
             reason.EvidenceReferences,
-            reason.ThreatCodes.Select(ThreatReference).ToArray());
+            [.. reason.ThreatCodes.Select(ThreatReference)]);
     }
 
     private static RecommendationWarningViewModel[] MapWarnings(
@@ -292,21 +276,24 @@ public static class CombatRecommendationViewModelMapper
                 "Snapshot",
                 warning.Code,
                 warning.Message,
-                evidenceReferences: []));
+                evidenceReferences: [],
+                occurrences: 1));
         var threatWarnings = recommendation.ThreatAnalysis.Warnings
             .Select((warning, index) => MapWarning(
                 $"warning:threat:{warning.Code}:{index + 1}",
                 "ThreatAnalysis",
                 warning.Code,
                 warning.Message,
-                [warning.Mechanic.EvidenceReference]));
+                [warning.Mechanic.EvidenceReference],
+                occurrences: 1));
         var generationWarnings = recommendation.Generation.Diagnostics
             .Select((warning, index) => MapWarning(
                 $"warning:generation:{warning.Code}:{index + 1}",
                 "CandidateGeneration",
                 warning.Code.ToString(),
-                warning.Reason,
-                evidenceReferences: []));
+                GenerationWarningMessage(warning),
+                evidenceReferences: [],
+                warning.Occurrences));
 
         return
         [
@@ -316,12 +303,20 @@ public static class CombatRecommendationViewModelMapper
         ];
     }
 
+    private static string GenerationWarningMessage(
+        CombatLoadoutGenerationDiagnostic warning) =>
+        warning.Occurrences == 1
+            ? warning.Reason
+            : $"{warning.Reason} Occurred in {warning.Occurrences} explored "
+              + "combinations.";
+
     private static RecommendationWarningViewModel MapWarning(
         string reference,
         string source,
         string code,
         string message,
-        IReadOnlyList<string> evidenceReferences)
+        IReadOnlyList<string> evidenceReferences,
+        int occurrences)
     {
         var classification =
             RecommendationWarningPresentation.Classify(source, code);
@@ -331,6 +326,7 @@ public static class CombatRecommendationViewModelMapper
             code,
             classification.Kind,
             classification.IsCritical,
+            occurrences,
             message,
             classification.EffectOnRecommendation,
             evidenceReferences);

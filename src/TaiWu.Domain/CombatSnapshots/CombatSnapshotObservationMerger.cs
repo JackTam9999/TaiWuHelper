@@ -77,7 +77,11 @@ public static class CombatSnapshotObservationMerger
                 observation.ObservedAtUtc,
                 observation.EvidenceReference));
 
-        var warnings = snapshot.Warnings;
+        var warnings = observation.DisplayedSlotBudgets is null
+            ? snapshot.Warnings
+            : snapshot.Warnings.RemoveAll(warning =>
+                warning.Code
+                == "RUNTIME_SLOT_CAPACITY_MODIFIERS_NOT_EVALUATED");
         if (!snapshot.Metadata.SaveLastWriteTimeUtc.IsAvailable)
         {
             warnings = warnings.Add(

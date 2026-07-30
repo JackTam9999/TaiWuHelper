@@ -44,9 +44,10 @@ public static class CombatLoadoutFeasibilityValidator
         SlotBudgetSet? slotBudgets = null;
         try
         {
-            var proposedPlayer = CreateProposedPlayer(player, proposal);
-            slotBudgets = CombatSlotBudgetCalculator.Calculate(
-                proposedPlayer);
+            slotBudgets = CombatSlotBudgetCalculator.CalculateProposed(
+                player,
+                proposal.Skills,
+                proposal.GenericSlotAllocation);
             foreach (var budget in slotBudgets.Values.Where(
                          budget => !budget.Used.IsAvailable))
             {
@@ -172,22 +173,6 @@ public static class CombatLoadoutFeasibilityValidator
                     + $"not match the derived available total "
                     + $"{expectedTotal}."));
         }
-    }
-
-    private static PlayerCombatSnapshot CreateProposedPlayer(
-        PlayerCombatSnapshot player,
-        ProposedCombatLoadout proposal)
-    {
-        return new PlayerCombatSnapshot(
-            player.CharacterId,
-            player.DisplayName,
-            player.LearnedSkills,
-            proposal.Skills,
-            player.Equipment,
-            player.SlotBudgets,
-            proposal.GenericSlotAllocation,
-            player.LegendaryBookCostSlots,
-            player.LegendaryBookCostAssignments);
     }
 
     private static CombatLoadoutFeasibilityFailure Failure(

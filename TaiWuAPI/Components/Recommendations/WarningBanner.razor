@@ -29,6 +29,12 @@
                     }
                 </div>
                 <h3>@warning.Code</h3>
+                @if (warning.Occurrences > 1)
+                {
+                    <p class="warning-occurrences">
+                        Aggregated from @warning.Occurrences evaluated combinations.
+                    </p>
+                }
                 <p>@warning.Message</p>
                 <p class="warning-effect">
                     <strong>Effect on recommendation:</strong>

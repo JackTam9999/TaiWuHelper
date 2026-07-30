@@ -241,6 +241,21 @@ used, capacity, and remaining values for all five categories. Unknown skills,
 wrong-category placement, negative derived capacity, and used capacity above
 the calculated limit produce Domain validation errors.
 
+Proposal validation preserves the difference between the current capacity
+reported by the source snapshot and the capacity derivable from static
+Neigong plus generic-slot configuration. This observed adjustment represents
+runtime capacity effects that the standalone reader cannot safely invoke.
+`CalculateProposed` applies proposed Neigong and allocation changes to the
+configured portion while carrying that source-backed adjustment forward. It
+does not invent capacity, and an unchanged loadout is not made infeasible
+merely because the runtime adjustment cannot be recalculated.
+
+The read-only adapter never treats a collection's implementation
+`Capacity` as combat-grid capacity. Without current-screen values it reports
+configured capacities and a runtime-capacity warning. A newer observation can
+replace all five displayed slot budgets, at which point that superseded
+warning is removed from the merged snapshot.
+
 `大盈` and `大成` remain evidence-backed contribution transformations rather
 than occupied-cost rules. The budget calculator consumes the resulting
 `SkillSlotContribution`; it does not infer either transformation unless an

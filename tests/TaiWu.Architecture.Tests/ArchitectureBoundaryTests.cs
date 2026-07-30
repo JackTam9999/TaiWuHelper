@@ -640,6 +640,28 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Snapshot_adapter_does_not_use_collection_capacity_as_slots()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var source = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "TaiwuCombatSnapshotReader.cs"));
+
+        Assert.DoesNotContain("equipment.Neigong.Capacity", source);
+        Assert.DoesNotContain("equipment.Attack.Capacity", source);
+        Assert.DoesNotContain("equipment.Agility.Capacity", source);
+        Assert.DoesNotContain("equipment.Defense.Capacity", source);
+        Assert.DoesNotContain("equipment.Assistance.Capacity", source);
+        Assert.Contains(
+            "CombatSlotBudgetCalculator.CalculateConfiguredCapacity",
+            source);
+    }
+
+    [Fact]
     public void Snapshot_adapter_reads_legendary_book_cost_assignments()
     {
         var repositoryRoot = FindRepositoryRoot();

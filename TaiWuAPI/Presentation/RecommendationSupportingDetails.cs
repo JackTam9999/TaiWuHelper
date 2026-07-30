@@ -75,7 +75,7 @@ public static class RecommendationSupportingDetailsBuilder
             .ToArray();
 
         return new RecommendationSupportingDetailsViewModel(
-            recommendation.Styles
+            [.. recommendation.Styles
                 .Where(style => style.Reference != selectedStyle.Reference)
                 .Select(style => new AlternativeStyleViewModel(
                     style.Reference,
@@ -84,17 +84,14 @@ public static class RecommendationSupportingDetailsBuilder
                     style.TotalScore,
                     style.ManualChanges.Count,
                     style.Caveats.Count,
-                    style.Diagnostic))
-                .ToArray(),
-            selectedStyle.Caveats
+                    style.Diagnostic))],
+            [.. selectedStyle.Caveats
                 .Where(caveat =>
-                    caveat.Kind == RecommendationCaveatKind.Assumption)
-                .ToArray(),
-            selectedStyle.Caveats
+                    caveat.Kind == RecommendationCaveatKind.Assumption)],
+            [.. selectedStyle.Caveats
                 .Where(caveat =>
-                    caveat.Kind == RecommendationCaveatKind.UnavailableData)
-                .ToArray(),
-            skills
+                    caveat.Kind == RecommendationCaveatKind.UnavailableData)],
+            [.. skills
                 .SelectMany(skill => skill.Conditions
                     .Where(condition =>
                         condition.Criticality
@@ -103,8 +100,7 @@ public static class RecommendationSupportingDetailsBuilder
                         condition.Reference,
                         skill.Reference,
                         skill.Name ?? $"Skill {skill.SkillId}",
-                        condition)))
-                .ToArray(),
+                        condition)))],
             selectedStyle.Scores,
             evidence,
             UnknownValuePolicy);

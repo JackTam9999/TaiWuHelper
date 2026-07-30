@@ -92,5 +92,6 @@ public sealed record CombatRecommendationWarningResponse(
     string Reference,
     string Source,
     string Code,
+    int Occurrences,
     string Message,
     IReadOnlyList<string> EvidenceReferences);

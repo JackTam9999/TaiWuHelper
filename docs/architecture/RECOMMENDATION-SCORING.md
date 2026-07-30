@@ -26,7 +26,7 @@ Every scored candidate exposes the following 0–100 components:
 | Threat coverage | Share of severity-weighted target threats covered |
 | Survival | Best verified protection per threat: hard counter 100, mitigation 60 |
 | Execution reliability | Starts at 100; minus 15 per manual direction change and 5 per active-attack step |
-| Current-loadout compatibility | Share of selected skills already equipped |
+| Current-loadout compatibility | Share of current equipped skills retained |
 | Damage potential | Caller-supplied evidence-backed damage score |
 | Opportunity cost | Share of available slot capacity left unused |
 | Conditional risk | Starts at 100; minus 25 per unresolved conditional requirement |

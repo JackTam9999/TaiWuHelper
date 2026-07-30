@@ -55,6 +55,18 @@ public sealed class CombatRecommendationsControllerTests
         Assert.All(
             response.Threats,
             threat => Assert.StartsWith("threat:", threat.Reference));
+        Assert.All(
+            response.Warnings,
+            warning => Assert.True(warning.Occurrences >= 1));
+        Assert.Equal(
+            response.Warnings.Count,
+            response.Warnings
+                .Select(warning => (
+                    warning.Source,
+                    warning.Code,
+                    warning.Message))
+                .Distinct()
+                .Count());
         var safe = response.Styles.Single(
             style => style.Style == RecommendationPolicy.Safe);
         Assert.True(safe.HasRecommendation);
@@ -112,7 +124,16 @@ public sealed class CombatRecommendationsControllerTests
                             AttackSkillIds = [604]
                         },
                         GenericSlotAllocation =
-                            new GenericSlotAllocationRequest()
+                            new GenericSlotAllocationRequest(),
+                        DisplayedSlotBudgets =
+                            new DisplayedSlotBudgetSetRequest
+                            {
+                                Neigong = Budget(0, 6),
+                                Attack = Budget(1, 10),
+                                Agility = Budget(0, 8),
+                                Defense = Budget(0, 8),
+                                Assistance = Budget(0, 2)
+                            }
                     }
             },
             cancellationToken);
@@ -126,8 +147,21 @@ public sealed class CombatRecommendationsControllerTests
                 && request.CurrentLoadoutObservation.EvidenceReference
                     == "ui:current-screen"
                 && request.CurrentLoadoutObservation.EquippedSkills
-                    .AttackSkillIds.Contains(604)),
+                    .AttackSkillIds.Contains(604)
+                && request.CurrentLoadoutObservation.DisplayedSlotBudgets!
+                    [SkillCategory.Attack].Capacity == 10),
             cancellationToken);
+    }
+
+    private static DisplayedSlotBudgetRequest Budget(
+        int used,
+        int capacity)
+    {
+        return new DisplayedSlotBudgetRequest
+        {
+            Used = used,
+            Capacity = capacity
+        };
     }
 
     [Theory]
@@ -241,7 +275,7 @@ public sealed class CombatRecommendationsControllerTests
     {
         var playerSkill = Skill(
             604,
-            PracticeDirection.Neutral,
+            PracticeDirection.Reverse,
             directEffectId: 338,
             reverseEffectId: 1064);
         var targetSkill = Skill(

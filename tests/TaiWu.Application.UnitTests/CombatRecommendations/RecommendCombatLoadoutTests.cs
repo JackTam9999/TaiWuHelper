@@ -55,11 +55,9 @@ public sealed class RecommendCombatLoadoutTests
             result.Scoring.Weights.Policy);
         Assert.Contains(
             result.ManualPlan.Plan!.LoadoutChanges,
-            change => change.Kind
-                    == ManualLoadoutChangeKind.ChangeDirection
+            change => change.Kind == ManualLoadoutChangeKind.Add
                 && change.SkillId == 604
-                && change.RequiredDirection
-                    == PracticeDirection.Reverse);
+                && change.RequiredDirection is null);
         await reader.Received(1).ReadAsync(
             Arg.Is<CombatSnapshotReadRequest>(value =>
                 value != null
@@ -67,6 +65,33 @@ public sealed class RecommendCombatLoadoutTests
                 && value.TargetCharacterId == request.TargetCharacterId
                 && value.CurrentLoadoutObservation == observation),
             cancellationToken);
+    }
+
+    [Fact]
+    public async Task Direction_change_is_not_assumed_without_evidence()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var snapshot = GoldenSnapshot(PracticeDirection.Neutral);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var useCase = new RecommendCombatLoadout(reader);
+
+        var result = await useCase.ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Safe),
+            TestContext.Current.CancellationToken);
+
+        Assert.Empty(result.Generation.Candidates);
+        Assert.Contains(
+            result.Generation.Diagnostics,
+            diagnostic => diagnostic.Code
+                    == CombatLoadoutGenerationDiagnosticCode.OptionRejected
+                && diagnostic.SkillId == 604);
+        Assert.False(result.ManualPlan.HasPlan);
     }
 
     [Fact]
@@ -167,12 +192,13 @@ public sealed class RecommendCombatLoadoutTests
                 (RecommendationPolicy)999));
     }
 
-    private static CombatSnapshot GoldenSnapshot()
+    private static CombatSnapshot GoldenSnapshot(
+        PracticeDirection direction = PracticeDirection.Reverse)
     {
         var playerSkill = Skill(
             604,
             SkillCategory.Attack,
-            PracticeDirection.Neutral,
+            direction,
             directEffectId: 338,
             reverseEffectId: 1064);
         var targetSkill = Skill(

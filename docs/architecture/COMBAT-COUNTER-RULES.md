@@ -74,3 +74,8 @@ For the confirmed current direction profile, neutral 金猊 fails the Reverse
 requirement and reverse 墨玉 fails the Direct requirement. Reverse 老君,
 reverse 萬花, and reverse 伏龍 pass direction/effect eligibility when the
 proposed context equips 老君 and actively runs 萬花.
+
+Recommendation options keep this direction check strict by default. The
+presence of both raw Direct and Reverse effect IDs does not prove that the
+player can change practice direction. A manual direction change may be
+proposed only when separate current-player evidence explicitly permits it.

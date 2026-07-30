@@ -13,11 +13,10 @@ public sealed record GeneratedCombatLoadout
         FeasibleLoadout = feasibleLoadout;
         SelectedOptions = [.. selectedOptions];
         StableKey = stableKey;
-        ThreatCodes = SelectedOptions
+        ThreatCodes = [.. SelectedOptions
             .SelectMany(option => option.ThreatCodes)
             .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)
-            .ToImmutableArray();
+            .Order(StringComparer.Ordinal)];
         CombatStartCounterCount = SelectedOptions.Count(
             option => option.IsCombatStartCounter);
         HardCounterCount = SelectedOptions.Count(

@@ -21,7 +21,7 @@ public sealed class CombatEffectCatalog
         }
 
         ArgumentNullException.ThrowIfNull(entries);
-        Entries = entries.ToImmutableArray();
+        Entries = [.. entries];
         if (Entries.Any(entry => entry is null))
         {
             throw new ArgumentException(

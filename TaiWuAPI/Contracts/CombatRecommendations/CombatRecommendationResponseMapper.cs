@@ -19,9 +19,7 @@ public static class CombatRecommendationResponseMapper
                 value.Threat.Title,
                 value.Threat.Severity,
                 value.Threat.ActivationTiming,
-                value.Threat.Evidence
-                    .Select(evidence => evidence.Reference)
-                    .ToArray()))
+                [.. value.Threat.Evidence.Select(evidence => evidence.Reference)]))
             .ToArray();
         var styles = recommendation.Styles
             .Select(style => MapStyle(snapshotReference, style))
@@ -70,42 +68,34 @@ public static class CombatRecommendationResponseMapper
             HasRecommendation: true,
             candidateReference,
             plan.SelectedRecommendation.TotalScore,
-            plan.SelectedRecommendation.Components
+            [.. plan.SelectedRecommendation.Components
                 .Select(component => new RecommendationScoreResponse(
                     component.Kind,
                     component.Weight,
                     component.Score,
                     component.WeightedPoints,
                     component.Explanation,
-                    component.EvidenceReference))
-                .ToArray(),
-            explanation.Skills
-                .Select(skill => MapSkill(candidateReference, skill))
-                .ToArray(),
-            plan.LoadoutChanges
-                .Select(change => MapChange(candidateReference, change))
-                .ToArray(),
-            plan.OpeningActions
+                    component.EvidenceReference))],
+            [.. explanation.Skills.Select(skill => MapSkill(candidateReference, skill))],
+            [.. plan.LoadoutChanges.Select(change => MapChange(candidateReference, change))],
+            [.. plan.OpeningActions
                 .Select(action => MapStep(
                     candidateReference,
                     "opening",
-                    action))
-                .ToArray(),
-            plan.SwitchingConditions
+                    action))],
+            [.. plan.SwitchingConditions
                 .Select(action => MapStep(
                     candidateReference,
                     "switch",
-                    action))
-                .ToArray(),
-            explanation.Caveats
+                    action))],
+            [.. explanation.Caveats
                 .Select((caveat, index) => new RecommendationCaveatResponse(
                     $"{candidateReference}:caveat:{caveat.Code}:{index + 1}",
                     caveat.Kind,
                     caveat.Code,
                     caveat.Explanation,
                     caveat.SkillId,
-                    caveat.EvidenceReferences))
-                .ToArray(),
+                    caveat.EvidenceReferences))],
             Diagnostic: null);
     }
 
@@ -130,11 +120,10 @@ public static class CombatRecommendationResponseMapper
                 : null,
             skill.Counter.Strength,
             skill.Counter.ActivationTiming,
-            skill.Reasons.Select(reason => MapReason(
+            [.. skill.Reasons.Select(reason => MapReason(
                     candidateReference,
                     skill.SkillId,
-                    reason))
-                .ToArray());
+                    reason))]);
     }
 
     private static ManualLoadoutChangeResponse MapChange(
@@ -183,7 +172,7 @@ public static class CombatRecommendationResponseMapper
             reason.Code,
             reason.Summary,
             reason.EvidenceReferences,
-            reason.ThreatCodes.Select(ThreatReference).ToArray());
+            [.. reason.ThreatCodes.Select(ThreatReference)]);
     }
 
     private static CombatRecommendationWarningResponse[] MapWarnings(
@@ -195,6 +184,7 @@ public static class CombatRecommendationResponseMapper
                     $"warning:snapshot:{warning.Code}:{index + 1}",
                     "Snapshot",
                     warning.Code,
+                    Occurrences: 1,
                     warning.Message,
                     EvidenceReferences: Array.Empty<string>()));
         var threatWarnings = recommendation.ThreatAnalysis.Warnings
@@ -203,6 +193,7 @@ public static class CombatRecommendationResponseMapper
                     $"warning:threat:{warning.Code}:{index + 1}",
                     "ThreatAnalysis",
                     warning.Code,
+                    Occurrences: 1,
                     warning.Message,
                     [warning.Mechanic.EvidenceReference]));
         var generationWarnings = recommendation.Generation.Diagnostics
@@ -211,7 +202,8 @@ public static class CombatRecommendationResponseMapper
                     $"warning:generation:{warning.Code}:{index + 1}",
                     "CandidateGeneration",
                     warning.Code.ToString(),
-                    warning.Reason,
+                    warning.Occurrences,
+                    GenerationWarningMessage(warning),
                     EvidenceReferences: Array.Empty<string>()));
 
         return
@@ -221,6 +213,13 @@ public static class CombatRecommendationResponseMapper
             .. generationWarnings
         ];
     }
+
+    private static string GenerationWarningMessage(
+        CombatLoadoutGenerationDiagnostic warning) =>
+        warning.Occurrences == 1
+            ? warning.Reason
+            : $"{warning.Reason} Occurred in {warning.Occurrences} explored "
+              + "combinations.";
 
     private static string ThreatReference(string code) =>
         $"threat:{code}";

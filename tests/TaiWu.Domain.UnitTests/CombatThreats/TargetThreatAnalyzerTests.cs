@@ -122,7 +122,7 @@ public sealed class TargetThreatAnalyzerTests
             snapshot,
             CreateRuleSet(
                 [equipped.SkillId, learned.SkillId],
-                rules.Reverse().ToArray()));
+                [.. rules.Reverse()]));
 
         string[] expected =
         [
@@ -325,7 +325,7 @@ public sealed class TargetThreatAnalyzerTests
         TargetThreatSkillSignature[] signatures)
     {
         return CreateRuleSet(
-            signatures.Select(signature => signature.SkillId).ToArray(),
+            [.. signatures.Select(signature => signature.SkillId)],
             [Rule(CreateThreat(), signatures)]);
     }
 

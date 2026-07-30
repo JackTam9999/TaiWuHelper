@@ -95,7 +95,7 @@ public sealed class RecommendationSelectionStateTests
                     TargetThreatActivationTiming.OnHit,
                     ["evidence:test"])
             ],
-            Enum.GetValues<RecommendationPolicy>()
+            [.. Enum.GetValues<RecommendationPolicy>()
                 .Select(policy => new RecommendationStyleViewModel(
                     $"{snapshotReference}:style:{policy}",
                     snapshotReference,
@@ -110,8 +110,7 @@ public sealed class RecommendationSelectionStateTests
                     OpeningActions: [],
                     SwitchingConditions: [],
                     Caveats: [],
-                    Diagnostic: null))
-                .ToArray(),
+                    Diagnostic: null))],
             Warnings: []);
     }
 }

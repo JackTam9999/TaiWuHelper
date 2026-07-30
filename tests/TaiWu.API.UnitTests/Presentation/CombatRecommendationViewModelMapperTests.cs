@@ -61,9 +61,9 @@ public sealed class CombatRecommendationViewModelMapperTests
         var jinni = Assert.Single(
             attack.Skills,
             skill => skill.SkillId == 604);
-        Assert.Equal(PracticeDirection.Neutral, jinni.CurrentDirection);
+        Assert.Equal(PracticeDirection.Reverse, jinni.CurrentDirection);
         Assert.Equal(PracticeDirection.Reverse, jinni.RequiredDirection);
-        Assert.True(jinni.RequiresManualDirectionChange);
+        Assert.False(jinni.RequiresManualDirectionChange);
         Assert.Equal(1, jinni.Cost.ActualCost);
         Assert.Equal(1, jinni.Cost.EffectiveCost);
         Assert.Equal(
@@ -90,6 +90,18 @@ public sealed class CombatRecommendationViewModelMapperTests
         Assert.Equal(CombatRequirementStatus.Satisfied, condition.Status);
         Assert.False(string.IsNullOrWhiteSpace(condition.EvidenceReference));
         Assert.NotEmpty(model.Warnings);
+        Assert.All(
+            model.Warnings,
+            warning => Assert.True(warning.Occurrences >= 1));
+        Assert.Equal(
+            model.Warnings.Count,
+            model.Warnings
+                .Select(warning => (
+                    warning.Source,
+                    warning.Code,
+                    warning.Message))
+                .Distinct()
+                .Count());
     }
 
     [Fact]
@@ -200,7 +212,7 @@ public sealed class CombatRecommendationViewModelMapperTests
         var jinni = Skill(
             604,
             SkillCategory.Attack,
-            PracticeDirection.Neutral,
+            PracticeDirection.Reverse,
             directEffectId: 338,
             reverseEffectId: 1064);
         var laojun = Skill(

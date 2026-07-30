@@ -1552,6 +1552,9 @@ Audit the completed UI against the permanent game non-interference boundary.
 
 ### M1-025 — Verify the recommendation in-game
 
+**Status:** In progress — preparation complete; awaiting a current in-game
+snapshot and manual verification.
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-023, M1-024, M1-033
@@ -1569,6 +1572,28 @@ game during verification.
 - [ ] Differences are recorded as rule corrections, not silently ignored.
 - [ ] Every save, game-owned file, and observed runtime state remains unchanged
       by the helper.
+
+#### Preparation evidence
+
+- The live read found target `16317`, age 52, and the three documented
+  magic-sound/mind-resonance threats.
+- The first dry run exposed duplicate diagnostics and a search/scoring bias
+  toward undersized loadouts. Diagnostics are now aggregated, strategic
+  choices are searched separately, and feasible current skills are retained.
+- The second dry run exposed the adapter's incorrect use of collection
+  `Capacity` as combat-grid capacity. Disk reads now use configured capacity,
+  explicitly warn when runtime modifiers are unavailable, and the API accepts
+  all five displayed used/capacity pairs as newer current-screen evidence.
+- Counter direction is strict unless separate evidence permits a manual
+  change. The known-neutral skill 604 is therefore retained but not treated as
+  the unavailable Reverse hard counter. The current disk snapshot instead
+  selects already-Reverse skills 624 and 686 as mitigations.
+- The disk snapshot is older than the latest in-game outer-skill layout, so no
+  candidate is accepted as manually verified yet.
+- `dotnet format TaiWu.slnx --no-restore --verify-no-changes` passed.
+- Default tests: 306 discovered, 305 passed, and the opt-in local read skipped.
+- Opt-in local integration tests: 2 discovered and 2 passed.
+- A post-run read-only inspection confirmed the source save was unchanged.
 
 ## Later backlog
 

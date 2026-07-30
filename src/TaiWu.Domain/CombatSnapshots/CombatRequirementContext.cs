@@ -94,7 +94,7 @@ public sealed record CombatRequirementContext
                 parameterName);
         }
 
-        return values.ToImmutableHashSet();
+        return [.. values];
     }
 
     private static ImmutableDictionary<int, int> CopyTrickCounts(

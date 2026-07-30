@@ -135,6 +135,7 @@ public sealed class RecommendationPageStateTests
             code,
             PresentationWarningKind.General,
             IsCritical: false,
+            Occurrences: 1,
             "Test warning.",
             "Review manually.",
             []);

@@ -170,6 +170,41 @@ public sealed class CombatSlotBudgetCalculatorTests
     }
 
     [Fact]
+    public void Proposed_budget_preserves_observed_capacity_adjustment()
+    {
+        var neigong = CreateSkill(
+            100,
+            SkillCategory.Neigong,
+            gridCost: 1,
+            slotContribution: new SkillSlotContribution(
+                attack: 1,
+                agility: 0,
+                defense: 0,
+                assistance: 0,
+                generic: 0));
+        var attacks = Enumerable.Range(200, 4)
+            .Select(skillId => CreateSkill(
+                skillId,
+                SkillCategory.Attack,
+                gridCost: 1))
+            .ToArray();
+        var loadout = CreateLoadout(
+            neigong: [neigong.SkillId],
+            attack: [.. attacks.Select(skill => skill.SkillId)]);
+        var player = CreatePlayer(
+            [neigong, .. attacks],
+            loadout,
+            slotBudgets: CreateSlotBudgets(attackCapacity: 4));
+
+        var result = CombatSlotBudgetCalculator.CalculateProposed(
+            player,
+            loadout,
+            player.GenericSlotAllocation);
+
+        AssertBudget(result, SkillCategory.Attack, 4, 4, 0);
+    }
+
+    [Fact]
     public void Unavailable_skill_cost_preserves_unavailable_usage()
     {
         var attack = CreateSkill(
@@ -247,7 +282,7 @@ public sealed class CombatSlotBudgetCalculatorTests
         var player = CreatePlayer(
             skills,
             CreateLoadout(
-                attack: skills.Select(skill => skill.SkillId).ToArray()));
+                attack: [.. skills.Select(skill => skill.SkillId)]));
 
         var exception = Assert.Throws<ArgumentException>(
             () => CombatSlotBudgetCalculator.Calculate(player));
@@ -390,7 +425,8 @@ public sealed class CombatSlotBudgetCalculatorTests
         GenericSlotAllocation? genericSlotAllocation = null,
         LegendaryBookCostSlot[]? legendaryBookCostSlots = null,
         LegendaryBookCostAssignment[]?
-            legendaryBookCostAssignments = null)
+            legendaryBookCostAssignments = null,
+        SlotBudgetSet? slotBudgets = null)
     {
         return new PlayerCombatSnapshot(
             characterId: 1,
@@ -398,17 +434,23 @@ public sealed class CombatSlotBudgetCalculatorTests
             skills,
             loadout,
             equipment: [],
-            slotBudgets: new SlotBudgetSet(
-            [
-                new SlotBudget(SkillCategory.Neigong, 0, 6),
-                new SlotBudget(SkillCategory.Attack, 0, 2),
-                new SlotBudget(SkillCategory.Agility, 0, 2),
-                new SlotBudget(SkillCategory.Defense, 0, 2),
-                new SlotBudget(SkillCategory.Assistance, 0, 2)
-            ]),
+            slotBudgets: slotBudgets ?? CreateSlotBudgets(),
             genericSlotAllocation
                 ?? new GenericSlotAllocation(0, 0, 0, 0, 0),
             legendaryBookCostSlots ?? [],
             legendaryBookCostAssignments ?? []);
+    }
+
+    private static SlotBudgetSet CreateSlotBudgets(
+        int attackCapacity = 2)
+    {
+        return new SlotBudgetSet(
+        [
+            new SlotBudget(SkillCategory.Neigong, 0, 6),
+            new SlotBudget(SkillCategory.Attack, 0, attackCapacity),
+            new SlotBudget(SkillCategory.Agility, 0, 2),
+            new SlotBudget(SkillCategory.Defense, 0, 2),
+            new SlotBudget(SkillCategory.Assistance, 0, 2)
+        ]);
     }
 }

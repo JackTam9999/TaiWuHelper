@@ -23,6 +23,10 @@ public sealed class CombatSnapshotObservationMergerTests
         Assert.Equal([21], result.Player.EquippedSkills.AttackSkillIds);
         Assert.Equal(4, result.Player.GenericSlotAllocation.Attack);
         Assert.Equal(10, result.Player.SlotBudgets[SkillCategory.Attack].Capacity);
+        Assert.DoesNotContain(
+            result.Warnings,
+            warning => warning.Code
+                == "RUNTIME_SLOT_CAPACITY_MODIFIERS_NOT_EVALUATED");
         Assert.Equal([20], snapshot.Player.EquippedSkills.AttackSkillIds);
         Assert.Equal(9, snapshot.Player.SlotBudgets[SkillCategory.Attack].Capacity);
         Assert.Same(snapshot.Metadata, result.Metadata);
@@ -57,6 +61,10 @@ public sealed class CombatSnapshotObservationMergerTests
             observation);
 
         Assert.Equal(9, result.Player.SlotBudgets[SkillCategory.Attack].Capacity);
+        Assert.Contains(
+            result.Warnings,
+            warning => warning.Code
+                == "RUNTIME_SLOT_CAPACITY_MODIFIERS_NOT_EVALUATED");
         Assert.DoesNotContain(
             result.FieldSources,
             source =>
@@ -270,7 +278,12 @@ public sealed class CombatSnapshotObservationMergerTests
                 SnapshotValue<string>.Available("1.0.0+test")),
             player,
             target,
-            warnings: []);
+            warnings:
+            [
+                new SnapshotWarning(
+                    "RUNTIME_SLOT_CAPACITY_MODIFIERS_NOT_EVALUATED",
+                    "Runtime capacity modifiers were unavailable.")
+            ]);
     }
 
     private static PlayerLoadoutObservation CreateObservation(

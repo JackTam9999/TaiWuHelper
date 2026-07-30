@@ -58,6 +58,12 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
                 "Configured GridCost and confirmed mastery were mapped, but "
                 + "effective used capacity remains unavailable because the "
                 + "standalone-unsafe SpecialEffect calculation was not invoked."));
+        warnings.Add(
+            new SnapshotWarning(
+                "RUNTIME_SLOT_CAPACITY_MODIFIERS_NOT_EVALUATED",
+                "Configured slot capacities were mapped, but runtime capacity "
+                + "modifiers were not invoked. Supply current-screen displayed "
+                + "slot budgets when exact capacities differ."));
 
         var taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
         var taiwu = DomainManager.Taiwu.GetTaiwu()
@@ -106,6 +112,11 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
         var legendaryBookCosts = MapLegendaryBookCosts(
             learnedById,
             warnings);
+        var genericSlotAllocation = MapGenericSlotAllocation(
+            character,
+            loadout,
+            learnedById,
+            warnings);
 
         return new PlayerCombatSnapshot(
             characterId,
@@ -114,13 +125,10 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
             loadout,
             MapEquipment(character.GetEquipment()),
             MapSlotBudgets(
-                equipment,
-                loadout),
-            MapGenericSlotAllocation(
-                character,
                 loadout,
                 learnedById,
-                warnings),
+                genericSlotAllocation),
+            genericSlotAllocation,
             legendaryBookCosts.Slots,
             legendaryBookCosts.Assignments);
     }
@@ -306,32 +314,22 @@ internal sealed class TaiwuCombatSnapshotReader : ICombatSnapshotReader
     }
 
     private static SlotBudgetSet MapSlotBudgets(
-        CombatSkillEquipment equipment,
-        CombatLoadoutSnapshot loadout)
+        CombatLoadoutSnapshot loadout,
+        Dictionary<int, CombatSkillSnapshot> learnedById,
+        GenericSlotAllocation genericSlotAllocation)
     {
+        var equippedNeigong = loadout.NeigongSkillIds
+            .Select(skillId => learnedById[skillId])
+            .ToArray();
         return new SlotBudgetSet(
-        [
-            MapSlotBudget(
-                SkillCategory.Neigong,
-                equipment.Neigong.Capacity,
-                loadout),
-            MapSlotBudget(
-                SkillCategory.Attack,
-                equipment.Attack.Capacity,
-                loadout),
-            MapSlotBudget(
-                SkillCategory.Agility,
-                equipment.Agility.Capacity,
-                loadout),
-            MapSlotBudget(
-                SkillCategory.Defense,
-                equipment.Defense.Capacity,
-                loadout),
-            MapSlotBudget(
-                SkillCategory.Assistance,
-                equipment.Assistance.Capacity,
-                loadout)
-        ]);
+            Enum.GetValues<SkillCategory>().Select(category =>
+                MapSlotBudget(
+                    category,
+                    CombatSlotBudgetCalculator.CalculateConfiguredCapacity(
+                        category,
+                        equippedNeigong,
+                        genericSlotAllocation),
+                    loadout)));
     }
 
     private static SlotBudget MapSlotBudget(

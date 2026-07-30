@@ -36,7 +36,7 @@ public sealed class CombatLoadoutGeneratorTests
 
         var result = Generate(
             CreatePlayer(skills),
-            skills.Select(skill => Option(skill)).ToArray());
+            [.. skills.Select(skill => Option(skill))]);
 
         Assert.DoesNotContain(
             result.Candidates,
@@ -84,7 +84,7 @@ public sealed class CombatLoadoutGeneratorTests
 
         var result = Generate(
             CreatePlayer(skills),
-            skills.Select(skill => Option(skill)).ToArray(),
+            [.. skills.Select(skill => Option(skill))],
             maxExploredCombinations: 2);
 
         Assert.Equal(2, result.ExploredCombinations);
@@ -136,7 +136,7 @@ public sealed class CombatLoadoutGeneratorTests
         var first = Generate(CreatePlayer(skills), options);
         var second = Generate(
             CreatePlayer(skills),
-            options.Reverse().ToArray());
+            [.. options.Reverse()]);
 
         Assert.Equal(
             first.Candidates.Select(candidate => candidate.StableKey),
@@ -166,6 +166,69 @@ public sealed class CombatLoadoutGeneratorTests
         var selected = Assert.Single(best.SelectedOptions);
         Assert.Equal(current.SkillId, selected.Candidate.SkillId);
         Assert.Equal(1, best.RetainedCurrentSkillCount);
+    }
+
+    [Fact]
+    public void Equipped_neigong_is_required_to_preserve_slot_capacity()
+    {
+        var neigong = CreateSkill(100, SkillCategory.Neigong);
+        var attack = CreateSkill(101);
+        var player = CreatePlayer(
+            [neigong, attack],
+            new CombatLoadoutSnapshot(
+                neigongSkillIds: [neigong.SkillId],
+                attackSkillIds: [],
+                agilitySkillIds: [],
+                defenseSkillIds: [],
+                assistanceSkillIds: []));
+
+        var result = Generate(
+            player,
+            [
+                Option(neigong, isCurrentlyEquipped: true),
+                Option(attack, threatCodes: ["THREAT"])
+            ]);
+
+        Assert.NotEmpty(result.Candidates);
+        Assert.All(
+            result.Candidates,
+            candidate => Assert.Contains(
+                neigong.SkillId,
+                candidate.FeasibleLoadout.Proposal.Skills.NeigongSkillIds));
+    }
+
+    [Fact]
+    public void Strategic_counter_preserves_every_current_skill_that_fits()
+    {
+        var firstCurrent = CreateSkill(100);
+        var secondCurrent = CreateSkill(101);
+        var counter = CreateSkill(102);
+        var player = CreatePlayer(
+            [firstCurrent, secondCurrent, counter],
+            CreateLoadout(
+                attack:
+                [
+                    firstCurrent.SkillId,
+                    secondCurrent.SkillId
+                ]));
+
+        var result = Generate(
+            player,
+            [
+                Option(firstCurrent, isCurrentlyEquipped: true),
+                Option(secondCurrent, isCurrentlyEquipped: true),
+                Option(
+                    counter,
+                    threatCodes: ["THREAT"],
+                    strength: CombatCounterStrength.HardCounter,
+                    timing: CombatCounterActivationTiming.ActiveAttack)
+            ]);
+
+        var counterCandidate = Assert.Single(
+            result.Candidates,
+            candidate => candidate.ThreatCodes.Contains("THREAT"));
+        Assert.Equal(1, counterCandidate.RetainedCurrentSkillCount);
+        Assert.Equal(2, counterCandidate.SelectedOptions.Length);
     }
 
     [Fact]
@@ -234,6 +297,40 @@ public sealed class CombatLoadoutGeneratorTests
         Assert.Equal(
             skill.SkillId,
             Assert.Single(candidate.SelectedOptions).Candidate.SkillId);
+    }
+
+    [Fact]
+    public void Rejected_current_counter_falls_back_to_plain_retention()
+    {
+        var skill = CreateSkill(
+            100,
+            direction: PracticeDirection.Direct);
+        var player = CreatePlayer(
+            [skill],
+            CreateLoadout(attack: [skill.SkillId]));
+        var option = new CombatLoadoutOption(
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Reverse),
+            requirements: [],
+            threatCodes: ["THREAT"],
+            isCurrentlyEquipped: true,
+            evidenceReference: "local-config:reverse-effect",
+            CombatCounterStrength.HardCounter,
+            CombatCounterActivationTiming.ActiveAttack,
+            expectedEffectId: skill.ReverseEffectId.Value);
+
+        var result = Generate(player, [option]);
+
+        var candidate = Assert.Single(result.Candidates);
+        var retained = Assert.Single(candidate.SelectedOptions);
+        Assert.True(retained.IsCurrentlyEquipped);
+        Assert.Empty(retained.ThreatCodes);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Code
+                    == CombatLoadoutGenerationDiagnosticCode.OptionRejected
+                && diagnostic.SkillId == skill.SkillId);
     }
 
     [Fact]

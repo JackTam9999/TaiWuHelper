@@ -37,6 +37,12 @@ public sealed class CurrentScreenLoadoutRequest
         init;
     } = new();
 
+    public DisplayedSlotBudgetSetRequest? DisplayedSlotBudgets
+    {
+        get;
+        init;
+    }
+
     internal PlayerLoadoutObservation ToDomain()
     {
         if (ObservedAt == default)
@@ -50,7 +56,8 @@ public sealed class CurrentScreenLoadoutRequest
             ObservedAt,
             EvidenceReference,
             EquippedSkills.ToDomain(),
-            GenericSlotAllocation.ToDomain());
+            GenericSlotAllocation.ToDomain(),
+            DisplayedSlotBudgets?.ToDomain());
     }
 }
 
@@ -74,6 +81,67 @@ public sealed class CombatLoadoutRequest
             AgilitySkillIds,
             DefenseSkillIds,
             AssistanceSkillIds);
+    }
+}
+
+public sealed class DisplayedSlotBudgetSetRequest
+{
+    [Required]
+    public DisplayedSlotBudgetRequest? Neigong { get; init; }
+
+    [Required]
+    public DisplayedSlotBudgetRequest? Attack { get; init; }
+
+    [Required]
+    public DisplayedSlotBudgetRequest? Agility { get; init; }
+
+    [Required]
+    public DisplayedSlotBudgetRequest? Defense { get; init; }
+
+    [Required]
+    public DisplayedSlotBudgetRequest? Assistance { get; init; }
+
+    internal SlotBudgetSet ToDomain()
+    {
+        return new SlotBudgetSet(
+        [
+            Required(Neigong, SkillCategory.Neigong),
+            Required(Attack, SkillCategory.Attack),
+            Required(Agility, SkillCategory.Agility),
+            Required(Defense, SkillCategory.Defense),
+            Required(Assistance, SkillCategory.Assistance)
+        ]);
+    }
+
+    private static SlotBudget Required(
+        DisplayedSlotBudgetRequest? request,
+        SkillCategory category)
+    {
+        return request?.ToDomain(category)
+            ?? throw new ArgumentException(
+                $"Displayed {category} slot budget is required.");
+    }
+}
+
+public sealed class DisplayedSlotBudgetRequest
+{
+    [Required]
+    [Range(0, int.MaxValue)]
+    public int? Used { get; init; }
+
+    [Required]
+    [Range(0, int.MaxValue)]
+    public int? Capacity { get; init; }
+
+    internal SlotBudget ToDomain(SkillCategory category)
+    {
+        if (Used is null || Capacity is null)
+        {
+            throw new ArgumentException(
+                $"Displayed {category} used and capacity values are required.");
+        }
+
+        return new SlotBudget(category, Used.Value, Capacity.Value);
     }
 }
 

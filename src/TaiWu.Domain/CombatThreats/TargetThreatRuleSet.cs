@@ -53,7 +53,7 @@ public sealed class TargetThreatRuleSet
                 nameof(rules));
         }
 
-        RelevantSkillIds = relevantIds.ToImmutableHashSet();
+        RelevantSkillIds = [.. relevantIds];
         if (Rules
             .SelectMany(rule => rule.Signatures)
             .Any(signature =>

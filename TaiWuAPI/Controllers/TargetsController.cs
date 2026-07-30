@@ -59,7 +59,7 @@ public sealed class TargetsController(
             result.TotalMatches,
             result.CapturedAtUtc,
             result.GameDataVersion,
-            result.Matches.Select(entry => new TargetLookupMatchResponse(
+            [.. result.Matches.Select(entry => new TargetLookupMatchResponse(
                     $"target:{entry.CharacterId}",
                     entry.CharacterId,
                     entry.DisplayName,
@@ -67,13 +67,11 @@ public sealed class TargetsController(
                     new TargetLocationResponse(
                         $"location:{entry.AreaId}:{entry.BlockId}",
                         entry.AreaId,
-                        entry.BlockId)))
-                .ToArray(),
-            result.Warnings.Select((warning, index) =>
+                        entry.BlockId)))],
+            [.. result.Warnings.Select((warning, index) =>
                     new TargetLookupWarningResponse(
                         $"warning:target-lookup:{warning.Code}:{index + 1}",
                         warning.Code,
-                        warning.Message))
-                .ToArray());
+                        warning.Message))]);
     }
 }

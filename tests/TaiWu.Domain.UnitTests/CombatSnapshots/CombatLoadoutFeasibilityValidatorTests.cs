@@ -35,11 +35,11 @@ public sealed class CombatLoadoutFeasibilityValidatorTests
                 CreateSkill(skillId, SkillCategory.Attack))
             .ToArray();
         var loadout = CreateLoadout(
-            attack: attacks.Select(skill => skill.SkillId).ToArray());
+            attack: [.. attacks.Select(skill => skill.SkillId)]);
         var proposal = CreateProposal(
             loadout,
-            attacks.Select(skill =>
-                new CombatSkillCandidate(skill.SkillId)).ToArray());
+            [.. attacks.Select(skill =>
+                new CombatSkillCandidate(skill.SkillId))]);
 
         var result = CombatLoadoutFeasibilityValidator.Validate(
             CreatePlayer(attacks),
@@ -51,6 +51,45 @@ public sealed class CombatLoadoutFeasibilityValidatorTests
         AssertFailure(
             result,
             CombatLoadoutFeasibilityFailureCode.SlotBudgetInvalid);
+    }
+
+    [Fact]
+    public void Observed_capacity_adjustment_is_preserved_for_proposal()
+    {
+        var neigong = CreateSkill(
+            100,
+            SkillCategory.Neigong,
+            contribution: new SkillSlotContribution(
+                attack: 1,
+                agility: 0,
+                defense: 0,
+                assistance: 0,
+                generic: 0));
+        var attacks = Enumerable.Range(200, 4)
+            .Select(skillId =>
+                CreateSkill(skillId, SkillCategory.Attack))
+            .ToArray();
+        var loadout = CreateLoadout(
+            neigong: [neigong.SkillId],
+            attack: [.. attacks.Select(skill => skill.SkillId)]);
+        CombatSkillSnapshot[] skills = [neigong, .. attacks];
+        var candidates = skills
+            .Select(skill => new CombatSkillCandidate(skill.SkillId))
+            .ToArray();
+        var player = CreatePlayer(
+            skills,
+            loadout,
+            CreateSlotBudgets(attackCapacity: 4));
+
+        var result = CombatLoadoutFeasibilityValidator.Validate(
+            player,
+            CreateProposal(loadout, candidates));
+
+        Assert.True(result.IsFeasible);
+        Assert.Equal(
+            4,
+            result.FeasibleLoadout!
+                .SlotBudgets[SkillCategory.Attack].Capacity);
     }
 
     [Fact]
@@ -349,24 +388,32 @@ public sealed class CombatLoadoutFeasibilityValidatorTests
     }
 
     private static PlayerCombatSnapshot CreatePlayer(
-        CombatSkillSnapshot[] skills)
+        CombatSkillSnapshot[] skills,
+        CombatLoadoutSnapshot? loadout = null,
+        SlotBudgetSet? slotBudgets = null)
     {
         return new PlayerCombatSnapshot(
             characterId: 1,
             SnapshotValue<string>.Available("Taiwu"),
             skills,
-            CreateLoadout(),
+            loadout ?? CreateLoadout(),
             equipment: [],
-            new SlotBudgetSet(
-            [
-                new SlotBudget(SkillCategory.Neigong, 0, 6),
-                new SlotBudget(SkillCategory.Attack, 0, 2),
-                new SlotBudget(SkillCategory.Agility, 0, 2),
-                new SlotBudget(SkillCategory.Defense, 0, 2),
-                new SlotBudget(SkillCategory.Assistance, 0, 2)
-            ]),
+            slotBudgets ?? CreateSlotBudgets(),
             new GenericSlotAllocation(0, 0, 0, 0, 0),
             legendaryBookCostSlots: [],
             legendaryBookCostAssignments: []);
+    }
+
+    private static SlotBudgetSet CreateSlotBudgets(
+        int attackCapacity = 2)
+    {
+        return new SlotBudgetSet(
+        [
+            new SlotBudget(SkillCategory.Neigong, 0, 6),
+            new SlotBudget(SkillCategory.Attack, 0, attackCapacity),
+            new SlotBudget(SkillCategory.Agility, 0, 2),
+            new SlotBudget(SkillCategory.Defense, 0, 2),
+            new SlotBudget(SkillCategory.Assistance, 0, 2)
+        ]);
     }
 }
