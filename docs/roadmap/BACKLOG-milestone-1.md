@@ -686,6 +686,8 @@ Analyze the target snapshot and return ordered threats.
 
 ### M1-015 — Define counter rules for the golden target
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-012, M1-013
@@ -695,11 +697,40 @@ skills, equipment, or tactical responses.
 
 #### Acceptance criteria
 
-- [ ] Every counter cites an effect, configuration entry, or verified rule.
-- [ ] Required direction and activation timing are represented.
-- [ ] Hard counters are distinguished from mitigation.
-- [ ] Missing player access to a counter is reported.
-- [ ] Counter rules are unit tested.
+- [x] Every counter cites an effect, configuration entry, or verified rule.
+- [x] Required direction and activation timing are represented.
+- [x] Hard counters are distinguished from mitigation.
+- [x] Missing player access to a counter is reported.
+- [x] Counter rules are unit tested.
+
+#### Evidence
+
+- `CombatCounterRule` links stable threat codes to one typed, recognized
+  `CombatEffectCatalogEntry`; raw effect ID, text, source key, skill, and
+  required direction remain available through that entry.
+- Activation is explicitly CombatStartPassive, EquippedPassive, ActiveAttack,
+  ActiveDefense, or ActiveAgility.
+- `REVERSE_JINNI_SUPPRESSION` is the initial hard counter. Reverse 老君,
+  reverse 萬花, direct 墨玉, and reverse 伏龍 are modeled as mitigations.
+- Passive and active-agility rules carry evidence-backed
+  `SkillActivationRequirement` instances. No unverified legendary-book or
+  unowned effect is used.
+- `CombatCounterAccessEvaluator` composes candidate eligibility and combat
+  requirements, checks the observed raw effect ID, returns every rule, and
+  separates accessible counters from missing access.
+- Missing ownership, unavailable or wrong direction, unavailable or changed
+  effect identity, and unmet hard activation requirements remain explicit
+  issues. Conditional requirement failures remain warnings.
+- The current confirmed directions make reverse 老君, reverse 萬花, and
+  reverse 伏龍 eligible under the intended activation context. Neutral 金猊
+  and reverse 墨玉 remain missing-access results because their required
+  directions are Reverse and Direct respectively.
+- Nine focused xUnit v3 tests cover effect citations, strength and timing,
+  successful access, missing ownership, direction/effect mismatch, activation,
+  the current direction profile, and invalid rule construction.
+- The rules and evaluator are pure Domain code and cannot equip a skill,
+  change direction, write a save, or control the game.
+- `dotnet test --no-restore`: 171 tests passed.
 
 ## Slice 5: Recommendation
 
