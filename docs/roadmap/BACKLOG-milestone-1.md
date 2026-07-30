@@ -594,6 +594,8 @@ scenario's effects into typed mechanics.
 
 ### M1-013 — Define target-threat taxonomy
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-012
@@ -603,11 +605,34 @@ evidence.
 
 #### Acceptance criteria
 
-- [ ] Threat types are Domain concepts.
-- [ ] Severity has a documented scale.
-- [ ] Every threat contains source evidence.
-- [ ] The taxonomy supports the golden target's critical mechanic.
-- [ ] Unknown mechanics generate warnings.
+- [x] Threat types are Domain concepts.
+- [x] Severity has a documented scale.
+- [x] Every threat contains source evidence.
+- [x] The taxonomy supports the golden target's critical mechanic.
+- [x] Unknown mechanics generate warnings.
+
+#### Evidence
+
+- `TargetThreat` represents stable code, typed kind, severity, title,
+  explanation, activation timing, and immutable evidence entirely in Domain.
+- The documented ascending severity scale is Informational, Moderate, High,
+  and Critical; enum values preserve that ordering for later deterministic
+  analysis.
+- Construction rejects a threat with no source evidence. Evidence retains its
+  reference, summary, confidence, and optional raw skill/effect identity.
+- `TargetThreatTaxonomy.Normalize` preserves recognized threats, rejects
+  duplicate stable codes, and converts every `UnknownTargetMechanic` into an
+  `UNRECOGNIZED_TARGET_MECHANIC` warning without guessing a threat type.
+- `VerifiedTargetThreatTaxonomies.GoldenMagicSound` represents the verified
+  positive-practice mind-damage pressure, critical distraction-mark
+  accumulation, and critical mind-resonance cascade.
+- The observed 36-defeat-mark reset remains a warning rather than a recognized
+  threat because the golden target's equipped reverse 九色玉蟬法 source effect
+  is still unconfirmed.
+- Nine focused xUnit v3 tests cover typed fields, severity ordering, mandatory
+  evidence, unknown warnings, the golden critical chain and hypothesis,
+  uniqueness, immutability, and invalid construction.
+- `dotnet test --no-restore`: 153 tests passed.
 
 ### M1-014 — Implement target threat analyzer
 
