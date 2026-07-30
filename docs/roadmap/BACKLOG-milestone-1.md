@@ -423,6 +423,8 @@ generic allocation.
 
 ### M1-009 — Validate ownership, mastery, and practice direction
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-003
@@ -432,11 +434,33 @@ effects.
 
 #### Acceptance criteria
 
-- [ ] Every selected skill exists in the player's learned-skill snapshot.
-- [ ] Direct, reverse, and neutral directions are distinct.
-- [ ] Neutral direction cannot activate a direction-specific effect.
-- [ ] The reason for each rejection is returned.
-- [ ] All direction cases are unit tested.
+- [x] Every selected skill exists in the player's learned-skill snapshot.
+- [x] Direct, reverse, and neutral directions are distinct.
+- [x] Neutral direction cannot activate a direction-specific effect.
+- [x] The reason for each rejection is returned.
+- [x] All direction cases are unit tested.
+
+#### Evidence
+
+- `CombatSkillCandidate` records a learned-skill ID plus optional mastery and
+  direction-specific-effect requirements.
+- `CombatSkillCandidateValidator` returns a
+  `CombatSkillCandidateValidationResult`; expected rejection never uses an
+  exception as control flow.
+- Rejections have stable codes and non-blank reasons for unknown ownership,
+  unavailable or missing mastery, unavailable or mismatched direction, Neutral
+  direction, and unavailable Direct/Reverse effects.
+- Direction-independent candidates may use Neutral skills, while Neutral can
+  never satisfy a Direct, Reverse, or purported Neutral directional-effect
+  requirement.
+- All independently detectable mastery, direction, and effect failures are
+  returned together.
+- Fourteen focused xUnit v3 tests cover accepted Direct, accepted Reverse,
+  direction-independent Neutral, all rejection states, multiple simultaneous
+  reasons, and invalid candidate construction.
+- The validator reads and writes no save, game file, process, input, or live
+  game state.
+- `dotnet test --no-restore`: 112 tests passed.
 
 ### M1-010 — Model activation and combat requirements
 

@@ -245,3 +245,38 @@ the calculated limit produce Domain validation errors.
 than occupied-cost rules. The budget calculator consumes the resulting
 `SkillSlotContribution`; it does not infer either transformation unless an
 upstream snapshot source can prove the current assignment.
+
+## Combat-skill candidate eligibility
+
+`CombatSkillCandidateValidator` is a pure Domain service that checks one
+recommendation candidate against the immutable player snapshot. A candidate
+identifies a skill and may declare that its recommendation depends on mastery
+and/or a direction-specific effect.
+
+The validator applies these rules:
+
+- The skill ID must exist in `PlayerCombatSnapshot.LearnedSkills`.
+- A mastery-dependent candidate requires an available, confirmed `Mastered`
+  value. Skills that do not depend on mastery are not rejected merely because
+  they are unmastered.
+- A direction-independent candidate may use a Neutral skill.
+- A Direct requirement needs current Direct practice and an available
+  `DirectEffectId`.
+- A Reverse requirement needs current Reverse practice and an available
+  `ReverseEffectId`.
+- Neutral means the direct and reverse counts are tied; it activates neither
+  direction-specific effect.
+- Unknown direction, an opposite direction, and unavailable effect data are
+  separate rejection reasons.
+
+Expected ineligibility is returned as
+`CombatSkillCandidateRejection`, not thrown as control flow. Each rejection has
+a stable `CombatSkillCandidateRejectionCode` and a non-blank explanation.
+`CombatSkillCandidateValidationResult` returns all independently detectable
+reasons so later feasibility and UI slices can explain every failed condition.
+Unknown skill identity is the only check that prevents further skill-state
+validation because there is no learned snapshot to inspect.
+
+The validator never changes practice direction, mastery, a save, or the game.
+It reports current eligibility for a recommendation that the player may carry
+out manually.
