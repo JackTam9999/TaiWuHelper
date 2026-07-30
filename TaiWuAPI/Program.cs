@@ -1,10 +1,10 @@
-using TaiWu.Application.SaveGames;
+using System.Text.Json.Serialization;
 using TaiWu.Application.CombatRecommendations;
+using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
 using TaiWu.Infrastructure;
 using TaiWuAPI.Components;
 using TaiWuAPI.Configuration;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 

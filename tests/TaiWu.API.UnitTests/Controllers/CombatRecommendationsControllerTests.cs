@@ -1,8 +1,8 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using System.Reflection;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Domain.CombatEffects;

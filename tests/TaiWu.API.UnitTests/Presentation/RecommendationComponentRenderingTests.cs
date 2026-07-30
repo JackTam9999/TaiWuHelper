@@ -1,11 +1,11 @@
-using System.Net;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using NSubstitute;
+using System.Net;
+using System.Text.RegularExpressions;
 using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatRecommendations;
