@@ -886,6 +886,8 @@ informational instructions for the player to carry out manually.
 
 ### M1-019 — Add evidence-backed recommendation explanations
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-014, M1-017, M1-018
@@ -895,10 +897,35 @@ language presentation.
 
 #### Acceptance criteria
 
-- [ ] Every selected skill has at least one reason.
-- [ ] Threat, counter, direction, cost, and conditions are linked.
-- [ ] Assumptions and unavailable data are explicit.
-- [ ] Explanations do not depend on an LLM.
+- [x] Every selected skill has at least one reason.
+- [x] Threat, counter, direction, cost, and conditions are linked.
+- [x] Assumptions and unavailable data are explicit.
+- [x] Explanations do not depend on an LLM.
+
+#### Evidence
+
+- `CombatRecommendationExplanationBuilder` creates one structured explanation
+  per selected skill and carries forward the plan's reason codes, summaries,
+  evidence references, and threat codes.
+- Each skill explanation links matched `TargetThreat` records, counter strength
+  and activation timing, current and required direction, expected effect ID,
+  effective slot-cost breakdown, category budget, and evaluated combat
+  requirements.
+- Threat references without supplied structured details are reported as
+  unavailable instead of being invented. Compatibility-only selections
+  explicitly state that no verified counter mapping is attached.
+- Current-screen observations, player observations, and hypotheses are
+  surfaced as assumptions with their source references.
+- Missing damage evidence, skill fields, cost fields, and unknown requirement
+  evaluations use typed unavailable-data caveats with stable codes.
+- Explanations are produced by a static, deterministic Domain builder with no
+  model service, prompt, network, or natural-language-generation dependency.
+- Eight focused xUnit v3 tests cover per-skill reasons, all evidence links,
+  assumptions, unavailable data, unmatched threats, compatibility-only
+  selections, input validation, and absence of model dependencies.
+- Explanation building is pure Domain work and cannot equip a skill, change a
+  direction, write a save, or control the game.
+- `dotnet test --no-restore`: 207 tests passed.
 
 ## Slice 6: Application and API
 
