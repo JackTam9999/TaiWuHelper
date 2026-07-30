@@ -841,6 +841,8 @@ damage, opportunity cost, and conditional risk.
 
 ### M1-018 — Produce suggested manual loadout changes and battle plan
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-016, M1-017
@@ -850,10 +852,37 @@ informational instructions for the player to carry out manually.
 
 #### Acceptance criteria
 
-- [ ] Manual add, remove, retain, and change-direction suggestions are returned.
-- [ ] Primary and alternative defense/agility choices are identified.
-- [ ] Opening actions and switching conditions are included.
-- [ ] Every instruction references its recommendation reason.
+- [x] Manual add, remove, retain, and change-direction suggestions are returned.
+- [x] Primary and alternative defense/agility choices are identified.
+- [x] Opening actions and switching conditions are included.
+- [x] Every instruction references its recommendation reason.
+
+#### Evidence
+
+- `ManualCombatPlanBuilder` compares the selected feasible proposal with the
+  current snapshot and returns explicit `Add`, `Remove`, `Retain`, and
+  `ChangeDirection` steps.
+- Required direction changes come from accepted candidate validation and state
+  the exact Direct or Reverse direction for the player to select manually.
+- The highest-ranked active defense and agility are returned as primary
+  choices. Up to three distinct choices from lower-ranked feasible candidates
+  are retained as alternatives.
+- Counter activation timing produces ordered opening instructions for
+  combat-start passives, equipped passives, active defense, active agility,
+  and active attacks.
+- Alternative active-role choices produce explicit switch-before-combat
+  conditions. The plan never implies that the helper changes a selection
+  during combat.
+- Every loadout change, role choice, opening action, and switch condition owns
+  a structured recommendation reason with a code, summary, evidence
+  references, and relevant threat codes.
+- An empty ranking returns a diagnostic rather than an invented plan.
+- Seven focused xUnit v3 tests cover all change kinds, reason references,
+  defense/agility alternatives, activation order, switching conditions, empty
+  rankings, and deterministic output.
+- Planning is pure Domain work. It cannot equip a skill, change a direction,
+  write a save, or control the game.
+- `dotnet test --no-restore`: 199 tests passed.
 
 ### M1-019 — Add evidence-backed recommendation explanations
 
