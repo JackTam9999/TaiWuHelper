@@ -506,6 +506,8 @@ passive, active defense, and active agility conditions.
 
 ### M1-011 — Implement loadout feasibility validator
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** M  
 **Dependencies:** M1-007, M1-008, M1-009, M1-010
@@ -514,12 +516,36 @@ Create a pure Domain service that validates a complete proposed loadout.
 
 #### Acceptance criteria
 
-- [ ] Validator has no Infrastructure dependency.
-- [ ] It returns all validation failures, not only the first.
-- [ ] Slot totals, generic allocation, ownership, direction, and requirements
+- [x] Validator has no Infrastructure dependency.
+- [x] It returns all validation failures, not only the first.
+- [x] Slot totals, generic allocation, ownership, direction, and requirements
       are checked.
-- [ ] Invalid loadouts cannot enter the scoring stage.
-- [ ] Unit tests include over-budget and mutually incompatible loadouts.
+- [x] Invalid loadouts cannot enter the scoring stage.
+- [x] Unit tests include over-budget and mutually incompatible loadouts.
+
+#### Evidence
+
+- `CombatLoadoutFeasibilityValidator` is a pure Domain service that composes
+  candidate eligibility, combat requirements, derived generic-slot totals, and
+  complete slot-budget calculation.
+- `CombatLoadoutFeasibilityResult` retains every independently detectable
+  failure with a stable code, explanation, and skill ID where applicable.
+- Candidate coverage detects missing and extra candidate specifications;
+  candidate validation covers ownership, mastery, direction, and
+  direction-specific effect availability.
+- Requirement-context equipped skills must exactly match the proposed
+  loadout, and every hard requirement rejection is preserved.
+- Generic-slot totals are re-derived from persistent slots plus the proposed
+  Neigong contributions before capacity is calculated.
+- `FeasibleCombatLoadout` has an internal constructor and is returned only
+  when no hard failure exists, giving later scoring a validated-only input.
+- Ten focused xUnit v3 tests cover valid output, over-budget and mutually
+  incompatible loadouts, aggregated failures, candidate coverage, context
+  mismatch, generic totals, unavailable costs, conditional warnings, and
+  duplicate specifications.
+- The validator reads and writes no save, game file, process, input, or live
+  game state.
+- `dotnet test --no-restore`: 134 tests passed.
 
 ## Slice 4: Threats and counters
 

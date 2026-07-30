@@ -324,3 +324,36 @@ generic Domain requirements.
 Requirement evaluation is descriptive and read-only. It cannot equip a weapon,
 spend resources, activate a skill, unlock an item, change distance, or control
 the game.
+
+## Proposed-loadout feasibility
+
+M1-011 makes the complete proposed loadout an explicit Domain boundary.
+`ProposedCombatLoadout` contains the skill selection, generic-slot allocation,
+candidate eligibility specifications, evidence-backed requirements, and the
+context in which those requirements are evaluated.
+
+`CombatLoadoutFeasibilityValidator` composes the earlier Domain rules and
+reports all independently detectable failures:
+
+- every selected skill must have exactly one candidate specification;
+- candidate ownership, mastery, direction, and effect availability must pass;
+- the requirement context must describe exactly the proposed equipped skills;
+- every hard combat requirement must be satisfied;
+- the generic-slot total must equal persistent slots plus generic slots
+  contributed by the proposed Neigong selection; and
+- effective slot usage must be available and fit every category capacity.
+
+Expected invalidity is returned as `CombatLoadoutFeasibilityFailure`, with a
+stable code and explanation, rather than used as exception-driven control
+flow. Conditional requirement failures remain warnings in the nested
+requirement result and do not make an otherwise valid proposal infeasible.
+
+The validator returns `FeasibleCombatLoadout` only when there are no failures
+and a complete `SlotBudgetSet` is available. Its constructor is internal, so a
+later scoring service can require this accepted-only type instead of accepting
+an unchecked proposal. This prevents an invalid loadout from entering scoring
+by construction.
+
+Feasibility validation remains descriptive and read-only. It cannot equip the
+proposed loadout, reassign slots in the game, write a save, or control the game
+runtime.
