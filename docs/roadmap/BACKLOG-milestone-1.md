@@ -1107,6 +1107,8 @@ threats, candidate validation, and scoring.
 
 ### M1-024 — Add opt-in local GameData integration tests
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-005, M1-020
@@ -1115,13 +1117,37 @@ Verify the adapter against the locally installed game and configured save.
 
 #### Acceptance criteria
 
-- [ ] Tests skip clearly when local prerequisites are absent.
-- [ ] Hashes of all game-owned files touched by the read path are unchanged
+- [x] Tests skip clearly when local prerequisites are absent.
+- [x] Hashes of all game-owned files touched by the read path are unchanged
       before and after.
-- [ ] The helper opens source files read-only wherever it controls access.
-- [ ] Two consecutive reads succeed in one process.
-- [ ] Snapshot contains the expected golden player and target.
-- [ ] Proprietary data is not stored in test artifacts.
+- [x] The helper opens source files read-only wherever it controls access.
+- [x] Two consecutive reads succeed in one process.
+- [x] Snapshot contains the expected golden player and target.
+- [x] Proprietary data is not stored in test artifacts.
+
+#### Evidence
+
+- `TaiWu.Infrastructure.IntegrationTests` is an xUnit v3 project with one
+  prerequisite-independent contract test and one opt-in local read test.
+- The local read test requires only `TAIWU_INTEGRATION_SAVE_PATH`. An absent or
+  invalid value, or absent runtime dependencies, produces an explicit skip.
+- [Local integration instructions](../testing/LOCAL-GAMEDATA-INTEGRATION-TESTS.md)
+  contain no machine-specific path, save hash, or proprietary fixture.
+- The test fingerprints the source save and every recognized GameData runtime
+  dependency in the test process before reading, then compares length, SHA-256,
+  and last-write time in a `finally` block.
+- Fingerprint streams specify `FileMode.Open`, `FileAccess.Read`, and shared
+  read access. The production adapter retains its read-only fingerprint guard
+  and architecture-level save-write prohibition.
+- Two consecutive reads through `ICombatSnapshotReader` returned player
+  `21396`, target `16317`, and the expected target age of 52 from the golden
+  save in one process.
+- The contract test verifies no save or GameData source is embedded in the
+  integration-test assembly. Build-time local runtime copies remain ignored
+  and excluded from publication.
+- Opt-in local run: 2 tests passed; no source fingerprint changed.
+- Default `dotnet test --no-restore`: 249 tests discovered, 248 passed, and the
+  one local GameData read test skipped explicitly.
 
 ## Slice 8: Presentation
 
