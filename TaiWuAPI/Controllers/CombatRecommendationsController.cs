@@ -51,7 +51,8 @@ public sealed class CombatRecommendationsController(
         catch (Exception exception)
             when (exception is ArgumentException
                 or FileNotFoundException
-                or InvalidDataException)
+                or InvalidDataException
+                or OptionsValidationException)
         {
             return Problem(
                 detail: exception.Message,

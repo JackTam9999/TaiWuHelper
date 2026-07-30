@@ -59,6 +59,22 @@ a {
     color: var(--gold);
 }
 
+.skip-link {
+    position: fixed;
+    z-index: 100;
+    top: 12px;
+    left: 12px;
+    padding: 10px 14px;
+    color: #151612;
+    background: var(--gold);
+    font-weight: 800;
+    transform: translateY(-180%);
+}
+
+.skip-link:focus {
+    transform: translateY(0);
+}
+
 .app-shell {
     width: min(1440px, 100%);
     min-height: 100vh;
@@ -411,6 +427,56 @@ select {
     padding: 18px 22px;
 }
 
+.page-state {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.page-state > div {
+    display: grid;
+    gap: 7px;
+}
+
+.page-state strong,
+.page-state p {
+    margin: 0;
+}
+
+.page-state p {
+    color: #c7d2cd;
+    line-height: 1.55;
+}
+
+.state-label {
+    width: fit-content;
+    color: var(--jade);
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.page-state[aria-busy="true"] .state-label::before {
+    content: "Reading · ";
+}
+
+.state-recovery {
+    color: var(--muted) !important;
+    font-size: 0.82rem;
+}
+
+.state-recovery strong {
+    color: var(--ink);
+}
+
+.problem-state {
+    border-color: rgba(238, 147, 128, 0.45);
+}
+
+.problem-state .state-label {
+    color: var(--danger);
+}
+
 .error-message {
     border-color: rgba(238, 147, 128, 0.45);
     color: #ffd5cc;
@@ -460,8 +526,22 @@ select {
 }
 
 .style-tabs button.active {
+    border-width: 2px;
     color: #151612;
     background: var(--gold);
+}
+
+.style-tabs button {
+    display: grid;
+    gap: 2px;
+    place-items: center;
+}
+
+.style-tabs button small {
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .result-summary {
@@ -781,7 +861,7 @@ select {
 
 .condition {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto auto minmax(0, 1fr);
     gap: 8px;
     padding: 7px 9px;
     border-left: 2px solid var(--gold);
@@ -793,6 +873,15 @@ select {
 
 .condition.satisfied {
     border-left-color: var(--jade);
+}
+
+.condition-status {
+    color: var(--gold);
+    font-weight: 800;
+}
+
+.condition.satisfied .condition-status {
+    color: var(--jade);
 }
 
 .skill-evidence {
@@ -1230,6 +1319,16 @@ select {
     padding: 100px 0;
 }
 
+@media (max-width: 1279px) {
+    .briefing-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .threat-panel {
+        position: static;
+    }
+}
+
 @media (max-width: 1000px) {
     .app-shell {
         padding-inline: 24px;
@@ -1237,7 +1336,6 @@ select {
 
     .hero,
     .control-grid,
-    .briefing-grid,
     .manual-plan-grid {
         grid-template-columns: 1fr;
     }
@@ -1256,10 +1354,6 @@ select {
     .result-summary {
         grid-template-columns: repeat(2, 1fr);
     }
-
-    .threat-panel {
-        position: static;
-    }
 }
 
 @media (max-width: 620px) {
@@ -1274,8 +1368,14 @@ select {
     }
 
     .section-heading,
-    .request-row {
+    .request-row,
+    .page-state {
         flex-direction: column;
+    }
+
+    .page-state {
+        grid-template-columns: 1fr;
+        justify-items: start;
     }
 
     .brand small {
@@ -1324,6 +1424,15 @@ select {
 
     .snapshot-strip > div:last-child {
         border-bottom: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
     }
 }
 

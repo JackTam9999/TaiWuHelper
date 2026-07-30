@@ -1410,6 +1410,8 @@ primary recommendation.
 
 ### M1-031 — Implement responsive, accessible, and failure states
 
+**Status:** Complete
+
 **Priority:** P1  
 **Estimate:** M  
 **Dependencies:** M1-027, M1-028, M1-029, M1-030
@@ -1419,14 +1421,46 @@ desktop and narrow-window sizes.
 
 #### Acceptance criteria
 
-- [ ] Initial, loading, success, success-with-warning, empty, ambiguous-target,
+- [x] Initial, loading, success, success-with-warning, empty, ambiguous-target,
       invalid-configuration, unsupported-version, and failure states exist.
-- [ ] Threat and loadout panels are side by side at 1280 pixels and stack
+- [x] Threat and loadout panels are side by side at 1280 pixels and stack
       below that width.
-- [ ] All interactive elements support keyboard navigation and visible focus.
-- [ ] Severity, direction, and status are not communicated by colour alone.
-- [ ] Conditions and evidence do not require hover.
-- [ ] Error recovery never offers to repair or modify game data.
+- [x] All interactive elements support keyboard navigation and visible focus.
+- [x] Severity, direction, and status are not communicated by colour alone.
+- [x] Conditions and evidence do not require hover.
+- [x] Error recovery never offers to repair or modify game data.
+
+#### Evidence
+
+- `RecommendationPageState` defines explicit Initial, Loading, TargetReady,
+  Empty, AmbiguousTarget, Success, SuccessWithWarning, InvalidConfiguration,
+  UnsupportedVersion, and Failure states.
+- The page maps target lookup status and recommendation warnings to those
+  states, logs unexpected failures without exposing exception details, and
+  retains cancellable/versioned requests.
+- Invalid options are validated when first used instead of preventing the
+  local host from starting. The rendered page explains the required
+  `SaveGames:DefaultSaveFilePath` setting while read buttons remain disabled;
+  API endpoints return a controlled 400 for the same validation failure.
+- Recovery offers only `Retry read`, configuration guidance, or a request for
+  better in-game evidence. It never offers repair, automatic equipment, game
+  control, or save modification.
+- The threat/loadout grid uses its two-column layout at 1280 pixels and a
+  `max-width: 1279px` rule below it; browser verification confirmed the media
+  query is false at 1280 and true at 1279.
+- Native buttons, links, selects, inputs, checkboxes, and `details` elements
+  remain keyboard reachable. A skip link and consistent `:focus-visible`
+  outline were added, with reduced-motion handling.
+- Selected style, threat severity, practice direction, requirement status,
+  warning criticality, and capacity are all expressed in text in addition to
+  visual styling.
+- Requirement conditions are always visible and evidence uses native
+  keyboard-accessible `details`; neither requires hover.
+- Ten page-state test cases and one architecture test cover the state
+  transitions, no-estimate policy, breakpoint, focus contracts, explicit
+  status text, and read-only recovery.
+- Default `dotnet test --no-restore`: 282 tests discovered, 281 passed, and the
+  opt-in local GameData read skipped explicitly.
 
 ### M1-032 — Add Presentation test coverage
 

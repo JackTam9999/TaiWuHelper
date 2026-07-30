@@ -411,7 +411,8 @@ public sealed partial class ArchitectureBoundaryTests
         var program = File.ReadAllText(
             Path.Combine(repositoryRoot, "TaiWuAPI", "Program.cs"));
         Assert.Contains("ListenLocalhost(", program);
-        Assert.Contains("ValidateOnStart()", program);
+        Assert.Contains("options.HasValidSaveFilePath()", program);
+        Assert.DoesNotContain("ValidateOnStart()", program);
 
         var developmentSettings = File.ReadAllText(
             Path.Combine(
@@ -420,6 +421,58 @@ public sealed partial class ArchitectureBoundaryTests
                 "appsettings.Development.json"));
         Assert.DoesNotContain("Program Files", developmentSettings);
         Assert.DoesNotContain("SaveGames\\\\world_", developmentSettings);
+    }
+
+    [Fact]
+    public void Recommendation_page_states_are_accessible_and_read_only()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var componentRoot = Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "Components");
+        var page = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Pages",
+                "CombatRecommendation.razor"));
+        var stateNotice = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "PageStateNotice.razor"));
+        var skillCard = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "SkillCard.razor"));
+        var layout = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Layout",
+                "MainLayout.razor"));
+        var styles = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "wwwroot",
+                "app.css"));
+
+        Assert.Contains("aria-busy=", page);
+        Assert.Contains("role=\"group\"", page);
+        Assert.Contains("aria-pressed=", page);
+        Assert.Contains("Retry read", stateNotice);
+        Assert.Contains("aria-live=", stateNotice);
+        Assert.DoesNotContain("repair", stateNotice);
+        Assert.DoesNotContain("modify", stateNotice);
+        Assert.Contains("condition-status", skillCard);
+        Assert.Contains("Skip to main content", layout);
+        Assert.Contains(":focus-visible", styles);
+        Assert.Contains("@media (max-width: 1279px)", styles);
+        Assert.Contains(
+            "grid-template-columns: minmax(280px, 0.72fr) "
+            + "minmax(0, 1.8fr)",
+            styles);
     }
 
     [Fact]

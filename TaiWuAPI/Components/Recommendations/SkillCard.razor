@@ -51,7 +51,8 @@
             {
                 <span class="@($"condition {condition.Status.ToString().ToLowerInvariant()}")">
                     <strong>@condition.Kind</strong>
-                    @condition.Evaluation
+                    <span class="condition-status">@ConditionStatusLabel(condition.Status)</span>
+                    <span>@condition.Evaluation</span>
                 </span>
             }
         </div>
@@ -154,4 +155,13 @@
             _ => Skill.Counter.ActivationTiming.ToString()!
         };
     }
+
+    private static string ConditionStatusLabel(
+        CombatRequirementStatus status) => status switch
+    {
+        CombatRequirementStatus.Satisfied => "Satisfied",
+        CombatRequirementStatus.Unsatisfied => "Not satisfied",
+        CombatRequirementStatus.Unknown => "Unknown",
+        _ => status.ToString()
+    };
 }

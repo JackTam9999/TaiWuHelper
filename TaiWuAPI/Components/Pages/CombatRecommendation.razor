@@ -10,6 +10,7 @@
 @inject IFindTargets FindTargets
 @inject IRecommendCombatLoadout RecommendCombatLoadout
 @inject IOptions<SaveGameOptions> SaveOptions
+@inject ILogger<CombatRecommendation> Logger
 
 <PageTitle>TaiWu Helper · Combat recommendation</PageTitle>
 
@@ -29,7 +30,9 @@
     </div>
 </section>
 
-<section class="control-panel" aria-labelledby="recommendation-controls">
+<section class="control-panel"
+         aria-labelledby="recommendation-controls"
+         aria-busy="@IsBusy.ToString().ToLowerInvariant()">
     <div class="section-heading">
         <div>
             <p class="eyebrow">Recommendation controls</p>
@@ -53,7 +56,7 @@
                 <button type="button"
                         class="secondary-button"
                         @onclick="SearchTargetsAsync"
-                        disabled="@(_isSearching || string.IsNullOrWhiteSpace(_targetQuery))">
+                        disabled="@(!_configurationValid || IsBusy || string.IsNullOrWhiteSpace(_targetQuery))">
                     Search
                 </button>
             </div>
@@ -72,10 +75,6 @@
                         </button>
                     }
                 </div>
-            }
-            else if (_searchCompleted)
-            {
-                <p class="field-message">No target matched this search.</p>
             }
         </div>
 
@@ -178,19 +177,15 @@
         <button type="button"
                 class="primary-button"
                 @onclick="GetRecommendationAsync"
-                disabled="@(_selectedTarget is null || _isRecommending)">
+                disabled="@(!_configurationValid || _selectedTarget is null || IsBusy)">
             @(_isRecommending ? "Calculating…" : "Get recommendation")
         </button>
     </div>
 </section>
 
-@if (!string.IsNullOrWhiteSpace(_errorMessage))
-{
-    <section class="message-card error-message" role="alert">
-        <strong>Could not complete the read</strong>
-        <span>@_errorMessage</span>
-    </section>
-}
+<PageStateNotice State="_pageState"
+                 RetryRead="RetryLastReadAsync"
+                 RetryDisabled="IsBusy" />
 
 @if (_model is not null)
 {
@@ -227,15 +222,19 @@
             <span class="information-badge">Information only</span>
         </div>
 
-        <div class="style-tabs" role="tablist" aria-label="Recommendation styles">
+        <div class="style-tabs" role="group" aria-label="Recommendation styles">
             @foreach (var style in _model.Styles)
             {
+                var selected = style.Style == _selection.VisibleStyle;
                 <button type="button"
-                        role="tab"
-                        aria-selected="@(style.Style == _selection.VisibleStyle)"
-                        class="@(style.Style == _selection.VisibleStyle ? "active" : null)"
+                        aria-pressed="@selected"
+                        class="@(selected ? "active" : null)"
                         @onclick="() => ShowStyle(style.Style)">
-                    @style.Style
+                    <span>@style.Style</span>
+                    @if (selected)
+                    {
+                        <small>Selected</small>
+                    }
                 </button>
             }
         </div>
@@ -325,33 +324,57 @@
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _recommendationCancellation;
     private string _targetQuery = string.Empty;
+    private string _saveFilePath = string.Empty;
     private TargetLookupEntry? _selectedTarget;
     private CombatRecommendationViewModel? _model;
-    private string? _errorMessage;
+    private RecommendationPageState _pageState =
+        RecommendationPageState.Initial();
+    private PageReadOperation _lastReadOperation;
+    private bool _configurationValid;
     private bool _isSearching;
     private bool _isRecommending;
-    private bool _searchCompleted;
     private long _searchVersion;
     private long _recommendationVersion;
 
+    private bool IsBusy => _isSearching || _isRecommending;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _saveFilePath = SaveOptions.Value.DefaultSaveFilePath;
+            _configurationValid = true;
+        }
+        catch (OptionsValidationException)
+        {
+            _configurationValid = false;
+            _pageState = RecommendationPageState.InvalidConfiguration();
+        }
+    }
+
     private async Task SearchTargetsAsync()
     {
-        if (string.IsNullOrWhiteSpace(_targetQuery))
+        if (!_configurationValid || string.IsNullOrWhiteSpace(_targetQuery))
         {
             return;
         }
 
         var version = ++_searchVersion;
         var cancellation = ReplaceCancellation(ref _searchCancellation);
+        _lastReadOperation = PageReadOperation.TargetSearch;
         _isSearching = true;
-        _searchCompleted = false;
-        _errorMessage = null;
+        _selectedTarget = null;
+        _targetMatches.Clear();
+        _model = null;
+        _selection.Clear();
+        _pageState = RecommendationPageState.Loading(
+            "Searching the configured save");
 
         try
         {
             var result = await FindTargets.ExecuteAsync(
                 new FindTargetsRequest(
-                    SaveOptions.Value.DefaultSaveFilePath,
+                    _saveFilePath,
                     _targetQuery),
                 cancellation.Token);
             if (version != _searchVersion)
@@ -359,9 +382,10 @@
                 return;
             }
 
-            _targetMatches.Clear();
             _targetMatches.AddRange(result.Matches);
-            _searchCompleted = true;
+            _pageState = RecommendationPageState.ForTargetLookup(
+                result.Status,
+                result.TotalMatches);
         }
         catch (OperationCanceledException)
         {
@@ -371,8 +395,16 @@
                   or FileNotFoundException
                   or InvalidDataException)
         {
-            _errorMessage = exception.Message;
-            _searchCompleted = true;
+            _pageState = RecommendationPageState.Failure(
+                exception.Message);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unexpected target lookup failure.");
+            _pageState = RecommendationPageState.Failure(
+                "An unexpected target read failure occurred.");
         }
         finally
         {
@@ -388,12 +420,14 @@
         _selectedTarget = target;
         _model = null;
         _selection.Clear();
-        _errorMessage = null;
+        _lastReadOperation = PageReadOperation.None;
+        _pageState = RecommendationPageState.TargetReady(
+            target.DisplayName);
     }
 
     private async Task GetRecommendationAsync()
     {
-        if (_selectedTarget is null)
+        if (!_configurationValid || _selectedTarget is null)
         {
             return;
         }
@@ -401,15 +435,19 @@
         var version = ++_recommendationVersion;
         var cancellation = ReplaceCancellation(
             ref _recommendationCancellation);
+        _lastReadOperation = PageReadOperation.Recommendation;
         _isRecommending = true;
-        _errorMessage = null;
+        _model = null;
+        _selection.Clear();
+        _pageState = RecommendationPageState.Loading(
+            "Building the combat recommendation");
 
         try
         {
             var observation = CreateObservation();
             var recommendation = await RecommendCombatLoadout.ExecuteAsync(
                 new RecommendCombatLoadoutRequest(
-                    SaveOptions.Value.DefaultSaveFilePath,
+                    _saveFilePath,
                     _selectedTarget.CharacterId,
                     _form.Policy,
                     observation),
@@ -421,6 +459,8 @@
 
             _model = CombatRecommendationViewModelMapper.Map(recommendation);
             _selection.Load(_model, _form.Policy);
+            _pageState =
+                RecommendationPageState.ForRecommendation(_model);
         }
         catch (OperationCanceledException)
         {
@@ -432,7 +472,17 @@
                   or FormatException
                   or OverflowException)
         {
-            _errorMessage = exception.Message;
+            _pageState = RecommendationPageState.Failure(
+                exception.Message);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unexpected combat recommendation failure.");
+            _pageState = RecommendationPageState.Failure(
+                "An unexpected recommendation read or calculation failure "
+                + "occurred.");
         }
         finally
         {
@@ -442,6 +492,13 @@
             }
         }
     }
+
+    private Task RetryLastReadAsync() => _lastReadOperation switch
+    {
+        PageReadOperation.TargetSearch => SearchTargetsAsync(),
+        PageReadOperation.Recommendation => GetRecommendationAsync(),
+        _ => Task.CompletedTask
+    };
 
     private PlayerLoadoutObservation? CreateObservation()
     {
@@ -567,5 +624,12 @@
         public int GenericDefense { get; set; }
 
         public int GenericAssistance { get; set; }
+    }
+
+    private enum PageReadOperation
+    {
+        None,
+        TargetSearch,
+        Recommendation
     }
 }

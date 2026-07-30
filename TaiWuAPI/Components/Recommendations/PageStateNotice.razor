@@ -1,0 +1,48 @@
+@using TaiWuAPI.Presentation
+
+<section class="@CssClass"
+         role="@Role"
+         aria-live="@LiveRegion"
+         aria-busy="@State.IsLoading.ToString().ToLowerInvariant()">
+    <div>
+        <span class="state-label">@State.Status</span>
+        <strong>@State.Title</strong>
+        <p>@State.Message</p>
+        @if (!string.IsNullOrWhiteSpace(State.Recovery))
+        {
+            <p class="state-recovery">
+                <strong>Next step:</strong>
+                @State.Recovery
+            </p>
+        }
+    </div>
+    @if (State.CanRetryRead)
+    {
+        <button type="button"
+                class="secondary-button"
+                @onclick="RetryRead"
+                disabled="@RetryDisabled">
+            Retry read
+        </button>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public RecommendationPageState State { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback RetryRead { get; set; }
+
+    [Parameter]
+    public bool RetryDisabled { get; set; }
+
+    private string CssClass =>
+        State.IsProblem
+            ? "message-card page-state problem-state"
+            : "message-card page-state";
+
+    private string Role => State.IsProblem ? "alert" : "status";
+
+    private string LiveRegion => State.IsProblem ? "assertive" : "polite";
+}
