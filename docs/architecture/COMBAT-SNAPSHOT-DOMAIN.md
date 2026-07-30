@@ -280,3 +280,47 @@ validation because there is no learned snapshot to inspect.
 The validator never changes practice direction, mastery, a save, or the game.
 It reports current eligibility for a recommendation that the player may carry
 out manually.
+
+## Activation and combat requirements
+
+M1-010 represents combat conditions as evidence-backed `CombatRequirement`
+types:
+
+- `WeaponRequirement`
+- `TrickRequirement`
+- `RangeRequirement`
+- `ResourceRequirement` for Neili, stance, or breath
+- `WeaponUnlockRequirement`
+- `SkillActivationRequirement` for an equipped passive, active defense, or
+  active agility skill
+
+Every requirement records `Hard` or `Conditional` criticality and a non-blank
+evidence reference. `CombatRequirementContext` is immutable and contains the
+current equipped and unlocked weapon types, trick counts, distance, resources,
+equipped skills, and at most one active defense and one active agility skill.
+An active skill must also be equipped, and one skill cannot occupy both active
+roles.
+
+`CombatRequirementEvaluator` returns one `CombatRequirementEvaluation` per
+input requirement:
+
+- `Satisfied` means the current context meets it.
+- `Unsatisfied` means the current facts disprove it.
+- `Unknown` means required context, such as current distance or resource
+  amount, is unavailable.
+
+Unsatisfied or unknown hard requirements appear in `Rejections` and make the
+result ineligible. Unsatisfied or unknown conditional requirements appear in
+`Warnings` without being reported as satisfied. All independently detectable
+results are retained.
+
+The model supports the golden anti-magic scenario without hard-coding game
+configuration: equipped reverse 老君 as a passive, actively running reverse
+萬花, blade unlock and trick prerequisites for 鬼庖丁, and range conditions for
+三部/長目 can all be expressed with their local evidence. M1-012 remains
+responsible for mapping verified GameData effect IDs and source text into these
+generic Domain requirements.
+
+Requirement evaluation is descriptive and read-only. It cannot equip a weapon,
+spend resources, activate a skill, unlock an item, change distance, or control
+the game.

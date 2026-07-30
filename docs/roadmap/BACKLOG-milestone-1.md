@@ -464,6 +464,8 @@ effects.
 
 ### M1-010 — Model activation and combat requirements
 
+**Status:** Complete
+
 **Priority:** P0  
 **Estimate:** L  
 **Dependencies:** M1-003
@@ -473,12 +475,34 @@ passive, active defense, and active agility conditions.
 
 #### Acceptance criteria
 
-- [ ] Requirements are typed and evidence-backed.
-- [ ] Unsatisfied hard requirements reject the candidate.
-- [ ] Conditional requirements are included in recommendation warnings.
-- [ ] Multiple defense or agility effects are not modeled as simultaneously
+- [x] Requirements are typed and evidence-backed.
+- [x] Unsatisfied hard requirements reject the candidate.
+- [x] Conditional requirements are included in recommendation warnings.
+- [x] Multiple defense or agility effects are not modeled as simultaneously
       active.
-- [ ] At least the golden target's relevant requirements are supported.
+- [x] At least the golden target's relevant requirements are supported.
+
+#### Evidence
+
+- The Domain has explicit weapon, trick, range, Neili/stance/breath, weapon
+  unlock, equipped-passive, active-defense, and active-agility requirement
+  types.
+- Every requirement records hard/conditional criticality and an evidence
+  reference.
+- `CombatRequirementContext` is immutable, requires active skills to be
+  equipped, and permits only one active defense plus one active agility skill.
+- `CombatRequirementEvaluator` reports `Satisfied`, `Unsatisfied`, or
+  `Unknown` for every requirement.
+- Hard unsatisfied/unknown results reject; conditional unsatisfied/unknown
+  results remain visible as warnings.
+- The golden anti-magic test covers equipped 老君, active 萬花, 鬼庖丁 weapon
+  unlock and trick conditions, and 三部 range.
+- Twelve focused xUnit v3 cases cover every requirement type, hard rejection,
+  conditional warnings, unavailable facts, active-skill exclusivity, all
+  failure collection, and invalid unevidenced construction.
+- The model and evaluator have no save, game, process, input, or runtime-control
+  dependency.
+- `dotnet test --no-restore`: 124 tests passed.
 
 ### M1-011 — Implement loadout feasibility validator
 
