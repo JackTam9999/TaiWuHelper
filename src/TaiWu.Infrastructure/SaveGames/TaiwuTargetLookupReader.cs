@@ -100,7 +100,8 @@ internal sealed class TaiwuTargetLookupReader(
                     displayName,
                     character.GetCurrAge(),
                     location.AreaId,
-                    location.BlockId));
+                    location.BlockId,
+                    text.ResolveLocationName(location)));
         }
         catch (Exception exception)
             when (exception is ArgumentException

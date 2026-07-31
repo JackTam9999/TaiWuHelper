@@ -10,7 +10,7 @@
         </div>
     </div>
 
-    <p class="unknown-policy">@Details.UnknownValuePolicy</p>
+    <p class="unknown-policy">@T(Details.UnknownValuePolicy)</p>
 
     <div class="supporting-panels">
         <details>
@@ -33,7 +33,7 @@
                         }
                         else
                         {
-                            <span>@alternative.Diagnostic</span>
+                            <span>@T(alternative.Diagnostic ?? T("Unavailable"))</span>
                         }
                     </article>
                 }
@@ -50,14 +50,14 @@
                 {
                     <article>
                         <strong>@T("Assumption") · @caveat.Code</strong>
-                        <span>@caveat.Explanation</span>
+                        <span>@T(caveat.Explanation)</span>
                     </article>
                 }
                 @foreach (var caveat in Details.UnavailableData)
                 {
                     <article>
                         <strong>@T("Unavailable data") · @caveat.Code</strong>
-                        <span>@caveat.Explanation</span>
+                        <span>@T(caveat.Explanation)</span>
                     </article>
                 }
                 @if (Details.Assumptions.Count == 0
@@ -77,8 +77,8 @@
                 @foreach (var requirement in Details.ConditionalRequirements)
                 {
                     <article>
-                        <strong>@requirement.SkillName · @requirement.Condition.Kind</strong>
-                        <span>@requirement.Condition.Evaluation</span>
+                        <strong>@requirement.SkillName · @ConditionKindLabel(requirement.Condition.Kind)</strong>
+                        <span>@T(requirement.Condition.Evaluation)</span>
                         <code>@requirement.Condition.EvidenceReference</code>
                     </article>
                 }
@@ -109,11 +109,11 @@
                         @foreach (var score in Details.Scores)
                         {
                             <tr>
-                                <th scope="row">@score.Component</th>
+                                <th scope="row">@ScoreComponentLabel(score.Component)</th>
                                 <td>@score.Weight</td>
                                 <td>@score.Score?.ToString("0.##")</td>
                                 <td>@score.WeightedPoints?.ToString("0.##")</td>
-                                <td>@score.Explanation</td>
+                                <td>@T(score.Explanation)</td>
                             </tr>
                         }
                     </tbody>
@@ -160,4 +160,36 @@
                 _ => policy.ToString()
             }
             : policy.ToString();
+
+    private string ConditionKindLabel(
+        RecommendationConditionKind kind) => kind switch
+    {
+        RecommendationConditionKind.Weapon => T("Weapon"),
+        RecommendationConditionKind.Trick => T("Trick"),
+        RecommendationConditionKind.Range => T("Range"),
+        RecommendationConditionKind.Resource => T("Resource"),
+        RecommendationConditionKind.WeaponUnlock => T("Weapon unlock"),
+        RecommendationConditionKind.SkillActivation =>
+            T("Skill activation"),
+        _ => kind.ToString()
+    };
+
+    private string ScoreComponentLabel(
+        RecommendationScoreComponentKind component) => component switch
+    {
+        RecommendationScoreComponentKind.ThreatCoverage =>
+            T("Threat coverage"),
+        RecommendationScoreComponentKind.Survival => T("Survival"),
+        RecommendationScoreComponentKind.ExecutionReliability =>
+            T("Execution reliability"),
+        RecommendationScoreComponentKind.CurrentLoadoutCompatibility =>
+            T("Current-loadout compatibility"),
+        RecommendationScoreComponentKind.DamagePotential =>
+            T("Damage potential"),
+        RecommendationScoreComponentKind.OpportunityCost =>
+            T("Opportunity cost"),
+        RecommendationScoreComponentKind.ConditionalRisk =>
+            T("Conditional risk"),
+        _ => component.ToString()
+    };
 }

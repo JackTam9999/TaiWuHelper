@@ -7,7 +7,8 @@ public sealed record TargetLookupEntry
         string displayName,
         int age,
         int areaId,
-        int blockId)
+        int blockId,
+        string? locationDisplayName = null)
     {
         if (characterId <= 0)
         {
@@ -37,6 +38,9 @@ public sealed record TargetLookupEntry
         Age = age;
         AreaId = areaId;
         BlockId = blockId;
+        LocationDisplayName = string.IsNullOrWhiteSpace(locationDisplayName)
+            ? null
+            : locationDisplayName.Trim();
     }
 
     public int CharacterId { get; }
@@ -48,4 +52,6 @@ public sealed record TargetLookupEntry
     public int AreaId { get; }
 
     public int BlockId { get; }
+
+    public string? LocationDisplayName { get; }
 }

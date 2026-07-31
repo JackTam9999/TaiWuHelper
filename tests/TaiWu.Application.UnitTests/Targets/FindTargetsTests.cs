@@ -52,6 +52,9 @@ public sealed class FindTargetsTests
                 Assert.Equal("何春石", first.DisplayName);
                 Assert.Equal(10, first.AreaId);
                 Assert.Equal(20, first.BlockId);
+                Assert.Equal(
+                    "辽东 · 鸭绿江 · 玄石之地",
+                    first.LocationDisplayName);
             },
             second =>
             {
@@ -184,7 +187,8 @@ public sealed class FindTargetsTests
                     "何春石",
                     age: 52,
                     areaId: 10,
-                    blockId: 20),
+                    blockId: 20,
+                    "辽东 · 鸭绿江 · 玄石之地"),
                 new TargetLookupEntry(
                     20000,
                     "何春石",

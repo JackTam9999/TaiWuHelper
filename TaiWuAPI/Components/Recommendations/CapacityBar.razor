@@ -28,7 +28,7 @@
     </div>
     @if (!Category.UsedSlots.HasValue)
     {
-        <small class="unavailable-copy">@Category.UsedSlotsUnavailableReason</small>
+        <small class="unavailable-copy">@T(Category.UsedSlotsUnavailableReason ?? T("Unavailable"))</small>
     }
 </div>
 

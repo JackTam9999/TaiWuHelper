@@ -21,7 +21,8 @@ public sealed record TargetLookupMatchResponse(
 public sealed record TargetLocationResponse(
     string Reference,
     int AreaId,
-    int BlockId);
+    int BlockId,
+    string? DisplayName);
 
 public sealed record TargetLookupWarningResponse(
     string Reference,

@@ -1,0 +1,12 @@
+<section class="empty-state">
+    <p class="eyebrow">@T("Page not found")</p>
+    <h1>@T("This path is not part of TaiWu Helper.")</h1>
+    <a href="/">@T("Return to the recommendation page")</a>
+</section>
+
+@code {
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+}

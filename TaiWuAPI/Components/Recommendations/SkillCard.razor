@@ -38,7 +38,7 @@
             {
                 <p>
                     <span aria-hidden="true">↳</span>
-                    @reason.Summary
+                    @T(reason.Summary)
                 </p>
             }
         </div>
@@ -50,9 +50,9 @@
             @foreach (var condition in Skill.Conditions)
             {
                 <span class="@($"condition {condition.Status.ToString().ToLowerInvariant()}")">
-                    <strong>@condition.Kind</strong>
+                    <strong>@ConditionKindLabel(condition.Kind)</strong>
                     <span class="condition-status">@ConditionStatusLabel(condition.Status)</span>
-                    <span>@condition.Evaluation</span>
+                    <span>@T(condition.Evaluation)</span>
                 </span>
             }
         </div>
@@ -172,6 +172,19 @@
         CombatRequirementStatus.Unsatisfied => T("Not satisfied"),
         CombatRequirementStatus.Unknown => T("Unknown"),
         _ => status.ToString()
+    };
+
+    private string ConditionKindLabel(
+        RecommendationConditionKind kind) => kind switch
+    {
+        RecommendationConditionKind.Weapon => T("Weapon"),
+        RecommendationConditionKind.Trick => T("Trick"),
+        RecommendationConditionKind.Range => T("Range"),
+        RecommendationConditionKind.Resource => T("Resource"),
+        RecommendationConditionKind.WeaponUnlock => T("Weapon unlock"),
+        RecommendationConditionKind.SkillActivation =>
+            T("Skill activation"),
+        _ => kind.ToString()
     };
 
     private string T(string english) => UiText.Get(Language, english);

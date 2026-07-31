@@ -35,10 +35,10 @@
                         @T("Aggregated from") @warning.Occurrences @T("evaluated combinations.")
                     </p>
                 }
-                <p>@warning.Message</p>
+                <p>@T(warning.Message)</p>
                 <p class="warning-effect">
                     <strong>@T("Effect on recommendation:")</strong>
-                    @warning.EffectOnRecommendation
+                    @T(warning.EffectOnRecommendation)
                 </p>
                 @if (warning.EvidenceReferences.Count > 0)
                 {

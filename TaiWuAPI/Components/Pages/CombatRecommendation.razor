@@ -69,7 +69,16 @@
                                 @onclick="() => SelectTarget(target)">
                             <strong>@target.DisplayName</strong>
                             <span>@target.Age @T("years") · ID @target.CharacterId</span>
-                            <small>@T("Area") @target.AreaId · @T("Block") @target.BlockId</small>
+                            @if (target.LocationDisplayName is not null)
+                            {
+                                <small title="@LocationIdText(target)">
+                                    @target.LocationDisplayName
+                                </small>
+                            }
+                            else
+                            {
+                                <small>@LocationIdText(target)</small>
+                            }
                         </button>
                     }
                 </div>
@@ -261,7 +270,7 @@
             }
             else
             {
-                <p>@(visible.Diagnostic ?? T("No feasible recommendation was produced."))</p>
+                <p>@T(visible.Diagnostic ?? "No feasible recommendation was produced.")</p>
             }
         </div>
 
@@ -291,7 +300,7 @@
                 else
                 {
                     <p class="empty-category">
-                        @(visible.Diagnostic ?? T("No feasible recommendation was produced."))
+                        @T(visible.Diagnostic ?? "No feasible recommendation was produced.")
                     </p>
                 }
             </section>
@@ -591,6 +600,9 @@
         _selectedTarget?.CharacterId == characterId
             ? "target-result selected"
             : "target-result";
+
+    private string LocationIdText(TargetLookupEntry target) =>
+        $"{T("Area")} {target.AreaId} · {T("Block")} {target.BlockId}";
 
     private void ShowStyle(RecommendationPolicy style)
     {

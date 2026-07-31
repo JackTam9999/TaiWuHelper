@@ -39,7 +39,7 @@
                                @onchange="() => Toggle(item.Reference)" />
                         <span>
                             <strong>@ItemLabel(item.Kind)</strong>
-                            @item.Instruction
+                            @T(item.Instruction)
                         </span>
                     </label>
                     <details>
@@ -95,7 +95,7 @@
                 string.Empty
             }.Concat(
                 Items.Select((item, index) =>
-                    $"{index + 1}. {item.Instruction}")));
+                    $"{index + 1}. {T(item.Instruction)}")));
         await JavaScript.InvokeVoidAsync("taiwuHelper.copyText", text);
         _copyStatus = T("Recommendation checklist copied.");
     }

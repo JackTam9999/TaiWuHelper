@@ -41,6 +41,9 @@ public sealed class TargetsControllerTests
                 Assert.Equal("target:16317", first.Reference);
                 Assert.Equal("何春石", first.DisplayName);
                 Assert.Equal("location:10:20", first.Location.Reference);
+                Assert.Equal(
+                    "辽东 · 鸭绿江 · 玄石之地",
+                    first.Location.DisplayName);
             },
             second =>
             {
@@ -166,7 +169,8 @@ public sealed class TargetsControllerTests
                             "何春石",
                             age: 52,
                             areaId: 10,
-                            blockId: 20),
+                            blockId: 20,
+                            "辽东 · 鸭绿江 · 玄石之地"),
                         new TargetLookupEntry(
                             20000,
                             "何春石",

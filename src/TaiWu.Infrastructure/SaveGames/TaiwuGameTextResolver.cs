@@ -1,5 +1,6 @@
 using GameData.Domains;
 using GameData.Domains.Character;
+using GameData.Domains.Map;
 using System.Collections.Concurrent;
 using TaiWu.Application.Localization;
 
@@ -134,6 +135,40 @@ internal sealed class TaiwuGameTextContext(
             separator,
             new[] { resolvedSurname, resolvedGivenName }
                 .Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    public string? ResolveLocationName(Location location)
+    {
+        if (!location.IsValid())
+        {
+            return null;
+        }
+
+        var (stateKey, areaKey) =
+            DomainManager.Map.GetStateAndAreaNameByAreaId(location.AreaId);
+        var blockKey = DomainManager.Map.GetBlock(location).GetConfig().Name;
+        var parts = new[]
+        {
+            ResolveAvailable("MapState", stateKey),
+            ResolveAvailable("MapArea", areaKey),
+            ResolveAvailable("MapBlock", blockKey)
+        };
+        var resolved = parts
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        return resolved.Length == 0
+            ? null
+            : string.Join(" · ", resolved);
+    }
+
+    private string? ResolveAvailable(string pack, string? key)
+    {
+        var value = Resolve(pack, key);
+        return string.IsNullOrWhiteSpace(value)
+               || string.Equals(value, key, StringComparison.Ordinal)
+            ? null
+            : value;
     }
 
     internal string ResolveNameParts(string source, string separator)

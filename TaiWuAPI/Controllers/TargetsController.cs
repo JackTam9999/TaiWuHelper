@@ -70,7 +70,8 @@ public sealed class TargetsController(
                     new TargetLocationResponse(
                         $"location:{entry.AreaId}:{entry.BlockId}",
                         entry.AreaId,
-                        entry.BlockId)))],
+                        entry.BlockId,
+                        entry.LocationDisplayName)))],
             [.. result.Warnings.Select((warning, index) =>
                     new TargetLookupWarningResponse(
                         $"warning:target-lookup:{warning.Code}:{index + 1}",

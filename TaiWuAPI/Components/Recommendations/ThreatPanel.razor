@@ -31,9 +31,9 @@
                         class="@(selected ? "threat-card selected" : "threat-card")"
                         aria-pressed="@selected"
                         @onclick="() => SelectedReferenceChanged.InvokeAsync(threat.Reference)">
-                    <span class="severity-marker">@group.Key</span>
-                    <strong>@threat.Title</strong>
-                    <span>@threat.Explanation</span>
+                    <span class="severity-marker">@SeverityLabel(group.Key)</span>
+                    <strong>@T(threat.Title)</strong>
+                    <span>@T(threat.Explanation)</span>
                     <small>
                         @TimingLabel(threat.ActivationTiming) ·
                         @threat.EvidenceReferences.Count @T("evidence source(s)")

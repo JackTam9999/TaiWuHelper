@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Security.Cryptography;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.Localization;
+using TaiWu.Application.Targets;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -43,6 +44,8 @@ public sealed class LocalGameDataIntegrationTests
                 .AddTaiwuInfrastructure()
                 .BuildServiceProvider();
             var reader = provider.GetRequiredService<ICombatSnapshotReader>();
+            var targetReader =
+                provider.GetRequiredService<ITargetLookupReader>();
             var request = new CombatSnapshotReadRequest(
                 savePath,
                 GoldenTargetId,
@@ -54,10 +57,16 @@ public sealed class LocalGameDataIntegrationTests
             var second = await reader.ReadAsync(
                 request,
                 TestContext.Current.CancellationToken);
+            var targetLookup = await targetReader.ReadAsync(
+                new TargetLookupReadRequest(
+                    savePath,
+                    TaiwuLanguage.Chinese),
+                TestContext.Current.CancellationToken);
 
             AssertGoldenSnapshot(first, savePath);
             AssertGoldenSnapshot(second, savePath);
             AssertLocalizedNames(first);
+            AssertLocalizedLocation(targetLookup);
             AssertRepeatable(first, second);
             Assert.True(
                 string.Equals(
@@ -203,6 +212,18 @@ public sealed class LocalGameDataIntegrationTests
             skill => skill.SkillId == 0);
         Assert.True(firstNeigong.DisplayName.IsAvailable);
         Assert.Equal("沛然诀", firstNeigong.DisplayName.Value);
+    }
+
+    private static void AssertLocalizedLocation(
+        TargetLookupSnapshot snapshot)
+    {
+        var target = Assert.Single(
+            snapshot.Entries,
+            entry => entry.CharacterId == GoldenTargetId);
+
+        Assert.Equal(
+            "辽东 · 鸭绿江 · 玄石之地",
+            target.LocationDisplayName);
     }
 
     private static void AssertUnchanged(

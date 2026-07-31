@@ -24,7 +24,7 @@
                         @foreach (var item in phase.Items)
                         {
                             <li class="@(AddressesSelectedThreat(item) ? "threat-highlight" : null)">
-                                <strong>@item.Instruction</strong>
+                                <strong>@T(item.Instruction)</strong>
                                 @if (item.SkillId.HasValue)
                                 {
                                     <span>@T("Skill") @item.SkillId</span>
