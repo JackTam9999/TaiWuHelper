@@ -13,7 +13,7 @@ internal static partial class DynamicUiText
         if (match.Success)
         {
             return $"找到 {match.Groups["count"].Value} 個可能的目標。"
-                + "請依年齡、人物 ID 與所在地點選擇。";
+                + "請依姓名、年齡與地點名稱選擇。";
         }
 
         match = SelectedTargetPattern().Match(english);
@@ -26,8 +26,8 @@ internal static partial class DynamicUiText
         match = TargetLoadoutNotPersistedPattern().Match(english);
         if (match.Success)
         {
-            return $"目前磁碟存檔中沒有目標 {match.Groups["id"].Value} "
-                + "的實際運功配置。GameData 可能在準備戰鬥時才替 NPC "
+            return "目前磁碟存檔中沒有所選目標的實際運功配置。"
+                + "GameData 可能在準備戰鬥時才替 NPC "
                 + "選擇功法；推薦將改用已知功法及已驗證機制。";
         }
 
@@ -69,7 +69,7 @@ internal static partial class DynamicUiText
         match = SkillCannotActivatePattern().Match(english);
         if (match.Success)
         {
-            return $"功法 {match.Groups["id"].Value} 目前為"
+            return $"{Skill(match.Groups["skill"].Value)}目前為"
                 + $"{Direction(match.Groups["current"].Value)}，"
                 + $"無法啟動其{Direction(match.Groups["required"].Value)}效果。";
         }
@@ -77,7 +77,7 @@ internal static partial class DynamicUiText
         match = SkillDirectionMismatchPattern().Match(english);
         if (match.Success)
         {
-            return $"功法 {match.Groups["id"].Value} 為"
+            return $"{Skill(match.Groups["skill"].Value)}為"
                 + $"{Direction(match.Groups["current"].Value)}，"
                 + $"並非{Direction(match.Groups["required"].Value)}。";
         }
@@ -85,27 +85,27 @@ internal static partial class DynamicUiText
         match = RemoveSkillPattern().Match(english);
         if (match.Success)
         {
-            return $"手動移除功法 {match.Groups["id"].Value}。";
+            return $"手動移除{Skill(match.Groups["skill"].Value)}。";
         }
 
         match = AddSkillPattern().Match(english);
         if (match.Success)
         {
-            return $"手動將功法 {match.Groups["id"].Value} 加入"
+            return $"手動將{Skill(match.Groups["skill"].Value)}加入"
                 + $"{Category(match.Groups["category"].Value)}欄。";
         }
 
         match = KeepSkillPattern().Match(english);
         if (match.Success)
         {
-            return $"將功法 {match.Groups["id"].Value} 保留在"
+            return $"將{Skill(match.Groups["skill"].Value)}保留在"
                 + $"{Category(match.Groups["category"].Value)}欄。";
         }
 
         match = ChangeDirectionPattern().Match(english);
         if (match.Success)
         {
-            return $"將功法 {match.Groups["id"].Value} 改為"
+            return $"將{Skill(match.Groups["skill"].Value)}改為"
                 + $"{Direction(match.Groups["direction"].Value)}。";
         }
 
@@ -119,10 +119,49 @@ internal static partial class DynamicUiText
         match = ConfirmRequirementPattern().Match(english);
         if (match.Success)
         {
-            return $"確認{match.Groups["skill"].Value}："
+            return $"確認{Skill(match.Groups["skill"].Value)}："
                 + UiText.Get(
                     TaiwuLanguage.Chinese,
                     match.Groups["evaluation"].Value);
+        }
+
+        match = NamedCombatStartPassivePattern().Match(english);
+        if (match.Success)
+        {
+            return $"戰鬥開始前，確認已裝備{Skill(match.Groups["skill"].Value)}，"
+                + "使其被動效果能夠生效。";
+        }
+
+        match = NamedEquippedPassivePattern().Match(english);
+        if (match.Success)
+        {
+            return $"需要克制效果期間，保持裝備"
+                + $"{Skill(match.Groups["skill"].Value)}。";
+        }
+
+        match = NamedActiveRolePattern().Match(english);
+        if (match.Success)
+        {
+            var role = match.Groups["role"].Value == "defense"
+                ? "護體"
+                : "輕靈";
+            return $"開局時，將{Skill(match.Groups["skill"].Value)}選為主動"
+                + $"{role}功法，並在滿足需求後運起。";
+        }
+
+        match = NamedOpeningAttackPattern().Match(english);
+        if (match.Success)
+        {
+            return $"開局時，在滿足生效需求後施展"
+                + $"{Skill(match.Groups["skill"].Value)}。";
+        }
+
+        match = NamedSwitchPattern().Match(english);
+        if (match.Success)
+        {
+            return "若主要功法的生效需求無法滿足，請在戰鬥前或兩次嘗試"
+                + $"之間，以{Skill(match.Groups["alternative"].Value)}替代"
+                + $"{Skill(match.Groups["primary"].Value)}。";
         }
 
         match = UseSkillPattern().Match(english);
@@ -141,7 +180,7 @@ internal static partial class DynamicUiText
             var status = match.Groups["negative"].Success
                 ? "未滿足"
                 : "已滿足";
-            return $"功法 {match.Groups["id"].Value} {status}"
+            return $"{Skill(match.Groups["skill"].Value)}{status}"
                 + $"{ActivationState(match.Groups["state"].Value)}條件。";
         }
 
@@ -149,20 +188,20 @@ internal static partial class DynamicUiText
         if (match.Success)
         {
             var status = match.Groups["negative"].Success ? "未裝備" : "已裝備";
-            return $"{status}兵器類型 {match.Groups["id"].Value}。";
+            return $"所需兵器類型{status}。";
         }
 
         match = WeaponUnlockPattern().Match(english);
         if (match.Success)
         {
             var status = match.Groups["negative"].Success ? "尚未解鎖" : "已解鎖";
-            return $"兵器類型 {match.Groups["id"].Value}{status}。";
+            return $"所需兵器類型{status}。";
         }
 
         match = TrickCountPattern().Match(english);
         if (match.Success)
         {
-            return $"式類型 {match.Groups["id"].Value} 目前有 "
+            return "所需式類型目前有 "
                 + $"{match.Groups["actual"].Value} 個；"
                 + $"需要 {match.Groups["required"].Value} 個。";
         }
@@ -215,28 +254,27 @@ internal static partial class DynamicUiText
         match = SkillEffectMismatchPattern().Match(english);
         if (match.Success)
         {
-            return $"功法 {match.Groups["id"].Value} 與預期效果 "
-                + $"{match.Groups["effect"].Value} 不符。";
+            return $"{Skill(match.Groups["skill"].Value)}與預期效果不符。";
         }
 
         match = SkillCategoryUnsupportedPattern().Match(english);
         if (match.Success)
         {
-            return $"功法 {match.Groups["id"].Value} 的裝備類型 "
+            return $"{Skill(match.Groups["skill"].Value)}的裝備類型 "
                 + $"{match.Groups["type"].Value} 不受支援，因此已略過。";
         }
 
         match = SkillGridBonusPattern().Match(english);
         if (match.Success)
         {
-            return $"功法 {match.Groups["id"].Value} 的欄位加成無效："
+            return $"{Skill(match.Groups["skill"].Value)}的欄位加成無效："
                 + match.Groups["reason"].Value;
         }
 
         match = SkillMissingValuePattern().Match(english);
         if (match.Success)
         {
-            return $"功法 {match.Groups["id"].Value} "
+            return $"{Skill(match.Groups["skill"].Value)}"
                 + MissingValue(match.Groups["value"].Value);
         }
 
@@ -252,14 +290,14 @@ internal static partial class DynamicUiText
         match = ObservedSkillUnlearnedPattern().Match(english);
         if (match.Success)
         {
-            return $"畫面觀察到的功法 {match.Groups["id"].Value} "
+            return $"畫面觀察到的{Skill(match.Groups["skill"].Value)}"
                 + "尚未由玩家習得。";
         }
 
         match = ObservedSkillCategoryPattern().Match(english);
         if (match.Success)
         {
-            return $"畫面觀察到的功法 {match.Groups["id"].Value} "
+            return $"畫面觀察到的{Skill(match.Groups["skill"].Value)}"
                 + $"屬於{Category(match.Groups["actual"].Value)}，"
                 + $"而非{Category(match.Groups["expected"].Value)}。";
         }
@@ -301,6 +339,13 @@ internal static partial class DynamicUiText
         _ => value
     };
 
+    private static string Skill(string value) => value switch
+    {
+        "Unnamed skill" => "未命名功法",
+        "the alternative skill" => "替代功法",
+        _ => value
+    };
+
     private static string MissingValue(string value) => value switch
     {
         "name" => "沒有設定名稱。",
@@ -309,7 +354,7 @@ internal static partial class DynamicUiText
     };
 
     [GeneratedRegex(
-        @"^(?<count>\d+) possible targets were found\. Select one using its age, character ID, and location\.$",
+        @"^(?<count>\d+) possible targets were found\. Select one using its name, age, and named location\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex PossibleTargetsPattern();
 
@@ -319,8 +364,8 @@ internal static partial class DynamicUiText
     private static partial Regex SelectedTargetPattern();
 
     [GeneratedRegex(
-        @"^Target (?<id>\d+)'s active loadout is not present in the current disk save\. GameData may select NPC combat skills during combat preparation; recommendations use known skills and verified mechanics instead\.$",
-        RegexOptions.CultureInvariant)]
+        @"^the selected target's active loadout is not present in the current disk save\. GameData may select NPC combat skills during combat preparation; recommendations use known skills and verified mechanics instead\.$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex TargetLoadoutNotPersistedPattern();
 
     [GeneratedRegex(
@@ -344,32 +389,32 @@ internal static partial class DynamicUiText
     private static partial Regex OccurrencePattern();
 
     [GeneratedRegex(
-        @"^Skill (?<id>\d+) is (?<current>Direct|Reverse|Neutral) and cannot activate its (?<required>Direct|Reverse) effect\.$",
+        @"^(?<skill>.+) is (?<current>Direct|Reverse|Neutral) and cannot activate its (?<required>Direct|Reverse) effect\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillCannotActivatePattern();
 
     [GeneratedRegex(
-        @"^Skill (?<id>\d+) is (?<current>Direct|Reverse|Neutral), not (?<required>Direct|Reverse|Neutral)\.$",
+        @"^(?<skill>.+) is (?<current>Direct|Reverse|Neutral), not (?<required>Direct|Reverse|Neutral)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillDirectionMismatchPattern();
 
     [GeneratedRegex(
-        @"^Remove skill (?<id>\d+) manually\.$",
+        @"^Remove (?<skill>.+) manually\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex RemoveSkillPattern();
 
     [GeneratedRegex(
-        @"^Add skill (?<id>\d+) to (?<category>\w+) manually\.$",
+        @"^Add (?<skill>.+) to (?<category>\w+) manually\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex AddSkillPattern();
 
     [GeneratedRegex(
-        @"^Keep skill (?<id>\d+) in (?<category>\w+)\.$",
+        @"^Keep (?<skill>.+) in (?<category>\w+)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex KeepSkillPattern();
 
     [GeneratedRegex(
-        @"^Change skill (?<id>\d+) to (?<direction>.+)\.$",
+        @"^Change (?<skill>.+) to (?<direction>.+)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex ChangeDirectionPattern();
 
@@ -384,28 +429,53 @@ internal static partial class DynamicUiText
     private static partial Regex ConfirmRequirementPattern();
 
     [GeneratedRegex(
+        @"^Before combat, confirm (?<skill>.+) is equipped so its passive can activate\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex NamedCombatStartPassivePattern();
+
+    [GeneratedRegex(
+        @"^Keep (?<skill>.+) equipped while its counter is needed\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex NamedEquippedPassivePattern();
+
+    [GeneratedRegex(
+        @"^At the opening, select (?<skill>.+) as the active (?<role>defense|agility) skill and activate it once its requirements are satisfied\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex NamedActiveRolePattern();
+
+    [GeneratedRegex(
+        @"^At the opening, use (?<skill>.+) once its activation requirements are satisfied\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex NamedOpeningAttackPattern();
+
+    [GeneratedRegex(
+        @"^Before combat or between attempts, use (?<alternative>.+) instead of (?<primary>.+) if \k<primary>'s activation requirements cannot be satisfied\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex NamedSwitchPattern();
+
+    [GeneratedRegex(
         @"^(?<action>Use|Activate) (?<skill>.+) when its listed conditions and linked threat timing are present\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex UseSkillPattern();
 
     [GeneratedRegex(
-        @"^Skill (?<id>\d+) (?<negative>does not )?satisf(?:y|ies) (?<state>EquippedPassive|ActiveDefense|ActiveAgility)\.$",
+        @"^(?<skill>.+) (?<negative>does not )?satisf(?:y|ies) (?<state>EquippedPassive|ActiveDefense|ActiveAgility)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillActivationPattern();
 
     [GeneratedRegex(
-        @"^Weapon type (?<id>\d+) is (?<negative>not )?equipped\.$",
-        RegexOptions.CultureInvariant)]
+        @"^the required weapon type is (?<negative>not )?equipped\.$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex WeaponStatePattern();
 
     [GeneratedRegex(
-        @"^Weapon type (?<id>\d+) is (?<negative>not )?unlocked\.$",
-        RegexOptions.CultureInvariant)]
+        @"^the required weapon type is (?<negative>not )?unlocked\.$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex WeaponUnlockPattern();
 
     [GeneratedRegex(
-        @"^Trick type (?<id>\d+) has (?<actual>\d+) available; (?<required>\d+) required\.$",
-        RegexOptions.CultureInvariant)]
+        @"^the required trick type has (?<actual>\d+) available; (?<required>\d+) required\.$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex TrickCountPattern();
 
     [GeneratedRegex(
@@ -439,22 +509,22 @@ internal static partial class DynamicUiText
     private static partial Regex ResultLimitPattern();
 
     [GeneratedRegex(
-        @"^Skill (?<id>\d+) does not match expected effect (?<effect>\d+)\.$",
+        @"^(?<skill>.+) does not match the expected effect\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillEffectMismatchPattern();
 
     [GeneratedRegex(
-        @"^Skill (?<id>\d+) has unsupported equip type (?<type>.+) and was omitted\.$",
+        @"^(?<skill>.+) has unsupported equip type (?<type>.+) and was omitted\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillCategoryUnsupportedPattern();
 
     [GeneratedRegex(
-        @"^Skill (?<id>\d+) grid bonuses were invalid: (?<reason>.+)$",
+        @"^(?<skill>.+) grid bonuses were invalid: (?<reason>.+)$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillGridBonusPattern();
 
     [GeneratedRegex(
-        @"^Skill (?<id>\d+) has no configured (?<value>name|positive configured GridCost)\.$",
+        @"^(?<skill>.+) has no configured (?<value>name|positive configured GridCost)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillMissingValuePattern();
 
@@ -464,12 +534,12 @@ internal static partial class DynamicUiText
     private static partial Regex GenericSlotMismatchPattern();
 
     [GeneratedRegex(
-        @"^Observed skill (?<id>\d+) is not learned by the player\.$",
+        @"^Observed (?<skill>.+) is not learned by the player\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex ObservedSkillUnlearnedPattern();
 
     [GeneratedRegex(
-        @"^Observed skill (?<id>\d+) belongs to (?<actual>\w+), not (?<expected>\w+)\.$",
+        @"^Observed (?<skill>.+) belongs to (?<actual>\w+), not (?<expected>\w+)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex ObservedSkillCategoryPattern();
 }

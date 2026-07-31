@@ -81,6 +81,7 @@ public sealed partial class RecommendationComponentRenderingTests
                 ManualLoadoutChangeKind.Add,
                 SkillCategory.Attack,
                 604,
+                "金貌玉魄",
                 RequiredDirection: null,
                 reason),
             new(
@@ -88,6 +89,7 @@ public sealed partial class RecommendationComponentRenderingTests
                 ManualLoadoutChangeKind.ChangeDirection,
                 SkillCategory.Attack,
                 604,
+                "金貌玉魄",
                 PracticeDirection.Reverse,
                 reason)
         };
@@ -112,7 +114,9 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("Weapon Satisfied Required weapon is equipped.", text);
         Assert.Contains("Add · change direction", text);
         Assert.Contains("Evidence and linked threats", text);
-        Assert.Contains("evidence:counter", text);
+        Assert.Contains("Counter-effect evidence", text);
+        Assert.DoesNotContain("evidence:", text);
+        Assert.DoesNotContain("#604", text);
         Assert.Contains("threat-highlight", html);
     }
 
@@ -156,9 +160,10 @@ public sealed partial class RecommendationComponentRenderingTests
         var item = new ManualChecklistItemViewModel(
             "checklist:add:604",
             ManualChecklistItemKind.AddSkill,
-            "Add skill 604 manually.",
-            "reason:604",
-            ["evidence:604"]);
+            "金猊鎮魔刀",
+            "Add 金猊鎮魔刀 manually.",
+            "reason:add",
+            ["evidence:add"]);
 
         var html = await RenderAsync<ManualChecklist>(
             new Dictionary<string, object?>
@@ -171,10 +176,124 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains(
             "Instructions only: TaiWu Helper cannot perform these steps.",
             text);
-        Assert.Contains("Add skill 604 manually.", text);
+        Assert.Contains("Add 金猊鎮魔刀 manually.", text);
+        Assert.DoesNotContain(
+            "skill 604",
+            text,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("reason:", text);
+        Assert.DoesNotContain("evidence:", text);
         Assert.Contains("type=\"checkbox\"", html);
         Assert.DoesNotContain(">Apply<", html);
         Assert.DoesNotContain(">Execute<", html);
+    }
+
+    [Fact]
+    public async Task Checklist_renders_named_actions_without_skill_ids()
+    {
+        var item = new ManualChecklistItemViewModel(
+            "checklist:add:624",
+            ManualChecklistItemKind.AddSkill,
+            "伏龍刀法",
+            "Add 伏龍刀法 to Attack manually.",
+            "reason:add",
+            ["evidence:add"]);
+
+        var html = await RenderAsync<ManualChecklist>(
+            new Dictionary<string, object?>
+            {
+                [nameof(ManualChecklist.Items)] =
+                    new ManualChecklistItemViewModel[] { item }
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("Add 伏龍刀法 to Attack manually.", text);
+        Assert.DoesNotContain("624", text);
+    }
+
+    [Fact]
+    public async Task Battle_plan_renders_distinct_named_actions_without_ids()
+    {
+        var phases = new BattlePlanPhaseViewModel[]
+        {
+            new(
+                BattlePlanPhaseKind.BeforeCombat,
+                "Before combat",
+                [
+                    new BattlePlanItemViewModel(
+                        "plan:686",
+                        "老君拂塵功",
+                        "Before combat, confirm 老君拂塵功 is equipped so its "
+                        + "passive can activate.",
+                        686,
+                        "reason:passive",
+                        ["threat:mind"],
+                        ["evidence:passive"])
+                ]),
+            new(
+                BattlePlanPhaseKind.Opening,
+                "Opening",
+                [
+                    new BattlePlanItemViewModel(
+                        "plan:624",
+                        "伏龍刀法",
+                        "At the opening, use 伏龍刀法 once its activation "
+                        + "requirements are satisfied.",
+                        624,
+                        "reason:opening",
+                        ["threat:mind"],
+                        ["evidence:opening"])
+                ])
+        };
+
+        var html = await RenderAsync<BattlePlan>(
+            new Dictionary<string, object?>
+            {
+                [nameof(BattlePlan.Phases)] = phases
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("老君拂塵功", text);
+        Assert.Contains("伏龍刀法", text);
+        Assert.Contains("Before combat", text);
+        Assert.Contains("At the opening", text);
+        Assert.DoesNotContain("686", text);
+        Assert.DoesNotContain("624", text);
+        Assert.DoesNotContain("reason:", text);
+        Assert.DoesNotContain("evidence:", text);
+    }
+
+    [Fact]
+    public async Task Supporting_details_render_named_evidence_not_references()
+    {
+        var details = new RecommendationSupportingDetailsViewModel(
+            Alternatives: [],
+            Assumptions: [],
+            UnavailableData: [],
+            ConditionalRequirements: [],
+            Scores: [],
+            EvidenceReferences: ["snapshot:skill:604:evidence"],
+            EvidenceSummaries:
+            [
+                new SupportingEvidenceSummaryViewModel(
+                    "金猊鎮魔刀",
+                    "Recommended skill",
+                    SourceCount: 1)
+            ],
+            UnknownValuePolicy:
+                RecommendationSupportingDetailsBuilder.UnknownValuePolicy);
+
+        var html = await RenderAsync<SupportingDetails>(
+            new Dictionary<string, object?>
+            {
+                [nameof(SupportingDetails.Details)] = details
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("金猊鎮魔刀", text);
+        Assert.Contains("Recommended skill", text);
+        Assert.DoesNotContain("snapshot:", text);
+        Assert.DoesNotContain("604", text);
     }
 
     [Fact]
@@ -200,8 +319,8 @@ public sealed partial class RecommendationComponentRenderingTests
             });
         var text = VisibleText(html);
 
-        Assert.Single(
-            WarningOccurrencePattern().Matches(text).Cast<Match>());
+        Assert.Contains("Candidate search", text);
+        Assert.DoesNotContain("CombinationInfeasible", text);
         Assert.Contains(
             "Aggregated from 2236 evaluated combinations.",
             text);
@@ -310,6 +429,4 @@ public sealed partial class RecommendationComponentRenderingTests
     [GeneratedRegex("\\s+")]
     private static partial Regex WhitespacePattern();
 
-    [GeneratedRegex("CombinationInfeasible")]
-    private static partial Regex WarningOccurrencePattern();
 }

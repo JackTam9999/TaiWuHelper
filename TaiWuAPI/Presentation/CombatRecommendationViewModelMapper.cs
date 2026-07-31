@@ -17,11 +17,18 @@ public static class CombatRecommendationViewModelMapper
 
         var snapshotReference =
             $"snapshot:{recommendation.Snapshot.Metadata.CapturedAtUtc:O}";
+        var skillNames = recommendation.Snapshot.Player.LearnedSkills
+            .ToDictionary(
+                skill => skill.SkillId,
+                skill => skill.DisplayName.IsAvailable
+                    ? skill.DisplayName.Value
+                    : "Unnamed skill");
         var styles = recommendation.Styles
             .Select(style => MapStyle(
                 snapshotReference,
                 recommendation.RequestedPolicy,
-                style))
+                style,
+                skillNames))
             .ToArray();
 
         return new CombatRecommendationViewModel(
@@ -40,20 +47,23 @@ public static class CombatRecommendationViewModelMapper
                 .Select(value => new ThreatViewModel(
                     ThreatReference(value.Threat.Code),
                     value.Threat.Code,
-                    value.Threat.Title,
-                    value.Threat.Explanation,
+                    UiEntityText.UseNames(value.Threat.Title, skillNames),
+                    UiEntityText.UseNames(
+                        value.Threat.Explanation,
+                        skillNames),
                     value.Threat.Kind,
                     value.Threat.Severity,
                     value.Threat.ActivationTiming,
                     [.. value.Threat.Evidence.Select(evidence => evidence.Reference)]))],
             styles,
-            MapWarnings(recommendation));
+            MapWarnings(recommendation, skillNames));
     }
 
     private static RecommendationStyleViewModel MapStyle(
         string snapshotReference,
         RecommendationPolicy requestedPolicy,
-        CombatRecommendationStyleResult style)
+        CombatRecommendationStyleResult style,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         var styleReference = StyleReference(snapshotReference, style.Policy);
         var plan = style.ManualPlan.Plan;
@@ -73,14 +83,21 @@ public static class CombatRecommendationViewModelMapper
                 OpeningActions: [],
                 SwitchingConditions: [],
                 Caveats: [],
-                style.ManualPlan.Diagnostic);
+                style.ManualPlan.Diagnostic is null
+                    ? null
+                    : UiEntityText.UseNames(
+                        style.ManualPlan.Diagnostic,
+                        skillNames));
         }
 
         var candidate = plan.SelectedRecommendation.Candidate;
         var candidateReference = $"candidate:{candidate.StableKey}";
         var explanation = style.Explanation!;
         var skills = explanation.Skills
-            .Select(skill => MapSkill(candidateReference, skill))
+            .Select(skill => MapSkill(
+                candidateReference,
+                skill,
+                skillNames))
             .ToArray();
 
         return new RecommendationStyleViewModel(
@@ -98,26 +115,33 @@ public static class CombatRecommendationViewModelMapper
                     component.Weight,
                     component.Score,
                     component.WeightedPoints,
-                    component.Explanation,
+                    UiEntityText.UseNames(
+                        component.Explanation,
+                        skillNames),
                     component.EvidenceReference))],
             MapCategories(candidateReference, candidate, skills),
-            [.. plan.LoadoutChanges.Select(change => MapChange(candidateReference, change))],
+            [.. plan.LoadoutChanges.Select(change => MapChange(
+                candidateReference,
+                change,
+                skillNames))],
             [.. plan.OpeningActions
                 .Select(action => MapStep(
                     candidateReference,
                     "opening",
-                    action))],
+                    action,
+                    skillNames))],
             [.. plan.SwitchingConditions
                 .Select(action => MapStep(
                     candidateReference,
                     "switch",
-                    action))],
+                    action,
+                    skillNames))],
             [.. explanation.Caveats
                 .Select((caveat, index) => new RecommendationCaveatViewModel(
                     $"{candidateReference}:caveat:{caveat.Code}:{index + 1}",
                     caveat.Kind,
                     caveat.Code,
-                    caveat.Explanation,
+                    UiEntityText.UseNames(caveat.Explanation, skillNames),
                     caveat.SkillId,
                     caveat.EvidenceReferences))],
             Diagnostic: null);
@@ -156,7 +180,8 @@ public static class CombatRecommendationViewModelMapper
 
     private static RecommendedSkillViewModel MapSkill(
         string candidateReference,
-        SkillRecommendationExplanation skill)
+        SkillRecommendationExplanation skill,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         var skillReference = SkillReference(
             candidateReference,
@@ -179,13 +204,17 @@ public static class CombatRecommendationViewModelMapper
                     : null,
                 skill.Cost.BaseCost.IsAvailable
                     ? null
-                    : skill.Cost.BaseCost.UnavailableReason,
+                    : UseNames(
+                        skill.Cost.BaseCost.UnavailableReason,
+                        skillNames),
                 skill.Cost.EffectiveCost.IsAvailable
                     ? skill.Cost.EffectiveCost.Value
                     : null,
                 skill.Cost.EffectiveCost.IsAvailable
                     ? null
-                    : skill.Cost.EffectiveCost.UnavailableReason,
+                    : UseNames(
+                        skill.Cost.EffectiveCost.UnavailableReason,
+                        skillNames),
                 skill.Cost.MasteryReduction.IsAvailable
                     ? skill.Cost.MasteryReduction.Value
                     : null,
@@ -198,7 +227,11 @@ public static class CombatRecommendationViewModelMapper
                 skill.Counter.Strength,
                 skill.Counter.ActivationTiming,
                 skill.Counter.EvidenceReference,
-                skill.Counter.UnavailableReason),
+                skill.Counter.UnavailableReason is null
+                    ? null
+                    : UiEntityText.UseNames(
+                        skill.Counter.UnavailableReason,
+                        skillNames)),
             [.. skill.Threats.Select(threat => ThreatReference(threat.Code))],
             [.. skill.Conditions
                 .Select((condition, index) =>
@@ -208,18 +241,22 @@ public static class CombatRecommendationViewModelMapper
                         condition.Kind,
                         condition.Criticality,
                         condition.Status,
-                        condition.Evaluation,
+                        UiEntityText.UseNames(
+                            condition.Evaluation,
+                            skillNames),
                         condition.EvidenceReference))],
             [.. skill.Reasons
                 .Select(reason => MapReason(
                     candidateReference,
                     skill.SkillId,
-                    reason))]);
+                    reason,
+                    skillNames))]);
     }
 
     private static ManualLoadoutChangeViewModel MapChange(
         string candidateReference,
-        ManualLoadoutChange change)
+        ManualLoadoutChange change,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         return new ManualLoadoutChangeViewModel(
             $"{candidateReference}:change:{change.Kind}:"
@@ -227,17 +264,20 @@ public static class CombatRecommendationViewModelMapper
             change.Kind,
             change.Category,
             change.SkillId,
+            SkillName(skillNames, change.SkillId),
             change.RequiredDirection,
             MapReason(
                 candidateReference,
                 change.SkillId,
-                change.Reason));
+                change.Reason,
+                skillNames));
     }
 
     private static BattlePlanStepViewModel MapStep(
         string candidateReference,
         string phase,
-        BattlePlanInstruction instruction)
+        BattlePlanInstruction instruction,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         var reasonSkillId = instruction.AlternativeSkillId
             ?? instruction.SkillId;
@@ -245,30 +285,50 @@ public static class CombatRecommendationViewModelMapper
             $"{candidateReference}:plan:{phase}:{instruction.Sequence}",
             instruction.Kind,
             instruction.SkillId,
+            SkillName(skillNames, instruction.SkillId),
             instruction.AlternativeSkillId,
+            instruction.AlternativeSkillId is int alternativeSkillId
+                ? SkillName(skillNames, alternativeSkillId)
+                : null,
             instruction.Condition,
             MapReason(
                 candidateReference,
                 reasonSkillId,
-                instruction.Reason));
+                instruction.Reason,
+                skillNames));
     }
+
+    private static string SkillName(
+        IReadOnlyDictionary<int, string> skillNames,
+        int skillId) =>
+        skillNames.TryGetValue(skillId, out var name)
+        && !string.IsNullOrWhiteSpace(name)
+            ? name
+            : "Unnamed skill";
+
+    private static string? UseNames(
+        string? text,
+        IReadOnlyDictionary<int, string> skillNames) =>
+        text is null ? null : UiEntityText.UseNames(text, skillNames);
 
     private static RecommendationReasonViewModel MapReason(
         string candidateReference,
         int skillId,
-        RecommendationReason reason)
+        RecommendationReason reason,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         return new RecommendationReasonViewModel(
             $"{SkillReference(candidateReference, skillId)}:"
             + $"reason:{reason.Code}",
             reason.Code,
-            reason.Summary,
+            UiEntityText.UseNames(reason.Summary, skillNames),
             reason.EvidenceReferences,
             [.. reason.ThreatCodes.Select(ThreatReference)]);
     }
 
     private static RecommendationWarningViewModel[] MapWarnings(
-        CombatLoadoutRecommendation recommendation)
+        CombatLoadoutRecommendation recommendation,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         var snapshotWarnings = recommendation.SnapshotWarnings
             .Select((warning, index) => MapWarning(
@@ -277,7 +337,8 @@ public static class CombatRecommendationViewModelMapper
                 warning.Code,
                 warning.Message,
                 evidenceReferences: [],
-                occurrences: 1));
+                occurrences: 1,
+                skillNames));
         var threatWarnings = recommendation.ThreatAnalysis.Warnings
             .Select((warning, index) => MapWarning(
                 $"warning:threat:{warning.Code}:{index + 1}",
@@ -285,7 +346,8 @@ public static class CombatRecommendationViewModelMapper
                 warning.Code,
                 warning.Message,
                 [warning.Mechanic.EvidenceReference],
-                occurrences: 1));
+                occurrences: 1,
+                skillNames));
         var generationWarnings = recommendation.Generation.Diagnostics
             .Select((warning, index) => MapWarning(
                 $"warning:generation:{warning.Code}:{index + 1}",
@@ -293,13 +355,35 @@ public static class CombatRecommendationViewModelMapper
                 warning.Code.ToString(),
                 GenerationWarningMessage(warning),
                 evidenceReferences: [],
-                warning.Occurrences));
+                warning.Occurrences,
+                skillNames));
 
-        return
+        RecommendationWarningViewModel[] warnings =
         [
             .. snapshotWarnings,
             .. threatWarnings,
             .. generationWarnings
+        ];
+        return
+        [
+            .. warnings
+                .GroupBy(warning => (
+                    warning.Source,
+                    warning.Code,
+                    warning.Kind,
+                    warning.IsCritical,
+                    warning.Message,
+                    warning.EffectOnRecommendation))
+                .Select(group => group.First() with
+                {
+                    Occurrences = group.Sum(warning => warning.Occurrences),
+                    EvidenceReferences =
+                    [
+                        .. group
+                            .SelectMany(warning => warning.EvidenceReferences)
+                            .Distinct(StringComparer.Ordinal)
+                    ]
+                })
         ];
     }
 
@@ -316,7 +400,8 @@ public static class CombatRecommendationViewModelMapper
         string code,
         string message,
         IReadOnlyList<string> evidenceReferences,
-        int occurrences)
+        int occurrences,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         var classification =
             RecommendationWarningPresentation.Classify(source, code);
@@ -327,7 +412,7 @@ public static class CombatRecommendationViewModelMapper
             classification.Kind,
             classification.IsCritical,
             occurrences,
-            message,
+            UiEntityText.UseNames(message, skillNames),
             classification.EffectOnRecommendation,
             evidenceReferences);
     }

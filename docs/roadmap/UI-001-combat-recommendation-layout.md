@@ -6,7 +6,7 @@
 | Epic | [EPIC-001](./EPIC-001-combat-skill-recommendation.md) |
 | Milestone | 1 |
 | Primary surface | Local browser |
-| Last updated | 2026-07-29 |
+| Last updated | 2026-07-31 |
 
 ## Purpose
 
@@ -103,7 +103,7 @@ describes only the last source-data read.
 
 Provide:
 
-- Target search with character ID and disambiguating context.
+- Target search by in-game character name with age and named-location context.
 - Preferred-style selector: safe, balanced, or aggressive.
 - Optional preferred weapon.
 - Optional current-screen observations used only for analysis.
@@ -269,13 +269,18 @@ must consume presentation models rather than `GameData` types.
 
 ## Accessibility and terminology
 
+This layout inherits the project-wide
+[UI presentation guidelines](../architecture/UI-PRESENTATION-GUIDELINES.md),
+including absolute game non-interference and the requirement to use localized
+entity names instead of IDs or raw technical references.
+
 - Support keyboard navigation for all controls and panels.
 - Maintain readable contrast.
 - Do not communicate severity, direction, or status by colour alone.
 - Use visible focus states.
 - Associate warnings and validation messages with their inputs.
 - Use Chinese in-game names as the primary skill terminology.
-- Allow explanatory text to use localized labels without changing identifiers.
+- Keep identifiers internal while explanatory text uses localized names.
 
 ## Testing
 
@@ -309,3 +314,5 @@ hierarchy and non-interference message.
 - [ ] The layout is usable with keyboard navigation and without colour.
 - [ ] The information-only boundary remains visible.
 - [ ] No control can apply a recommendation or modify or control the game.
+- [ ] Every player-visible game entity uses its localized name; no numeric ID,
+      warning code, or raw evidence reference is rendered.

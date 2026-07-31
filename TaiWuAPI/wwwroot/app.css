@@ -428,11 +428,26 @@ select {
     grid-template-columns: repeat(5, minmax(120px, 1fr));
 }
 
+.observation-grid fieldset {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid var(--line);
+}
+
+.observation-grid legend {
+    padding: 0 5px;
+    color: var(--gold);
+    font-weight: 800;
+}
+
 .generic-grid {
     grid-template-columns: repeat(5, minmax(100px, 150px));
 }
 
-.observation-grid label,
 .generic-grid label {
     display: grid;
     gap: 6px;
@@ -825,12 +840,6 @@ select {
     font-size: 1.02rem;
 }
 
-.skill-id {
-    color: var(--muted);
-    font-size: 0.67rem;
-    letter-spacing: 0.08em;
-}
-
 .change-badge {
     max-width: 130px;
     padding: 4px 7px;
@@ -935,14 +944,18 @@ select {
     margin-top: 8px;
 }
 
-.skill-evidence code {
+.named-evidence-list span {
+    display: grid;
+    gap: 2px;
     max-width: 100%;
-    padding: 3px 5px;
-    overflow: hidden;
+    padding: 6px 8px;
     color: #b8d8cf;
     background: #0b1818;
     font-size: 0.64rem;
-    text-overflow: ellipsis;
+}
+
+.named-evidence-list strong {
+    color: var(--ink);
 }
 
 .empty-category {
@@ -1212,7 +1225,7 @@ select {
     gap: 5px;
 }
 
-.warning-evidence code {
+.warning-evidence span {
     color: #b8d8cf;
     font-size: 0.65rem;
 }
@@ -1277,7 +1290,8 @@ select {
 }
 
 .alternative-list article,
-.support-list article {
+.support-list article,
+.evidence-list article {
     display: grid;
     gap: 5px;
     padding: 11px 12px;
@@ -1285,23 +1299,20 @@ select {
 }
 
 .alternative-list strong,
-.support-list strong {
+.support-list strong,
+.evidence-list strong {
     color: var(--gold);
     font-size: 0.75rem;
 }
 
 .alternative-list span,
 .support-list span,
+.evidence-list span,
 .support-list p {
     margin: 0;
     color: var(--muted);
     font-size: 0.76rem;
     line-height: 1.5;
-}
-
-.support-list code {
-    color: #b8d8cf;
-    font-size: 0.66rem;
 }
 
 .score-table-wrap {
@@ -1337,15 +1348,6 @@ select {
 
 .evidence-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.evidence-list code {
-    padding: 7px 8px;
-    overflow: hidden;
-    color: #b8d8cf;
-    background: rgba(5, 16, 16, 0.32);
-    font-size: 0.66rem;
-    text-overflow: ellipsis;
 }
 
 .empty-state {

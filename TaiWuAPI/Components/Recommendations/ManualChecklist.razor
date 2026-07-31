@@ -44,14 +44,10 @@
                     </label>
                     <details>
                         <summary>@T("Reason and evidence")</summary>
-                        @if (item.ReasonReference is not null)
-                        {
-                            <code>@item.ReasonReference</code>
-                        }
-                        @foreach (var evidence in item.EvidenceReferences)
-                        {
-                            <code>@evidence</code>
-                        }
+                        <strong>@item.SubjectName</strong>
+                        <span>
+                            @EvidenceCount(item) @T("evidence source(s)")
+                        </span>
                     </details>
                 </li>
             }
@@ -83,6 +79,10 @@
     {
         _state.Toggle(reference);
     }
+
+    private static int EvidenceCount(ManualChecklistItemViewModel item) =>
+        item.EvidenceReferences.Count
+        + (item.ReasonReference is null ? 0 : 1);
 
     private async Task CopyAsync()
     {

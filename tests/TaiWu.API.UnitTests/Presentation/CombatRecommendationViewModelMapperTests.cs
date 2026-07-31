@@ -61,6 +61,7 @@ public sealed class CombatRecommendationViewModelMapperTests
         var jinni = Assert.Single(
             attack.Skills,
             skill => skill.SkillId == 604);
+        Assert.Equal("金猊鎮魔刀", jinni.Name);
         Assert.Equal(PracticeDirection.Reverse, jinni.CurrentDirection);
         Assert.Equal(PracticeDirection.Reverse, jinni.RequiredDirection);
         Assert.False(jinni.RequiresManualDirectionChange);
@@ -90,6 +91,13 @@ public sealed class CombatRecommendationViewModelMapperTests
         Assert.Equal(CombatRequirementStatus.Satisfied, condition.Status);
         Assert.False(string.IsNullOrWhiteSpace(condition.EvidenceReference));
         Assert.NotEmpty(model.Warnings);
+        Assert.Contains(
+            style.ManualChanges,
+            change => change.SkillId == 604
+                && change.SkillName == "金猊鎮魔刀");
+        Assert.Contains(
+            style.OpeningActions,
+            step => step.SkillName is "金猊鎮魔刀" or "老君拂塵功");
         Assert.All(
             model.Warnings,
             warning => Assert.True(warning.Occurrences >= 1));
@@ -289,7 +297,7 @@ public sealed class CombatRecommendationViewModelMapperTests
     {
         return new CombatSkillSnapshot(
             skillId,
-            SnapshotValue<string>.Available($"Skill {skillId}"),
+            SnapshotValue<string>.Available(SkillName(skillId)),
             category,
             SnapshotValue<int>.Available(1),
             SnapshotValue<bool>.Available(true),
@@ -298,4 +306,12 @@ public sealed class CombatRecommendationViewModelMapperTests
             SnapshotValue<int>.Available(directEffectId),
             SnapshotValue<int>.Available(reverseEffectId));
     }
+
+    private static string SkillName(int skillId) => skillId switch
+    {
+        604 => "金猊鎮魔刀",
+        686 => "老君拂塵功",
+        719 => "測試目標功法",
+        _ => "未命名測試功法"
+    };
 }

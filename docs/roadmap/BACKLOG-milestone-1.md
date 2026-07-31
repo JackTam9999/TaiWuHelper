@@ -1552,8 +1552,8 @@ Audit the completed UI against the permanent game non-interference boundary.
 
 ### M1-025 — Verify the recommendation in-game
 
-**Status:** In progress — preparation complete; awaiting a current in-game
-snapshot and manual verification.
+**Status:** In progress — generated Safe loadout equipped and capacity-checked;
+awaiting live battle verification.
 
 **Priority:** P0  
 **Estimate:** M  
@@ -1565,12 +1565,12 @@ game during verification.
 
 #### Acceptance criteria
 
-- [ ] Returned slot totals match the game UI.
-- [ ] Every returned skill and direction can be equipped.
+- [x] Returned slot totals match the game UI.
+- [x] Every returned skill and direction can be equipped.
 - [ ] Required weapon and execution conditions are accurate.
 - [ ] The battle plan addresses the documented critical threat.
 - [ ] Differences are recorded as rule corrections, not silently ignored.
-- [ ] Every save, game-owned file, and observed runtime state remains unchanged
+- [x] Every save, game-owned file, and observed runtime state remains unchanged
       by the helper.
 
 #### Preparation evidence
@@ -1590,6 +1590,27 @@ game during verification.
   selects already-Reverse skills 624 and 686 as mitigations.
 - The disk snapshot is older than the latest in-game outer-skill layout, so no
   candidate is accepted as manually verified yet.
+- The complete local-only current-screen evidence was resolved to stable skill
+  IDs and submitted with displayed capacities `6/6`, `10/10`, `8/8`, `8/8`,
+  and `2/2`. Its timestamp is newer than the configured save.
+- The reproducible Safe candidate retains every observed skill except Neutral
+  金猊鎮魔刀 (604). It replaces that three-slot skill with already-Reverse
+  伏龍刀法 (624, one slot) and already-Reverse 老君拂塵功 (686, two slots),
+  preserving every displayed category total without requesting a direction
+  change.
+- The recommendation instructs the player to confirm 老君拂塵功 before combat
+  and use 伏龍刀法 at the opening only when its live requirements are met.
+- A newer complete screen superseded the earlier observation. Re-running the
+  API with the newer screen returns its exact `41,21,5,42,0,97 / 599,598,616,
+  603,602,624,686 / 148,158,1,146,147,149,128 / 289,253,266,2,292,251,244 /
+  252,280` loadout with no remaining manual changes.
+- The newer screen confirms `6/6`, `10/10`, `8/8`, `8/8`, and `2/2`, and the
+  supplied detail screens confirm the configured Reverse descriptions for
+  伏龍刀法 and 老君拂塵功.
+- The remaining acceptance work is deliberately manual and battle-only:
+  activate 伏龍刀法 with the selected weapon, observe 老君拂塵功's six-layer
+  combat-start state, and verify that the plan controls the documented target
+  pressure.
 - `dotnet format TaiWu.slnx --no-restore --verify-no-changes` passed.
 - Default tests: 306 discovered, 305 passed, and the opt-in local read skipped.
 - Opt-in local integration tests: 2 discovered and 2 passed.

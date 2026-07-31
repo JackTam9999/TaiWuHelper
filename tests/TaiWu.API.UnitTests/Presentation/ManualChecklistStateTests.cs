@@ -45,6 +45,7 @@ public sealed class ManualChecklistStateTests
         new(
             reference,
             ManualChecklistItemKind.AddSkill,
+            "Test skill",
             "Add a skill manually.",
             "reason:test",
             ["evidence:test"]);

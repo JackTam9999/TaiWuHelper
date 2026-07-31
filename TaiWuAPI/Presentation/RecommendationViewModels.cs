@@ -114,6 +114,7 @@ public sealed record ManualLoadoutChangeViewModel(
     ManualLoadoutChangeKind Kind,
     SkillCategory Category,
     int SkillId,
+    string SkillName,
     PracticeDirection? RequiredDirection,
     RecommendationReasonViewModel Reason);
 
@@ -121,7 +122,9 @@ public sealed record BattlePlanStepViewModel(
     string Reference,
     BattlePlanInstructionKind Kind,
     int SkillId,
+    string SkillName,
     int? AlternativeSkillId,
+    string? AlternativeSkillName,
     string Condition,
     RecommendationReasonViewModel Reason);
 

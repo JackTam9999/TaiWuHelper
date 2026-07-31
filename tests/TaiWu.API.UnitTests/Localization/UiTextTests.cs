@@ -19,11 +19,11 @@ public sealed class UiTextTests
                 "保留此功法，因為所選運功方案保留了目前配置。"
             },
             {
-                "Target 16317's active loadout is not present in the current "
+                "the selected target's active loadout is not present in the current "
                 + "disk save. GameData may select NPC combat skills during "
                 + "combat preparation; recommendations use known skills and "
                 + "verified mechanics instead.",
-                "目前磁碟存檔中沒有目標 16317 的實際運功配置。"
+                "目前磁碟存檔中沒有所選目標的實際運功配置。"
                 + "GameData 可能在準備戰鬥時才替 NPC 選擇功法；"
                 + "推薦將改用已知功法及已驗證機制。"
             },
@@ -39,29 +39,33 @@ public sealed class UiTextTests
                 + " 此情況出現在 22 個已探索組合中。"
             },
             {
-                "Skill 604 is Neutral and cannot activate its Reverse "
+                "金猊鎮魔刀 is Neutral and cannot activate its Reverse "
                 + "effect.",
-                "功法 604 目前為中性，無法啟動其逆練效果。"
+                "金猊鎮魔刀目前為中性，無法啟動其逆練效果。"
             },
             {
-                "Skill 267 is Reverse, not Direct.",
-                "功法 267 為逆練，並非正練。"
+                "伏龍刀法 is Reverse, not Direct.",
+                "伏龍刀法為逆練，並非正練。"
             },
             {
-                "Skill 686 satisfies EquippedPassive.",
-                "功法 686 已滿足裝備後被動生效條件。"
+                "老君拂塵功 satisfies EquippedPassive.",
+                "老君拂塵功已滿足裝備後被動生效條件。"
             },
             {
-                "Remove skill 604 manually.",
-                "手動移除功法 604。"
+                "Remove 金猊鎮魔刀 manually.",
+                "手動移除金猊鎮魔刀。"
             },
             {
-                "Add skill 624 to Attack manually.",
-                "手動將功法 624 加入摧破欄。"
+                "Add 伏龍刀法 to Attack manually.",
+                "手動將伏龍刀法加入摧破欄。"
             },
             {
-                "Keep skill 0 in Neigong.",
-                "將功法 0 保留在內功欄。"
+                "Keep 沛然訣 in Neigong.",
+                "將沛然訣保留在內功欄。"
+            },
+            {
+                "Change 金猊鎮魔刀 to 逆練 (Reverse).",
+                "將金猊鎮魔刀改為逆練。"
             },
             {
                 "Allocate 4 萬用 slot(s) to 摧破.",
@@ -73,9 +77,26 @@ public sealed class UiTextTests
                 "施展伏龙刀法；僅在其列出的條件及關聯威脅時機都符合時操作。"
             },
             {
-                "31 possible targets were found. Select one using its age, "
-                + "character ID, and location.",
-                "找到 31 個可能的目標。請依年齡、人物 ID 與所在地點選擇。"
+                "Before combat, confirm 老君拂塵功 is equipped so its passive "
+                + "can activate.",
+                "戰鬥開始前，確認已裝備老君拂塵功，使其被動效果能夠生效。"
+            },
+            {
+                "At the opening, use 伏龍刀法 once its activation requirements "
+                + "are satisfied.",
+                "開局時，在滿足生效需求後施展伏龍刀法。"
+            },
+            {
+                "Before combat or between attempts, use 水火硬氣功 instead of "
+                + "曼荼羅真言 if 曼荼羅真言's activation requirements cannot "
+                + "be satisfied.",
+                "若主要功法的生效需求無法滿足，請在戰鬥前或兩次嘗試之間，"
+                + "以水火硬氣功替代曼荼羅真言。"
+            },
+            {
+                "31 possible targets were found. Select one using its name, "
+                + "age, and named location.",
+                "找到 31 個可能的目標。請依姓名、年齡與地點名稱選擇。"
             },
             {
                 "葛贵婵 is selected for the next read-only analysis.",

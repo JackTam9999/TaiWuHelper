@@ -299,6 +299,64 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Project_wide_ui_rules_require_names_and_non_interference()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var componentRoot = Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "Components");
+        var uiRule = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "docs",
+            "architecture",
+            "UI-PRESENTATION-GUIDELINES.md"));
+        var combatLayout = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "docs",
+            "roadmap",
+            "UI-001-combat-recommendation-layout.md"));
+        var componentSources = Directory
+            .EnumerateFiles(componentRoot, "*.razor", SearchOption.AllDirectories)
+            .Select(path => new
+            {
+                Path = Path.GetRelativePath(repositoryRoot, path),
+                Source = File.ReadAllText(path)
+            })
+            .ToArray();
+        var forbiddenVisibleFragments = new[]
+        {
+            "<code>",
+            "character ID",
+            "skill ID",
+            " IDs",
+            "· ID",
+            "#@",
+            "@warning.Code",
+            "@caveat.Code",
+            "LocationIdText("
+        };
+        var violations = componentSources
+            .SelectMany(file => forbiddenVisibleFragments
+                .Where(fragment => file.Source.Contains(
+                    fragment,
+                    StringComparison.OrdinalIgnoreCase))
+                .Select(fragment => $"{file.Path}: {fragment}"))
+            .Concat(componentSources.SelectMany(file =>
+                PlayerVisibleIdentifierPattern()
+                    .Matches(file.Source)
+                    .Select(match => $"{file.Path}: {match.Value.Trim()}")))
+            .ToArray();
+
+        Assert.Contains("## Absolute game non-interference", uiRule);
+        Assert.Contains("must never modify", uiRule);
+        Assert.Contains("## Player-visible identity", uiRule);
+        Assert.Contains("never by a numeric ID", uiRule);
+        Assert.Contains("UI-PRESENTATION-GUIDELINES.md", combatLayout);
+        Assert.Empty(violations);
+    }
+
+    [Fact]
     public void Manual_workflow_changes_helper_state_only()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -575,6 +633,7 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SetLanguage(TaiwuLanguage.English)",
             "() => ShowStyle(style.Style)",
             "() => Toggle(item.Reference)",
+            "() => ToggleObservationSkill(skill.SkillId)",
             "CopyAsync",
             "GetRecommendationAsync",
             "PrintAsync",
@@ -1097,6 +1156,11 @@ public sealed partial class ArchitectureBoundaryTests
         @"@on(?:click|change)\s*=\s*""([^""]+)""",
         RegexOptions.IgnoreCase)]
     private static partial Regex UiEventHandlerPattern();
+
+    [GeneratedRegex(
+        @">\s*@(?<expression>(?:(?:[A-Za-z_]\w*\.)*(?:(?:[A-Za-z_]\w*)?Id|(?:[A-Za-z_]\w*)?Reference)|(?:[A-Za-z_]\w*\.)+Code))\b|>\s*@(?:reference|evidence)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex PlayerVisibleIdentifierPattern();
 
     [GeneratedRegex(
         @"\b(?:localStorage|sessionStorage|indexedDB|showSaveFilePicker|createObjectURL)\b|\bdownload\s*=",

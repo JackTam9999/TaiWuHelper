@@ -18,6 +18,7 @@ public enum ManualChecklistItemKind
 public sealed record ManualChecklistItemViewModel(
     string Reference,
     ManualChecklistItemKind Kind,
+    string SubjectName,
     string Instruction,
     string? ReasonReference,
     IReadOnlyList<string> EvidenceReferences);
@@ -38,6 +39,7 @@ public sealed record BattlePlanPhaseViewModel(
 
 public sealed record BattlePlanItemViewModel(
     string Reference,
+    string SkillName,
     string Instruction,
     int? SkillId,
     string? ReasonReference,
@@ -67,6 +69,7 @@ public static class ManualSetupChecklistBuilder
                 $"{style.CandidateReference}:checklist:generic:"
                 + category.Category,
                 ManualChecklistItemKind.AllocateGenericSlots,
+                category.DisplayName,
                 $"Allocate {category.GenericSlots} 萬用 slot(s) to "
                 + $"{category.DisplayName}.",
                 ReasonReference: category.Reference,
@@ -87,6 +90,7 @@ public static class ManualSetupChecklistBuilder
                 value.Condition.Kind == RecommendationConditionKind.Weapon
                     ? ManualChecklistItemKind.ConfirmWeapon
                     : ManualChecklistItemKind.ConfirmResource,
+                SkillName(value.Skill),
                 $"Confirm for {SkillName(value.Skill)}: "
                 + value.Condition.Evaluation,
                 value.Skill.Reasons.FirstOrDefault()?.Reference,
@@ -117,16 +121,17 @@ public static class ManualSetupChecklistBuilder
                     ManualChecklistItemKind.ChangeDirection,
                 _ => throw new ArgumentOutOfRangeException(nameof(change))
             },
+            change.SkillName,
             change.Kind switch
             {
                 ManualLoadoutChangeKind.Remove =>
-                    $"Remove skill {change.SkillId} manually.",
+                    $"Remove {change.SkillName} manually.",
                 ManualLoadoutChangeKind.Add =>
-                    $"Add skill {change.SkillId} to {change.Category} manually.",
+                    $"Add {change.SkillName} to {change.Category} manually.",
                 ManualLoadoutChangeKind.Retain =>
-                    $"Keep skill {change.SkillId} in {change.Category}.",
+                    $"Keep {change.SkillName} in {change.Category}.",
                 ManualLoadoutChangeKind.ChangeDirection =>
-                    $"Change skill {change.SkillId} to "
+                    $"Change {change.SkillName} to "
                     + $"{DirectionLabel(change.RequiredDirection)}.",
                 _ => throw new ArgumentOutOfRangeException(nameof(change))
             },
@@ -154,7 +159,7 @@ public static class ManualSetupChecklistBuilder
         };
 
     private static string SkillName(RecommendedSkillViewModel skill) =>
-        skill.Name ?? $"skill {skill.SkillId}";
+        skill.Name ?? "Unnamed skill";
 }
 
 public static class BattlePlanViewModelBuilder
@@ -168,18 +173,21 @@ public static class BattlePlanViewModelBuilder
             return [];
         }
 
+        var skills = style.Categories
+            .SelectMany(category => category.Skills)
+            .ToArray();
+        var skillsById = skills
+            .GroupBy(skill => skill.SkillId)
+            .ToDictionary(group => group.Key, group => group.First());
         var beforeCombat = style.OpeningActions
             .Where(step => step.Kind is
                 BattlePlanInstructionKind.ConfirmEquipped
                 or BattlePlanInstructionKind.SwitchBeforeCombat)
-            .Select(MapStep)
+            .Select(step => MapStep(step, skillsById))
             .ToArray();
         var opening = style.OpeningActions
             .Where(step => step.Kind == BattlePlanInstructionKind.ActivateSkill)
-            .Select(MapStep)
-            .ToArray();
-        var skills = style.Categories
-            .SelectMany(category => category.Skills)
+            .Select(step => MapStep(step, skillsById))
             .ToArray();
         var normalExecution = skills
             .Where(skill => skill.Counter.ActivationTiming
@@ -197,7 +205,7 @@ public static class BattlePlanViewModelBuilder
                 BattlePlanPhaseKind.TriggerBasedReaction))
             .ToArray();
         var switching = style.SwitchingConditions
-            .Select(MapStep)
+            .Select(step => MapStep(step, skillsById))
             .ToArray();
 
         return
@@ -226,16 +234,51 @@ public static class BattlePlanViewModelBuilder
     }
 
     private static BattlePlanItemViewModel MapStep(
-        BattlePlanStepViewModel step)
+        BattlePlanStepViewModel step,
+        IReadOnlyDictionary<int, RecommendedSkillViewModel> skillsById)
     {
+        skillsById.TryGetValue(step.SkillId, out var skill);
         return new BattlePlanItemViewModel(
             step.Reference,
-            step.Condition,
+            step.SkillName,
+            StepInstruction(step, skill?.Counter.ActivationTiming),
             step.SkillId,
             step.Reason.Reference,
             step.Reason.ThreatReferences,
             step.Reason.EvidenceReferences);
     }
+
+    private static string StepInstruction(
+        BattlePlanStepViewModel step,
+        CombatCounterActivationTiming? timing) =>
+        step.Kind switch
+        {
+            BattlePlanInstructionKind.ConfirmEquipped
+                when timing == CombatCounterActivationTiming.EquippedPassive =>
+                $"Keep {step.SkillName} equipped while its counter is needed.",
+            BattlePlanInstructionKind.ConfirmEquipped =>
+                $"Before combat, confirm {step.SkillName} is equipped so its "
+                + "passive can activate.",
+            BattlePlanInstructionKind.ActivateSkill
+                when timing == CombatCounterActivationTiming.ActiveDefense =>
+                $"At the opening, select {step.SkillName} as the active "
+                + "defense skill and activate it once its requirements are "
+                + "satisfied.",
+            BattlePlanInstructionKind.ActivateSkill
+                when timing == CombatCounterActivationTiming.ActiveAgility =>
+                $"At the opening, select {step.SkillName} as the active "
+                + "agility skill and activate it once its requirements are "
+                + "satisfied.",
+            BattlePlanInstructionKind.ActivateSkill =>
+                $"At the opening, use {step.SkillName} once its activation "
+                + "requirements are satisfied.",
+            BattlePlanInstructionKind.SwitchBeforeCombat =>
+                "Before combat or between attempts, use "
+                + $"{step.AlternativeSkillName ?? "the alternative skill"} "
+                + $"instead of {step.SkillName} if {step.SkillName}'s "
+                + "activation requirements cannot be satisfied.",
+            _ => throw new ArgumentOutOfRangeException(nameof(step))
+        };
 
     private static BattlePlanItemViewModel MapSkillInstruction(
         RecommendedSkillViewModel skill,
@@ -245,9 +288,11 @@ public static class BattlePlanViewModelBuilder
         var timing = phase == BattlePlanPhaseKind.NormalExecution
             ? "Use"
             : "Activate";
+        var skillName = skill.Name ?? "Unnamed skill";
         return new BattlePlanItemViewModel(
             $"{skill.Reference}:plan:{phase}",
-            $"{timing} {skill.Name ?? $"skill {skill.SkillId}"} when its "
+            skillName,
+            $"{timing} {skillName} when its "
             + "listed conditions and linked threat timing are present.",
             skill.SkillId,
             reason?.Reference,

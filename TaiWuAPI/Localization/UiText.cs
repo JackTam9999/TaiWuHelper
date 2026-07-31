@@ -25,11 +25,12 @@ public static class UiText
             ["Recommendation controls"] = "推薦設定",
             ["Choose the encounter"] = "選擇對手",
             ["Reading the configured save…"] = "正在讀取已設定的存檔……",
-            ["Target name or character ID"] = "目標姓名或人物 ID",
-            ["For example: 16317"] = "例如：16317",
+            ["Target name"] = "目標姓名",
+            ["Enter the in-game character name"] = "輸入遊戲內的人物姓名",
             ["Search"] = "搜尋",
             ["Target search results"] = "目標搜尋結果",
             ["years"] = "歲",
+            ["Location unavailable"] = "無法取得地點名稱",
             ["Area"] = "區域",
             ["Block"] = "地塊",
             ["Preferred style"] = "偏好風格",
@@ -42,7 +43,9 @@ public static class UiText
             ["Optional current-screen observation"] = "可選：目前畫面觀察值",
             ["Analysis input only. These values refine this recommendation and are never sent to or applied in the game."] =
                 "僅作分析輸入。這些數值只用來改善推薦，絕不會傳送或套用到遊戲。",
-            ["Use manually entered equipped-skill IDs"] = "使用手動輸入的已裝備功法 ID",
+            ["Use selected equipped-skill names"] = "使用所選的已裝備功法名稱",
+            ["Get an initial recommendation to load available skill names."] =
+                "請先取得一次推薦，以載入可用的功法名稱。",
             ["total"] = "總數",
             ["Selected"] = "已選擇",
             ["Safe"] = "穩健",
@@ -113,6 +116,11 @@ public static class UiText
             ["Unknown"] = "未知",
             ["Skill requirements"] = "功法需求",
             ["Evidence and linked threats"] = "證據與關聯威脅",
+            ["Unnamed skill"] = "未命名功法",
+            ["Target-threat evidence"] = "目標威脅證據",
+            ["Slot-cost evidence"] = "佔格證據",
+            ["Counter-effect evidence"] = "克制效果證據",
+            ["Requirement evidence"] = "需求證據",
             ["Manual setup"] = "手動設定",
             ["Setup checklist"] = "設定檢查表",
             ["Copy checklist"] = "複製檢查表",
@@ -156,6 +164,12 @@ public static class UiText
             ["Points"] = "分數",
             ["Explanation"] = "說明",
             ["Detailed evidence"] = "詳細證據",
+            ["Target threat"] = "目標威脅",
+            ["Recommended skill"] = "推薦功法",
+            ["Recommendation scoring"] = "推薦評分",
+            ["Warnings and caveats"] = "警告與注意事項",
+            ["Analysis"] = "分析",
+            ["Manual review"] = "手動檢查",
             ["No evidence reference was available."] = "沒有可用的證據參照。",
             ["Review before setup"] = "設定前請檢查",
             ["Warnings and unavailable information"] = "警告與無法取得的資訊",
@@ -164,11 +178,14 @@ public static class UiText
             ["evaluated combinations."] = "個已評估組合。",
             ["Effect on recommendation:"] = "對推薦的影響：",
             ["Warning evidence"] = "警告證據",
+            ["Target loadout unavailable"] = "無法取得目標運功配置",
+            ["Target equipped skills unavailable"] = "無法取得目標已裝備功法",
+            ["Unrecognized target mechanic"] = "無法識別的目標機制",
             ["Next step:"] = "下一步：",
             ["Retry read"] = "重新讀取",
             ["Start with a target"] = "先選擇目標",
-            ["Search the configured save by character name or ID, then select the intended opponent."] =
-                "以人物姓名或 ID 搜尋已設定的存檔，然後選擇預定對手。",
+            ["Search the configured save by character name, then select the intended opponent."] =
+                "以人物姓名搜尋已設定的存檔，然後選擇預定對手。",
             ["Searching the configured save"] = "正在搜尋已設定的存檔",
             ["Building the combat recommendation"] = "正在建立戰鬥推薦",
             ["Reading a new snapshot from the configured save. No game data is changed."] =
@@ -219,8 +236,8 @@ public static class UiText
             ["Opportunity cost"] = "格位機會成本",
             ["Conditional risk"] = "條件風險",
             ["Multiple targets matched"] = "找到多個相符目標",
-            ["Check the displayed name or use the character ID shown by trusted evidence."] =
-                "請核對顯示的姓名，或使用可信證據所示的人物 ID。",
+            ["Check the in-game name and search again."] =
+                "請核對遊戲內的姓名後再次搜尋。",
             ["If the intended opponent is still unclear, gather more in-game evidence before requesting a recommendation."] =
                 "若仍無法確定預定對手，請先在遊戲中取得更多證據，再要求推薦。",
             ["Review the target context before requesting a recommendation."] =
@@ -240,6 +257,10 @@ public static class UiText
                 "讀取目標時發生未預期的錯誤。",
             ["An unexpected recommendation read or calculation failure occurred."] =
                 "讀取或計算推薦時發生未預期的錯誤。",
+            ["The target search could not read valid data from the configured save."] =
+                "目標搜尋無法從已設定存檔讀取有效資料。",
+            ["The recommendation could not be built from the available save data."] =
+                "無法使用存檔中的現有資料建立推薦。",
             ["Source timestamp is newer than the read"] =
                 "來源時間戳記晚於本次讀取時間",
             ["Information only — TaiWu Helper cannot apply, equip, or execute this recommendation."] =

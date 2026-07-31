@@ -28,7 +28,7 @@
                         <strong>@T("Critical")</strong>
                     }
                 </div>
-                <h3>@warning.Code</h3>
+                <h3>@WarningTitle(warning)</h3>
                 @if (warning.Occurrences > 1)
                 {
                     <p class="warning-occurrences">
@@ -43,10 +43,11 @@
                 @if (warning.EvidenceReferences.Count > 0)
                 {
                     <div class="warning-evidence" aria-label="@T("Warning evidence")">
-                        @foreach (var evidence in warning.EvidenceReferences)
-                        {
-                            <code>@evidence</code>
-                        }
+                        <span>
+                            @WarningTitle(warning) ·
+                            @warning.EvidenceReferences.Count
+                            @T("evidence source(s)")
+                        </span>
                     </div>
                 }
             </article>
@@ -74,6 +75,17 @@
         PresentationWarningKind.General => T("General"),
         _ => kind.ToString()
     };
+
+    private string WarningTitle(RecommendationWarningViewModel warning) =>
+        warning.Code switch
+        {
+            "TARGET_LOADOUT_UNAVAILABLE" => T("Target loadout unavailable"),
+            "TARGET_EQUIPPED_SKILLS_UNAVAILABLE" =>
+                T("Target equipped skills unavailable"),
+            "UNRECOGNIZED_TARGET_MECHANIC" =>
+                T("Unrecognized target mechanic"),
+            _ => WarningKindLabel(warning.Kind)
+        };
 
     private string T(string english) => UiText.Get(Language, english);
 }

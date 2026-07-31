@@ -34,7 +34,7 @@ public sealed record RecommendationPageState(
         new(
             RecommendationPageStatus.Initial,
             "Start with a target",
-            "Search the configured save by character name or ID, then select "
+            "Search the configured save by character name, then select "
             + "the intended opponent.",
             null,
             CanRetryRead: false);
@@ -56,14 +56,13 @@ public sealed record RecommendationPageState(
                 RecommendationPageStatus.Empty,
                 "No matching target",
                 "The configured save returned no target for this search.",
-                "Check the displayed name or use the character ID shown by "
-                + "trusted evidence.",
+                "Check the in-game name and search again.",
                 CanRetryRead: false),
             TargetLookupStatus.Ambiguous => new(
                 RecommendationPageStatus.AmbiguousTarget,
                 "Multiple targets matched",
                 $"{matchCount} possible targets were found. Select one using "
-                + "its age, character ID, and location.",
+                + "its name, age, and named location.",
                 "If the intended opponent is still unclear, gather more "
                 + "in-game evidence before requesting a recommendation.",
                 CanRetryRead: false),

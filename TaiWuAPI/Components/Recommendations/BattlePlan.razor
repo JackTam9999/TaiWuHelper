@@ -25,20 +25,12 @@
                         {
                             <li class="@(AddressesSelectedThreat(item) ? "threat-highlight" : null)">
                                 <strong>@T(item.Instruction)</strong>
-                                @if (item.SkillId.HasValue)
-                                {
-                                    <span>@T("Skill") @item.SkillId</span>
-                                }
                                 <details>
                                     <summary>@T("Reason and evidence")</summary>
-                                    @if (item.ReasonReference is not null)
-                                    {
-                                        <code>@item.ReasonReference</code>
-                                    }
-                                    @foreach (var evidence in item.EvidenceReferences)
-                                    {
-                                        <code>@evidence</code>
-                                    }
+                                    <strong>@item.SkillName</strong>
+                                    <span>
+                                        @EvidenceCount(item) @T("evidence source(s)")
+                                    </span>
                                 </details>
                             </li>
                         }
@@ -66,4 +58,8 @@
         && item.ThreatReferences.Contains(
             SelectedThreatReference,
             StringComparer.Ordinal);
+
+    private static int EvidenceCount(BattlePlanItemViewModel item) =>
+        item.EvidenceReferences.Count
+        + (item.ReasonReference is null ? 0 : 1);
 }

@@ -25,6 +25,8 @@ Application depends only on Domain.
 
 The permanent safety boundary is documented in
 [ADR-0001: Absolute game non-interference](docs/architecture/ADR-0001-absolute-game-non-interference.md).
+All user interfaces also follow the project-wide
+[UI presentation guidelines](docs/architecture/UI-PRESENTATION-GUIDELINES.md).
 
 ## Requirements
 

@@ -44,12 +44,12 @@
 
     <div class="control-grid">
         <div class="control-group target-control">
-            <label for="target-search">@T("Target name or character ID")</label>
+            <label for="target-search">@T("Target name")</label>
             <div class="inline-control">
                 <input id="target-search"
                        @bind="_targetQuery"
                        @bind:event="oninput"
-                       placeholder="@T("For example: 16317")"
+                       placeholder="@T("Enter the in-game character name")"
                        autocomplete="off" />
                 <button type="button"
                         class="secondary-button"
@@ -68,17 +68,8 @@
                                 class="@TargetResultClass(target.CharacterId)"
                                 @onclick="() => SelectTarget(target)">
                             <strong>@target.DisplayName</strong>
-                            <span>@target.Age @T("years") · ID @target.CharacterId</span>
-                            @if (target.LocationDisplayName is not null)
-                            {
-                                <small title="@LocationIdText(target)">
-                                    @target.LocationDisplayName
-                                </small>
-                            }
-                            else
-                            {
-                                <small>@LocationIdText(target)</small>
-                            }
+                            <span>@target.Age @T("years")</span>
+                            <small>@LocationName(target)</small>
                         </button>
                     }
                 </div>
@@ -114,33 +105,36 @@
             @T("Analysis input only. These values refine this recommendation and are never sent to or applied in the game.")
         </p>
         <label class="check-control">
-            <input type="checkbox" @bind="_form.IncludeObservation" />
-            @T("Use manually entered equipped-skill IDs")
+            <input type="checkbox"
+                   @bind="_form.IncludeObservation"
+                   disabled="@(_observationSkills.Count == 0)" />
+            @T("Use selected equipped-skill names")
         </label>
 
-        @if (_form.IncludeObservation)
+        @if (_observationSkills.Count == 0)
+        {
+            <p>@T("Get an initial recommendation to load available skill names.")</p>
+        }
+        else if (_form.IncludeObservation)
         {
             <div class="observation-grid">
-                <label>
-                    內功 IDs
-                    <input @bind="_form.NeigongSkillIds" placeholder="101, 102" />
-                </label>
-                <label>
-                    摧破 IDs
-                    <input @bind="_form.AttackSkillIds" placeholder="604" />
-                </label>
-                <label>
-                    輕靈 IDs
-                    <input @bind="_form.AgilitySkillIds" />
-                </label>
-                <label>
-                    護體 IDs
-                    <input @bind="_form.DefenseSkillIds" />
-                </label>
-                <label>
-                    奇竅 IDs
-                    <input @bind="_form.AssistanceSkillIds" />
-                </label>
+                @foreach (var group in _observationSkills
+                    .GroupBy(skill => skill.Category)
+                    .OrderBy(group => group.Key))
+                {
+                    <fieldset>
+                        <legend>@CategoryName(group.Key)</legend>
+                        @foreach (var skill in group.OrderBy(skill => skill.Name))
+                        {
+                            <label class="check-control">
+                                <input type="checkbox"
+                                       checked="@_form.EquippedSkillIds.Contains(skill.SkillId)"
+                                       @onchange="() => ToggleObservationSkill(skill.SkillId)" />
+                                @skill.Name
+                            </label>
+                        }
+                    </fieldset>
+                }
             </div>
             <div class="generic-grid">
                 <label>
@@ -172,7 +166,7 @@
             @if (_selectedTarget is not null)
             {
                 <strong>@T("Selected"): @_selectedTarget.DisplayName</strong>
-                <span>ID @_selectedTarget.CharacterId · @_selectedTarget.Age @T("years")</span>
+                <span>@_selectedTarget.Age @T("years") · @LocationName(_selectedTarget)</span>
             }
             else
             {
@@ -325,6 +319,7 @@
 @code {
     private readonly RecommendationForm _form = new();
     private readonly List<TargetLookupEntry> _targetMatches = [];
+    private readonly List<ObservationSkillOption> _observationSkills = [];
     private readonly RecommendationSelectionState _selection = new();
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _recommendationCancellation;
@@ -377,23 +372,14 @@
         _lastLanguage = Language;
         var selectedCharacterId = _selectedTarget?.CharacterId;
         var hadRecommendation = _model is not null;
-        if (selectedCharacterId.HasValue)
-        {
-            _targetQuery = selectedCharacterId.Value.ToString();
-        }
-
         if (!_configurationValid
-            || string.IsNullOrWhiteSpace(_targetQuery))
+            || !selectedCharacterId.HasValue)
         {
             _pageState = RecommendationPageState.Initial();
             return;
         }
 
-        await SearchTargetsAsync();
-        if (!selectedCharacterId.HasValue)
-        {
-            return;
-        }
+        await SearchTargetsAsync(selectedCharacterId.Value.ToString());
 
         var translatedTarget = _targetMatches.FirstOrDefault(target =>
             target.CharacterId == selectedCharacterId.Value);
@@ -409,9 +395,11 @@
         }
     }
 
-    private async Task SearchTargetsAsync()
+    private Task SearchTargetsAsync() => SearchTargetsAsync(_targetQuery);
+
+    private async Task SearchTargetsAsync(string query)
     {
-        if (!_configurationValid || string.IsNullOrWhiteSpace(_targetQuery))
+        if (!_configurationValid || string.IsNullOrWhiteSpace(query))
         {
             return;
         }
@@ -423,6 +411,7 @@
         _selectedTarget = null;
         _targetMatches.Clear();
         _model = null;
+        ResetObservation();
         _selection.Clear();
         _pageState = RecommendationPageState.Loading(
             "Searching the configured save");
@@ -432,7 +421,7 @@
             var result = await FindTargets.ExecuteAsync(
                 new FindTargetsRequest(
                     _saveFilePath,
-                    _targetQuery,
+                    query,
                     language: Language),
                 cancellation.Token);
             if (version != _searchVersion)
@@ -454,7 +443,8 @@
                   or InvalidDataException)
         {
             _pageState = RecommendationPageState.Failure(
-                exception.Message);
+                "The target search could not read valid data from the "
+                + "configured save.");
         }
         catch (Exception exception)
         {
@@ -476,7 +466,9 @@
     private void SelectTarget(TargetLookupEntry target)
     {
         _selectedTarget = target;
+        _targetQuery = target.DisplayName;
         _model = null;
+        ResetObservation();
         _selection.Clear();
         _lastReadOperation = PageReadOperation.None;
         _pageState = RecommendationPageState.TargetReady(
@@ -517,6 +509,7 @@
             }
 
             _model = CombatRecommendationViewModelMapper.Map(recommendation);
+            PopulateObservationSkills(_model);
             _selection.Load(_model, _form.Policy);
             _pageState =
                 RecommendationPageState.ForRecommendation(_model);
@@ -532,7 +525,8 @@
                   or OverflowException)
         {
             _pageState = RecommendationPageState.Failure(
-                exception.Message);
+                "The recommendation could not be built from the available "
+                + "save data.");
         }
         catch (Exception exception)
         {
@@ -570,11 +564,11 @@
             DateTimeOffset.UtcNow,
             "ui:manual-current-screen-observation",
             new CombatLoadoutSnapshot(
-                ParseSkillIds(_form.NeigongSkillIds),
-                ParseSkillIds(_form.AttackSkillIds),
-                ParseSkillIds(_form.AgilitySkillIds),
-                ParseSkillIds(_form.DefenseSkillIds),
-                ParseSkillIds(_form.AssistanceSkillIds)),
+                ObservedSkillIds(SkillCategory.Neigong),
+                ObservedSkillIds(SkillCategory.Attack),
+                ObservedSkillIds(SkillCategory.Agility),
+                ObservedSkillIds(SkillCategory.Defense),
+                ObservedSkillIds(SkillCategory.Assistance)),
             new GenericSlotAllocation(
                 _form.GenericTotal,
                 _form.GenericAttack,
@@ -583,17 +577,46 @@
                 _form.GenericAssistance));
     }
 
-    private static int[] ParseSkillIds(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return [];
-        }
-
-        return value
-            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(int.Parse)
+    private int[] ObservedSkillIds(SkillCategory category) =>
+        _observationSkills
+            .Where(skill => skill.Category == category)
+            .Where(skill => _form.EquippedSkillIds.Contains(skill.SkillId))
+            .Select(skill => skill.SkillId)
             .ToArray();
+
+    private void ToggleObservationSkill(int skillId)
+    {
+        if (!_form.EquippedSkillIds.Add(skillId))
+        {
+            _form.EquippedSkillIds.Remove(skillId);
+        }
+    }
+
+    private void PopulateObservationSkills(CombatRecommendationViewModel model)
+    {
+        var available = model.Styles
+            .SelectMany(style => style.Categories)
+            .SelectMany(category => category.Skills)
+            .GroupBy(skill => skill.SkillId)
+            .Select(group => group.First())
+            .OrderBy(skill => skill.Category)
+            .ThenBy(skill => skill.Name, StringComparer.Ordinal)
+            .Select(skill => new ObservationSkillOption(
+                skill.SkillId,
+                skill.Name ?? T("Unnamed skill"),
+                skill.Category))
+            .ToArray();
+        _observationSkills.Clear();
+        _observationSkills.AddRange(available);
+        _form.EquippedSkillIds.RemoveWhere(skillId =>
+            available.All(skill => skill.SkillId != skillId));
+    }
+
+    private void ResetObservation()
+    {
+        _observationSkills.Clear();
+        _form.IncludeObservation = false;
+        _form.EquippedSkillIds.Clear();
     }
 
     private string TargetResultClass(int characterId) =>
@@ -601,8 +624,18 @@
             ? "target-result selected"
             : "target-result";
 
-    private string LocationIdText(TargetLookupEntry target) =>
-        $"{T("Area")} {target.AreaId} · {T("Block")} {target.BlockId}";
+    private string LocationName(TargetLookupEntry target) =>
+        target.LocationDisplayName ?? T("Location unavailable");
+
+    private string CategoryName(SkillCategory category) => category switch
+    {
+        SkillCategory.Neigong => "內功",
+        SkillCategory.Attack => "摧破",
+        SkillCategory.Agility => "輕靈",
+        SkillCategory.Defense => "護體",
+        SkillCategory.Assistance => "奇竅",
+        _ => T("Unavailable")
+    };
 
     private void ShowStyle(RecommendationPolicy style)
     {
@@ -684,15 +717,7 @@
 
         public bool IncludeObservation { get; set; }
 
-        public string NeigongSkillIds { get; set; } = string.Empty;
-
-        public string AttackSkillIds { get; set; } = string.Empty;
-
-        public string AgilitySkillIds { get; set; } = string.Empty;
-
-        public string DefenseSkillIds { get; set; } = string.Empty;
-
-        public string AssistanceSkillIds { get; set; } = string.Empty;
+        public HashSet<int> EquippedSkillIds { get; } = [];
 
         public int GenericTotal { get; set; }
 
@@ -704,6 +729,11 @@
 
         public int GenericAssistance { get; set; }
     }
+
+    private sealed record ObservationSkillOption(
+        int SkillId,
+        string Name,
+        SkillCategory Category);
 
     private enum PageReadOperation
     {

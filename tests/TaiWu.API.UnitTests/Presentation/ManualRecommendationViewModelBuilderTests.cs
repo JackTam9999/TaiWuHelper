@@ -32,6 +32,16 @@ public sealed class ManualRecommendationViewModelBuilderTests
                     && item.Instruction.Contains(
                         "Neili",
                         StringComparison.Ordinal));
+        Assert.Contains(
+            checklist,
+            item => item.Instruction.Contains(
+                "金猊鎮魔刀",
+                StringComparison.Ordinal));
+        Assert.All(
+            checklist,
+            item => Assert.DoesNotMatch(
+                @"\bskill \d+\b",
+                item.Instruction));
     }
 
     [Fact]
@@ -53,6 +63,21 @@ public sealed class ManualRecommendationViewModelBuilderTests
                     item.ReasonReference is not null
                     || item.EvidenceReferences.Count > 0);
             });
+        var instructions = phases
+            .SelectMany(phase => phase.Items)
+            .Select(item => item.Instruction)
+            .ToArray();
+        Assert.Contains(
+            instructions,
+            instruction => instruction.Contains(
+                "老君拂塵功",
+                StringComparison.Ordinal));
+        Assert.Contains(
+            instructions,
+            instruction => instruction.Contains(
+                "金猊鎮魔刀",
+                StringComparison.Ordinal));
+        Assert.Equal(instructions.Length, instructions.Distinct().Count());
     }
 
     [Fact]
@@ -214,7 +239,7 @@ public sealed class ManualRecommendationViewModelBuilderTests
         return new RecommendedSkillViewModel(
             $"{candidateReference}:skill:{skillId}",
             skillId,
-            $"Skill {skillId}",
+            TestSkillName(skillId),
             category,
             PracticeDirection.Reverse,
             PracticeDirection.Reverse,
@@ -250,6 +275,7 @@ public sealed class ManualRecommendationViewModelBuilderTests
             kind,
             SkillCategory.Attack,
             skillId,
+            TestSkillName(skillId),
             direction,
             reason);
     }
@@ -266,8 +292,19 @@ public sealed class ManualRecommendationViewModelBuilderTests
             $"{candidateReference}:plan:{sequence}",
             kind,
             skillId,
+            TestSkillName(skillId),
             AlternativeSkillId: null,
+            AlternativeSkillName: null,
             condition,
             reason);
     }
+
+    private static string TestSkillName(int skillId) => skillId switch
+    {
+        500 => "曼荼羅真言",
+        604 => "金猊鎮魔刀",
+        686 => "老君拂塵功",
+        999 => "舊功法",
+        _ => "測試功法"
+    };
 }

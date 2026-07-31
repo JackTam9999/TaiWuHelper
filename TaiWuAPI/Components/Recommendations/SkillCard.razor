@@ -6,8 +6,7 @@
 <article class="@(Highlighted ? "skill-card threat-highlight" : "skill-card")">
     <div class="skill-card-heading">
         <div>
-            <span class="skill-id">#@Skill.SkillId</span>
-            <h4>@(Skill.Name ?? $"{T("Skill")} {Skill.SkillId}")</h4>
+            <h4>@DisplayName</h4>
         </div>
         <span class="change-badge">@ManualStatus()</span>
     </div>
@@ -60,22 +59,37 @@
 
     <details class="skill-evidence">
         <summary>@T("Evidence and linked threats")</summary>
-        <div>
-            @foreach (var reference in Skill.ThreatReferences)
+        <div class="named-evidence-list">
+            @if (Skill.ThreatReferences.Count > 0)
             {
-                <code>@reference</code>
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Target-threat evidence") ·
+                    @Skill.ThreatReferences.Count @T("evidence source(s)")
+                </span>
             }
-            @foreach (var reference in Skill.Cost.EvidenceReferences)
+            @if (Skill.Cost.EvidenceReferences.Count > 0)
             {
-                <code>@reference</code>
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Slot-cost evidence") ·
+                    @Skill.Cost.EvidenceReferences.Count @T("evidence source(s)")
+                </span>
             }
             @if (Skill.Counter.EvidenceReference is not null)
             {
-                <code>@Skill.Counter.EvidenceReference</code>
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Counter-effect evidence")
+                </span>
             }
-            @foreach (var condition in Skill.Conditions)
+            @if (Skill.Conditions.Count > 0)
             {
-                <code>@condition.EvidenceReference</code>
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Requirement evidence") ·
+                    @Skill.Conditions.Count @T("evidence source(s)")
+                </span>
             }
         </div>
     </details>
@@ -93,6 +107,8 @@
 
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string DisplayName => Skill.Name ?? T("Unnamed skill");
 
     private string ManualStatus()
     {

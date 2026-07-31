@@ -10,7 +10,13 @@ public sealed record RecommendationSupportingDetailsViewModel(
     IReadOnlyList<SupportingConditionViewModel> ConditionalRequirements,
     IReadOnlyList<RecommendationScoreViewModel> Scores,
     IReadOnlyList<string> EvidenceReferences,
+    IReadOnlyList<SupportingEvidenceSummaryViewModel> EvidenceSummaries,
     string UnknownValuePolicy);
+
+public sealed record SupportingEvidenceSummaryViewModel(
+    string Name,
+    string Kind,
+    int SourceCount);
 
 public sealed record AlternativeStyleViewModel(
     string Reference,
@@ -73,6 +79,10 @@ public static class RecommendationSupportingDetailsBuilder
             .Distinct(StringComparer.Ordinal)
             .Order(StringComparer.Ordinal)
             .ToArray();
+        var evidenceSummaries = BuildEvidenceSummaries(
+            recommendation,
+            selectedStyle,
+            skills);
 
         return new RecommendationSupportingDetailsViewModel(
             [.. recommendation.Styles
@@ -99,10 +109,76 @@ public static class RecommendationSupportingDetailsBuilder
                     .Select(condition => new SupportingConditionViewModel(
                         condition.Reference,
                         skill.Reference,
-                        skill.Name ?? $"Skill {skill.SkillId}",
+                        skill.Name ?? "Unnamed skill",
                         condition)))],
             selectedStyle.Scores,
             evidence,
+            evidenceSummaries,
             UnknownValuePolicy);
+    }
+
+    private static SupportingEvidenceSummaryViewModel[]
+        BuildEvidenceSummaries(
+            CombatRecommendationViewModel recommendation,
+            RecommendationStyleViewModel selectedStyle,
+            RecommendedSkillViewModel[] skills)
+    {
+        IEnumerable<SupportingEvidenceSummaryViewModel> threatEvidence =
+            recommendation.Threats
+            .Where(threat => threat.EvidenceReferences.Count > 0)
+            .Select(threat => new SupportingEvidenceSummaryViewModel(
+                threat.Title,
+                "Target threat",
+                threat.EvidenceReferences.Distinct().Count()));
+        IEnumerable<SupportingEvidenceSummaryViewModel> skillEvidence = skills
+            .Select(skill => new
+            {
+                Name = skill.Name ?? "Unnamed skill",
+                References = skill.Cost.EvidenceReferences
+                    .Concat(skill.Counter.EvidenceReference is null
+                        ? []
+                        : [skill.Counter.EvidenceReference])
+                    .Concat(skill.Conditions.Select(condition =>
+                        condition.EvidenceReference))
+                    .Concat(skill.Reasons.SelectMany(reason =>
+                        reason.EvidenceReferences))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray()
+            })
+            .Where(skill => skill.References.Length > 0)
+            .Select(skill => new SupportingEvidenceSummaryViewModel(
+                skill.Name,
+                "Recommended skill",
+                skill.References.Length));
+        var scoreCount = selectedStyle.Scores
+            .Select(score => score.EvidenceReference)
+            .Where(reference => !string.IsNullOrWhiteSpace(reference))
+            .Distinct(StringComparer.Ordinal)
+            .Count();
+        var reviewCount = selectedStyle.Caveats
+            .SelectMany(caveat => caveat.EvidenceReferences)
+            .Concat(recommendation.Warnings.SelectMany(warning =>
+                warning.EvidenceReferences))
+            .Where(reference => !string.IsNullOrWhiteSpace(reference))
+            .Distinct(StringComparer.Ordinal)
+            .Count();
+
+        return
+        [
+            .. threatEvidence,
+            .. skillEvidence,
+            .. scoreCount == 0
+                ? []
+                : new SupportingEvidenceSummaryViewModel[]
+                {
+                    new("Recommendation scoring", "Analysis", scoreCount)
+                },
+            .. reviewCount == 0
+                ? []
+                : new SupportingEvidenceSummaryViewModel[]
+                {
+                    new("Warnings and caveats", "Manual review", reviewCount)
+                }
+        ];
     }
 }

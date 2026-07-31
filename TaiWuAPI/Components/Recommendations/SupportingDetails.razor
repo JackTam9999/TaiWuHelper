@@ -49,14 +49,14 @@
                 @foreach (var caveat in Details.Assumptions)
                 {
                     <article>
-                        <strong>@T("Assumption") · @caveat.Code</strong>
+                        <strong>@T("Assumption")</strong>
                         <span>@T(caveat.Explanation)</span>
                     </article>
                 }
                 @foreach (var caveat in Details.UnavailableData)
                 {
                     <article>
-                        <strong>@T("Unavailable data") · @caveat.Code</strong>
+                        <strong>@T("Unavailable data")</strong>
                         <span>@T(caveat.Explanation)</span>
                     </article>
                 }
@@ -79,7 +79,7 @@
                     <article>
                         <strong>@requirement.SkillName · @ConditionKindLabel(requirement.Condition.Kind)</strong>
                         <span>@T(requirement.Condition.Evaluation)</span>
-                        <code>@requirement.Condition.EvidenceReference</code>
+                        <span>@requirement.SkillName · @T("Requirement evidence")</span>
                     </article>
                 }
                 @if (Details.ConditionalRequirements.Count == 0)
@@ -127,9 +127,15 @@
                 <span>@Details.EvidenceReferences.Count</span>
             </summary>
             <div class="evidence-list">
-                @foreach (var evidence in Details.EvidenceReferences)
+                @foreach (var evidence in Details.EvidenceSummaries)
                 {
-                    <code>@evidence</code>
+                    <article>
+                        <strong>@T(evidence.Name)</strong>
+                        <span>
+                            @T(evidence.Kind) · @evidence.SourceCount
+                            @T("evidence source(s)")
+                        </span>
+                    </article>
                 }
                 @if (Details.EvidenceReferences.Count == 0)
                 {
