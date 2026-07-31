@@ -23,11 +23,12 @@ internal static partial class DynamicUiText
                 + "將用於下一次唯讀分析。";
         }
 
-        match = TargetWithoutSkillsPattern().Match(english);
+        match = TargetLoadoutNotPersistedPattern().Match(english);
         if (match.Success)
         {
-            return $"目前磁碟存檔中，目標 {match.Groups["id"].Value} "
-                + "沒有已裝備功法；目前遊戲畫面的證據可能較新。";
+            return $"目前磁碟存檔中沒有目標 {match.Groups["id"].Value} "
+                + "的實際運功配置。GameData 可能在準備戰鬥時才替 NPC "
+                + "選擇功法；推薦將改用已知功法及已驗證機制。";
         }
 
         match = TargetSkillsUnavailablePattern().Match(english);
@@ -318,9 +319,9 @@ internal static partial class DynamicUiText
     private static partial Regex SelectedTargetPattern();
 
     [GeneratedRegex(
-        @"^Target (?<id>\d+) has no equipped skills in the current disk save\. Current-screen evidence may be newer\.$",
+        @"^Target (?<id>\d+)'s active loadout is not present in the current disk save\. GameData may select NPC combat skills during combat preparation; recommendations use known skills and verified mechanics instead\.$",
         RegexOptions.CultureInvariant)]
-    private static partial Regex TargetWithoutSkillsPattern();
+    private static partial Regex TargetLoadoutNotPersistedPattern();
 
     [GeneratedRegex(
         @"^Target equipped skills are unavailable: (?<reason>.+)$",

@@ -18,9 +18,14 @@ public sealed class RecommendationWarningPresentationTests
         false)]
     [InlineData(
         "Snapshot",
-        "TARGET_LOADOUT_UNAVAILABLE",
+        "TARGET_LOADOUT_NOT_PERSISTED",
         PresentationWarningKind.UnavailableValue,
-        true)]
+        false)]
+    [InlineData(
+        "ThreatAnalysis",
+        "TARGET_EQUIPPED_SKILLS_UNAVAILABLE",
+        PresentationWarningKind.UnavailableValue,
+        false)]
     [InlineData(
         "ThreatAnalysis",
         "TARGET_GAMEDATA_VERSION_UNSUPPORTED",

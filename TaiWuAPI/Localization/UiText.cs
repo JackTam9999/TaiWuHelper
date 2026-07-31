@@ -252,6 +252,8 @@ public static class UiText
                 "經強制候選條件篩選後，沒有符合資格的運功方案。",
             ["The affected value remains unavailable and is not replaced with an estimate; review the related caveat manually."] =
                 "受影響的數值仍無法取得，且不會以估算值代替；請手動檢查相關注意事項。",
+            ["The target's exact equipped loadout remains unconfirmed. Recommendations use known target skills and verified mechanics; equipped-only conclusions are excluded."] =
+                "目標實際裝備的運功配置仍未確認。推薦會使用目標的已知功法及已驗證機制，並排除僅在確認裝備後才能成立的結論。",
             ["The affected mechanic was excluded from verified scoring, so threat coverage may be incomplete."] =
                 "受影響的機制已從已驗證評分中排除，因此威脅覆蓋可能不完整。",
             ["The affected option was excluded before scoring; returned candidates still satisfy known constraints."] =
@@ -276,6 +278,8 @@ public static class UiText
                 "第一個失神標記會開始倒數；倒數結束後，心神共鳴會反覆施加失神壓力，並可能使新標記持續存在。",
             ["The observed reset at 36 defeat marks resembles reverse 九色玉蟬法, but the target's equipped source effect is not confirmed."] =
                 "觀察到的 36 個戰敗標記重置現象類似逆練九色玉蟬法，但尚未確認目標所裝備的效果來源。",
+            ["The target's active loadout is not present in this disk save; GameData may select NPC combat skills during combat preparation."] =
+                "此磁碟存檔不含目標的實際運功配置；GameData 可能在準備戰鬥時才替 NPC 選擇功法。",
             ["The current save contains no equipped target skills."] =
                 "目前存檔不含目標已裝備的功法。",
             ["Configured GridCost and confirmed mastery were mapped, but effective used capacity remains unavailable because the standalone-unsafe SpecialEffect calculation was not invoked."] =

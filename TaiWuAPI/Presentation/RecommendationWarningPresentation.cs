@@ -1,3 +1,6 @@
+using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.CombatThreats;
+
 namespace TaiWuAPI.Presentation;
 
 public sealed record RecommendationWarningClassification(
@@ -13,6 +16,21 @@ public static class RecommendationWarningPresentation
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(code);
+
+        if (code.Equals(
+                CombatSnapshotWarningCodes.TargetLoadoutNotPersisted,
+                StringComparison.Ordinal)
+            || code.Equals(
+                TargetThreatAnalyzer.EquippedSkillsUnavailableWarningCode,
+                StringComparison.Ordinal))
+        {
+            return new(
+                PresentationWarningKind.UnavailableValue,
+                IsCritical: false,
+                "The target's exact equipped loadout remains unconfirmed. "
+                + "Recommendations use known target skills and verified "
+                + "mechanics; equipped-only conclusions are excluded.");
+        }
 
         if (code.Contains("NOT_NEWER", StringComparison.Ordinal)
             || code.Contains("OBSERVATION", StringComparison.Ordinal))

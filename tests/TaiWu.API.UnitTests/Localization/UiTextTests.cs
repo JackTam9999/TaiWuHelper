@@ -19,10 +19,13 @@ public sealed class UiTextTests
                 "保留此功法，因為所選運功方案保留了目前配置。"
             },
             {
-                "Target 16317 has no equipped skills in the current disk "
-                + "save. Current-screen evidence may be newer.",
-                "目前磁碟存檔中，目標 16317 沒有已裝備功法；"
-                + "目前遊戲畫面的證據可能較新。"
+                "Target 16317's active loadout is not present in the current "
+                + "disk save. GameData may select NPC combat skills during "
+                + "combat preparation; recommendations use known skills and "
+                + "verified mechanics instead.",
+                "目前磁碟存檔中沒有目標 16317 的實際運功配置。"
+                + "GameData 可能在準備戰鬥時才替 NPC 選擇功法；"
+                + "推薦將改用已知功法及已驗證機制。"
             },
             {
                 "Target equipped skills are unavailable: The current save "
@@ -109,7 +112,7 @@ public sealed class UiTextTests
     }
 
     [Theory]
-    [InlineData("TARGET_LOADOUT_UNAVAILABLE")]
+    [InlineData("TARGET_LOADOUT_NOT_PERSISTED")]
     [InlineData("snapshot:target:16317:equipped-skills")]
     [InlineData("GameData")]
     public void Chinese_mode_preserves_technical_identifiers(string value)

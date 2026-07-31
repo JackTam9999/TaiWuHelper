@@ -156,12 +156,16 @@ internal sealed class TaiwuCombatSnapshotReader(
         {
             equippedSkills =
                 SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
-                    "The current save contains no equipped target skills.");
+                    "The target's active loadout is not present in this disk "
+                    + "save; GameData may select NPC combat skills during "
+                    + "combat preparation.");
             warnings.Add(
                 new SnapshotWarning(
-                    "TARGET_LOADOUT_UNAVAILABLE",
-                    $"Target {characterId} has no equipped skills in the "
-                    + "current disk save. Current-screen evidence may be newer."));
+                    CombatSnapshotWarningCodes.TargetLoadoutNotPersisted,
+                    $"Target {characterId}'s active loadout is not present in "
+                    + "the current disk save. GameData may select NPC combat "
+                    + "skills during combat preparation; recommendations use "
+                    + "known skills and verified mechanics instead."));
         }
         else
         {

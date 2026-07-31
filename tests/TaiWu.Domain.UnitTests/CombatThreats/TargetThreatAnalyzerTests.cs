@@ -164,6 +164,33 @@ public sealed class TargetThreatAnalyzerTests
     }
 
     [Fact]
+    public void Snapshot_loadout_warning_prevents_duplicate_threat_warning()
+    {
+        var skill = CreateSkill(100, effectId: 1000);
+        var snapshot = CreateSnapshot(
+            [skill],
+            SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
+                "Target loadout is selected during combat preparation."),
+            warnings:
+            [
+                new SnapshotWarning(
+                    CombatSnapshotWarningCodes.TargetLoadoutNotPersisted,
+                    "The disk snapshot does not contain the active loadout.")
+            ]);
+
+        var result = TargetThreatAnalyzer.Analyze(
+            snapshot,
+            CreateRuleSet([Signature(skill)]));
+
+        Assert.Single(result.Threats);
+        Assert.DoesNotContain(
+            result.Warnings,
+            warning => warning.Code
+                == TargetThreatAnalyzer
+                    .EquippedSkillsUnavailableWarningCode);
+    }
+
+    [Fact]
     public void Unrecognized_relevant_effect_generates_warning()
     {
         var skill = CreateSkill(100, effectId: 9999);
@@ -380,7 +407,8 @@ public sealed class TargetThreatAnalyzerTests
     private static CombatSnapshot CreateSnapshot(
         CombatSkillSnapshot[] targetSkills,
         SnapshotValue<CombatLoadoutSnapshot>? equippedSkills = null,
-        SnapshotValue<string>? gameDataVersion = null)
+        SnapshotValue<string>? gameDataVersion = null,
+        SnapshotWarning[]? warnings = null)
     {
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
@@ -402,7 +430,7 @@ public sealed class TargetThreatAnalyzerTests
                     ?? SnapshotValue<CombatLoadoutSnapshot>.Available(
                         CreateLoadout()),
                 equipment: []),
-            warnings: []);
+            warnings ?? []);
     }
 
     private static PlayerCombatSnapshot CreatePlayer()

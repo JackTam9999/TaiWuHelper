@@ -39,7 +39,14 @@ public static class TargetThreatAnalyzer
             return new TargetThreatAnalysis([], warnings);
         }
 
-        var candidates = GetCandidates(snapshot.Target, warnings);
+        var loadoutAbsenceAlreadyReported = snapshot.Warnings.Any(
+            warning => warning.Code.Equals(
+                CombatSnapshotWarningCodes.TargetLoadoutNotPersisted,
+                StringComparison.Ordinal));
+        var candidates = GetCandidates(
+            snapshot.Target,
+            warnings,
+            reportUnavailableLoadout: !loadoutAbsenceAlreadyReported);
         Dictionary<
             string,
             (TargetThreat Threat, List<TargetThreatSource> Sources)> findings =
@@ -101,7 +108,8 @@ public static class TargetThreatAnalyzer
 
     private static List<Candidate> GetCandidates(
         TargetCombatSnapshot target,
-        List<TargetThreatWarning> warnings)
+        List<TargetThreatWarning> warnings,
+        bool reportUnavailableLoadout)
     {
         var learnedById = target.LearnedSkills.ToDictionary(
             skill => skill.SkillId);
@@ -136,7 +144,7 @@ public static class TargetThreatAnalyzer
                 }
             }
         }
-        else
+        else if (reportUnavailableLoadout)
         {
             warnings.Add(
                 Warning(
