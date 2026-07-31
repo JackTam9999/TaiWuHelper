@@ -5,12 +5,12 @@
          aria-live="polite">
     <div class="panel-heading">
         <div>
-            <p class="eyebrow">Review before setup</p>
-            <h2 id="warning-heading">Warnings and unavailable information</h2>
+            <p class="eyebrow">@T("Review before setup")</p>
+            <h2 id="warning-heading">@T("Warnings and unavailable information")</h2>
         </div>
         @if (Warnings.Any(warning => warning.IsCritical))
         {
-            <span class="critical-label">Critical review required</span>
+            <span class="critical-label">@T("Critical review required")</span>
         }
     </div>
 
@@ -25,24 +25,24 @@
                     <span class="warning-kind">@WarningKindLabel(warning.Kind)</span>
                     @if (warning.IsCritical)
                     {
-                        <strong>Critical</strong>
+                        <strong>@T("Critical")</strong>
                     }
                 </div>
                 <h3>@warning.Code</h3>
                 @if (warning.Occurrences > 1)
                 {
                     <p class="warning-occurrences">
-                        Aggregated from @warning.Occurrences evaluated combinations.
+                        @T("Aggregated from") @warning.Occurrences @T("evaluated combinations.")
                     </p>
                 }
                 <p>@warning.Message</p>
                 <p class="warning-effect">
-                    <strong>Effect on recommendation:</strong>
+                    <strong>@T("Effect on recommendation:")</strong>
                     @warning.EffectOnRecommendation
                 </p>
                 @if (warning.EvidenceReferences.Count > 0)
                 {
-                    <div class="warning-evidence" aria-label="Warning evidence">
+                    <div class="warning-evidence" aria-label="@T("Warning evidence")">
                         @foreach (var evidence in warning.EvidenceReferences)
                         {
                             <code>@evidence</code>
@@ -58,16 +58,22 @@
     [Parameter, EditorRequired]
     public IReadOnlyList<RecommendationWarningViewModel> Warnings { get; set; } = [];
 
-    private static string WarningKindLabel(
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string WarningKindLabel(
         PresentationWarningKind kind) => kind switch
     {
-        PresentationWarningKind.StaleData => "Stale data",
+        PresentationWarningKind.StaleData => T("Stale data"),
         PresentationWarningKind.ObservationDifference =>
-            "Observation difference",
-        PresentationWarningKind.UnavailableValue => "Unavailable value",
-        PresentationWarningKind.UnverifiedMechanic => "Unverified mechanic",
-        PresentationWarningKind.CandidateSearch => "Candidate search",
-        PresentationWarningKind.General => "General",
+            T("Observation difference"),
+        PresentationWarningKind.UnavailableValue => T("Unavailable value"),
+        PresentationWarningKind.UnverifiedMechanic =>
+            T("Unverified mechanic"),
+        PresentationWarningKind.CandidateSearch => T("Candidate search"),
+        PresentationWarningKind.General => T("General"),
         _ => kind.ToString()
     };
+
+    private string T(string english) => UiText.Get(Language, english);
 }

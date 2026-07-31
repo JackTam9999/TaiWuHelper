@@ -1,11 +1,12 @@
 @using TaiWuAPI.Presentation
+@using TaiWu.Domain.CombatRecommendations
 
 <section class="supporting-details recommendation-only"
          aria-labelledby="supporting-details-heading">
     <div class="panel-heading">
         <div>
-            <p class="eyebrow">Supporting detail</p>
-            <h3 id="supporting-details-heading">Verify the recommendation</h3>
+            <p class="eyebrow">@T("Supporting detail")</p>
+            <h3 id="supporting-details-heading">@T("Verify the recommendation")</h3>
         </div>
     </div>
 
@@ -14,20 +15,20 @@
     <div class="supporting-panels">
         <details>
             <summary>
-                Alternatives
+                @T("Alternatives")
                 <span>@Details.Alternatives.Count</span>
             </summary>
             <div class="alternative-list">
                 @foreach (var alternative in Details.Alternatives)
                 {
                     <article>
-                        <strong>@alternative.Style</strong>
+                        <strong>@PolicyLabel(alternative.Style)</strong>
                         @if (alternative.HasRecommendation)
                         {
                             <span>
-                                Score @alternative.TotalScore?.ToString("0.##") ·
-                                @alternative.ManualChangeCount manual changes ·
-                                @alternative.CaveatCount caveats
+                                @T("Score") @alternative.TotalScore?.ToString("0.##") ·
+                                @alternative.ManualChangeCount @T("manual changes") ·
+                                @alternative.CaveatCount @T("caveats")
                             </span>
                         }
                         else
@@ -41,35 +42,35 @@
 
         <details>
             <summary>
-                Assumptions and unavailable data
+                @T("Assumptions and unavailable data")
                 <span>@(Details.Assumptions.Count + Details.UnavailableData.Count)</span>
             </summary>
             <div class="support-list">
                 @foreach (var caveat in Details.Assumptions)
                 {
                     <article>
-                        <strong>Assumption · @caveat.Code</strong>
+                        <strong>@T("Assumption") · @caveat.Code</strong>
                         <span>@caveat.Explanation</span>
                     </article>
                 }
                 @foreach (var caveat in Details.UnavailableData)
                 {
                     <article>
-                        <strong>Unavailable · @caveat.Code</strong>
+                        <strong>@T("Unavailable data") · @caveat.Code</strong>
                         <span>@caveat.Explanation</span>
                     </article>
                 }
                 @if (Details.Assumptions.Count == 0
                      && Details.UnavailableData.Count == 0)
                 {
-                    <p>No additional assumption or unavailable-data caveat was produced.</p>
+                    <p>@T("No additional assumption or unavailable-data caveat was produced.")</p>
                 }
             </div>
         </details>
 
         <details>
             <summary>
-                Conditional requirements
+                @T("Conditional requirements")
                 <span>@Details.ConditionalRequirements.Count</span>
             </summary>
             <div class="support-list">
@@ -83,25 +84,25 @@
                 }
                 @if (Details.ConditionalRequirements.Count == 0)
                 {
-                    <p>No conditional requirement was selected for this style.</p>
+                    <p>@T("No conditional requirement was selected for this style.")</p>
                 }
             </div>
         </details>
 
         <details>
             <summary>
-                Score contributions
+                @T("Score contributions")
                 <span>@Details.Scores.Count</span>
             </summary>
             <div class="score-table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th scope="col">Component</th>
-                            <th scope="col">Weight</th>
-                            <th scope="col">Score</th>
-                            <th scope="col">Points</th>
-                            <th scope="col">Explanation</th>
+                            <th scope="col">@T("Component")</th>
+                            <th scope="col">@T("Weight")</th>
+                            <th scope="col">@T("Score")</th>
+                            <th scope="col">@T("Points")</th>
+                            <th scope="col">@T("Explanation")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -122,7 +123,7 @@
 
         <details>
             <summary>
-                Detailed evidence
+                @T("Detailed evidence")
                 <span>@Details.EvidenceReferences.Count</span>
             </summary>
             <div class="evidence-list">
@@ -132,7 +133,7 @@
                 }
                 @if (Details.EvidenceReferences.Count == 0)
                 {
-                    <p>No evidence reference was available.</p>
+                    <p>@T("No evidence reference was available.")</p>
                 }
             </div>
         </details>
@@ -143,4 +144,20 @@
     [Parameter, EditorRequired]
     public RecommendationSupportingDetailsViewModel Details { get; set; } =
         default!;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private string PolicyLabel(RecommendationPolicy policy) =>
+        Language == TaiwuLanguage.Chinese
+            ? policy switch
+            {
+                RecommendationPolicy.Safe => "穩健",
+                RecommendationPolicy.Balanced => "均衡",
+                RecommendationPolicy.Aggressive => "進取",
+                _ => policy.ToString()
+            }
+            : policy.ToString();
 }

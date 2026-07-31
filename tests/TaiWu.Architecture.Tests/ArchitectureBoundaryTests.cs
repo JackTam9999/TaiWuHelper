@@ -571,6 +571,8 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SelectTarget(target)",
             "() => SelectedReferenceChanged.InvokeAsync(null)",
             "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
+            "() => SetLanguage(TaiwuLanguage.Chinese)",
+            "() => SetLanguage(TaiwuLanguage.English)",
             "() => ShowStyle(style.Style)",
             "() => Toggle(item.Reference)",
             "CopyAsync",

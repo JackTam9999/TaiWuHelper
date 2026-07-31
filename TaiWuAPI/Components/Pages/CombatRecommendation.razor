@@ -12,21 +12,19 @@
 @inject IOptions<SaveGameOptions> SaveOptions
 @inject ILogger<CombatRecommendation> Logger
 
-<PageTitle>TaiWu Helper · Combat recommendation</PageTitle>
+<PageTitle>TaiWu Helper · @T("Combat recommendation")</PageTitle>
 
 <section class="hero">
     <div>
-        <p class="eyebrow">Read-only combat planning</p>
-        <h1>Prepare for the fight before it starts.</h1>
+        <p class="eyebrow">@T("Read-only combat planning")</p>
+        <h1>@T("Prepare for the fight before it starts.")</h1>
         <p class="hero-copy">
-            Search the configured save, choose a target and compare three
-            evidence-backed loadout styles. Every instruction is performed
-            manually by you in the game.
+            @T("Search the configured save, choose a target and compare three evidence-backed loadout styles. Every instruction is performed manually by you in the game.")
         </p>
     </div>
     <div class="boundary-card" role="note">
-        <strong>Information only</strong>
-        <span>TaiWu Helper cannot change the save, equip skills, or control the game.</span>
+        <strong>@T("Information only")</strong>
+        <span>@T("TaiWu Helper cannot change the save, equip skills, or control the game.")</span>
     </div>
 </section>
 
@@ -35,43 +33,43 @@
          aria-busy="@IsBusy.ToString().ToLowerInvariant()">
     <div class="section-heading">
         <div>
-            <p class="eyebrow">Recommendation controls</p>
-            <h2 id="recommendation-controls">Choose the encounter</h2>
+            <p class="eyebrow">@T("Recommendation controls")</p>
+            <h2 id="recommendation-controls">@T("Choose the encounter")</h2>
         </div>
         @if (_isSearching || _isRecommending)
         {
-            <span class="working-status" role="status">Reading the configured save…</span>
+            <span class="working-status" role="status">@T("Reading the configured save…")</span>
         }
     </div>
 
     <div class="control-grid">
         <div class="control-group target-control">
-            <label for="target-search">Target name or character ID</label>
+            <label for="target-search">@T("Target name or character ID")</label>
             <div class="inline-control">
                 <input id="target-search"
                        @bind="_targetQuery"
                        @bind:event="oninput"
-                       placeholder="For example: 16317"
+                       placeholder="@T("For example: 16317")"
                        autocomplete="off" />
                 <button type="button"
                         class="secondary-button"
                         @onclick="SearchTargetsAsync"
                         disabled="@(!_configurationValid || IsBusy || string.IsNullOrWhiteSpace(_targetQuery))">
-                    Search
+                    @T("Search")
                 </button>
             </div>
 
             @if (_targetMatches.Count > 0)
             {
-                <div class="target-results" aria-label="Target search results">
+                <div class="target-results" aria-label="@T("Target search results")">
                     @foreach (var target in _targetMatches)
                     {
                         <button type="button"
                                 class="@TargetResultClass(target.CharacterId)"
                                 @onclick="() => SelectTarget(target)">
                             <strong>@target.DisplayName</strong>
-                            <span>@target.Age years · ID @target.CharacterId</span>
-                            <small>Area @target.AreaId · Block @target.BlockId</small>
+                            <span>@target.Age @T("years") · ID @target.CharacterId</span>
+                            <small>@T("Area") @target.AreaId · @T("Block") @target.BlockId</small>
                         </button>
                     }
                 </div>
@@ -79,38 +77,36 @@
         </div>
 
         <div class="control-group">
-            <label for="style-select">Preferred style</label>
+            <label for="style-select">@T("Preferred style")</label>
             <select id="style-select" @bind="_form.Policy">
                 @foreach (var policy in Enum.GetValues<RecommendationPolicy>())
                 {
-                    <option value="@policy">@policy</option>
+                    <option value="@policy">@PolicyLabel(policy)</option>
                 }
             </select>
-            <small>Safe prioritizes survival; Aggressive accepts more risk.</small>
+            <small>@T("Safe prioritizes survival; Aggressive accepts more risk.")</small>
         </div>
 
         <div class="control-group">
-            <label for="weapon-select">Preferred weapon (optional)</label>
+            <label for="weapon-select">@T("Preferred weapon (optional)")</label>
             <select id="weapon-select" @bind="_form.PreferredWeapon">
-                <option value="">No preference</option>
+                <option value="">@T("No preference")</option>
                 <option value="刀">刀</option>
             </select>
             <small>
-                A visible player preference only; verified rules still decide
-                whether a loadout is feasible.
+                @T("A visible player preference only; verified rules still decide whether a loadout is feasible.")
             </small>
         </div>
     </div>
 
     <details class="observation-panel">
-        <summary>Optional current-screen observation</summary>
+        <summary>@T("Optional current-screen observation")</summary>
         <p>
-            Analysis input only. These values refine this recommendation and
-            are never sent to or applied in the game.
+            @T("Analysis input only. These values refine this recommendation and are never sent to or applied in the game.")
         </p>
         <label class="check-control">
             <input type="checkbox" @bind="_form.IncludeObservation" />
-            Use manually entered equipped-skill IDs
+            @T("Use manually entered equipped-skill IDs")
         </label>
 
         @if (_form.IncludeObservation)
@@ -139,7 +135,7 @@
             </div>
             <div class="generic-grid">
                 <label>
-                    萬用 total
+                    萬用 @T("total")
                     <input type="number" min="0" @bind="_form.GenericTotal" />
                 </label>
                 <label>
@@ -166,19 +162,19 @@
         <div>
             @if (_selectedTarget is not null)
             {
-                <strong>Selected: @_selectedTarget.DisplayName</strong>
-                <span>ID @_selectedTarget.CharacterId · @_selectedTarget.Age years</span>
+                <strong>@T("Selected"): @_selectedTarget.DisplayName</strong>
+                <span>ID @_selectedTarget.CharacterId · @_selectedTarget.Age @T("years")</span>
             }
             else
             {
-                <span>Select a target before requesting a recommendation.</span>
+                <span>@T("Select a target before requesting a recommendation.")</span>
             }
         </div>
         <button type="button"
                 class="primary-button"
                 @onclick="GetRecommendationAsync"
                 disabled="@(!_configurationValid || _selectedTarget is null || IsBusy)">
-            @(_isRecommending ? "Calculating…" : "Get recommendation")
+            @(_isRecommending ? T("Calculating…") : T("Get recommendation"))
         </button>
     </div>
 </section>
@@ -189,22 +185,22 @@
 
 @if (_model is not null)
 {
-    <section class="snapshot-strip" aria-label="Snapshot metadata">
+    <section class="snapshot-strip" aria-label="@T("Snapshot metadata")">
         <div>
-            <span>Snapshot read</span>
+            <span>@T("Snapshot read")</span>
             <strong>@_model.CapturedAtUtc.ToLocalTime().ToString("g")</strong>
         </div>
         <div>
-            <span>Source freshness</span>
+            <span>@T("Source freshness")</span>
             <strong>@FreshnessText(_model)</strong>
         </div>
         <div>
             <span>GameData</span>
-            <strong>@(_model.GameDataVersion ?? "Unavailable")</strong>
+            <strong>@(_model.GameDataVersion ?? T("Unavailable"))</strong>
         </div>
         <div>
-            <span>Weapon preference</span>
-            <strong>@(string.IsNullOrWhiteSpace(_form.PreferredWeapon) ? "None" : _form.PreferredWeapon)</strong>
+            <span>@T("Weapon preference")</span>
+            <strong>@(string.IsNullOrWhiteSpace(_form.PreferredWeapon) ? T("None") : _form.PreferredWeapon)</strong>
         </div>
     </section>
 
@@ -216,13 +212,13 @@
     <section class="result-shell">
         <div class="section-heading">
             <div>
-                <p class="eyebrow">Same snapshot · three policies</p>
-                <h2>Recommendation ready</h2>
+                <p class="eyebrow">@T("Same snapshot · three policies")</p>
+                <h2>@T("Recommendation ready")</h2>
             </div>
-            <span class="information-badge">Information only</span>
+            <span class="information-badge">@T("Information only")</span>
         </div>
 
-        <div class="style-tabs" role="group" aria-label="Recommendation styles">
+        <div class="style-tabs" role="group" aria-label="@T("Recommendation styles")">
             @foreach (var style in _model.Styles)
             {
                 var selected = style.Style == _selection.VisibleStyle;
@@ -230,10 +226,10 @@
                         aria-pressed="@selected"
                         class="@(selected ? "active" : null)"
                         @onclick="() => ShowStyle(style.Style)">
-                    <span>@style.Style</span>
+                    <span>@PolicyLabel(style.Style)</span>
                     @if (selected)
                     {
-                        <small>Selected</small>
+                        <small>@T("Selected")</small>
                     }
                 </button>
             }
@@ -246,26 +242,26 @@
             @if (visible.HasRecommendation)
             {
                 <div>
-                    <span>Known-constraint score</span>
+                    <span>@T("Known-constraint score")</span>
                     <strong>@visible.TotalScore?.ToString("0.##")</strong>
-                    <small>This is not a win probability.</small>
+                    <small>@T("This is not a win probability.")</small>
                 </div>
                 <div>
-                    <span>Threats identified</span>
+                    <span>@T("Threats identified")</span>
                     <strong>@_model.Threats.Count</strong>
                 </div>
                 <div>
-                    <span>Manual changes</span>
+                    <span>@T("Manual changes")</span>
                     <strong>@visible.ManualChanges.Count</strong>
                 </div>
                 <div>
-                    <span>Conditional caveats</span>
+                    <span>@T("Conditional caveats")</span>
                     <strong>@visible.Caveats.Count</strong>
                 </div>
             }
             else
             {
-                <p>@(visible.Diagnostic ?? "No feasible recommendation was produced.")</p>
+                <p>@(visible.Diagnostic ?? T("No feasible recommendation was produced."))</p>
             }
         </div>
 
@@ -277,10 +273,10 @@
             <section class="loadout-panel" aria-labelledby="recommended-loadout-heading">
                 <div class="panel-heading">
                     <div>
-                        <p class="eyebrow">Manual configuration</p>
-                        <h3 id="recommended-loadout-heading">Recommended loadout</h3>
+                        <p class="eyebrow">@T("Manual configuration")</p>
+                        <h3 id="recommended-loadout-heading">@T("Recommended loadout")</h3>
                     </div>
-                    <span class="validation-label">Known constraints validated</span>
+                    <span class="validation-label">@T("Known constraints validated")</span>
                 </div>
 
                 @if (visible.HasRecommendation)
@@ -295,7 +291,7 @@
                 else
                 {
                     <p class="empty-category">
-                        @(visible.Diagnostic ?? "No feasible recommendation was produced.")
+                        @(visible.Diagnostic ?? T("No feasible recommendation was produced."))
                     </p>
                 }
             </section>
@@ -335,6 +331,10 @@
     private bool _isRecommending;
     private long _searchVersion;
     private long _recommendationVersion;
+    private TaiwuLanguage? _lastLanguage;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
 
     private bool IsBusy => _isSearching || _isRecommending;
 
@@ -349,6 +349,54 @@
         {
             _configurationValid = false;
             _pageState = RecommendationPageState.InvalidConfiguration();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_lastLanguage is null)
+        {
+            _lastLanguage = Language;
+            return;
+        }
+
+        if (_lastLanguage == Language)
+        {
+            return;
+        }
+
+        _lastLanguage = Language;
+        var selectedCharacterId = _selectedTarget?.CharacterId;
+        var hadRecommendation = _model is not null;
+        if (selectedCharacterId.HasValue)
+        {
+            _targetQuery = selectedCharacterId.Value.ToString();
+        }
+
+        if (!_configurationValid
+            || string.IsNullOrWhiteSpace(_targetQuery))
+        {
+            _pageState = RecommendationPageState.Initial();
+            return;
+        }
+
+        await SearchTargetsAsync();
+        if (!selectedCharacterId.HasValue)
+        {
+            return;
+        }
+
+        var translatedTarget = _targetMatches.FirstOrDefault(target =>
+            target.CharacterId == selectedCharacterId.Value);
+        if (translatedTarget is null)
+        {
+            return;
+        }
+
+        SelectTarget(translatedTarget);
+        if (hadRecommendation)
+        {
+            await GetRecommendationAsync();
         }
     }
 
@@ -375,7 +423,8 @@
             var result = await FindTargets.ExecuteAsync(
                 new FindTargetsRequest(
                     _saveFilePath,
-                    _targetQuery),
+                    _targetQuery,
+                    language: Language),
                 cancellation.Token);
             if (version != _searchVersion)
             {
@@ -450,7 +499,8 @@
                     _saveFilePath,
                     _selectedTarget.CharacterId,
                     _form.Policy,
-                    observation),
+                    observation,
+                    Language),
                 cancellation.Token);
             if (version != _recommendationVersion)
             {
@@ -552,31 +602,48 @@
         _selection.SelectThreat(threatReference);
     }
 
-    private static string FreshnessText(CombatRecommendationViewModel model)
+    private string FreshnessText(CombatRecommendationViewModel model)
     {
         if (!model.SaveLastWriteTimeUtc.HasValue)
         {
-            return "Unavailable";
+            return T("Unavailable");
         }
 
         var age = model.CapturedAtUtc - model.SaveLastWriteTimeUtc.Value;
         if (age < TimeSpan.Zero)
         {
-            return "Source timestamp is newer than the read";
+            return T("Source timestamp is newer than the read");
         }
 
         if (age <= TimeSpan.FromMinutes(15))
         {
-            return $"{Math.Max(0, age.TotalMinutes):0} min old at read";
+            var minutes = Math.Max(0, age.TotalMinutes);
+            return Language == TaiwuLanguage.Chinese
+                ? $"讀取時為 {minutes:0} 分鐘前"
+                : $"{minutes:0} min old at read";
         }
 
         if (age < TimeSpan.FromHours(2))
         {
-            return $"{age.TotalMinutes:0} min old at read";
+            return Language == TaiwuLanguage.Chinese
+                ? $"讀取時為 {age.TotalMinutes:0} 分鐘前"
+                : $"{age.TotalMinutes:0} min old at read";
         }
 
-        return $"{age.TotalHours:0.0} h old at read";
+        return Language == TaiwuLanguage.Chinese
+            ? $"讀取時為 {age.TotalHours:0.0} 小時前"
+            : $"{age.TotalHours:0.0} h old at read";
     }
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private string PolicyLabel(RecommendationPolicy policy) => policy switch
+    {
+        RecommendationPolicy.Safe => T("Safe"),
+        RecommendationPolicy.Balanced => T("Balanced"),
+        RecommendationPolicy.Aggressive => T("Aggressive"),
+        _ => policy.ToString()
+    };
 
     private static CancellationTokenSource ReplaceCancellation(
         ref CancellationTokenSource? cancellation)

@@ -16,6 +16,7 @@ public static class DependencyInjection
             ReadOnlyFileFingerprintProvider>();
         services.AddSingleton<ITaiwuArchiveLoader, TaiwuArchiveLoader>();
         services.AddSingleton<TaiwuArchiveReadSession>();
+        services.AddSingleton<TaiwuGameTextResolver>();
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<ITargetLookupReader, TaiwuTargetLookupReader>();

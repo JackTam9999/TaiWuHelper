@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Cryptography;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.Localization;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -44,7 +45,8 @@ public sealed class LocalGameDataIntegrationTests
             var reader = provider.GetRequiredService<ICombatSnapshotReader>();
             var request = new CombatSnapshotReadRequest(
                 savePath,
-                GoldenTargetId);
+                GoldenTargetId,
+                language: TaiwuLanguage.Chinese);
 
             var first = await reader.ReadAsync(
                 request,
@@ -55,6 +57,7 @@ public sealed class LocalGameDataIntegrationTests
 
             AssertGoldenSnapshot(first, savePath);
             AssertGoldenSnapshot(second, savePath);
+            AssertLocalizedNames(first);
             AssertRepeatable(first, second);
             Assert.True(
                 string.Equals(
@@ -187,6 +190,19 @@ public sealed class LocalGameDataIntegrationTests
         Assert.Equal(
             first.Warnings.Select(warning => warning.Code),
             second.Warnings.Select(warning => warning.Code));
+    }
+
+    private static void AssertLocalizedNames(
+        Domain.CombatSnapshots.CombatSnapshot snapshot)
+    {
+        Assert.True(snapshot.Target.DisplayName.IsAvailable);
+        Assert.Equal("葛贵婵", snapshot.Target.DisplayName.Value);
+
+        var firstNeigong = Assert.Single(
+            snapshot.Player.LearnedSkills,
+            skill => skill.SkillId == 0);
+        Assert.True(firstNeigong.DisplayName.IsAvailable);
+        Assert.Equal("沛然诀", firstNeigong.DisplayName.Value);
     }
 
     private static void AssertUnchanged(

@@ -1,3 +1,4 @@
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatSnapshots;
 
 namespace TaiWu.Application.CombatSnapshots;
@@ -7,7 +8,8 @@ public sealed record CombatSnapshotReadRequest
     public CombatSnapshotReadRequest(
         string saveFilePath,
         int targetCharacterId,
-        PlayerLoadoutObservation? currentLoadoutObservation = null)
+        PlayerLoadoutObservation? currentLoadoutObservation = null,
+        TaiwuLanguage language = TaiwuLanguage.English)
     {
         if (string.IsNullOrWhiteSpace(saveFilePath))
         {
@@ -24,9 +26,18 @@ public sealed record CombatSnapshotReadRequest
                 "Target character ID must be greater than zero.");
         }
 
+        if (!Enum.IsDefined(language))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(language),
+                language,
+                "Unknown Taiwu language.");
+        }
+
         SaveFilePath = saveFilePath;
         TargetCharacterId = targetCharacterId;
         CurrentLoadoutObservation = currentLoadoutObservation;
+        Language = language;
     }
 
     public string SaveFilePath { get; }
@@ -34,4 +45,6 @@ public sealed record CombatSnapshotReadRequest
     public int TargetCharacterId { get; }
 
     public PlayerLoadoutObservation? CurrentLoadoutObservation { get; }
+
+    public TaiwuLanguage Language { get; }
 }

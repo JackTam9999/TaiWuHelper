@@ -1,5 +1,6 @@
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.GameData;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatSnapshots;
 using Xunit;
 
@@ -18,6 +19,18 @@ public sealed class CombatSnapshotReadRequestTests
             @"C:\Taiwu\SaveGames\world_1\local.sav",
             request.SaveFilePath);
         Assert.Equal(16317, request.TargetCharacterId);
+        Assert.Equal(TaiwuLanguage.English, request.Language);
+    }
+
+    [Fact]
+    public void Request_preserves_selected_language()
+    {
+        var request = new CombatSnapshotReadRequest(
+            "local.sav",
+            16317,
+            language: TaiwuLanguage.Chinese);
+
+        Assert.Equal(TaiwuLanguage.Chinese, request.Language);
     }
 
     [Fact]

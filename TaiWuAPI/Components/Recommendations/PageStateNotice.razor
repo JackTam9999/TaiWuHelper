@@ -5,14 +5,14 @@
          aria-live="@LiveRegion"
          aria-busy="@State.IsLoading.ToString().ToLowerInvariant()">
     <div>
-        <span class="state-label">@State.Status</span>
-        <strong>@State.Title</strong>
-        <p>@State.Message</p>
+        <span class="state-label">@StatusLabel()</span>
+        <strong>@T(State.Title)</strong>
+        <p>@T(State.Message)</p>
         @if (!string.IsNullOrWhiteSpace(State.Recovery))
         {
             <p class="state-recovery">
-                <strong>Next step:</strong>
-                @State.Recovery
+                <strong>@T("Next step:")</strong>
+                @T(State.Recovery)
             </p>
         }
     </div>
@@ -22,7 +22,7 @@
                 class="secondary-button"
                 @onclick="RetryRead"
                 disabled="@RetryDisabled">
-            Retry read
+            @T("Retry read")
         </button>
     }
 </section>
@@ -36,6 +36,28 @@
 
     [Parameter]
     public bool RetryDisabled { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private string StatusLabel() => Language == TaiwuLanguage.Chinese
+        ? State.Status switch
+        {
+            RecommendationPageStatus.Initial => "開始",
+            RecommendationPageStatus.Loading => "讀取中",
+            RecommendationPageStatus.TargetReady => "目標就緒",
+            RecommendationPageStatus.Empty => "沒有結果",
+            RecommendationPageStatus.AmbiguousTarget => "多個目標",
+            RecommendationPageStatus.Success => "完成",
+            RecommendationPageStatus.SuccessWithWarning => "完成但有警告",
+            RecommendationPageStatus.InvalidConfiguration => "設定錯誤",
+            RecommendationPageStatus.UnsupportedVersion => "不支援",
+            RecommendationPageStatus.Failure => "失敗",
+            _ => State.Status.ToString()
+        }
+        : State.Status.ToString();
 
     private string CssClass =>
         State.IsProblem

@@ -1,0 +1,217 @@
+using TaiWu.Application.Localization;
+
+namespace TaiWuAPI.Localization;
+
+public static class UiText
+{
+    private static readonly IReadOnlyDictionary<string, string>
+        ChineseTranslations = new Dictionary<string, string>(
+            StringComparer.Ordinal)
+        {
+            ["Skip to main content"] = "跳至主要內容",
+            ["TaiWu Helper home"] = "太吾助手首頁",
+            ["Pre-fight briefing"] = "戰前簡報",
+            ["Information only"] = "僅供參考",
+            ["English"] = "英文",
+            ["Chinese"] = "中文",
+            ["Combat recommendation"] = "戰鬥推薦",
+            ["Read-only combat planning"] = "唯讀戰鬥規劃",
+            ["Prepare for the fight before it starts."] = "在戰鬥開始前做好準備。",
+            ["Search the configured save, choose a target and compare three evidence-backed loadout styles. Every instruction is performed manually by you in the game."] =
+                "搜尋已設定的存檔、選擇目標，並比較三種有證據支持的運功方案。所有操作均由你在遊戲中手動完成。",
+            ["TaiWu Helper cannot change the save, equip skills, or control the game."] =
+                "太吾助手不能修改存檔、裝備功法或控制遊戲。",
+            ["Recommendation controls"] = "推薦設定",
+            ["Choose the encounter"] = "選擇對手",
+            ["Reading the configured save…"] = "正在讀取已設定的存檔……",
+            ["Target name or character ID"] = "目標姓名或人物 ID",
+            ["For example: 16317"] = "例如：16317",
+            ["Search"] = "搜尋",
+            ["Target search results"] = "目標搜尋結果",
+            ["years"] = "歲",
+            ["Area"] = "區域",
+            ["Block"] = "地塊",
+            ["Preferred style"] = "偏好風格",
+            ["Safe prioritizes survival; Aggressive accepts more risk."] =
+                "穩健優先確保生存；進取則接受較高風險。",
+            ["Preferred weapon (optional)"] = "偏好武器（可選）",
+            ["No preference"] = "無偏好",
+            ["A visible player preference only; verified rules still decide whether a loadout is feasible."] =
+                "這只是顯示用的玩家偏好；方案是否可行仍由已驗證規則決定。",
+            ["Optional current-screen observation"] = "可選：目前畫面觀察值",
+            ["Analysis input only. These values refine this recommendation and are never sent to or applied in the game."] =
+                "僅作分析輸入。這些數值只用來改善推薦，絕不會傳送或套用到遊戲。",
+            ["Use manually entered equipped-skill IDs"] = "使用手動輸入的已裝備功法 ID",
+            ["total"] = "總數",
+            ["Selected"] = "已選擇",
+            ["Safe"] = "穩健",
+            ["Balanced"] = "均衡",
+            ["Aggressive"] = "進取",
+            ["Select a target before requesting a recommendation."] =
+                "請先選擇目標，再取得推薦。",
+            ["Calculating…"] = "計算中……",
+            ["Get recommendation"] = "取得推薦",
+            ["Snapshot read"] = "存檔快照",
+            ["Snapshot metadata"] = "快照資訊",
+            ["Source freshness"] = "來源新鮮度",
+            ["Unavailable"] = "無法取得",
+            ["Weapon preference"] = "武器偏好",
+            ["None"] = "無",
+            ["Same snapshot · three policies"] = "同一快照 · 三種策略",
+            ["Recommendation ready"] = "推薦已完成",
+            ["Recommendation styles"] = "推薦風格",
+            ["Known-constraint score"] = "已知條件評分",
+            ["This is not a win probability."] = "此數值並非勝率。",
+            ["Threats identified"] = "已識別威脅",
+            ["Manual changes"] = "手動變更",
+            ["Conditional caveats"] = "條件式注意事項",
+            ["No feasible recommendation was produced."] = "未能產生可行的推薦。",
+            ["Manual configuration"] = "手動配置",
+            ["Recommended loadout"] = "推薦運功配置",
+            ["Known constraints validated"] = "已驗證所有已知條件",
+            ["Target analysis"] = "目標分析",
+            ["Target threats"] = "目標威脅",
+            ["Clear focus"] = "清除焦點",
+            ["Critical"] = "嚴重",
+            ["High"] = "高",
+            ["Moderate"] = "中",
+            ["At combat start"] = "戰鬥開始時",
+            ["Always active"] = "持續生效",
+            ["On skill use"] = "施展功法時",
+            ["On hit"] = "命中時",
+            ["When a mark is applied"] = "施加標記時",
+            ["At mark threshold"] = "標記達到門檻時",
+            ["Timing unavailable"] = "無法取得生效時機",
+            ["evidence source(s)"] = "項證據來源",
+            ["Select a threat to highlight the skills and plan steps that address it."] =
+                "選擇一項威脅，以標示對應的功法與計劃步驟。",
+            ["No skill selected in this category."] = "此類別未選擇任何功法。",
+            ["slots"] = "格",
+            ["Usage unavailable"] = "無法取得佔用量",
+            ["Practice"] = "修習",
+            ["Actual cost"] = "實際佔格",
+            ["Effective cost"] = "有效佔格",
+            ["Activation"] = "生效方式",
+            ["Add · change direction"] = "加入 · 更改正逆練",
+            ["Change direction"] = "更改正逆練",
+            ["Add manually"] = "手動加入",
+            ["Keep"] = "保留",
+            ["Recommended"] = "推薦",
+            ["Direct"] = "正練",
+            ["Reverse"] = "逆練",
+            ["Neutral"] = "中性",
+            ["Unavailable · see warning"] = "無法取得 · 請查看警告",
+            ["Combat-start passive"] = "戰鬥開始時被動生效",
+            ["Equipped passive"] = "裝備後被動生效",
+            ["Active attack"] = "主動摧破",
+            ["Active defense"] = "主動護體",
+            ["Active agility"] = "主動輕靈",
+            ["No counter timing"] = "無克制生效時機",
+            ["Satisfied"] = "已滿足",
+            ["Not satisfied"] = "未滿足",
+            ["Unknown"] = "未知",
+            ["Skill requirements"] = "功法需求",
+            ["Evidence and linked threats"] = "證據與關聯威脅",
+            ["Manual setup"] = "手動設定",
+            ["Setup checklist"] = "設定檢查表",
+            ["Copy checklist"] = "複製檢查表",
+            ["Print recommendation"] = "列印推薦",
+            ["Instructions only: TaiWu Helper cannot perform these steps."] =
+                "僅提供操作說明：太吾助手不能執行這些步驟。",
+            ["No manual setup differences were produced."] = "沒有需要手動變更的設定。",
+            ["Reason and evidence"] = "原因與證據",
+            ["Recommendation checklist copied."] = "已複製推薦檢查表。",
+            ["Remove"] = "移除",
+            ["Add"] = "加入",
+            ["Direction"] = "正逆練",
+            ["Weapon"] = "武器",
+            ["Resource"] = "資源",
+            ["Fight reference"] = "戰鬥參考",
+            ["Battle plan"] = "戰鬥計劃",
+            ["No separate evidence-backed instruction is available for this phase."] =
+                "此階段沒有獨立且有證據支持的指示。",
+            ["Skill"] = "功法",
+            ["Supporting detail"] = "補充資料",
+            ["Verify the recommendation"] = "核對推薦",
+            ["Alternatives"] = "其他方案",
+            ["Score"] = "評分",
+            ["manual changes"] = "項手動變更",
+            ["caveats"] = "項注意事項",
+            ["Assumptions and unavailable data"] = "假設與無法取得的資料",
+            ["Assumption"] = "假設",
+            ["Unavailable data"] = "無法取得",
+            ["No additional assumption or unavailable-data caveat was produced."] =
+                "沒有其他假設或資料缺失的注意事項。",
+            ["Conditional requirements"] = "條件式需求",
+            ["No conditional requirement was selected for this style."] =
+                "此風格未選取任何條件式需求。",
+            ["Score contributions"] = "評分構成",
+            ["Component"] = "項目",
+            ["Weight"] = "權重",
+            ["Points"] = "分數",
+            ["Explanation"] = "說明",
+            ["Detailed evidence"] = "詳細證據",
+            ["No evidence reference was available."] = "沒有可用的證據參照。",
+            ["Review before setup"] = "設定前請檢查",
+            ["Warnings and unavailable information"] = "警告與無法取得的資訊",
+            ["Critical review required"] = "需要重點檢查",
+            ["Aggregated from"] = "彙整自",
+            ["evaluated combinations."] = "個已評估組合。",
+            ["Effect on recommendation:"] = "對推薦的影響：",
+            ["Warning evidence"] = "警告證據",
+            ["Next step:"] = "下一步：",
+            ["Retry read"] = "重新讀取",
+            ["Start with a target"] = "先選擇目標",
+            ["Search the configured save by character name or ID, then select the intended opponent."] =
+                "以人物姓名或 ID 搜尋已設定的存檔，然後選擇預定對手。",
+            ["Searching the configured save"] = "正在搜尋已設定的存檔",
+            ["Building the combat recommendation"] = "正在建立戰鬥推薦",
+            ["Reading a new snapshot from the configured save. No game data is changed."] =
+                "正在從已設定的存檔讀取新快照。遊戲資料不會被更改。",
+            ["No matching target"] = "找不到相符目標",
+            ["The configured save returned no target for this search."] =
+                "已設定的存檔中沒有符合此搜尋的目標。",
+            ["Target found"] = "已找到目標",
+            ["Select the matching result, review the context, and request the recommendation."] =
+                "選擇相符結果、檢查資料，然後取得推薦。",
+            ["Target selected"] = "已選擇目標",
+            ["Recommendation ready with warnings"] = "推薦已完成，但有警告",
+            ["A recommendation was produced, but unavailable or uncertain information requires manual review."] =
+                "推薦已產生，但無法取得或不確定的資訊仍需手動檢查。",
+            ["Read every warning before following the manual setup."] =
+                "依照手動設定操作前，請先閱讀所有警告。",
+            ["The recommendation satisfies every known constraint in this snapshot."] =
+                "此推薦符合快照中的所有已知條件。",
+            ["Save path is not configured"] = "尚未設定存檔路徑",
+            ["Could not complete the read"] = "無法完成讀取",
+            ["Retry the read. TaiWu Helper did not change the save or game."] =
+                "請重新讀取。太吾助手沒有更改存檔或遊戲。",
+            ["Before combat"] = "戰鬥前",
+            ["Opening"] = "開局",
+            ["Normal execution"] = "一般應對",
+            ["Trigger-based reactions"] = "觸發式應對",
+            ["Switching conditions"] = "切換條件",
+            ["Stale data"] = "過期資料",
+            ["Observation difference"] = "觀察值差異",
+            ["Unavailable value"] = "無法取得的數值",
+            ["Unverified mechanic"] = "未驗證機制",
+            ["Candidate search"] = "候選方案搜尋",
+            ["General"] = "一般",
+            ["slot use"] = "格位使用量",
+            ["TaiWu Helper recommendation — information only"] =
+                "太吾助手推薦 — 僅供參考",
+            ["TaiWu Helper cannot perform these steps."] =
+                "太吾助手不能執行這些步驟。",
+            ["Page not found"] = "找不到頁面",
+            ["This path is not part of TaiWu Helper."] = "此路徑不屬於太吾助手。",
+            ["Return to the recommendation page"] = "返回推薦頁面"
+        };
+
+    public static string Get(TaiwuLanguage language, string english)
+    {
+        ArgumentNullException.ThrowIfNull(english);
+        return language == TaiwuLanguage.Chinese
+            ? ChineseTranslations.GetValueOrDefault(english, english)
+            : english;
+    }
+}

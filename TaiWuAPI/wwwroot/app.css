@@ -95,6 +95,40 @@ a {
     backdrop-filter: blur(14px);
 }
 
+.header-actions,
+.language-switcher {
+    display: flex;
+    align-items: center;
+}
+
+.header-actions {
+    gap: 14px;
+}
+
+.language-switcher {
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(21, 38, 38, 0.8);
+}
+
+.language-switcher button {
+    min-width: 38px;
+    min-height: 30px;
+    padding: 3px 9px;
+    border: 0;
+    border-radius: 999px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.language-switcher button.active {
+    color: #151612;
+    background: var(--gold);
+}
+
 .brand {
     display: inline-flex;
     gap: 12px;
@@ -1384,6 +1418,10 @@ select {
 
     .information-badge {
         font-size: 0.65rem;
+    }
+
+    .header-actions > .information-badge {
+        display: none;
     }
 
     .control-panel,

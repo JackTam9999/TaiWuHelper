@@ -5,6 +5,7 @@ using NSubstitute;
 using System.Reflection;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
@@ -36,7 +37,8 @@ public sealed class CombatRecommendationsControllerTests
             new CombatRecommendationApiRequest
             {
                 TargetCharacterId = 16317,
-                Objective = RecommendationPolicy.Aggressive
+                Objective = RecommendationPolicy.Aggressive,
+                Language = TaiwuLanguage.Chinese
             },
             cancellationToken);
 
@@ -94,7 +96,8 @@ public sealed class CombatRecommendationsControllerTests
             Arg.Is<CombatSnapshotReadRequest>(request =>
                 request != null
                 && request.SaveFilePath == ConfiguredSavePath
-                && request.TargetCharacterId == 16317),
+                && request.TargetCharacterId == 16317
+                && request.Language == TaiwuLanguage.Chinese),
             cancellationToken);
     }
 

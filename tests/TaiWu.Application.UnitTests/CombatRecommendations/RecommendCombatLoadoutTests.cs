@@ -1,6 +1,7 @@
 using NSubstitute;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
@@ -24,7 +25,8 @@ public sealed class RecommendCombatLoadoutTests
             snapshot.Metadata.SavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Safe,
-            observation);
+            observation,
+            TaiwuLanguage.Chinese);
         var cancellationToken = TestContext.Current.CancellationToken;
         reader.ReadAsync(
                 Arg.Any<CombatSnapshotReadRequest>(),
@@ -63,6 +65,7 @@ public sealed class RecommendCombatLoadoutTests
                 value != null
                 && value.SaveFilePath == request.SaveFilePath
                 && value.TargetCharacterId == request.TargetCharacterId
+                && value.Language == TaiwuLanguage.Chinese
                 && value.CurrentLoadoutObservation == observation),
             cancellationToken);
     }

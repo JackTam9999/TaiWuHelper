@@ -10,7 +10,9 @@ public sealed class FindTargets(ITargetLookupReader reader) : IFindTargets
         cancellationToken.ThrowIfCancellationRequested();
 
         var snapshot = await reader.ReadAsync(
-            new TargetLookupReadRequest(request.SaveFilePath),
+            new TargetLookupReadRequest(
+                request.SaveFilePath,
+                request.Language),
             cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using System.Reflection;
+using TaiWu.Application.Localization;
 using TaiWu.Application.Targets;
 using TaiWuAPI.Configuration;
 using TaiWuAPI.Contracts.Targets;
@@ -26,7 +27,8 @@ public sealed class TargetsControllerTests
         var action = await controller.Find(
             "何",
             maxResults: 25,
-            cancellationToken);
+            cancellationToken,
+            TaiwuLanguage.Chinese);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
         var response = Assert.IsType<TargetLookupResponse>(ok.Value);
@@ -49,7 +51,8 @@ public sealed class TargetsControllerTests
         await reader.Received(1).ReadAsync(
             Arg.Is<TargetLookupReadRequest>(request =>
                 request != null
-                && request.SaveFilePath == ConfiguredSavePath),
+                && request.SaveFilePath == ConfiguredSavePath
+                && request.Language == TaiwuLanguage.Chinese),
             cancellationToken);
     }
 

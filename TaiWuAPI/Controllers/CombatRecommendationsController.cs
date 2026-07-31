@@ -44,7 +44,8 @@ public sealed class CombatRecommendationsController(
                     options.Value.DefaultSaveFilePath,
                     request.TargetCharacterId.Value,
                     request.Objective,
-                    observation),
+                    observation,
+                    request.Language),
                 cancellationToken);
             return Ok(CombatRecommendationResponseMapper.Map(recommendation));
         }

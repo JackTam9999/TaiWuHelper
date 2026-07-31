@@ -7,7 +7,8 @@ using TaiWu.Application.Targets;
 namespace TaiWu.Infrastructure.SaveGames;
 
 internal sealed class TaiwuTargetLookupReader(
-    TaiwuArchiveReadSession readSession) : ITargetLookupReader
+    TaiwuArchiveReadSession readSession,
+    TaiwuGameTextResolver textResolver) : ITargetLookupReader
 {
     public Task<TargetLookupSnapshot> ReadAsync(
         TargetLookupReadRequest request,
@@ -17,12 +18,18 @@ internal sealed class TaiwuTargetLookupReader(
 
         return readSession.ReadAsync(
             request.SaveFilePath,
-            ProjectTargets,
+            (context, token) => ProjectTargets(
+                context,
+                textResolver.CreateContext(
+                    request.SaveFilePath,
+                    request.Language),
+                token),
             cancellationToken);
     }
 
     private static TargetLookupSnapshot ProjectTargets(
         TaiwuArchiveReadContext readContext,
+        TaiwuGameTextContext text,
         CancellationToken cancellationToken)
     {
         List<TargetLookupWarning> warnings = [];
@@ -54,6 +61,7 @@ internal sealed class TaiwuTargetLookupReader(
             TryMapCharacter(
                 characterId,
                 character,
+                text,
                 entries,
                 warnings);
         }
@@ -68,13 +76,13 @@ internal sealed class TaiwuTargetLookupReader(
     private static void TryMapCharacter(
         int characterId,
         Character character,
+        TaiwuGameTextContext text,
         List<TargetLookupEntry> entries,
         List<TargetLookupWarning> warnings)
     {
         try
         {
-            var displayName =
-                character.GetSurname() + character.GetGivenName();
+            var displayName = text.ResolveCharacterName(character);
             if (string.IsNullOrWhiteSpace(displayName))
             {
                 warnings.Add(

@@ -7,26 +7,26 @@
     <div class="skill-card-heading">
         <div>
             <span class="skill-id">#@Skill.SkillId</span>
-            <h4>@(Skill.Name ?? $"Skill {Skill.SkillId}")</h4>
+            <h4>@(Skill.Name ?? $"{T("Skill")} {Skill.SkillId}")</h4>
         </div>
         <span class="change-badge">@ManualStatus()</span>
     </div>
 
     <div class="skill-facts">
         <span>
-            <small>Practice</small>
+            <small>@T("Practice")</small>
             <strong>@DirectionLabel()</strong>
         </span>
         <span>
-            <small>Actual cost</small>
+            <small>@T("Actual cost")</small>
             <strong>@CostLabel(Skill.Cost.ActualCost, Skill.Cost.ActualCostUnavailableReason)</strong>
         </span>
         <span>
-            <small>Effective cost</small>
+            <small>@T("Effective cost")</small>
             <strong>@CostLabel(Skill.Cost.EffectiveCost, Skill.Cost.EffectiveCostUnavailableReason)</strong>
         </span>
         <span>
-            <small>Activation</small>
+            <small>@T("Activation")</small>
             <strong>@TimingLabel()</strong>
         </span>
     </div>
@@ -46,7 +46,7 @@
 
     @if (Skill.Conditions.Count > 0)
     {
-        <div class="condition-list" aria-label="Skill requirements">
+        <div class="condition-list" aria-label="@T("Skill requirements")">
             @foreach (var condition in Skill.Conditions)
             {
                 <span class="@($"condition {condition.Status.ToString().ToLowerInvariant()}")">
@@ -59,7 +59,7 @@
     }
 
     <details class="skill-evidence">
-        <summary>Evidence and linked threats</summary>
+        <summary>@T("Evidence and linked threats")</summary>
         <div>
             @foreach (var reference in Skill.ThreatReferences)
             {
@@ -91,6 +91,9 @@
     [Parameter]
     public bool Highlighted { get; set; }
 
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
     private string ManualStatus()
     {
         var changes = ManualChanges
@@ -100,27 +103,27 @@
         if (changes.Contains(ManualLoadoutChangeKind.Add)
             && changes.Contains(ManualLoadoutChangeKind.ChangeDirection))
         {
-            return "Add · change direction";
+            return T("Add · change direction");
         }
 
         if (changes.Contains(ManualLoadoutChangeKind.ChangeDirection))
         {
-            return "Change direction";
+            return T("Change direction");
         }
 
         if (changes.Contains(ManualLoadoutChangeKind.Add))
         {
-            return "Add manually";
+            return T("Add manually");
         }
 
         if (changes.Contains(ManualLoadoutChangeKind.Retain))
         {
-            return "Keep";
+            return T("Keep");
         }
 
         return Skill.RequiresManualDirectionChange
-            ? "Change direction"
-            : "Recommended";
+            ? T("Change direction")
+            : T("Recommended");
     }
 
     private string DirectionLabel()
@@ -128,40 +131,48 @@
         var direction = Skill.RequiredDirection ?? Skill.CurrentDirection;
         return direction switch
         {
-            PracticeDirection.Direct => "正練 · Direct",
-            PracticeDirection.Reverse => "逆練 · Reverse",
-            PracticeDirection.Neutral => "中性 · Neutral",
-            _ => "Unavailable"
+            PracticeDirection.Direct => Language == TaiwuLanguage.Chinese
+                ? "正練"
+                : "正練 · Direct",
+            PracticeDirection.Reverse => Language == TaiwuLanguage.Chinese
+                ? "逆練"
+                : "逆練 · Reverse",
+            PracticeDirection.Neutral => Language == TaiwuLanguage.Chinese
+                ? "中性"
+                : "中性 · Neutral",
+            _ => T("Unavailable")
         };
     }
 
-    private static string CostLabel(int? value, string? unavailableReason) =>
+    private string CostLabel(int? value, string? unavailableReason) =>
         value?.ToString() ?? (string.IsNullOrWhiteSpace(unavailableReason)
-            ? "Unavailable"
-            : "Unavailable · see warning");
+            ? T("Unavailable")
+            : T("Unavailable · see warning"));
 
     private string TimingLabel()
     {
         return Skill.Counter.ActivationTiming switch
         {
             CombatCounterActivationTiming.CombatStartPassive =>
-                "Combat-start passive",
+                T("Combat-start passive"),
             CombatCounterActivationTiming.EquippedPassive =>
-                "Equipped passive",
-            CombatCounterActivationTiming.ActiveAttack => "Active attack",
-            CombatCounterActivationTiming.ActiveDefense => "Active defense",
-            CombatCounterActivationTiming.ActiveAgility => "Active agility",
-            null => "No counter timing",
+                T("Equipped passive"),
+            CombatCounterActivationTiming.ActiveAttack => T("Active attack"),
+            CombatCounterActivationTiming.ActiveDefense => T("Active defense"),
+            CombatCounterActivationTiming.ActiveAgility => T("Active agility"),
+            null => T("No counter timing"),
             _ => Skill.Counter.ActivationTiming.ToString()!
         };
     }
 
-    private static string ConditionStatusLabel(
+    private string ConditionStatusLabel(
         CombatRequirementStatus status) => status switch
     {
-        CombatRequirementStatus.Satisfied => "Satisfied",
-        CombatRequirementStatus.Unsatisfied => "Not satisfied",
-        CombatRequirementStatus.Unknown => "Unknown",
+        CombatRequirementStatus.Satisfied => T("Satisfied"),
+        CombatRequirementStatus.Unsatisfied => T("Not satisfied"),
+        CombatRequirementStatus.Unknown => T("Unknown"),
         _ => status.ToString()
     };
+
+    private string T(string english) => UiText.Get(Language, english);
 }

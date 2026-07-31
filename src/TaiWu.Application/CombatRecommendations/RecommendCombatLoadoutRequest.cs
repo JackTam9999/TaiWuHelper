@@ -1,3 +1,4 @@
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 
@@ -9,7 +10,8 @@ public sealed record RecommendCombatLoadoutRequest
         string saveFilePath,
         int targetCharacterId,
         RecommendationPolicy policy,
-        PlayerLoadoutObservation? currentLoadoutObservation = null)
+        PlayerLoadoutObservation? currentLoadoutObservation = null,
+        TaiwuLanguage language = TaiwuLanguage.English)
     {
         if (string.IsNullOrWhiteSpace(saveFilePath))
         {
@@ -34,10 +36,19 @@ public sealed record RecommendCombatLoadoutRequest
                 "Unknown recommendation policy.");
         }
 
+        if (!Enum.IsDefined(language))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(language),
+                language,
+                "Unknown Taiwu language.");
+        }
+
         SaveFilePath = saveFilePath.Trim();
         TargetCharacterId = targetCharacterId;
         Policy = policy;
         CurrentLoadoutObservation = currentLoadoutObservation;
+        Language = language;
     }
 
     public string SaveFilePath { get; }
@@ -47,4 +58,6 @@ public sealed record RecommendCombatLoadoutRequest
     public RecommendationPolicy Policy { get; }
 
     public PlayerLoadoutObservation? CurrentLoadoutObservation { get; }
+
+    public TaiwuLanguage Language { get; }
 }

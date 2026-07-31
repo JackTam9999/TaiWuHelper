@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using TaiWu.Application.Localization;
 using TaiWu.Application.Targets;
 using TaiWuAPI.Configuration;
 using TaiWuAPI.Contracts.Targets;
@@ -20,7 +21,8 @@ public sealed class TargetsController(
     public async Task<ActionResult<TargetLookupResponse>> Find(
         [FromQuery] string? query,
         [FromQuery] int maxResults = 25,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        [FromQuery] TaiwuLanguage language = TaiwuLanguage.English)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -35,7 +37,8 @@ public sealed class TargetsController(
                 new FindTargetsRequest(
                     options.Value.DefaultSaveFilePath,
                     query,
-                    maxResults),
+                    maxResults,
+                    language),
                 cancellationToken);
             return Ok(Map(result));
         }

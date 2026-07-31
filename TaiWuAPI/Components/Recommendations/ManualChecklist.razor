@@ -6,26 +6,26 @@
          aria-labelledby="manual-checklist-heading">
     <div class="panel-heading">
         <div>
-            <p class="eyebrow">Manual setup</p>
-            <h3 id="manual-checklist-heading">Setup checklist</h3>
+            <p class="eyebrow">@T("Manual setup")</p>
+            <h3 id="manual-checklist-heading">@T("Setup checklist")</h3>
         </div>
         <div class="recommendation-actions no-print">
             <button type="button" class="text-button" @onclick="CopyAsync">
-                Copy checklist
+                @T("Copy checklist")
             </button>
             <button type="button" class="text-button" @onclick="PrintAsync">
-                Print recommendation
+                @T("Print recommendation")
             </button>
         </div>
     </div>
 
     <p class="manual-boundary">
-        Instructions only: TaiWu Helper cannot perform these steps.
+        @T("Instructions only: TaiWu Helper cannot perform these steps.")
     </p>
 
     @if (Items.Count == 0)
     {
-        <p class="empty-category">No manual setup differences were produced.</p>
+        <p class="empty-category">@T("No manual setup differences were produced.")</p>
     }
     else
     {
@@ -43,7 +43,7 @@
                         </span>
                     </label>
                     <details>
-                        <summary>Reason and evidence</summary>
+                        <summary>@T("Reason and evidence")</summary>
                         @if (item.ReasonReference is not null)
                         {
                             <code>@item.ReasonReference</code>
@@ -71,6 +71,9 @@
     [Parameter, EditorRequired]
     public IReadOnlyList<ManualChecklistItemViewModel> Items { get; set; } = [];
 
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
     protected override void OnParametersSet()
     {
         _state.Synchronize(Items);
@@ -87,14 +90,14 @@
             Environment.NewLine,
             new[]
             {
-                "TaiWu Helper recommendation — information only",
-                "TaiWu Helper cannot perform these steps.",
+                T("TaiWu Helper recommendation — information only"),
+                T("TaiWu Helper cannot perform these steps."),
                 string.Empty
             }.Concat(
                 Items.Select((item, index) =>
                     $"{index + 1}. {item.Instruction}")));
         await JavaScript.InvokeVoidAsync("taiwuHelper.copyText", text);
-        _copyStatus = "Recommendation checklist copied.";
+        _copyStatus = T("Recommendation checklist copied.");
     }
 
     private async Task PrintAsync()
@@ -102,16 +105,18 @@
         await JavaScript.InvokeVoidAsync("taiwuHelper.printRecommendation");
     }
 
-    private static string ItemLabel(
+    private string ItemLabel(
         ManualChecklistItemKind kind) => kind switch
     {
-        ManualChecklistItemKind.RemoveSkill => "Remove",
-        ManualChecklistItemKind.AddSkill => "Add",
-        ManualChecklistItemKind.RetainSkill => "Keep",
-        ManualChecklistItemKind.ChangeDirection => "Direction",
+        ManualChecklistItemKind.RemoveSkill => T("Remove"),
+        ManualChecklistItemKind.AddSkill => T("Add"),
+        ManualChecklistItemKind.RetainSkill => T("Keep"),
+        ManualChecklistItemKind.ChangeDirection => T("Direction"),
         ManualChecklistItemKind.AllocateGenericSlots => "萬用",
-        ManualChecklistItemKind.ConfirmWeapon => "Weapon",
-        ManualChecklistItemKind.ConfirmResource => "Resource",
+        ManualChecklistItemKind.ConfirmWeapon => T("Weapon"),
+        ManualChecklistItemKind.ConfirmResource => T("Resource"),
         _ => kind.ToString()
     };
+
+    private string T(string english) => UiText.Get(Language, english);
 }

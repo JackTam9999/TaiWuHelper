@@ -4,15 +4,15 @@
 <section class="threat-panel" aria-labelledby="target-threats-heading">
     <div class="panel-heading">
         <div>
-            <p class="eyebrow">Target analysis</p>
-            <h3 id="target-threats-heading">Target threats</h3>
+            <p class="eyebrow">@T("Target analysis")</p>
+            <h3 id="target-threats-heading">@T("Target threats")</h3>
         </div>
         @if (SelectedReference is not null)
         {
             <button type="button"
                     class="text-button"
                     @onclick="() => SelectedReferenceChanged.InvokeAsync(null)">
-                Clear focus
+                @T("Clear focus")
             </button>
         }
     </div>
@@ -36,7 +36,7 @@
                     <span>@threat.Explanation</span>
                     <small>
                         @TimingLabel(threat.ActivationTiming) ·
-                        @threat.EvidenceReferences.Count evidence source(s)
+                        @threat.EvidenceReferences.Count @T("evidence source(s)")
                     </small>
                 </button>
             }
@@ -44,7 +44,7 @@
     }
 
     <p class="panel-hint">
-        Select a threat to highlight the skills and plan steps that address it.
+        @T("Select a threat to highlight the skills and plan steps that address it.")
     </p>
 </section>
 
@@ -58,26 +58,32 @@
     [Parameter]
     public EventCallback<string?> SelectedReferenceChanged { get; set; }
 
-    private static string SeverityLabel(
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string SeverityLabel(
         TargetThreatSeverity severity) => severity switch
     {
-        TargetThreatSeverity.Critical => "Critical",
-        TargetThreatSeverity.High => "High",
-        TargetThreatSeverity.Moderate => "Moderate",
-        TargetThreatSeverity.Informational => "Information",
+        TargetThreatSeverity.Critical => T("Critical"),
+        TargetThreatSeverity.High => T("High"),
+        TargetThreatSeverity.Moderate => T("Moderate"),
+        TargetThreatSeverity.Informational => T("Information only"),
         _ => severity.ToString()
     };
 
-    private static string TimingLabel(
+    private string TimingLabel(
         TargetThreatActivationTiming timing) => timing switch
     {
-        TargetThreatActivationTiming.CombatStart => "At combat start",
-        TargetThreatActivationTiming.Always => "Always active",
-        TargetThreatActivationTiming.OnSkillUse => "On skill use",
-        TargetThreatActivationTiming.OnHit => "On hit",
-        TargetThreatActivationTiming.OnMarkApplied => "When a mark is applied",
-        TargetThreatActivationTiming.Threshold => "At mark threshold",
-        TargetThreatActivationTiming.Unknown => "Timing unavailable",
+        TargetThreatActivationTiming.CombatStart => T("At combat start"),
+        TargetThreatActivationTiming.Always => T("Always active"),
+        TargetThreatActivationTiming.OnSkillUse => T("On skill use"),
+        TargetThreatActivationTiming.OnHit => T("On hit"),
+        TargetThreatActivationTiming.OnMarkApplied =>
+            T("When a mark is applied"),
+        TargetThreatActivationTiming.Threshold => T("At mark threshold"),
+        TargetThreatActivationTiming.Unknown => T("Timing unavailable"),
         _ => timing.ToString()
     };
+
+    private string T(string english) => UiText.Get(Language, english);
 }

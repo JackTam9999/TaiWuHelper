@@ -4,14 +4,14 @@
     <div class="category-heading">
         <div>
             <h3 id="@HeadingId">@Category.DisplayName</h3>
-            <small>@Category.Category</small>
+            <small>@CategoryLabel()</small>
         </div>
         <CapacityBar Category="Category" />
     </div>
 
     @if (Category.Skills.Count == 0)
     {
-        <p class="empty-category">No skill selected in this category.</p>
+        <p class="empty-category">@T("No skill selected in this category.")</p>
     }
     else
     {
@@ -35,6 +35,15 @@
 
     [Parameter]
     public string? SelectedThreatReference { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private string CategoryLabel() => Language == TaiwuLanguage.Chinese
+        ? Category.DisplayName
+        : Category.Category.ToString();
 
     private string HeadingId =>
         $"loadout-category-{Category.Category.ToString().ToLowerInvariant()}";

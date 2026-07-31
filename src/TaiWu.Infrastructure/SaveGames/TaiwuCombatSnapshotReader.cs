@@ -11,7 +11,8 @@ using TaiWu.Domain.CombatSnapshots;
 namespace TaiWu.Infrastructure.SaveGames;
 
 internal sealed class TaiwuCombatSnapshotReader(
-    TaiwuArchiveReadSession readSession) : ICombatSnapshotReader
+    TaiwuArchiveReadSession readSession,
+    TaiwuGameTextResolver textResolver) : ICombatSnapshotReader
 {
     public Task<CombatSnapshot> ReadAsync(
         CombatSnapshotReadRequest request,
@@ -26,6 +27,9 @@ internal sealed class TaiwuCombatSnapshotReader(
                 var snapshot = ProjectSnapshot(
                     context,
                     request.TargetCharacterId,
+                    textResolver.CreateContext(
+                        request.SaveFilePath,
+                        request.Language),
                     token);
                 return request.CurrentLoadoutObservation is null
                     ? snapshot
@@ -39,6 +43,7 @@ internal sealed class TaiwuCombatSnapshotReader(
     private static CombatSnapshot ProjectSnapshot(
         TaiwuArchiveReadContext readContext,
         int targetCharacterId,
+        TaiwuGameTextContext text,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -81,11 +86,12 @@ internal sealed class TaiwuCombatSnapshotReader(
                 + "in the save.");
         }
 
-        var player = MapPlayer(taiwuId, taiwu, warnings);
+        var player = MapPlayer(taiwuId, taiwu, text, warnings);
         cancellationToken.ThrowIfCancellationRequested();
         var targetSnapshot = MapTarget(
             targetCharacterId,
             target,
+            text,
             warnings);
 
         return new CombatSnapshot(
@@ -104,11 +110,12 @@ internal sealed class TaiwuCombatSnapshotReader(
     private static PlayerCombatSnapshot MapPlayer(
         int characterId,
         Character character,
+        TaiwuGameTextContext text,
         List<SnapshotWarning> warnings)
     {
         var equipment = character.GetCombatSkillEquipment();
         var loadout = MapLoadout(equipment);
-        var learnedSkills = MapPlayerSkills(characterId, warnings);
+        var learnedSkills = MapPlayerSkills(characterId, text, warnings);
         var learnedById = learnedSkills.ToDictionary(skill => skill.SkillId);
         var legendaryBookCosts = MapLegendaryBookCosts(
             learnedById,
@@ -121,10 +128,10 @@ internal sealed class TaiwuCombatSnapshotReader(
 
         return new PlayerCombatSnapshot(
             characterId,
-            MapDisplayName(character),
+            MapDisplayName(character, text),
             learnedSkills,
             loadout,
-            MapEquipment(character.GetEquipment()),
+            MapEquipment(character.GetEquipment(), text),
             MapSlotBudgets(
                 loadout,
                 learnedById,
@@ -137,6 +144,7 @@ internal sealed class TaiwuCombatSnapshotReader(
     private static TargetCombatSnapshot MapTarget(
         int characterId,
         Character character,
+        TaiwuGameTextContext text,
         List<SnapshotWarning> warnings)
     {
         var equipment = character.GetCombatSkillEquipment();
@@ -164,19 +172,21 @@ internal sealed class TaiwuCombatSnapshotReader(
 
         return new TargetCombatSnapshot(
             characterId,
-            MapDisplayName(character),
+            MapDisplayName(character, text),
             SnapshotValue<int>.Available(character.GetCurrAge()),
-            MapFeatures(character),
+            MapFeatures(character, text),
             MapTargetSkills(
                 characterId,
                 equippedSkillIds,
+                text,
                 warnings),
             equippedSkills,
-            MapEquipment(character.GetEquipment()));
+            MapEquipment(character.GetEquipment(), text));
     }
 
     private static List<CombatSkillSnapshot> MapPlayerSkills(
         int characterId,
+        TaiwuGameTextContext text,
         List<SnapshotWarning> warnings)
     {
         var sourceSkills =
@@ -189,6 +199,7 @@ internal sealed class TaiwuCombatSnapshotReader(
                 characterId,
                 skillId,
                 skill,
+                text,
                 warnings);
             if (mapped is not null)
             {
@@ -202,6 +213,7 @@ internal sealed class TaiwuCombatSnapshotReader(
     private static List<CombatSkillSnapshot> MapTargetSkills(
         int characterId,
         HashSet<short> equippedSkillIds,
+        TaiwuGameTextContext text,
         List<SnapshotWarning> warnings)
     {
         var sourceSkills =
@@ -224,6 +236,7 @@ internal sealed class TaiwuCombatSnapshotReader(
                 characterId,
                 skillId,
                 skill,
+                text,
                 warnings);
             if (mapped is not null)
             {
@@ -238,6 +251,7 @@ internal sealed class TaiwuCombatSnapshotReader(
         int characterId,
         short skillId,
         CombatSkill skill,
+        TaiwuGameTextContext text,
         List<SnapshotWarning> warnings)
     {
         var item = skill.Template;
@@ -281,7 +295,9 @@ internal sealed class TaiwuCombatSnapshotReader(
 
         return new CombatSkillSnapshot(
             skillId,
-            MapText(item.Name, $"Skill {skillId} has no configured name."),
+            MapText(
+                text.Resolve("CombatSkill", item.Name),
+                $"Skill {skillId} has no configured name."),
             category,
             item.GridCost > 0
                 ? SnapshotValue<int>.Available(item.GridCost)
@@ -411,7 +427,8 @@ internal sealed class TaiwuCombatSnapshotReader(
     }
 
     private static List<CharacterFeatureSnapshot> MapFeatures(
-        Character character)
+        Character character,
+        TaiwuGameTextContext text)
     {
         List<CharacterFeatureSnapshot> result = [];
         foreach (var featureId in character.GetFeatureIds().Distinct())
@@ -424,7 +441,7 @@ internal sealed class TaiwuCombatSnapshotReader(
                         ? SnapshotValue<string>.Unavailable(
                             $"Feature {featureId} is missing from configuration.")
                         : MapText(
-                            feature.Name,
+                            text.Resolve("CharacterFeature", feature.Name),
                             $"Feature {featureId} has no configured name."),
                     feature is null || feature.Level < 0
                         ? SnapshotValue<int>.Unavailable(
@@ -435,7 +452,9 @@ internal sealed class TaiwuCombatSnapshotReader(
         return result;
     }
 
-    private static List<EquipmentSnapshot> MapEquipment(ItemKey[] equipment)
+    private static List<EquipmentSnapshot> MapEquipment(
+        ItemKey[] equipment,
+        TaiwuGameTextContext text)
     {
         List<EquipmentSnapshot> result = [];
         for (var slotIndex = 0;
@@ -459,7 +478,7 @@ internal sealed class TaiwuCombatSnapshotReader(
                         ? SnapshotValue<int>.Available(item.TemplateId)
                         : SnapshotValue<int>.Unavailable(
                             "The equipped item has no template ID."),
-                    MapEquipmentName(item),
+                    MapEquipmentName(item, text),
                     SnapshotValue<EquipmentKind>.Available(
                         CombatSnapshotMapping.MapEquipmentKind(
                             item.ItemType))));
@@ -468,7 +487,9 @@ internal sealed class TaiwuCombatSnapshotReader(
         return result;
     }
 
-    private static SnapshotValue<string> MapEquipmentName(ItemKey item)
+    private static SnapshotValue<string> MapEquipmentName(
+        ItemKey item,
+        TaiwuGameTextContext text)
     {
         if (item.ItemType != ItemType.Weapon)
         {
@@ -479,7 +500,7 @@ internal sealed class TaiwuCombatSnapshotReader(
 
         var name = Config.Weapon.Instance.GetItem(item.TemplateId)?.Name;
         return MapText(
-            name,
+            text.Resolve("Weapon", name),
             $"Weapon template {item.TemplateId} has no configured name.");
     }
 
@@ -569,10 +590,12 @@ internal sealed class TaiwuCombatSnapshotReader(
         return new LegendaryBookCostState(slots, assignments);
     }
 
-    private static SnapshotValue<string> MapDisplayName(Character character)
+    private static SnapshotValue<string> MapDisplayName(
+        Character character,
+        TaiwuGameTextContext text)
     {
         return MapText(
-            character.GetSurname() + character.GetGivenName(),
+            text.ResolveCharacterName(character),
             "The character name was unavailable in the standalone runtime.");
     }
 

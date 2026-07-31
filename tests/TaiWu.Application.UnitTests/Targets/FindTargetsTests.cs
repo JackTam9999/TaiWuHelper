@@ -1,5 +1,6 @@
 using NSubstitute;
 using TaiWu.Application.GameData;
+using TaiWu.Application.Localization;
 using TaiWu.Application.Targets;
 using Xunit;
 
@@ -15,7 +16,10 @@ public sealed class FindTargetsTests
         var cancellationToken = TestContext.Current.CancellationToken;
 
         var result = await useCase.ExecuteAsync(
-            new FindTargetsRequest("local.sav", "16317"),
+            new FindTargetsRequest(
+                "local.sav",
+                "16317",
+                language: TaiwuLanguage.Chinese),
             cancellationToken);
 
         Assert.Equal(TargetLookupStatus.Found, result.Status);
@@ -24,7 +28,8 @@ public sealed class FindTargetsTests
         await reader.Received(1).ReadAsync(
             Arg.Is<TargetLookupReadRequest>(request =>
                 request != null
-                && request.SaveFilePath == "local.sav"),
+                && request.SaveFilePath == "local.sav"
+                && request.Language == TaiwuLanguage.Chinese),
             cancellationToken);
     }
 

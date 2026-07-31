@@ -19,7 +19,8 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
         var snapshotRequest = new CombatSnapshotReadRequest(
             request.SaveFilePath,
             request.TargetCharacterId,
-            request.CurrentLoadoutObservation);
+            request.CurrentLoadoutObservation,
+            request.Language);
         var snapshot = await reader.ReadAsync(
             snapshotRequest,
             cancellationToken).ConfigureAwait(false);

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 
@@ -12,6 +13,9 @@ public sealed class CombatRecommendationApiRequest
 
     public RecommendationPolicy Objective { get; init; } =
         RecommendationPolicy.Balanced;
+
+    public TaiwuLanguage Language { get; init; } =
+        TaiwuLanguage.English;
 
     public CurrentScreenLoadoutRequest? CurrentScreenObservation
     {

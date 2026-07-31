@@ -7,11 +7,13 @@ using NSubstitute;
 using System.Net;
 using System.Text.RegularExpressions;
 using TaiWu.Application.Targets;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWuAPI.Components.Layout;
 using TaiWuAPI.Components.Recommendations;
+using TaiWuAPI.Localization;
 using TaiWuAPI.Presentation;
 using Xunit;
 
@@ -221,6 +223,30 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("Information only", text);
         Assert.Contains("Recommendation body", text);
         Assert.Contains("Skip to main content", text);
+        Assert.Contains("EN", text);
+        Assert.Contains("中", text);
+    }
+
+    [Fact]
+    public async Task Layout_renders_chinese_when_language_is_selected()
+    {
+        RenderFragment body = builder =>
+            builder.AddContent(0, "推薦內容");
+
+        var html = await RenderAsync<MainLayout>(
+            new Dictionary<string, object?>
+            {
+                [nameof(MainLayout.Body)] = body
+            },
+            TaiwuLanguage.Chinese);
+        var text = VisibleText(html);
+
+        Assert.Contains("僅供參考", text);
+        Assert.Contains("戰前簡報", text);
+        Assert.Contains("跳至主要內容", text);
+        Assert.Contains("推薦內容", text);
+        Assert.Contains("lang=\"zh-Hans\"", html);
+        Assert.Contains("class=\"active\"", html);
     }
 
     private static RecommendationPageState State(string scenario) =>
@@ -248,12 +274,16 @@ public sealed partial class RecommendationComponentRenderingTests
         };
 
     private static async Task<string> RenderAsync<TComponent>(
-        Dictionary<string, object?> parameters)
+        Dictionary<string, object?> parameters,
+        TaiwuLanguage language = TaiwuLanguage.English)
         where TComponent : IComponent
     {
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddLogging();
         serviceCollection.AddSingleton(Substitute.For<IJSRuntime>());
+        var languageState = new TaiwuLanguageState();
+        languageState.Set(language);
+        serviceCollection.AddSingleton(languageState);
         using var services = serviceCollection.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(
             services,
