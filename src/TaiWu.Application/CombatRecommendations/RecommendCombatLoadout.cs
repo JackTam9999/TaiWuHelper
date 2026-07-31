@@ -113,7 +113,8 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
             .. counterRules.Select(rule =>
                 CombatLoadoutOption.FromCounterRule(
                     rule,
-                    currentSkillIds.Contains(rule.Effect.SkillId))),
+                    currentSkillIds.Contains(rule.Effect.SkillId),
+                    allowBreakthrough: true)),
             .. currentSkillIds
                 .Except(counterSkillIds)
                 .Order()

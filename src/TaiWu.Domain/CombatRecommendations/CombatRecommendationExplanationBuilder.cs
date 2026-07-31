@@ -126,6 +126,7 @@ public static class CombatRecommendationExplanationBuilder
                 skill.Direction,
                 option.Candidate.RequiredDirection,
                 validation.RequiredDirectionChange.HasValue,
+                validation.RequiredBreakthroughDirection.HasValue,
                 option.ExpectedEffectId,
                 option.EvidenceReference),
             new SkillCostExplanation(

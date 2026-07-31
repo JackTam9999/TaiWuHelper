@@ -90,13 +90,19 @@ public static class CombatSkillCandidateValidator
 
         if (!skill.Direction.IsAvailable)
         {
-            rejections.Add(
-                Reject(
-                    CombatSkillCandidateRejectionCode
-                        .DirectionStatusUnavailable,
-                    $"Skill {skill.SkillId} requires {requiredDirection}, "
-                    + "but its practice direction is unavailable: "
-                    + skill.Direction.UnavailableReason));
+            if (!CanCompleteBreakthroughAs(
+                    candidate,
+                    skill,
+                    requiredDirection))
+            {
+                rejections.Add(
+                    Reject(
+                        CombatSkillCandidateRejectionCode
+                            .DirectionStatusUnavailable,
+                        BreakthroughRejectionReason(
+                            skill,
+                            requiredDirection)));
+            }
         }
         else if (skill.Direction.Value == PracticeDirection.Neutral)
         {
@@ -127,6 +133,48 @@ public static class CombatSkillCandidateValidator
             skill,
             requiredDirection,
             rejections);
+    }
+
+    private static bool CanCompleteBreakthroughAs(
+        CombatSkillCandidate candidate,
+        CombatSkillSnapshot skill,
+        PracticeDirection requiredDirection)
+    {
+        return candidate.AllowBreakthrough
+            && skill.BreakthroughDirections.IsAvailable
+            && skill.BreakthroughDirections.Value.Includes(
+                requiredDirection);
+    }
+
+    private static string BreakthroughRejectionReason(
+        CombatSkillSnapshot skill,
+        PracticeDirection requiredDirection)
+    {
+        if (!skill.BreakthroughDirections.IsAvailable)
+        {
+            return $"Skill {skill.SkillId} requires {requiredDirection}, "
+                + "but its practice direction is unavailable: "
+                + skill.Direction.UnavailableReason;
+        }
+
+        var availability = skill.BreakthroughDirections.Value;
+        if (!availability.IsBrokenOut
+            && availability.CanBreakthroughNow)
+        {
+            return $"Skill {skill.SkillId} requires {requiredDirection}, "
+                + "but its immediately available breakthrough cannot "
+                + $"produce {requiredDirection}.";
+        }
+
+        if (!availability.IsBrokenOut)
+        {
+            return $"Skill {skill.SkillId} requires {requiredDirection}, "
+                + "but it has not completed breakthrough and cannot "
+                + "break through now.";
+        }
+
+        return $"Skill {skill.SkillId} requires {requiredDirection}, but "
+            + "its active practice direction is unavailable.";
     }
 
     private static void ValidateDirectionEffect(

@@ -219,6 +219,36 @@ public sealed partial class RecommendationComponentRenderingTests
     }
 
     [Fact]
+    public async Task Checklist_renders_breakthrough_as_required_manual_step()
+    {
+        var item = new ManualChecklistItemViewModel(
+            "checklist:breakthrough:686",
+            ManualChecklistItemKind.CompleteBreakthrough,
+            "老君拂塵功",
+            "Complete 老君拂塵功's breakthrough as 逆練 (Reverse) before "
+            + "combat.",
+            "Complete breakthrough manually as Reverse before using this "
+            + "recommendation; only then is the verified effect active.",
+            "reason:breakthrough",
+            ["evidence:breakthrough"]);
+
+        var html = await RenderAsync<ManualChecklist>(
+            new Dictionary<string, object?>
+            {
+                [nameof(ManualChecklist.Items)] =
+                    new ManualChecklistItemViewModel[] { item }
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("Breakthrough", text);
+        Assert.Contains(
+            "Complete 老君拂塵功's breakthrough as 逆練 (Reverse)",
+            text);
+        Assert.DoesNotContain("686", text);
+        Assert.DoesNotContain("evidence:", text);
+    }
+
+    [Fact]
     public async Task Battle_plan_renders_distinct_named_actions_without_ids()
     {
         var phases = new BattlePlanPhaseViewModel[]

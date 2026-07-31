@@ -76,7 +76,8 @@ public sealed record RecommendedSkillViewModel(
     SkillCounterViewModel Counter,
     IReadOnlyList<string> ThreatReferences,
     IReadOnlyList<SkillConditionViewModel> Conditions,
-    IReadOnlyList<RecommendationReasonViewModel> Reasons);
+    IReadOnlyList<RecommendationReasonViewModel> Reasons,
+    bool RequiresBreakthrough = false);
 
 public sealed record SkillCostViewModel(
     int? ActualCost,

@@ -78,6 +78,9 @@ exports.
 - Warning and caveat headings are human-readable; raw warning codes are not
   rendered.
 - Unknown values remain unknown and are never replaced with guessed values.
+- A future state that the player can achieve manually, such as an immediately
+  available breakthrough, is labelled as a required step and is never shown
+  as an already-active direction or effect.
 - Expected and unexpected failures use safe presentation messages. Raw
   exceptions, paths, stack traces, IDs, and third-party diagnostic text are
   logged where appropriate, not displayed to the player.

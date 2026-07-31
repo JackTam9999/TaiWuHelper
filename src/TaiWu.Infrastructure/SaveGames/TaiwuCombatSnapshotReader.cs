@@ -290,11 +290,19 @@ internal sealed class TaiwuCombatSnapshotReader(
                     + exception.Message));
         }
 
+        var readingState = skill.GetReadingState();
         var activationState = skill.GetActivationState();
+        var isBrokenOut = CombatSkillStateHelper.IsBrokenOut(activationState);
         var direction = CombatSnapshotMapping.MapPracticeDirection(
             CombatSkillStateHelper.GetCombatSkillDirection(activationState),
-            CombatSkillStateHelper.IsBrokenOut(activationState),
+            isBrokenOut,
             skillId);
+        var breakthroughDirections = CombatSnapshotMapping
+            .MapBreakthroughDirectionAvailability(
+                readingState,
+                isBrokenOut,
+                skill.CanBreakout(),
+                skillId);
         var mastered =
             DomainManager.Extra.IsCombatSkillMasteredByCharacter(
                 characterId,
@@ -314,7 +322,8 @@ internal sealed class TaiwuCombatSnapshotReader(
             direction,
             slotContribution,
             MapEffectId(item.DirectEffectID, "direct", skillId),
-            MapEffectId(item.ReverseEffectID, "reverse", skillId));
+            MapEffectId(item.ReverseEffectID, "reverse", skillId),
+            breakthroughDirections);
     }
 
     private static CombatLoadoutSnapshot MapLoadout(

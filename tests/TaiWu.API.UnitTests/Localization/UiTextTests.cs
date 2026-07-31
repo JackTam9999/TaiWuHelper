@@ -79,6 +79,27 @@ public sealed class UiTextTests
                 "調整正逆練，使本次推薦所使用的已驗證逆練效果生效。"
             },
             {
+                "Complete 老君拂塵功's breakthrough as 逆練 (Reverse) before "
+                + "combat.",
+                "先將老君拂塵功完成逆練突破，再開始戰鬥。"
+            },
+            {
+                "Complete breakthrough manually as Reverse before using this "
+                + "recommendation; only then is the verified effect active.",
+                "先手動完成逆練突破，再使用此推薦；只有完成後，"
+                + "本次推薦所使用的已驗證效果才會生效。"
+            },
+            {
+                "老君拂塵功 requires Reverse, but its immediately available "
+                + "breakthrough cannot produce Reverse.",
+                "老君拂塵功目前可以突破，但無法突破成逆練。"
+            },
+            {
+                "老君拂塵功 requires Reverse, but it has not completed "
+                + "breakthrough and cannot break through now.",
+                "老君拂塵功尚未完成突破，而且目前仍未滿足突破條件。"
+            },
+            {
                 "Allocate 4 萬用 slot(s) to 摧破.",
                 "將 4 個萬用欄位分配至摧破欄。"
             },

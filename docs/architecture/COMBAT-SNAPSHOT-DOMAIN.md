@@ -20,7 +20,8 @@ boundary.
 | `PlayerCombatSnapshot` | Learned skills, equipped loadout, equipment, slot budgets, generic allocation, owned legendary-book cost slots, and current assignments |
 | `TargetCombatSnapshot` | Identity, age, features, learned skills, optionally available equipped loadout, and equipment |
 | `CharacterFeatureSnapshot` | Target feature ID, configured display name, and level |
-| `CombatSkillSnapshot` | Skill identity, category, actual grid cost, mastery, practice direction, slot contribution, and direct/reverse effect IDs |
+| `CombatSkillSnapshot` | Skill identity, category, actual grid cost, mastery, active practice direction, breakthrough-direction availability, slot contribution, and direct/reverse effect IDs |
+| `BreakthroughDirectionAvailability` | Whether breakthrough is complete, whether it can be completed now, and which Direct/Reverse outcomes the currently read pages can produce |
 | `CombatLoadoutSnapshot` | Equipped skill IDs separated into all five skill categories |
 
 All collection inputs are copied into `ImmutableArray<T>`. Later caller
@@ -41,9 +42,11 @@ mutation cannot change a constructed snapshot.
 These are Domain values, not GameData's raw constants. The installed GameData
 contract uses `None=-1`, `Direct=0`, and `Reverse=1`; Infrastructure maps those
 values by name rather than casting between enums. Before breakthrough,
-GameData reports `None`. The snapshot therefore leaves practice direction
-unavailable with an explicit breakthrough reason, so a direction-specific
-effect cannot enter candidate scoring.
+GameData reports `None`. The snapshot therefore leaves the active practice
+direction unavailable with an explicit breakthrough reason. Separately,
+`BreakthroughDirectionAvailability` records whether the currently read pages
+allow an immediate breakthrough and its achievable outcomes. Future or unread
+pages are never assumed.
 
 ### Slot categories
 
@@ -288,8 +291,10 @@ The validator applies these rules:
   `ReverseEffectId`.
 - Neutral means the direct and reverse counts are tied; it activates neither
   direction-specific effect.
-- An incomplete breakthrough leaves direction unavailable and prevents any
-  Direct- or Reverse-specific effect from being recommended.
+- An incomplete breakthrough leaves the active direction unavailable. It can
+  satisfy a direction-specific candidate only when the candidate explicitly
+  permits breakthrough, GameData reports that breakthrough is available now,
+  and the read-page state can produce the exact required direction.
 - Unknown direction, an opposite direction, and unavailable effect data are
   separate rejection reasons.
 
@@ -302,6 +307,12 @@ and a requested Neutral effect remain invalid.
 An accepted mismatch is exposed as `RequiredDirectionChange` in the validation
 result. This is manual recommendation data for later presentation, not a game
 operation.
+
+A candidate may separately opt in to `AllowBreakthrough`. An accepted
+unbroken skill is exposed as `RequiredBreakthroughDirection`; it is not
+reported as a current direction or active combat effect. If the available
+breakthrough produces only the opposite direction, the candidate remains
+rejected.
 
 Expected ineligibility is returned as
 `CombatSkillCandidateRejection`, not thrown as control flow. Each rejection has

@@ -11,7 +11,9 @@ public sealed record CombatSkillSnapshot
         SnapshotValue<PracticeDirection> direction,
         SkillSlotContribution slotContribution,
         SnapshotValue<int> directEffectId,
-        SnapshotValue<int> reverseEffectId)
+        SnapshotValue<int> reverseEffectId,
+        SnapshotValue<BreakthroughDirectionAvailability>?
+            breakthroughDirections = null)
     {
         if (skillId < 0)
         {
@@ -64,6 +66,9 @@ public sealed record CombatSkillSnapshot
         SlotContribution = slotContribution;
         DirectEffectId = directEffectId;
         ReverseEffectId = reverseEffectId;
+        BreakthroughDirections = breakthroughDirections
+            ?? SnapshotValue<BreakthroughDirectionAvailability>.Unavailable(
+                "Breakthrough-direction availability was not captured.");
     }
 
     public int SkillId { get; }
@@ -83,6 +88,10 @@ public sealed record CombatSkillSnapshot
     public SnapshotValue<int> DirectEffectId { get; }
 
     public SnapshotValue<int> ReverseEffectId { get; }
+
+    public SnapshotValue<BreakthroughDirectionAvailability>
+        BreakthroughDirections
+    { get; }
 
     private static void ValidateEffectId(
         SnapshotValue<int> effectId,

@@ -114,7 +114,7 @@ public static class CombatRecommendationResponseMapper
                 ? skill.Direction.CurrentDirection.Value
                 : null,
             skill.Direction.RequiredDirection,
-            skill.Direction.RequiresManualChange,
+            skill.Direction.RequiresManualDirectionChange,
             skill.Cost.EffectiveCost.IsAvailable
                 ? skill.Cost.EffectiveCost.Value
                 : null,
@@ -123,7 +123,8 @@ public static class CombatRecommendationResponseMapper
             [.. skill.Reasons.Select(reason => MapReason(
                     candidateReference,
                     skill.SkillId,
-                    reason))]);
+                    reason))],
+            skill.Direction.RequiresBreakthrough);
     }
 
     private static ManualLoadoutChangeResponse MapChange(

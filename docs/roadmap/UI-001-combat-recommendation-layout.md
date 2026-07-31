@@ -168,7 +168,8 @@ allocation. A skill card displays:
 - Category.
 - Direct, reverse, or neutral practice direction.
 - Actual grid cost and effective cost.
-- Manual-change status: add, retain, or change direction.
+- Manual-change status: add, retain, change direction, or complete an
+  immediately available breakthrough.
 - Countered threats and recommendation reason.
 - Passive, active-defense, or active-agility timing.
 - Weapon, range, stance, breath, Neili, unlock, or other requirements.
@@ -182,6 +183,7 @@ Show an ordered, copyable checklist containing:
 
 - Skills for the player to add manually.
 - Skills for the player to remove manually.
+- Required breakthroughs, ordered before adding the affected skill.
 - Practice-direction changes.
 - Generic-slot allocation.
 - Weapon and Neili checks.

@@ -98,6 +98,65 @@ public sealed class RecommendCombatLoadoutTests
     }
 
     [Fact]
+    public async Task Immediate_breakthrough_is_a_manual_recommendation_step()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var counter = UnbrokenSkill(
+            686,
+            SkillCategory.Assistance,
+            [PracticeDirection.Reverse],
+            directEffectId: 422,
+            reverseEffectId: 1422);
+        var targetSkill = Skill(
+            719,
+            SkillCategory.Attack,
+            PracticeDirection.Direct,
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var snapshot = Snapshot(
+            [counter],
+            [targetSkill],
+            new CombatLoadoutSnapshot([], [], [], [], []),
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                new CombatLoadoutSnapshot(
+                    [],
+                    [targetSkill.SkillId],
+                    [],
+                    [],
+                    [])),
+            warnings: []);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var useCase = new RecommendCombatLoadout(reader);
+
+        var result = await useCase.ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Safe),
+            TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(result.Generation.Candidates);
+        var plan = Assert.IsType<ManualCombatPlan>(result.ManualPlan.Plan);
+        var breakthrough = Assert.Single(
+            plan.LoadoutChanges,
+            change => change.Kind
+                == ManualLoadoutChangeKind.CompleteBreakthrough);
+        Assert.Equal(counter.SkillId, breakthrough.SkillId);
+        Assert.Equal(
+            PracticeDirection.Reverse,
+            breakthrough.RequiredDirection);
+        var explanation = Assert.Single(
+            result.Explanation!.Skills,
+            skill => skill.SkillId == counter.SkillId);
+        Assert.True(explanation.Direction.RequiresBreakthrough);
+        Assert.False(
+            explanation.Direction.RequiresManualDirectionChange);
+    }
+
+    [Fact]
     public async Task Execute_propagates_cancellation_to_snapshot_reader()
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
@@ -300,5 +359,30 @@ public sealed class RecommendCombatLoadoutTests
             SkillSlotContribution.None,
             SnapshotValue<int>.Available(directEffectId),
             SnapshotValue<int>.Available(reverseEffectId));
+    }
+
+    private static CombatSkillSnapshot UnbrokenSkill(
+        int skillId,
+        SkillCategory category,
+        PracticeDirection[] availableDirections,
+        int directEffectId,
+        int reverseEffectId)
+    {
+        return new CombatSkillSnapshot(
+            skillId,
+            SnapshotValue<string>.Available($"Skill {skillId}"),
+            category,
+            SnapshotValue<int>.Available(1),
+            SnapshotValue<bool>.Available(true),
+            SnapshotValue<PracticeDirection>.Unavailable(
+                "The skill has not completed breakthrough."),
+            SkillSlotContribution.None,
+            SnapshotValue<int>.Available(directEffectId),
+            SnapshotValue<int>.Available(reverseEffectId),
+            SnapshotValue<BreakthroughDirectionAvailability>.Available(
+                new BreakthroughDirectionAvailability(
+                    isBrokenOut: false,
+                    canBreakthroughNow: true,
+                    availableDirections)));
     }
 }

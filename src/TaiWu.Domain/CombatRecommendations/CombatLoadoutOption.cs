@@ -120,7 +120,8 @@ public sealed record CombatLoadoutOption
     public static CombatLoadoutOption FromCounterRule(
         CombatCounterRule rule,
         bool isCurrentlyEquipped,
-        bool allowDirectionChange = false)
+        bool allowDirectionChange = false,
+        bool allowBreakthrough = false)
     {
         ArgumentNullException.ThrowIfNull(rule);
 
@@ -128,7 +129,8 @@ public sealed record CombatLoadoutOption
             new CombatSkillCandidate(
                 rule.Effect.SkillId,
                 requiredDirection: rule.RequiredDirection,
-                allowDirectionChange: allowDirectionChange),
+                allowDirectionChange: allowDirectionChange,
+                allowBreakthrough: allowBreakthrough),
             rule.Requirements,
             rule.ThreatCodes,
             isCurrentlyEquipped,

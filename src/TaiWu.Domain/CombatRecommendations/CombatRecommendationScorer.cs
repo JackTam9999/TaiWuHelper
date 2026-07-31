@@ -57,7 +57,7 @@ public static class CombatRecommendationScorer
             Available(
                 RecommendationScoreComponentKind.ExecutionReliability,
                 ReliabilityScore(request.Player, candidate),
-                "Penalizes manual direction changes and active-attack "
+                "Penalizes manual direction preparation and active-attack "
                 + "execution steps.",
                 "domain:candidate-validation"),
             Available(
@@ -160,14 +160,19 @@ public static class CombatRecommendationScorer
         PlayerCombatSnapshot player,
         GeneratedCombatLoadout candidate)
     {
-        var directionChanges = candidate.SelectedOptions.Count(option =>
-            CombatSkillCandidateValidator.Validate(
+        var directionPreparations = candidate.SelectedOptions.Count(option =>
+        {
+            var validation = CombatSkillCandidateValidator.Validate(
                 player,
-                option.Candidate).RequiredDirectionChange.HasValue);
+                option.Candidate);
+            return validation.RequiredDirectionChange.HasValue
+                || validation.RequiredBreakthroughDirection.HasValue;
+        });
         var activeAttacks = candidate.SelectedOptions.Count(option =>
             option.ActivationTiming
             == CombatCounterActivationTiming.ActiveAttack);
-        return Clamp(100 - (directionChanges * 15) - (activeAttacks * 5));
+        return Clamp(
+            100 - (directionPreparations * 15) - (activeAttacks * 5));
     }
 
     private static decimal CompatibilityScore(

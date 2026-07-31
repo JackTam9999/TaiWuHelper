@@ -115,6 +115,26 @@ public static class ManualCombatPlanBuilder
             var validation = CombatSkillCandidateValidator.Validate(
                 player,
                 option.Candidate);
+            if (validation.RequiredBreakthroughDirection.HasValue)
+            {
+                var skillCategory = validation.Skill!.Category;
+                changes.Add(
+                    new ManualLoadoutChange(
+                        ManualLoadoutChangeKind.CompleteBreakthrough,
+                        skillCategory,
+                        option.Candidate.SkillId,
+                        validation.RequiredBreakthroughDirection,
+                        OptionReason(
+                            option,
+                            "COMPLETE_BREAKTHROUGH",
+                            "Complete breakthrough manually as "
+                            + $"{validation.RequiredBreakthroughDirection.Value} "
+                            + "before using this recommendation; only then "
+                            + "is the "
+                            + "verified effect active.")));
+                continue;
+            }
+
             if (!validation.RequiredDirectionChange.HasValue)
             {
                 continue;
@@ -138,11 +158,25 @@ public static class ManualCombatPlanBuilder
         return
         [
             .. changes
-                .OrderBy(change => change.Kind)
+                .OrderBy(change => ChangeOrder(change.Kind))
                 .ThenBy(change => change.Category)
                 .ThenBy(change => change.SkillId)
         ];
     }
+
+    private static int ChangeOrder(ManualLoadoutChangeKind kind) =>
+        kind switch
+        {
+            ManualLoadoutChangeKind.Remove => 0,
+            ManualLoadoutChangeKind.CompleteBreakthrough => 1,
+            ManualLoadoutChangeKind.Add => 2,
+            ManualLoadoutChangeKind.ChangeDirection => 3,
+            ManualLoadoutChangeKind.Retain => 4,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(kind),
+                kind,
+                "Unknown manual loadout change kind.")
+        };
 
     private static CombatRoleRecommendation BuildRoleRecommendation(
         SkillCategory category,

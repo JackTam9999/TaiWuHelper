@@ -6,7 +6,8 @@ public sealed record CombatSkillCandidate
         int skillId,
         bool requiresMastery = false,
         PracticeDirection? requiredDirection = null,
-        bool allowDirectionChange = false)
+        bool allowDirectionChange = false,
+        bool allowBreakthrough = false)
     {
         if (skillId < 0)
         {
@@ -29,6 +30,7 @@ public sealed record CombatSkillCandidate
         RequiresMastery = requiresMastery;
         RequiredDirection = requiredDirection;
         AllowDirectionChange = allowDirectionChange;
+        AllowBreakthrough = allowBreakthrough;
     }
 
     public int SkillId { get; }
@@ -38,4 +40,6 @@ public sealed record CombatSkillCandidate
     public PracticeDirection? RequiredDirection { get; }
 
     public bool AllowDirectionChange { get; }
+
+    public bool AllowBreakthrough { get; }
 }

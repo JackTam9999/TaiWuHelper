@@ -444,8 +444,8 @@ effects.
 
 - `CombatSkillCandidate` records a learned-skill ID plus optional mastery and
   direction-specific-effect requirements. It may explicitly permit a manual
-  direction-change proposal; strict current-direction validation remains the
-  default.
+  direction-change proposal or an immediately available breakthrough;
+  strict current-direction validation remains the default.
 - `CombatSkillCandidateValidator` returns a
   `CombatSkillCandidateValidationResult`; expected rejection never uses an
   exception as control flow.
@@ -459,11 +459,16 @@ effects.
   available.
 - Accepted proposed changes expose `RequiredDirectionChange`; the validator
   never performs that change.
+- Accepted breakthrough prerequisites expose `RequiredBreakthroughDirection`
+  only when GameData reports that breakthrough is available now and the
+  read-page state can produce that exact direction. Potential direction is
+  never reported as an active effect.
 - All independently detectable mastery, direction, and effect failures are
   returned together.
-- Fourteen focused xUnit v3 tests cover accepted Direct, accepted Reverse,
+- Focused xUnit v3 tests cover accepted Direct, accepted Reverse,
   direction-independent Neutral, all rejection states, multiple simultaneous
-  reasons, and invalid candidate construction.
+  reasons, exact-direction breakthrough, wrong-direction breakthrough, and
+  invalid candidate construction.
 - The validator reads and writes no save, game file, process, input, or live
   game state.
 - `dotnet test --no-restore`: 112 tests passed.
@@ -852,7 +857,8 @@ informational instructions for the player to carry out manually.
 
 #### Acceptance criteria
 
-- [x] Manual add, remove, retain, and change-direction suggestions are returned.
+- [x] Manual add, remove, retain, change-direction, and available-breakthrough
+      suggestions are returned.
 - [x] Primary and alternative defense/agility choices are identified.
 - [x] Opening actions and switching conditions are included.
 - [x] Every instruction references its recommendation reason.
@@ -861,9 +867,13 @@ informational instructions for the player to carry out manually.
 
 - `ManualCombatPlanBuilder` compares the selected feasible proposal with the
   current snapshot and returns explicit `Add`, `Remove`, `Retain`, and
-  `ChangeDirection` steps.
+  `ChangeDirection` steps plus `CompleteBreakthrough` when it is an accepted
+  prerequisite.
 - Required direction changes come from accepted candidate validation and state
   the exact Direct or Reverse direction for the player to select manually.
+- Required breakthroughs are placed before the affected add step and state
+  the exact achievable Direct or Reverse outcome. They never imply that the
+  helper completed or wrote the breakthrough.
 - The highest-ranked active defense and agility are returned as primary
   choices. Up to three distinct choices from lower-ranked feasible candidates
   are retained as alternatives.
@@ -1594,6 +1604,10 @@ game during verification.
   activate its Reverse effect and exposed a direction-mapping defect: GameData
   uses `-1 = None`, `0 = Direct`, and `1 = Reverse`, which does not match the
   Domain enum's numeric order.
+- Immediately achievable breakthrough directions are now mapped separately
+  from active direction. A counter may use one only with an explicit mandatory
+  `CompleteBreakthrough` step. The current 老君拂塵功 pages can produce Direct
+  only, so it remains ineligible for the required Reverse counter.
 - The disk snapshot is older than the latest in-game outer-skill layout, so no
   candidate is accepted as manually verified yet.
 - The complete local-only current-screen evidence was resolved to stable skill
@@ -1611,11 +1625,12 @@ game during verification.
   The supplied detail screens confirm configured Reverse descriptions, but do
   not prove current access to those directions.
 - The remaining acceptance work is deliberately manual and battle-only:
-  first generate a corrected loadout without unavailable Reverse effects, then
-  activate any selected counter with its required weapon and verify that the
-  plan controls the documented target pressure.
+  first generate a corrected loadout without unavailable Reverse effects (or
+  with an explicit achievable breakthrough prerequisite), then activate any
+  selected counter with its required weapon and verify that the plan controls
+  the documented target pressure.
 - `dotnet format TaiWu.slnx --no-restore --verify-no-changes` passed.
-- Default tests: 306 discovered, 305 passed, and the opt-in local read skipped.
+- Default tests: 393 discovered, 392 passed, and the opt-in local read skipped.
 - Opt-in local integration tests: 2 discovered and 2 passed.
 - A post-run read-only inspection confirmed the source save was unchanged.
 

@@ -169,7 +169,9 @@ endpoint but is not used as the recommendation engine's internal contract.
 Validate at least:
 
 - The player owns every recommended skill.
-- The required direct or reverse direction is available.
+- The required direct or reverse direction is active, or the same exact
+  direction is immediately achievable through a verified manual breakthrough
+  prerequisite.
 - Neutral direction is not treated as either direction-specific effect.
 - Effective cost is calculated from actual `GridCost`.
 - Mastery reduction applies only when mastery is confirmed.
@@ -223,7 +225,8 @@ The response must include:
 - Direction and effective cost for every skill.
 - Used and available capacity for every category.
 - Generic-slot allocation.
-- Skills the player could manually add, remove, retain, or change direction.
+- Skills the player could manually add, remove, retain, change direction, or
+  complete an immediately available breakthrough for.
 - Primary active defense and agility choices.
 - Alternative or switchable skills.
 - Suggested opening and combat sequence.
@@ -356,8 +359,9 @@ relationships without parsing explanation text.
 - [ ] All category and generic-slot totals are valid.
 - [ ] Weapon and combat conditions are disclosed.
 - [ ] The response identifies primary, alternative, and switchable skills.
-- [ ] Exact manual add, remove, retain, and direction-change suggestions are
-      returned for the player to perform.
+- [ ] Exact manual add, remove, retain, direction-change, and verified
+      breakthrough-prerequisite suggestions are returned for the player to
+      perform.
 - [ ] A practical opening and battle sequence is included.
 - [ ] Safe, balanced, and aggressive results are deterministic for the same
       snapshot and request.

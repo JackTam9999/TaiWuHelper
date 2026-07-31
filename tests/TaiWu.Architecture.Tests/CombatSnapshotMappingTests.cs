@@ -76,6 +76,57 @@ public sealed class CombatSnapshotMappingTests
         Assert.Equal(PracticeDirection.Reverse, direction.Value);
     }
 
+    [Fact]
+    public void Reading_pages_map_immediate_direct_breakthrough_only()
+    {
+        var availability = CombatSnapshotMapping
+            .MapBreakthroughDirectionAvailability(
+                readingState: 9928,
+                isBrokenOut: false,
+                canBreakthroughNow: true,
+                skillId: 686);
+
+        Assert.True(availability.IsAvailable);
+        Assert.True(availability.Value.CanBreakthroughNow);
+        Assert.Equal(
+            [PracticeDirection.Direct],
+            availability.Value.AvailableDirections);
+    }
+
+    [Fact]
+    public void Flexible_reading_pages_map_both_breakthrough_directions()
+    {
+        const int outlineAndAllNormalPages =
+            1 | (31 << 5) | (31 << 10);
+
+        var availability = CombatSnapshotMapping
+            .MapBreakthroughDirectionAvailability(
+                outlineAndAllNormalPages,
+                isBrokenOut: false,
+                canBreakthroughNow: true,
+                skillId: 100);
+
+        Assert.True(availability.IsAvailable);
+        Assert.Equal(
+            [PracticeDirection.Direct, PracticeDirection.Reverse],
+            availability.Value.AvailableDirections);
+    }
+
+    [Fact]
+    public void Unready_skill_exposes_no_immediate_breakthrough_direction()
+    {
+        var availability = CombatSnapshotMapping
+            .MapBreakthroughDirectionAvailability(
+                readingState: 9928,
+                isBrokenOut: false,
+                canBreakthroughNow: false,
+                skillId: 686);
+
+        Assert.True(availability.IsAvailable);
+        Assert.False(availability.Value.CanBreakthroughNow);
+        Assert.Empty(availability.Value.AvailableDirections);
+    }
+
     [Theory]
     [InlineData(-2)]
     [InlineData(2)]

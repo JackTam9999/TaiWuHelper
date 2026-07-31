@@ -20,9 +20,17 @@ snapshot, category by category:
 - `Retain` means the skill occurs in both loadouts.
 - `ChangeDirection` means accepted candidate validation requires a different
   Direct or Reverse effect.
+- `CompleteBreakthrough` means the skill is unbroken but the read-only
+  snapshot proves the exact required Direct or Reverse breakthrough is
+  available now.
 
 A direction change is an additional manual instruction. It does not indicate
 that the application changed the skill.
+
+A breakthrough is ordered before adding the affected skill. It remains an
+information-only prerequisite for the player; the helper does not invoke the
+breakthrough, alter pages, or write game data. Until the player completes it,
+the required effect is not described as active.
 
 ## Active-role choices
 

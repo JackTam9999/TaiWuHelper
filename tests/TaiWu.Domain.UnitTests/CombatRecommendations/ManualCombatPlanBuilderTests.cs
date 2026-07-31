@@ -57,6 +57,50 @@ public sealed class ManualCombatPlanBuilderTests
     }
 
     [Fact]
+    public void Reports_breakthrough_before_unbroken_counter_is_equipped()
+    {
+        var unbroken = Skill(
+            686,
+            SkillCategory.Assistance,
+            direction: SnapshotValue<PracticeDirection>.Unavailable(
+                "The skill has not completed breakthrough."),
+            breakthroughDirections:
+                SnapshotValue<BreakthroughDirectionAvailability>.Available(
+                    new BreakthroughDirectionAvailability(
+                        isBrokenOut: false,
+                        canBreakthroughNow: true,
+                        [PracticeDirection.Reverse])));
+        var player = Player([unbroken]);
+        var candidate = GenerateExact(
+            player,
+            [
+                Option(
+                    unbroken,
+                    CombatCounterActivationTiming.EquippedPassive,
+                    requiredDirection: PracticeDirection.Reverse,
+                    allowBreakthrough: true)
+            ],
+            unbroken.SkillId);
+
+        var plan = Assert.IsType<ManualCombatPlan>(
+            Build(player, candidate).Plan);
+
+        var breakthrough = Assert.Single(
+            plan.LoadoutChanges,
+            change => change.Kind
+                == ManualLoadoutChangeKind.CompleteBreakthrough);
+        Assert.Equal(unbroken.SkillId, breakthrough.SkillId);
+        Assert.Equal(
+            PracticeDirection.Reverse,
+            breakthrough.RequiredDirection);
+        Assert.Contains("only then", breakthrough.Reason.Summary);
+        Assert.DoesNotContain(
+            plan.LoadoutChanges,
+            change => change.Kind
+                == ManualLoadoutChangeKind.ChangeDirection);
+    }
+
+    [Fact]
     public void Every_manual_instruction_references_a_reason()
     {
         var current = Skill(100, SkillCategory.Attack);
@@ -332,13 +376,15 @@ public sealed class ManualCombatPlanBuilderTests
     private static CombatLoadoutOption Option(
         CombatSkillSnapshot skill,
         CombatCounterActivationTiming timing,
-        PracticeDirection? requiredDirection = null)
+        PracticeDirection? requiredDirection = null,
+        bool allowBreakthrough = false)
     {
         return new CombatLoadoutOption(
             new CombatSkillCandidate(
                 skill.SkillId,
                 requiredDirection: requiredDirection,
-                allowDirectionChange: requiredDirection.HasValue),
+                allowDirectionChange: requiredDirection.HasValue,
+                allowBreakthrough: allowBreakthrough),
             requirements: [],
             threatCodes: ["VERIFIED_THREAT"],
             isCurrentlyEquipped: false,
@@ -354,7 +400,10 @@ public sealed class ManualCombatPlanBuilderTests
 
     private static CombatSkillSnapshot Skill(
         int skillId,
-        SkillCategory category)
+        SkillCategory category,
+        SnapshotValue<PracticeDirection>? direction = null,
+        SnapshotValue<BreakthroughDirectionAvailability>?
+            breakthroughDirections = null)
     {
         return new CombatSkillSnapshot(
             skillId,
@@ -362,11 +411,12 @@ public sealed class ManualCombatPlanBuilderTests
             category,
             SnapshotValue<int>.Available(1),
             SnapshotValue<bool>.Available(true),
-            SnapshotValue<PracticeDirection>.Available(
+            direction ?? SnapshotValue<PracticeDirection>.Available(
                 PracticeDirection.Direct),
             SkillSlotContribution.None,
             SnapshotValue<int>.Available(1000 + skillId),
-            SnapshotValue<int>.Available(2000 + skillId));
+            SnapshotValue<int>.Available(2000 + skillId),
+            breakthroughDirections);
     }
 
     private static PlayerCombatSnapshot Player(

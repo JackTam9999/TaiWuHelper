@@ -63,6 +63,109 @@ internal static class CombatSnapshotMapping
                 + "practice direction is not active.");
     }
 
+    public static SnapshotValue<BreakthroughDirectionAvailability>
+        MapBreakthroughDirectionAvailability(
+            int readingState,
+            bool isBrokenOut,
+            bool canBreakthroughNow,
+            int skillId)
+    {
+        if (skillId < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(skillId),
+                skillId,
+                "Skill ID cannot be negative.");
+        }
+
+        if (readingState < 0)
+        {
+            return SnapshotValue<BreakthroughDirectionAvailability>
+                .Unavailable(
+                    $"Skill {skillId} has invalid reading state "
+                    + $"{readingState}.");
+        }
+
+        if (isBrokenOut)
+        {
+            if (canBreakthroughNow)
+            {
+                return SnapshotValue<BreakthroughDirectionAvailability>
+                    .Unavailable(
+                        $"Skill {skillId} is already broken through but was "
+                        + "reported as immediately breakable.");
+            }
+
+            return AvailableBreakthrough(
+                isBrokenOut: true,
+                canBreakthroughNow: false,
+                availableDirections: []);
+        }
+
+        if (!canBreakthroughNow)
+        {
+            return AvailableBreakthrough(
+                isBrokenOut: false,
+                canBreakthroughNow: false,
+                availableDirections: []);
+        }
+
+        var directPageCount = CountReadNormalPages(
+            readingState,
+            startingBit: 5);
+        var reversePageCount = CountReadNormalPages(
+            readingState,
+            startingBit: 10);
+        List<PracticeDirection> directions = [];
+        if (directPageCount >= 3)
+        {
+            directions.Add(PracticeDirection.Direct);
+        }
+
+        if (reversePageCount >= 3)
+        {
+            directions.Add(PracticeDirection.Reverse);
+        }
+
+        return directions.Count == 0
+            ? SnapshotValue<BreakthroughDirectionAvailability>.Unavailable(
+                $"Skill {skillId} can break through, but its readable page "
+                + "directions do not produce a Direct or Reverse result.")
+            : AvailableBreakthrough(
+                isBrokenOut: false,
+                canBreakthroughNow: true,
+                directions);
+    }
+
+    private static SnapshotValue<BreakthroughDirectionAvailability>
+        AvailableBreakthrough(
+            bool isBrokenOut,
+            bool canBreakthroughNow,
+            IEnumerable<PracticeDirection> availableDirections)
+    {
+        return SnapshotValue<BreakthroughDirectionAvailability>.Available(
+            new BreakthroughDirectionAvailability(
+                isBrokenOut,
+                canBreakthroughNow,
+                availableDirections));
+    }
+
+    private static int CountReadNormalPages(
+        int readingState,
+        int startingBit)
+    {
+        var count = 0;
+        for (var pageIndex = 0; pageIndex < 5; pageIndex++)
+        {
+            if ((readingState & (1 << (startingBit + pageIndex))) != 0)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     public static SkillSlotContribution MapSlotContribution(
         sbyte[] specificGrids,
         int genericGrid)

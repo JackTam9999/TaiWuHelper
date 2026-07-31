@@ -9,6 +9,7 @@ public enum ManualChecklistItemKind
     RemoveSkill,
     AddSkill,
     ChangeDirection,
+    CompleteBreakthrough,
     AllocateGenericSlots,
     ConfirmWeapon,
     ConfirmResource
@@ -125,6 +126,8 @@ public static class ManualSetupChecklistBuilder
                     ManualChecklistItemKind.AddSkill,
                 ManualLoadoutChangeKind.ChangeDirection =>
                     ManualChecklistItemKind.ChangeDirection,
+                ManualLoadoutChangeKind.CompleteBreakthrough =>
+                    ManualChecklistItemKind.CompleteBreakthrough,
                 _ => throw new ArgumentOutOfRangeException(nameof(change))
             },
             change.SkillName,
@@ -137,6 +140,10 @@ public static class ManualSetupChecklistBuilder
                 ManualLoadoutChangeKind.ChangeDirection =>
                     $"Change {change.SkillName} to "
                     + $"{DirectionLabel(change.RequiredDirection)}.",
+                ManualLoadoutChangeKind.CompleteBreakthrough =>
+                    $"Complete {change.SkillName}'s breakthrough as "
+                    + $"{DirectionLabel(change.RequiredDirection)} before "
+                    + "combat.",
                 _ => throw new ArgumentOutOfRangeException(nameof(change))
             },
             change.Reason.Summary,
@@ -147,8 +154,9 @@ public static class ManualSetupChecklistBuilder
     private static int ChangeOrder(ManualLoadoutChangeKind kind) => kind switch
     {
         ManualLoadoutChangeKind.Remove => 0,
-        ManualLoadoutChangeKind.Add => 1,
-        ManualLoadoutChangeKind.ChangeDirection => 2,
+        ManualLoadoutChangeKind.CompleteBreakthrough => 1,
+        ManualLoadoutChangeKind.Add => 2,
+        ManualLoadoutChangeKind.ChangeDirection => 3,
         _ => throw new ArgumentOutOfRangeException(nameof(kind))
     };
 

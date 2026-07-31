@@ -74,6 +74,20 @@ internal static partial class DynamicUiText
                 + "目前不可用。";
         }
 
+        match = SkillBreakthroughWrongDirectionPattern().Match(english);
+        if (match.Success)
+        {
+            return $"{Skill(match.Groups["skill"].Value)}目前可以突破，"
+                + $"但無法突破成{Direction(match.Groups["required"].Value)}。";
+        }
+
+        match = SkillCannotBreakthroughNowPattern().Match(english);
+        if (match.Success)
+        {
+            return $"{Skill(match.Groups["skill"].Value)}尚未完成突破，"
+                + "而且目前仍未滿足突破條件。";
+        }
+
         match = SkillCannotActivatePattern().Match(english);
         if (match.Success)
         {
@@ -122,6 +136,22 @@ internal static partial class DynamicUiText
         {
             return $"將{Skill(match.Groups["skill"].Value)}改為"
                 + $"{Direction(match.Groups["direction"].Value)}。";
+        }
+
+        match = CompleteBreakthroughPattern().Match(english);
+        if (match.Success)
+        {
+            return $"先將{Skill(match.Groups["skill"].Value)}完成"
+                + $"{Direction(match.Groups["direction"].Value)}突破，"
+                + "再開始戰鬥。";
+        }
+
+        match = CompleteBreakthroughReasonPattern().Match(english);
+        if (match.Success)
+        {
+            return $"先手動完成{Direction(match.Groups["direction"].Value)}"
+                + "突破，再使用此推薦；只有完成後，本次推薦所使用的"
+                + "已驗證效果才會生效。";
         }
 
         match = AllocateGenericSlotsPattern().Match(english);
@@ -409,6 +439,16 @@ internal static partial class DynamicUiText
     private static partial Regex SkillBreakthroughUnavailablePattern();
 
     [GeneratedRegex(
+        @"^(?<skill>.+) requires (?<required>Direct|Reverse), but its immediately available breakthrough cannot produce \k<required>\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SkillBreakthroughWrongDirectionPattern();
+
+    [GeneratedRegex(
+        @"^(?<skill>.+) requires (?<required>Direct|Reverse), but it has not completed breakthrough and cannot break through now\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SkillCannotBreakthroughNowPattern();
+
+    [GeneratedRegex(
         @"^(?<skill>.+) is (?<current>Direct|Reverse|Neutral) and cannot activate its (?<required>Direct|Reverse) effect\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillCannotActivatePattern();
@@ -437,6 +477,16 @@ internal static partial class DynamicUiText
         @"^Change (?<skill>.+) to (?<direction>.+)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex ChangeDirectionPattern();
+
+    [GeneratedRegex(
+        @"^Complete (?<skill>.+)'s breakthrough as (?<direction>.+) before combat\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex CompleteBreakthroughPattern();
+
+    [GeneratedRegex(
+        @"^Complete breakthrough manually as (?<direction>Direct|Reverse) before using this recommendation; only then is the verified effect active\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex CompleteBreakthroughReasonPattern();
 
     [GeneratedRegex(
         @"^Change direction manually to activate the verified (?<direction>Direct|Reverse|Neutral) effect used by this recommendation\.$",

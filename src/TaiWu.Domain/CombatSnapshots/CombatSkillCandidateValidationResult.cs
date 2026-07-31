@@ -27,6 +27,10 @@ public sealed record CombatSkillCandidateValidationResult
             candidate,
             skill,
             rejectionValues);
+        RequiredBreakthroughDirection = GetRequiredBreakthroughDirection(
+            candidate,
+            skill,
+            rejectionValues);
     }
 
     public CombatSkillCandidate Candidate { get; }
@@ -36,6 +40,8 @@ public sealed record CombatSkillCandidateValidationResult
     public ImmutableArray<CombatSkillCandidateRejection> Rejections { get; }
 
     public PracticeDirection? RequiredDirectionChange { get; }
+
+    public PracticeDirection? RequiredBreakthroughDirection { get; }
 
     public bool IsAccepted => Rejections.IsEmpty;
 
@@ -50,6 +56,26 @@ public sealed record CombatSkillCandidateValidationResult
             || skill is null
             || !skill.Direction.IsAvailable
             || skill.Direction.Value == candidate.RequiredDirection.Value)
+        {
+            return null;
+        }
+
+        return candidate.RequiredDirection;
+    }
+
+    private static PracticeDirection? GetRequiredBreakthroughDirection(
+        CombatSkillCandidate candidate,
+        CombatSkillSnapshot? skill,
+        ImmutableArray<CombatSkillCandidateRejection> rejections)
+    {
+        if (!rejections.IsEmpty
+            || !candidate.AllowBreakthrough
+            || !candidate.RequiredDirection.HasValue
+            || skill is null
+            || skill.Direction.IsAvailable
+            || !skill.BreakthroughDirections.IsAvailable
+            || !skill.BreakthroughDirections.Value.Includes(
+                candidate.RequiredDirection.Value))
         {
             return null;
         }

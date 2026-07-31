@@ -23,8 +23,10 @@ Each `CombatLoadoutOption` contains:
 
 `FromCounterRule` creates a direction-strict option using the exact verified
 catalog effect. A caller may enable a manual direction change only when it has
-separate evidence that the player can make that change. `RetainCurrentSkill`
-creates a direction-independent option for an existing selection.
+separate evidence that the player can make that change. It may independently
+allow an immediate breakthrough when the read-only snapshot proves the exact
+required outcome is currently achievable. `RetainCurrentSkill` creates a
+direction-independent option for an existing selection.
 
 Options are curated inputs. Candidate generation does not enumerate every
 learned skill or invent counters from names.
@@ -35,7 +37,9 @@ Before combination search, each option must pass:
 
 1. learned-skill ownership;
 2. any mastery requirement;
-3. strict current direction or explicit manual direction-change eligibility;
+3. strict current direction, explicit manual direction-change eligibility, or
+   an explicitly allowed and immediately achievable breakthrough into the
+   required direction;
 4. availability of the requested Direct or Reverse effect; and
 5. exact raw effect ID when the option comes from a verified counter.
 

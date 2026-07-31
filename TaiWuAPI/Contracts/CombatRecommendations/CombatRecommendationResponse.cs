@@ -55,7 +55,8 @@ public sealed record RecommendedSkillResponse(
     int? EffectiveCost,
     CombatCounterStrength? CounterStrength,
     CombatCounterActivationTiming? ActivationTiming,
-    IReadOnlyList<RecommendationReasonResponse> Reasons);
+    IReadOnlyList<RecommendationReasonResponse> Reasons,
+    bool RequiresBreakthrough = false);
 
 public sealed record RecommendationReasonResponse(
     string Reference,

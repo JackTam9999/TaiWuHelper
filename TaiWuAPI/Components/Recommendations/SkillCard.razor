@@ -117,6 +117,19 @@
             .Select(change => change.Kind)
             .ToHashSet();
         if (changes.Contains(ManualLoadoutChangeKind.Add)
+            && changes.Contains(
+                ManualLoadoutChangeKind.CompleteBreakthrough))
+        {
+            return T("Break through · add");
+        }
+
+        if (changes.Contains(
+                ManualLoadoutChangeKind.CompleteBreakthrough))
+        {
+            return T("Complete breakthrough");
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.Add)
             && changes.Contains(ManualLoadoutChangeKind.ChangeDirection))
         {
             return T("Add · change direction");
@@ -135,6 +148,11 @@
         if (changes.Contains(ManualLoadoutChangeKind.Retain))
         {
             return T("Keep");
+        }
+
+        if (Skill.RequiresBreakthrough)
+        {
+            return T("Complete breakthrough");
         }
 
         return Skill.RequiresManualDirectionChange

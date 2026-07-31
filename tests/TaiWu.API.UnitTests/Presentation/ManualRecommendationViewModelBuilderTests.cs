@@ -198,6 +198,12 @@ public sealed class ManualRecommendationViewModelBuilderTests
                     ManualLoadoutChangeKind.ChangeDirection,
                     604,
                     reason,
+                    PracticeDirection.Reverse),
+                Change(
+                    candidateReference,
+                    ManualLoadoutChangeKind.CompleteBreakthrough,
+                    500,
+                    reason,
                     PracticeDirection.Reverse)
             ],
             OpeningActions:

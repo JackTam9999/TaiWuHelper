@@ -178,6 +178,85 @@ public sealed class CombatSkillCandidateValidatorTests
     }
 
     [Fact]
+    public void Immediate_breakthrough_can_satisfy_required_direction()
+    {
+        var skill = CreateSkill(
+            direction: SnapshotValue<PracticeDirection>.Unavailable(
+                "The skill has not completed breakthrough."),
+            breakthroughDirections:
+                SnapshotValue<BreakthroughDirectionAvailability>.Available(
+                    new BreakthroughDirectionAvailability(
+                        isBrokenOut: false,
+                        canBreakthroughNow: true,
+                        [PracticeDirection.Reverse])));
+
+        var result = CombatSkillCandidateValidator.Validate(
+            CreatePlayer([skill]),
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Reverse,
+                allowBreakthrough: true));
+
+        Assert.True(result.IsAccepted);
+        Assert.Equal(
+            PracticeDirection.Reverse,
+            result.RequiredBreakthroughDirection);
+        Assert.Null(result.RequiredDirectionChange);
+    }
+
+    [Fact]
+    public void Breakthrough_in_wrong_direction_is_rejected()
+    {
+        var skill = CreateSkill(
+            direction: SnapshotValue<PracticeDirection>.Unavailable(
+                "The skill has not completed breakthrough."),
+            breakthroughDirections:
+                SnapshotValue<BreakthroughDirectionAvailability>.Available(
+                    new BreakthroughDirectionAvailability(
+                        isBrokenOut: false,
+                        canBreakthroughNow: true,
+                        [PracticeDirection.Direct])));
+
+        var result = CombatSkillCandidateValidator.Validate(
+            CreatePlayer([skill]),
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Reverse,
+                allowBreakthrough: true));
+
+        AssertRejected(
+            result,
+            CombatSkillCandidateRejectionCode.DirectionStatusUnavailable);
+        Assert.Contains(
+            "cannot produce Reverse",
+            result.Rejections[0].Reason);
+    }
+
+    [Fact]
+    public void Breakthrough_requires_explicit_manual_permission()
+    {
+        var skill = CreateSkill(
+            direction: SnapshotValue<PracticeDirection>.Unavailable(
+                "The skill has not completed breakthrough."),
+            breakthroughDirections:
+                SnapshotValue<BreakthroughDirectionAvailability>.Available(
+                    new BreakthroughDirectionAvailability(
+                        isBrokenOut: false,
+                        canBreakthroughNow: true,
+                        [PracticeDirection.Reverse])));
+
+        var result = CombatSkillCandidateValidator.Validate(
+            CreatePlayer([skill]),
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Reverse));
+
+        AssertRejected(
+            result,
+            CombatSkillCandidateRejectionCode.DirectionStatusUnavailable);
+    }
+
+    [Fact]
     public void Unavailable_direct_effect_is_rejected()
     {
         var skill = CreateSkill(
@@ -347,7 +426,9 @@ public sealed class CombatSkillCandidateValidatorTests
         SnapshotValue<bool>? mastered = null,
         SnapshotValue<PracticeDirection>? direction = null,
         SnapshotValue<int>? directEffectId = null,
-        SnapshotValue<int>? reverseEffectId = null)
+        SnapshotValue<int>? reverseEffectId = null,
+        SnapshotValue<BreakthroughDirectionAvailability>?
+            breakthroughDirections = null)
     {
         return new CombatSkillSnapshot(
             skillId,
@@ -360,7 +441,8 @@ public sealed class CombatSkillCandidateValidatorTests
                     PracticeDirection.Direct),
             SkillSlotContribution.None,
             directEffectId ?? SnapshotValue<int>.Available(1000),
-            reverseEffectId ?? SnapshotValue<int>.Available(1001));
+            reverseEffectId ?? SnapshotValue<int>.Available(1001),
+            breakthroughDirections);
     }
 
     private static PlayerCombatSnapshot CreatePlayer(

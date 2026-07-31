@@ -76,7 +76,8 @@ The typed response includes:
 - the requested style;
 - component scores;
 - selected skill details and evidence-backed reasons;
-- manual loadout changes;
+- manual loadout changes, including a required breakthrough when the save
+  proves its exact direction is immediately achievable;
 - opening and pre-combat switching steps;
 - assumptions and unavailable-data caveats; and
 - snapshot, threat-analysis, and generation warnings.
@@ -86,6 +87,11 @@ warning has a deterministic reference suitable for UI links.
 
 A style with no feasible recommendation returns `hasRecommendation: false`
 and a diagnostic. It does not fabricate a loadout.
+
+For each selected skill, `requiresBreakthrough` is separate from
+`requiresManualDirectionChange`. A breakthrough prerequisite means the effect
+is usable only after the player completes that step; it is not current combat
+state.
 
 ## Errors
 

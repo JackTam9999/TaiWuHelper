@@ -30,6 +30,12 @@ therefore misreported `None` as Reverse. GameData also returns `None` before a
 skill completes breakthrough. The adapter now maps the values by meaning and
 marks an unbroken skill's direction unavailable.
 
+The reader now also maps breakthrough availability as a separate value. It
+uses GameData's read-only `CanBreakout` result and the currently read normal
+pages to determine the exact outcomes available now. This does not activate an
+effect. A recommendation may use it only by adding a mandatory manual
+`CompleteBreakthrough` prerequisite.
+
 The player then supplied a newer complete loadout screen after making the
 changes manually. That local-only evidence has SHA-256
 `1C8629A919958943FC72BEEE273C96390F8777F51ADA02F80FE2FC1903E562CB`.
@@ -96,10 +102,12 @@ do not prove that the player can currently activate those directions. The
 latest breakthrough screen is authoritative for 老君拂塵功 and shows that its
 Reverse combat-start effect is not yet available.
 
-The instruction to rely on Reverse 老君拂塵功 is withdrawn. A corrected
-recommendation may use only skills whose completed breakthrough and required
-direction are confirmed by the read-only snapshot; 伏龍刀法 still requires its
-separate weapon and activation check.
+The instruction to rely on Reverse 老君拂塵功 is withdrawn. Its current read
+pages allow an immediate Direct breakthrough only, not the required Reverse
+breakthrough. A corrected recommendation may use a completed required
+direction or an exact immediately achievable breakthrough accompanied by a
+manual prerequisite; 伏龍刀法 still requires its separate weapon and
+activation check.
 
 The target's persisted loadout is still unavailable, and the observed reset at
 36 defeat marks still only resembles Reverse 九色玉蟬法. The recommendation
@@ -122,7 +130,8 @@ Its deterministic score must not be interpreted as a win probability.
 - Map GameData practice-direction values by their declared meaning rather than
   by numeric compatibility with the Domain enum.
 - Reject a direction-specific effect while the skill has not completed
-  breakthrough.
+  breakthrough unless the exact required direction is immediately achievable
+  and the option explicitly permits a mandatory manual breakthrough step.
 
 ## Verification still required
 
@@ -132,8 +141,9 @@ Its deterministic score must not be interpreted as a win probability.
 - [ ] Generate a fresh recommendation after the GameData direction-mapping
       correction.
 - [ ] Confirm every newly returned skill is available in the stated direction;
-      老君拂塵功 must remain excluded as a Reverse counter until breakthrough is
-      complete.
+      老君拂塵功 must remain excluded as a Reverse counter until Reverse
+      breakthrough is either completed or immediately achievable from the
+      current read pages.
 - [x] Confirm all five returned slot totals exactly match the game UI.
 - [ ] Confirm 伏龍刀法's weapon and activation requirements in the game.
 - [x] Confirm 老君拂塵功's configured Reverse combat-start effect description is

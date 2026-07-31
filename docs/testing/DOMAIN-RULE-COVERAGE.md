@@ -8,8 +8,8 @@ the installed game, a save file, or proprietary GameData binaries.
 | --- | --- | --- |
 | Learned-skill ownership | `Known_skill_without_special_requirements_is_accepted` | `Unknown_skill_is_rejected_instead_of_throwing` |
 | Required mastery | `Required_mastery_accepts_mastered_skill` | `Required_mastery_rejects_unmastered_skill`; unavailable mastery is rejected explicitly |
-| Practice direction and effect availability | Direct, reverse, and explicit manual direction-change cases are accepted | Neutral activation, opposite direction, and unavailable direct/reverse effects are rejected |
-| GameData direction adapter | Completed Direct and Reverse values map by GameData meaning | `None`, `NotInited`, unknown values, and incomplete breakthrough cannot be mistaken for an active Reverse effect |
+| Practice direction and effect availability | Direct, reverse, explicit manual direction-change, and exact immediately achievable breakthrough cases are accepted | Neutral activation, opposite direction, wrong-direction breakthrough, unavailable breakthrough, and unavailable direct/reverse effects are rejected |
+| GameData direction adapter | Completed Direct and Reverse values map by GameData meaning; read-page bits map the exact directions an available breakthrough can produce | `None`, `NotInited`, unknown values, and incomplete breakthrough cannot be mistaken for an active Reverse effect; potential direction is never counted as active direction |
 | Verified effect identity | `Matching_verified_effect_is_accepted` | `Changed_verified_effect_is_rejected_before_combinations` |
 | Weapon, trick, range, resource, unlock, and activation requirements | `All_supported_requirement_types_can_be_satisfied` | `Every_supported_hard_requirement_has_a_rejection_case`; unknown hard values are also rejected |
 | Active defense/agility uniqueness | The supported-requirements case accepts one active skill per role | Conflicting active-role options and a skill assigned to both roles are rejected |

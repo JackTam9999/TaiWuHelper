@@ -5,5 +5,6 @@ public enum ManualLoadoutChangeKind
     Add,
     Remove,
     Retain,
-    ChangeDirection
+    ChangeDirection,
+    CompleteBreakthrough
 }

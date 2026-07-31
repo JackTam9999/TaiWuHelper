@@ -7,13 +7,15 @@ public sealed record SkillDirectionExplanation
     internal SkillDirectionExplanation(
         SnapshotValue<PracticeDirection> currentDirection,
         PracticeDirection? requiredDirection,
-        bool requiresManualChange,
+        bool requiresManualDirectionChange,
+        bool requiresBreakthrough,
         int? expectedEffectId,
         string evidenceReference)
     {
         CurrentDirection = currentDirection;
         RequiredDirection = requiredDirection;
-        RequiresManualChange = requiresManualChange;
+        RequiresManualDirectionChange = requiresManualDirectionChange;
+        RequiresBreakthrough = requiresBreakthrough;
         ExpectedEffectId = expectedEffectId;
         EvidenceReference = evidenceReference;
     }
@@ -22,7 +24,12 @@ public sealed record SkillDirectionExplanation
 
     public PracticeDirection? RequiredDirection { get; }
 
-    public bool RequiresManualChange { get; }
+    public bool RequiresManualDirectionChange { get; }
+
+    public bool RequiresBreakthrough { get; }
+
+    public bool RequiresManualChange =>
+        RequiresManualDirectionChange || RequiresBreakthrough;
 
     public int? ExpectedEffectId { get; }
 

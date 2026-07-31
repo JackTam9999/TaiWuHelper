@@ -151,6 +151,53 @@ public sealed class CombatRecommendationScorerTests
     }
 
     [Fact]
+    public void Breakthrough_prerequisite_reduces_execution_reliability()
+    {
+        var skill = new CombatSkillSnapshot(
+            686,
+            SnapshotValue<string>.Available("老君拂塵功"),
+            SkillCategory.Assistance,
+            SnapshotValue<int>.Available(1),
+            SnapshotValue<bool>.Available(false),
+            SnapshotValue<PracticeDirection>.Unavailable(
+                "Breakthrough is incomplete."),
+            SkillSlotContribution.None,
+            SnapshotValue<int>.Available(422),
+            SnapshotValue<int>.Available(1422),
+            SnapshotValue<BreakthroughDirectionAvailability>.Available(
+                new BreakthroughDirectionAvailability(
+                    isBrokenOut: false,
+                    canBreakthroughNow: true,
+                    [PracticeDirection.Reverse])));
+        var player = CreatePlayer([skill]);
+        var option = new CombatLoadoutOption(
+            new CombatSkillCandidate(
+                skill.SkillId,
+                requiredDirection: PracticeDirection.Reverse,
+                allowBreakthrough: true),
+            requirements: [],
+            threatCodes: [],
+            isCurrentlyEquipped: false,
+            "evidence:breakthrough",
+            CombatCounterStrength.Mitigation,
+            CombatCounterActivationTiming.EquippedPassive,
+            expectedEffectId: 1422);
+        var candidate = GenerateSingleton(player, option);
+
+        var scored = Assert.Single(
+            Score(
+                player,
+                targetThreats: [],
+                [candidate],
+                RecommendationPolicy.Balanced).RankedCandidates);
+
+        Assert.Equal(
+            85,
+            scored.Get(
+                RecommendationScoreComponentKind.ExecutionReliability).Score);
+    }
+
+    [Fact]
     public void Conditional_warning_lowers_visible_risk_component()
     {
         var safeSkill = CreateSkill(100);

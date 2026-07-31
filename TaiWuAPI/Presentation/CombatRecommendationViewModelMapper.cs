@@ -197,7 +197,7 @@ public static class CombatRecommendationViewModelMapper
                 ? skill.Direction.CurrentDirection.Value
                 : null,
             skill.Direction.RequiredDirection,
-            skill.Direction.RequiresManualChange,
+            skill.Direction.RequiresManualDirectionChange,
             new SkillCostViewModel(
                 skill.Cost.BaseCost.IsAvailable
                     ? skill.Cost.BaseCost.Value
@@ -250,7 +250,8 @@ public static class CombatRecommendationViewModelMapper
                     candidateReference,
                     skill.SkillId,
                     reason,
-                    skillNames))]);
+                    skillNames))],
+            skill.Direction.RequiresBreakthrough);
     }
 
     private static ManualLoadoutChangeViewModel MapChange(
