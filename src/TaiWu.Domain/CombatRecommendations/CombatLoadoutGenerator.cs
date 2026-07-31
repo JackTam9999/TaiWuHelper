@@ -201,6 +201,22 @@ public static class CombatLoadoutGenerator
             if (validation.IsAccepted
                 && HasExpectedEffect(option, validation))
             {
+                var innerPower = InnerPowerCompatibilityEvaluator
+                    .EvaluateActiveUse(request.Player, option);
+                if (innerPower?.CausesBacklash == true)
+                {
+                    diagnostics.Add(
+                        Diagnostic(
+                            CombatLoadoutGenerationDiagnosticCode
+                                .OptionRejected,
+                            $"Skill {option.Candidate.SkillId} is actively "
+                            + "cast using the current inner-power state's "
+                            + "backlash element, which causes backlash "
+                            + "damage and inner-qi disorder on every use.",
+                            option.Candidate.SkillId));
+                    continue;
+                }
+
                 eligible.Add(option);
                 continue;
             }

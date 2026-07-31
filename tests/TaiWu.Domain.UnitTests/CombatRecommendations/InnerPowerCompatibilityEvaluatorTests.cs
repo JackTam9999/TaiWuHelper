@@ -8,23 +8,21 @@ namespace TaiWu.Domain.UnitTests.CombatRecommendations;
 public sealed class InnerPowerCompatibilityEvaluatorTests
 {
     [Fact]
-    public void Active_skill_of_backlash_element_scores_zero()
+    public void Active_skill_of_backlash_element_is_identified()
     {
         var fireAttack = Skill(100, SkillCategory.Attack, CombatSkillElement.Fire);
         var player = Player([fireAttack]);
-        var candidate = Generate(
-            player,
-            Option(
-                fireAttack,
-                CombatCounterActivationTiming.ActiveAttack));
+        var option = Option(
+            fireAttack,
+            CombatCounterActivationTiming.ActiveAttack);
 
-        var evaluation = InnerPowerCompatibilityEvaluator.Evaluate(
+        var evaluation = InnerPowerCompatibilityEvaluator.EvaluateActiveUse(
             player,
-            candidate);
+            option);
 
-        Assert.True(evaluation.Score.IsAvailable);
-        Assert.Equal(0, evaluation.Score.Value);
-        Assert.True(Assert.Single(evaluation.Evaluations).CausesBacklash);
+        Assert.NotNull(evaluation);
+        Assert.Equal(0, evaluation.Score);
+        Assert.True(evaluation.CausesBacklash);
     }
 
     [Fact]

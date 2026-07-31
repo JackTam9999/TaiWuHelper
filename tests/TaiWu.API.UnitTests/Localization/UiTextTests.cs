@@ -14,6 +14,10 @@ public sealed class UiTextTests
                 "正練魔音造成的失神傷害"
             },
             {
+                "Repeatable defeat-mark reset",
+                "可重複清除戰敗標記"
+            },
+            {
                 "Retain the skill because the selected loadout preserves "
                 + "this current selection.",
                 "保留此功法，因為所選運功方案保留了目前配置。"

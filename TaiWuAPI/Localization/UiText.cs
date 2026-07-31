@@ -94,6 +94,8 @@ public static class UiText
             ["Select a threat to highlight the skills and plan steps that address it."] =
                 "選擇一項威脅，以標示對應的功法與計劃步驟。",
             ["No skill selected in this category."] = "此類別未選擇任何功法。",
+            ["Recommended capacity"] = "推薦容量",
+            ["Recommended 萬用 allocation"] = "建議萬用配置",
             ["slots"] = "格",
             ["Usage unavailable"] = "無法取得佔用量",
             ["Practice"] = "修習",
@@ -311,6 +313,9 @@ public static class UiText
             ["Mind-resonance cascade"] = "心神共鳴連鎖",
             ["The first distraction mark begins a countdown; when it expires, mind resonance applies repeated mind-loss pressure and can make new marks persistent."] =
                 "第一個失神標記會開始倒數；倒數結束後，心神共鳴會反覆施加失神壓力，並可能使新標記持續存在。",
+            ["Repeatable defeat-mark reset"] = "可重複清除戰敗標記",
+            ["Reverse-practice 九色玉蝉法 consumes 9 Qiqiao true-Qi when the target reaches the defeat condition, clears all injury, hindrance, and critical-injury marks, then raises the next cost by 9 up to 99. Surviving alone cannot win while the target can keep paying this cost."] =
+                "逆練九色玉蟬法在目標達到戰敗條件時消耗 9 點奇竅真氣，清除全部傷勢、妨害及重創標記；之後每次消耗增加 9 點，最高為 99 點。只要目標仍能支付，單純生存並不足以取勝。",
             ["The observed reset at 36 defeat marks resembles reverse 九色玉蟬法, but the target's equipped source effect is not confirmed."] =
                 "觀察到的 36 個戰敗標記重置現象類似逆練九色玉蟬法，但尚未確認目標所裝備的效果來源。",
             ["The target's active loadout is not present in this disk save; GameData may select NPC combat skills during combat preparation."] =

@@ -29,16 +29,23 @@ public static class VerifiedTargetThreatRuleSets
             Direct(732, 356),
             Direct(733, 357)
         ];
+        var reverseResetSignature = new TargetThreatSkillSignature(
+            skillId: 287,
+            PracticeDirection.Reverse,
+            rawEffectId: 911);
         var taxonomy = VerifiedTargetThreatTaxonomies.GoldenMagicSound;
 
         return new TargetThreatRuleSet(
             VerifiedCombatEffectCatalogs.GoldenGameDataVersion,
-            directMagicSoundSignatures.Select(
-                signature => signature.SkillId),
+            directMagicSoundSignatures
+                .Select(signature => signature.SkillId)
+                .Append(reverseResetSignature.SkillId),
             taxonomy.Threats.Select(
                 threat => new TargetThreatRule(
                     threat,
-                    directMagicSoundSignatures)),
+                    threat.Code == "DEFEAT_MARK_RESET_LOOP"
+                        ? [reverseResetSignature]
+                        : directMagicSoundSignatures)),
             taxonomy.Warnings.Select(warning => warning.Mechanic));
     }
 

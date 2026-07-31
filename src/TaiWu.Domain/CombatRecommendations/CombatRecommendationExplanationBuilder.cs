@@ -357,8 +357,8 @@ public static class CombatRecommendationExplanationBuilder
                         "INNER_POWER_BACKLASH_ON_USE",
                         $"Actively using skill {skill.SkillId} under the "
                         + "current inner-power state causes backlash damage "
-                        + "and inner-qi disorder. It is penalized, not "
-                        + "automatically prohibited.",
+                        + "and inner-qi disorder. This active use is "
+                        + "incompatible with a feasible recommendation.",
                         skill.SkillId,
                         [InnerPowerCompatibilityEvaluator
                             .EvidenceReference]));

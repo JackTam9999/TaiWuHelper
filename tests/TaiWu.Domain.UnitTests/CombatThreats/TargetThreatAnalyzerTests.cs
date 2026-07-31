@@ -267,7 +267,8 @@ public sealed class TargetThreatAnalyzerTests
             CreateSkill(725, 349),
             CreateSkill(727, 351),
             CreateSkill(731, 355),
-            CreateSkill(733, 357)
+            CreateSkill(733, 357),
+            CreateSkill(287, 911, PracticeDirection.Reverse)
         };
         var snapshot = CreateSnapshot(
             goldenSkills,
@@ -282,6 +283,7 @@ public sealed class TargetThreatAnalyzerTests
 
         Assert.Equal(
             [
+                "DEFEAT_MARK_RESET_LOOP",
                 "DISTRACTION_MARK_ACCUMULATION",
                 "MIND_RESONANCE_CASCADE",
                 "POSITIVE_MAGIC_SOUND_MIND_DAMAGE"
@@ -291,7 +293,11 @@ public sealed class TargetThreatAnalyzerTests
             result.Threats,
             finding =>
             {
-                Assert.Equal(8, finding.Sources.Length);
+                var expectedSourceCount = finding.Threat.Code
+                    == "DEFEAT_MARK_RESET_LOOP"
+                    ? 1
+                    : 8;
+                Assert.Equal(expectedSourceCount, finding.Sources.Length);
                 Assert.All(
                     finding.Sources,
                     source => Assert.Equal(
@@ -303,14 +309,11 @@ public sealed class TargetThreatAnalyzerTests
             warning => warning.Code
                 == TargetThreatAnalyzer
                     .EquippedSkillsUnavailableWarningCode);
-        Assert.Contains(
+        Assert.DoesNotContain(
             result.Warnings,
             warning => warning.Code
                 == TargetThreatTaxonomy
-                    .UnrecognizedMechanicWarningCode
-                && warning.Message.Contains(
-                    "36 defeat marks",
-                    StringComparison.Ordinal));
+                    .UnrecognizedMechanicWarningCode);
     }
 
     [Fact]
@@ -338,7 +341,9 @@ public sealed class TargetThreatAnalyzerTests
         return new TargetThreatSkillSignature(
             skill.SkillId,
             skill.Direction.Value,
-            skill.DirectEffectId.Value);
+            skill.Direction.Value == PracticeDirection.Reverse
+                ? skill.ReverseEffectId.Value
+                : skill.DirectEffectId.Value);
     }
 
     private static TargetThreatRule Rule(
@@ -400,8 +405,14 @@ public sealed class TargetThreatAnalyzerTests
             SnapshotValue<bool>.Available(false),
             SnapshotValue<PracticeDirection>.Available(direction),
             SkillSlotContribution.None,
-            SnapshotValue<int>.Available(effectId),
-            SnapshotValue<int>.Available(effectId + 1000));
+            SnapshotValue<int>.Available(
+                direction == PracticeDirection.Direct
+                    ? effectId
+                    : effectId - 1),
+            SnapshotValue<int>.Available(
+                direction == PracticeDirection.Reverse
+                    ? effectId
+                    : effectId + 1000));
     }
 
     private static CombatSnapshot CreateSnapshot(

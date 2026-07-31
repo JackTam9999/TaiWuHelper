@@ -6,6 +6,7 @@
         <span>
             @if (Category.UsedSlots.HasValue)
             {
+                <small>@T("Recommended capacity")</small>
                 <strong>@Category.UsedSlots</strong><text>/@Category.Capacity @T("slots")</text>
             }
             else
@@ -15,7 +16,7 @@
         </span>
         @if (Category.GenericSlots > 0)
         {
-            <small>+@Category.GenericSlots 萬用</small>
+            <small>@T("Recommended 萬用 allocation"): @Category.GenericSlots</small>
         }
     </div>
     <div class="capacity-track"

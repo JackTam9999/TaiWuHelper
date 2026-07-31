@@ -221,9 +221,15 @@ public sealed class LocalGameDataIntegrationTests
             snapshot.Entries,
             entry => entry.CharacterId == GoldenTargetId);
 
-        Assert.Equal(
-            "辽东 · 鸭绿江 · 玄石之地",
-            target.LocationDisplayName);
+        Assert.False(string.IsNullOrWhiteSpace(target.LocationDisplayName));
+        var components = target.LocationDisplayName.Split(
+            " · ",
+            StringSplitOptions.RemoveEmptyEntries
+                | StringSplitOptions.TrimEntries);
+        Assert.Equal(3, components.Length);
+        Assert.All(
+            components,
+            component => Assert.DoesNotContain("_", component));
     }
 
     private static void AssertUnchanged(

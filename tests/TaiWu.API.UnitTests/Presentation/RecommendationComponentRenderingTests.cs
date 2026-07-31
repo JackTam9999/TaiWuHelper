@@ -104,8 +104,8 @@ public sealed partial class RecommendationComponentRenderingTests
             });
         var text = VisibleText(html);
 
-        Assert.Contains("1 /3 slots", text);
-        Assert.Contains("+1 萬用", text);
+        Assert.Contains("Recommended capacity 1 /3 slots", text);
+        Assert.Contains("Recommended 萬用 allocation: 1", text);
         Assert.Contains("金貌玉魄", text);
         Assert.Contains("逆練 · Reverse", text);
         Assert.Contains("Actual cost 2", text);

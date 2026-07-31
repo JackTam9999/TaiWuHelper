@@ -12,5 +12,7 @@ public enum CombatEffectMechanic
     ExtendEnemyDistractionMarkDuration,
     ReduceEnemyAttackSkillPower,
     IncreaseOwnAttackSkillPower,
-    TransferOwnHindranceMarks
+    TransferOwnHindranceMarks,
+    AmplifyEnemyDamageStates,
+    DrainEnemyRandomTrueQi
 }

@@ -16,7 +16,29 @@ public sealed class CombatEffectCatalogTests
         Assert.Equal(
             VerifiedCombatEffectCatalogs.GoldenGameDataVersion,
             catalog.GameDataVersion);
-        Assert.Equal(12, catalog.Entries.Length);
+        Assert.Equal(13, catalog.Entries.Length);
+    }
+
+    [Fact]
+    public void Reverse_qilun_records_random_true_qi_drain_limitation()
+    {
+        var catalog = VerifiedCombatEffectCatalogs.GoldenAntiMagic;
+
+        var result = catalog.Resolve(
+            catalog.GameDataVersion,
+            skillId: 291,
+            PracticeDirection.Reverse,
+            rawEffectId: 915);
+
+        var entry = Assert.IsType<CombatEffectCatalogEntry>(
+            result.CatalogEntry);
+        Assert.Contains(
+            CombatEffectMechanic.AmplifyEnemyDamageStates,
+            entry.Mechanics);
+        Assert.Contains(
+            CombatEffectMechanic.DrainEnemyRandomTrueQi,
+            entry.Mechanics);
+        Assert.Contains("随机类型真气", entry.RawSourceText);
     }
 
     [Fact]

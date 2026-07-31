@@ -125,7 +125,17 @@ public static class VerifiedCombatEffectCatalogs
                     + "任何人装备有「毒砂」、「药霜」，效果加倍，且可在"
                     + "解封任意刀时，大量牺牲解封兵器的耐久及3个任意可用"
                     + "的蓄式，运用者将自身的5个随机妨害标记转移给敌人",
-                    CombatEffectMechanic.TransferOwnHindranceMarks)
+                    CombatEffectMechanic.TransferOwnHindranceMarks),
+                Entry(
+                    291,
+                    "七轮感应法",
+                    PracticeDirection.Reverse,
+                    915,
+                    "敌人在受到损害状态时，所有损害状态的初始强度加倍，"
+                    + "并向敌人额外施加一个缓慢减少随机类型真气的损害状态；"
+                    + "且敌人的损害状态的强度在被增强时，增强的幅度也会提高",
+                    CombatEffectMechanic.AmplifyEnemyDamageStates,
+                    CombatEffectMechanic.DrainEnemyRandomTrueQi)
             ]);
 
     private static CombatEffectCatalogEntry Entry(

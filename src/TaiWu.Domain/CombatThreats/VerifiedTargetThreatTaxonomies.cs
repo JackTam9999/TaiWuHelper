@@ -39,15 +39,24 @@ public static class VerifiedTargetThreatTaxonomies
                     + "pressure and can make new marks persistent.",
                     TargetThreatActivationTiming.OnMarkApplied,
                     "Verified countdown, resonance, repeated-pressure, and "
-                    + "persistent-mark rules.")
+                    + "persistent-mark rules."),
+                Threat(
+                    "DEFEAT_MARK_RESET_LOOP",
+                    TargetThreatKind.DefeatMarkReset,
+                    TargetThreatSeverity.Critical,
+                    "Repeatable defeat-mark reset",
+                    "Reverse-practice 九色玉蝉法 consumes 9 Qiqiao true-Qi "
+                    + "when the target reaches the defeat condition, clears "
+                    + "all injury, hindrance, and critical-injury marks, then "
+                    + "raises the next cost by 9 up to 99. Surviving alone "
+                    + "cannot win while the target can keep paying this cost.",
+                    TargetThreatActivationTiming.Threshold,
+                    "Verified from reverse 九色玉蝉法 effect 911 and the "
+                    + "observed in-battle 消除己之标记 trigger.",
+                    sourceSkillId: 287,
+                    rawEffectId: 911)
             ],
-            [
-                new UnknownTargetMechanic(
-                    "The observed reset at 36 defeat marks resembles reverse "
-                    + "九色玉蟬法, but the target's equipped source effect "
-                    + "is not confirmed.",
-                    GoldenEvidence)
-            ]);
+            unknownMechanics: []);
 
     private static TargetThreat Threat(
         string code,
@@ -56,7 +65,9 @@ public static class VerifiedTargetThreatTaxonomies
         string title,
         string explanation,
         TargetThreatActivationTiming activationTiming,
-        string evidenceSummary)
+        string evidenceSummary,
+        int? sourceSkillId = null,
+        int? rawEffectId = null)
     {
         return new TargetThreat(
             code,
@@ -69,7 +80,9 @@ public static class VerifiedTargetThreatTaxonomies
                 new TargetThreatEvidence(
                     GoldenEvidence,
                     evidenceSummary,
-                    TargetThreatEvidenceConfidence.VerifiedRule)
+                    TargetThreatEvidenceConfidence.VerifiedRule,
+                    sourceSkillId,
+                    rawEffectId)
             ]);
     }
 }

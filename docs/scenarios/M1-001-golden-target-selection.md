@@ -28,7 +28,8 @@ The previously verified player profile identifies the intended scenario as:
 - Fight a 奇書 opponent centered on 正練魔音.
 - Survive 失神 marks and 心韻激盪 before optimizing damage.
 - Account for an observed reset whenever the enemy reaches 36 defeat marks.
-- Investigate that reset as an apparent reverse 九色玉蟬法 effect.
+- Treat that reset as the verified Reverse 九色玉蟬法 effect after live-battle
+  confirmation.
 - Prefer a 刀-based counter setup.
 - Do not rely on pure-Yang skills.
 - Do not assume reverse 即身成佛 is available.
@@ -97,8 +98,11 @@ For the confirmed character `16317`, the expected critical mechanic is:
    clear its marks through reverse 九色玉蟬法.
 
 The first four points come from the previously verified magic-sound rules. The
-fifth is based on the player's observed reset pattern and remains an explicit
-hypothesis until the exact equipped target skill is confirmed.
+fifth is now confirmed by the version-matched effect `911` description and a
+local-only live-battle frame showing Reverse 九色玉蟬法 reporting
+`消除己之標記`. The installed configuration supplies the exact threshold and
+escalating Qiqiao cost; the frame confirms that the target activates the
+effect in this fight.
 
 ## Verified player baseline
 

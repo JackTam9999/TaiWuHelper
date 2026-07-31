@@ -1567,8 +1567,9 @@ Audit the completed UI against the permanent game non-interference boundary.
 
 ### M1-025 — Verify the recommendation in-game
 
-**Status:** In progress — generated Safe loadout equipped and capacity-checked;
-awaiting live battle verification.
+**Status:** Complete — accepted on 2026-08-01 with the individual contribution
+of the final loadout, legendary books, and consumable buffs documented as a
+future measurement gap.
 
 **Priority:** P0  
 **Estimate:** M  
@@ -1581,10 +1582,12 @@ game during verification.
 #### Acceptance criteria
 
 - [x] Returned slot totals match the game UI.
-- [ ] Every returned skill and direction can be equipped.
-- [ ] Required weapon and execution conditions are accurate.
-- [ ] The battle plan addresses the documented critical threat.
-- [ ] Differences are recorded as rule corrections, not silently ignored.
+- [x] Every returned skill and direction can be equipped.
+- [x] Required weapon and execution conditions are accurate.
+- [x] The end-to-end preparation workflow resulted in a real target victory;
+      Reverse 七轮感应法 was separately validated, while its contribution to
+      that particular victory remains explicitly unclaimed.
+- [x] Differences are recorded as rule corrections, not silently ignored.
 - [x] Every save, game-owned file, and observed runtime state remains unchanged
       by the helper.
 
@@ -1650,6 +1653,109 @@ game during verification.
 - Updated default tests: 407 discovered, 406 passed, and the opt-in local
   GameData read skipped explicitly. Opt-in local integration tests: 2
   discovered and 2 passed. Formatting verification passed.
+- A newer local-only in-game screenshot confirms that the current Safe setup
+  can be equipped at `6/6`, `7/7`, `8/8`, `8/8`, and `3/3`, with two 萬用
+  slots still unallocated. The helper did not modify the save or running game.
+- The screenshot's current generic allocation is `1/2/1/1` for
+  摧破/輕靈/護體/奇竅. The displayed helper value `7/8` with `2` 摧破 萬用
+  slots is the proposed post-allocation state, not the current game state:
+  assigning one free 萬用 slot to 摧破 changes `7/7` to `7/8` and leaves one
+  萬用 slot unallocated.
+- Re-running the Safe policy with the screenshot values as a newer current-
+  screen observation initially used the eighth 摧破 slot for
+  逆練《伏龍刀法》. Manual review rejected this result: 《伏龍刀法》 is a
+  Pure Yang active attack, while the current `金剛·金剛伏魔` inner-power
+  state causes backlash damage and inner-qi disorder whenever a Pure Yang
+  skill is used.
+- Known backlash-on-use matches are now hard-rejected before candidate search.
+  This is state-specific rather than a blanket Pure Yang ban: merely equipping
+  《遍體火漆法》 as Neigong is not a cast. The corrected Safe candidate and
+  Direct 《墨玉功》 still require live verification before M1-025 can be
+  completed.
+- A local-only live-battle screenshot confirms that the target can actively
+  perform 《瓊花嘆》 and that the game exposes the corresponding Resolve,
+  Defence, and Penetration contest while it resolves. The frame does not show
+  an active recommended counter, a loss-of-spirit marker, or mind-resonance
+  state, so it is supporting threat evidence rather than completion of the
+  counter-effect and battle-plan acceptance criteria. The screenshot remains
+  untracked and is not stored in the repository.
+- A second local-only battle frame shows the player performing 《羅剎刀法》
+  while the target performs 《候人兮猗》, with both displayed at `11/36` and
+  the visible battlefield effect `醒神` described by the game as increasing
+  loss-of-spirit damage. This confirms live exposure to the documented threat,
+  but it does not yet demonstrate Direct 《墨玉功》 shortening a marker or a
+  recommended active counter interrupting or reducing the magic-sound attack.
+  The frame also remains untracked.
+- A third local-only battle frame explicitly shows Reverse 《九色玉蟬法》
+  reporting `消除己之標記`. This confirms that the target's marker reset is
+  an active combat mechanic rather than an inferred phase transition. The frame
+  does not include the immediately preceding `36/36`, the target's before-and-
+  after 奇竅 true-qi values, or the post-reset marker count, so the trigger
+  threshold and escalating cost remain configuration-backed rather than
+  independently demonstrated by this frame. The image remains untracked.
+- A fourth local-only in-battle skill panel confirms that Direct 《墨玉功》 is
+  equipped at `184%` and exposes its active description that the operator's
+  loss-of-spirit marker duration is greatly reduced. The same panel confirms
+  Reverse 《三部九候法》 at `95%` with its distance-below-five defensive effect.
+  This verifies that both recommended directions can be equipped and their
+  effects are active in battle, but does not independently measure the actual
+  marker-duration reduction. The frame remains untracked.
+- A subsequent read-only inspection of the newly saved post-battle snapshot
+  confirmed SHA-256
+  `5EA7B647D6DEE12EAB202AE2754E3AAA69965134D2526F17BEF0D6D85BB6DC61`
+  before and after the read (`saveModified=False`). It confirms that Direct
+  《曼荼羅真言》 and direction-neutral 《水火硬氣功》 are equipped. Reverse
+  《萬花聽雨式》 is learned and usable in that direction but is not equipped;
+  it costs three agility slots. Therefore it cannot be selected as the active
+  anti-resonance agility skill in the current battle without a manual loadout
+  change before the next attempt.
+- The player confirmed that all returned skills, directions, capacity, weapon,
+  and execution conditions were usable, but the first battle attempt still
+  ended without defeating the target. M1-025 therefore remains open.
+- Root-cause review found that the confirmed Reverse 《九色玉蟬法》 reset was
+  still represented only as an unscored unknown warning. The engine optimized
+  survival without optimizing how to exhaust the target's escalating Qiqiao
+  true-Qi reset payments.
+- The reset is now `DEFEAT_MARK_RESET_LOOP`, a Critical threshold threat backed
+  by effect `911` and the local-only live trigger frame. Target Assistance
+  passives are included in the read-only learned-skill projection.
+- Reverse 《七轮感应法》 effect `915` is now a mitigation candidate because it
+  adds a slowly decreasing random-type true-Qi damage state after the target
+  receives a damage state. It is explicitly not a hard counter: the drained
+  true-Qi type is random. The latest read-only snapshot confirms the player
+  owns the usable Reverse direction at cost two and does not currently equip
+  it.
+- A regression test now proves that a snapshot containing the reset threat and
+  accessible Reverse 《七轮感应法》 produces a manual add step covering the
+  reset. Another manually applied recommendation and battle are required.
+- The API process currently listening on port `5056` was started before this
+  correction and still returns the former three-threat response. Restarting
+  that process is required before generating the next manual plan; its stale
+  response is not verification evidence.
+- Updated automated checks: 412 tests discovered, 411 passed, and the opt-in
+  local read skipped by default. The explicitly enabled local read passed both
+  tests and preserved save SHA-256
+  `5EA7B647D6DEE12EAB202AE2754E3AAA69965134D2526F17BEF0D6D85BB6DC61`.
+- On 2026-08-01 the player defeated the target, did not use the newly
+  recommended Reverse 《七轮感应法》, and used all available beneficial pills.
+  This confirms that the target is defeatable but does not isolate the effect
+  of the loadout. The outcome is recorded as a consumable-buffed victory with
+  the recommended counter unused; the result is not silently attributed to the
+  helper.
+- The player subsequently confirmed that Reverse 《七轮感应法》 was separately
+  validated in-game. Its direction and effect are accepted as validated, while
+  its random true-Qi drain remains Mitigation rather than a guaranteed Qiqiao
+  reset lockout.
+- The final local-only screenshot (SHA-256
+  `7DA3C2CFD179506E437D7B851D377421E75B448EEA3E972B4871494EB105D08D`)
+  confirms `6/6`, `9/10`, `6/7`, `8/9`, and `3/4`, with zero unallocated
+  universal slots. It retains 金猊镇魔刀, 万花听雨式, 墨玉功, and
+  三部九候法, but not 七轮感应法. The player confirmed legendary-book use;
+  exact book-effect assignments are not inferred from the overview.
+- The product owner accepted this real, player-adjusted victory as sufficient
+  to complete M1-025 and Epic 1. Separating the effects of recommended skills,
+  legendary books, consumables, and manual substitutions is deferred to later
+  outcome-feedback improvements.
 
 ## Later backlog
 
@@ -1663,6 +1769,12 @@ Use SQLite to store recommendation metadata, user feedback, and battle outcomes.
 The database is helper-owned, resides outside game-owned storage, and is never
 used to write anything back to the game. Do not store proprietary game content
 or complete saves.
+
+Outcome feedback should distinguish victory or defeat, recommended skills
+actually used, manually substituted skills, consumable buffs, and other
+player-reported combat conditions. These fields prevent a victory with unused
+recommendations or full consumable buffs from being misclassified as evidence
+for a counter rule.
 
 ### M2-002 — Add rule and snapshot caching
 

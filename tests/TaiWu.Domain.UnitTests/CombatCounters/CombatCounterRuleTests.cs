@@ -15,7 +15,7 @@ public sealed class CombatCounterRuleTests
         Assert.Equal(
             VerifiedCombatEffectCatalogs.GoldenGameDataVersion,
             ruleSet.GameDataVersion);
-        Assert.Equal(5, ruleSet.Rules.Length);
+        Assert.Equal(6, ruleSet.Rules.Length);
         Assert.All(
             ruleSet.Rules,
             rule =>
@@ -192,7 +192,8 @@ public sealed class CombatCounterRuleTests
         Assert.Equal(
             [
                 "REVERSE_JINNI_SUPPRESSION",
-                "DIRECT_MOYU_MARK_DURATION"
+                "DIRECT_MOYU_MARK_DURATION",
+                "REVERSE_QILUN_TRUE_QI_DRAIN"
             ],
             result.MissingAccess.Select(value => value.Rule.Code));
     }
@@ -265,6 +266,7 @@ public sealed class CombatCounterRuleTests
     {
         134 => SkillCategory.Agility,
         267 => SkillCategory.Assistance,
+        291 => SkillCategory.Assistance,
         _ => SkillCategory.Attack
     };
 

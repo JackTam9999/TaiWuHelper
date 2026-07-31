@@ -231,6 +231,7 @@ internal sealed class TaiwuCombatSnapshotReader(
             var isRelevant =
                 equippedSkillIds.Contains(skillId)
                 || item.EquipType == 1
+                || item.EquipType == 4
                 || item.Type == 13;
             if (!isRelevant)
             {

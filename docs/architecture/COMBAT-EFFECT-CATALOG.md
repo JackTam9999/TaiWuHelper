@@ -61,6 +61,7 @@ records:
 | 624 | 伏龙刀法 | Reverse | 1234 | Reduce enemy attack-skill power |
 | 611 | 鬼庖丁刀法 | Direct | 439 | Transfer own hindrance marks |
 | 611 | 鬼庖丁刀法 | Reverse | 1165 | Transfer own hindrance marks |
+| 291 | 七轮感应法 | Reverse | 915 | Amplify enemy damage states; drain a random true-Qi type |
 
 Direction is part of the catalog key. Similar-looking Direct and Reverse
 effects are never collapsed, and common typed mechanics do not imply identical
@@ -79,6 +80,6 @@ On 2026-07-30:
 5. The inspection compared the save fingerprint before and after reading and
    reported no change.
 
-Only the 12 selected descriptions and their source keys are retained in Domain
+Only the 13 selected descriptions and their source keys are retained in Domain
 code. No complete local configuration file, GameData binary, save content,
 generated report, machine-specific path, or file fingerprint is committed.

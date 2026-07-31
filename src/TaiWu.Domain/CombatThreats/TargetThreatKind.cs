@@ -6,6 +6,7 @@ public enum TargetThreatKind
     DistractionMarkAccumulation,
     MindResonanceCascade,
     PersistentDefeatMarks,
+    DefeatMarkReset,
     RepeatedAttack,
     PenetrationPressure,
     MovementRestriction,

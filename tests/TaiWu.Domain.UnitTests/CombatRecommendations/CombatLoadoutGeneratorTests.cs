@@ -276,6 +276,44 @@ public sealed class CombatLoadoutGeneratorTests
     }
 
     [Fact]
+    public void Pure_yang_fulong_matching_inner_power_backlash_is_rejected()
+    {
+        var skill = CreateSkill(
+            624,
+            element: CombatSkillElement.Fire);
+        var player = CreatePlayer(
+            [skill],
+            innerPowerState: SnapshotValue<InnerPowerStateSnapshot>.Available(
+                new InnerPowerStateSnapshot(
+                    1,
+                    SnapshotValue<string>.Available("金剛·金剛伏魔"),
+                    SnapshotValue<string>.Available("Test state"),
+                    ElementAdjustmentSet.None,
+                    ElementAdjustmentSet.None,
+                    CombatSkillElement.Fire)));
+
+        var result = Generate(
+            player,
+            [
+                Option(
+                    skill,
+                    threatCodes: ["THREAT"],
+                    strength: CombatCounterStrength.Mitigation,
+                    timing: CombatCounterActivationTiming.ActiveAttack)
+            ]);
+
+        Assert.Empty(result.Candidates);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Code
+                    == CombatLoadoutGenerationDiagnosticCode.OptionRejected
+                && diagnostic.SkillId == skill.SkillId
+                && diagnostic.Reason.Contains(
+                    "backlash damage",
+                    StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Matching_verified_effect_is_accepted()
     {
         var skill = CreateSkill(100);
@@ -501,7 +539,8 @@ public sealed class CombatLoadoutGeneratorTests
         int skillId,
         SkillCategory category = SkillCategory.Attack,
         PracticeDirection direction = PracticeDirection.Direct,
-        SnapshotValue<PracticeDirection>? directionValue = null)
+        SnapshotValue<PracticeDirection>? directionValue = null,
+        CombatSkillElement? element = null)
     {
         return new CombatSkillSnapshot(
             skillId,
@@ -513,7 +552,10 @@ public sealed class CombatLoadoutGeneratorTests
                 ?? SnapshotValue<PracticeDirection>.Available(direction),
             SkillSlotContribution.None,
             SnapshotValue<int>.Available(1000 + skillId),
-            SnapshotValue<int>.Available(2000 + skillId));
+            SnapshotValue<int>.Available(2000 + skillId),
+            element: element.HasValue
+                ? SnapshotValue<CombatSkillElement>.Available(element.Value)
+                : null);
     }
 
     private static CombatRequirementContext CreateContext()
@@ -529,7 +571,8 @@ public sealed class CombatLoadoutGeneratorTests
 
     private static PlayerCombatSnapshot CreatePlayer(
         CombatSkillSnapshot[] skills,
-        CombatLoadoutSnapshot? loadout = null)
+        CombatLoadoutSnapshot? loadout = null,
+        SnapshotValue<InnerPowerStateSnapshot>? innerPowerState = null)
     {
         return new PlayerCombatSnapshot(
             characterId: 1,
@@ -547,7 +590,8 @@ public sealed class CombatLoadoutGeneratorTests
             ]),
             new GenericSlotAllocation(0, 0, 0, 0, 0),
             legendaryBookCostSlots: [],
-            legendaryBookCostAssignments: []);
+            legendaryBookCostAssignments: [],
+            innerPowerState);
     }
 
     private static CombatLoadoutSnapshot CreateLoadout(

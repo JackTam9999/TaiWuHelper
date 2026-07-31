@@ -170,7 +170,9 @@ internal static class CombatSkillReportSection
         foreach (var (skillId, skill) in skills)
         {
             var item = skill.Template;
-            if (item.Type != 13 && item.EquipType != 1)
+            if (item.Type != 13
+                && item.EquipType != 1
+                && item.EquipType != 4)
             {
                 continue;
             }

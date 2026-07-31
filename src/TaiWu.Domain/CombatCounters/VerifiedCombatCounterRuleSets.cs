@@ -86,7 +86,24 @@ public static class VerifiedCombatCounterRuleSets
                     Effect(catalog, 624, PracticeDirection.Reverse, 1234),
                     requirements: [],
                     "Reduces all enemy attack-skill power according to "
-                    + "achieved effectiveness for the rest of combat.")
+                    + "achieved effectiveness for the rest of combat."),
+                new CombatCounterRule(
+                    "REVERSE_QILUN_TRUE_QI_DRAIN",
+                    [
+                        "DEFEAT_MARK_RESET_LOOP"
+                    ],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.EquippedPassive,
+                    Effect(catalog, 291, PracticeDirection.Reverse, 915),
+                    [
+                        Passive(291, "reverse-qilun-equipped")
+                    ],
+                    "When the target receives a damage state, it doubles "
+                    + "the state's initial intensity and adds a slowly "
+                    + "decreasing random true-Qi state. This can deplete "
+                    + "the Qiqiao resource that powers repeated resets, "
+                    + "but the drained true-Qi type is random, so this is "
+                    + "mitigation rather than a guaranteed counter.")
             ]);
     }
 

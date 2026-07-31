@@ -157,6 +157,59 @@ public sealed class RecommendCombatLoadoutTests
     }
 
     [Fact]
+    public async Task Confirmed_reset_threat_recommends_reverse_qilun()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var qilun = Skill(
+            291,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 189,
+            reverseEffectId: 915);
+        var reset = Skill(
+            287,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 185,
+            reverseEffectId: 911);
+        var snapshot = Snapshot(
+            [qilun],
+            [reset],
+            new CombatLoadoutSnapshot([], [], [], [], []),
+            SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
+                "The target loadout is selected during combat preparation."),
+            warnings: []);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var useCase = new RecommendCombatLoadout(reader);
+
+        var result = await useCase.ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Safe),
+            TestContext.Current.CancellationToken);
+
+        var threat = Assert.Single(result.ThreatAnalysis.Threats);
+        Assert.Equal("DEFEAT_MARK_RESET_LOOP", threat.Threat.Code);
+        var plan = Assert.IsType<ManualCombatPlan>(result.ManualPlan.Plan);
+        Assert.Contains(
+            plan.LoadoutChanges,
+            change => change.Kind == ManualLoadoutChangeKind.Add
+                && change.SkillId == qilun.SkillId);
+        Assert.Contains(
+            plan.SelectedRecommendation.Candidate.SelectedOptions,
+            option => option.Candidate.SkillId == qilun.SkillId
+                && option.Candidate.RequiredDirection
+                    == PracticeDirection.Reverse);
+        Assert.Contains(
+            plan.SelectedRecommendation.Candidate.ThreatCodes,
+            code => code == "DEFEAT_MARK_RESET_LOOP");
+    }
+
+    [Fact]
     public async Task Execute_propagates_cancellation_to_snapshot_reader()
     {
         var reader = Substitute.For<ICombatSnapshotReader>();

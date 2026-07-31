@@ -16,60 +16,17 @@ public static class InnerPowerCompatibilityEvaluator
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(candidate);
 
-        var activeOptions = candidate.SelectedOptions
-            .Where(option => IsCast(option.ActivationTiming))
+        var evaluations = candidate.SelectedOptions
+            .Select(option => EvaluateActiveUse(player, option))
+            .Where(evaluation => evaluation is not null)
+            .Cast<InnerPowerSkillCompatibility>()
             .ToArray();
-        if (activeOptions.Length == 0)
+        if (evaluations.Length == 0)
         {
             return new InnerPowerCompatibilityEvaluation(
                 SnapshotValue<decimal>.Available(100),
                 evaluations: []);
         }
-
-        if (!player.InnerPowerState.IsAvailable)
-        {
-            return new InnerPowerCompatibilityEvaluation(
-                SnapshotValue<decimal>.Unavailable(
-                    "Current inner-power state is unavailable: "
-                    + player.InnerPowerState.UnavailableReason),
-                activeOptions.Select(option =>
-                    InnerPowerSkillCompatibility.Unavailable(
-                        option.Candidate.SkillId,
-                        player.InnerPowerState.UnavailableReason!)));
-        }
-
-        var state = player.InnerPowerState.Value;
-        var skillsById = player.LearnedSkills.ToDictionary(
-            skill => skill.SkillId);
-        var evaluations = activeOptions.Select(option =>
-        {
-            var skill = skillsById[option.Candidate.SkillId];
-            if (!skill.Element.IsAvailable)
-            {
-                return InnerPowerSkillCompatibility.Unavailable(
-                    skill.SkillId,
-                    skill.Element.UnavailableReason!);
-            }
-
-            var element = skill.Element.Value;
-            var causesBacklash = state.BacklashOnUseElement == element;
-            var maxPowerChange = state.MaxPowerChanges.Get(element);
-            var requirementChange = state.RequirementChanges.Get(element);
-            var score = causesBacklash
-                ? 0
-                : Math.Clamp(
-                    80 + maxPowerChange - requirementChange,
-                    0,
-                    100);
-            return new InnerPowerSkillCompatibility(
-                skill.SkillId,
-                element,
-                causesBacklash,
-                maxPowerChange,
-                requirementChange,
-                score,
-                UnavailableReason: null);
-        }).ToArray();
 
         var known = evaluations
             .Where(evaluation => evaluation.Score.HasValue)
@@ -79,11 +36,66 @@ public static class InnerPowerCompatibilityEvaluator
                 known.Average(evaluation =>
                     (decimal)evaluation.Score!.Value))
             : SnapshotValue<decimal>.Unavailable(
-                "One or more active skills have no mapped element, so "
-                + "inner-power compatibility is incomplete.");
+                "One or more active skills have no mapped inner-power "
+                + "state or element, so compatibility is incomplete.");
         return new InnerPowerCompatibilityEvaluation(
             scoreValue,
             evaluations);
+    }
+
+    public static InnerPowerSkillCompatibility? EvaluateActiveUse(
+        PlayerCombatSnapshot player,
+        CombatLoadoutOption option)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(option);
+        if (!IsCast(option.ActivationTiming))
+        {
+            return null;
+        }
+
+        if (!player.InnerPowerState.IsAvailable)
+        {
+            return InnerPowerSkillCompatibility.Unavailable(
+                option.Candidate.SkillId,
+                player.InnerPowerState.UnavailableReason!);
+        }
+
+        var state = player.InnerPowerState.Value;
+        var skill = player.LearnedSkills.SingleOrDefault(
+            skill => skill.SkillId == option.Candidate.SkillId);
+        if (skill is null)
+        {
+            return InnerPowerSkillCompatibility.Unavailable(
+                option.Candidate.SkillId,
+                "The skill is absent from the learned-skill snapshot.");
+        }
+
+        if (!skill.Element.IsAvailable)
+        {
+            return InnerPowerSkillCompatibility.Unavailable(
+                skill.SkillId,
+                skill.Element.UnavailableReason!);
+        }
+
+        var element = skill.Element.Value;
+        var causesBacklash = state.BacklashOnUseElement == element;
+        var maxPowerChange = state.MaxPowerChanges.Get(element);
+        var requirementChange = state.RequirementChanges.Get(element);
+        var score = causesBacklash
+            ? 0
+            : Math.Clamp(
+                80 + maxPowerChange - requirementChange,
+                0,
+                100);
+        return new InnerPowerSkillCompatibility(
+            skill.SkillId,
+            element,
+            causesBacklash,
+            maxPowerChange,
+            requirementChange,
+            score,
+            UnavailableReason: null);
     }
 
     private static bool IsCast(

@@ -94,17 +94,22 @@ public sealed class TargetThreatTaxonomyTests
     }
 
     [Fact]
-    public void Unconfirmed_golden_reset_remains_warning_not_threat()
+    public void Confirmed_golden_reset_is_a_critical_threshold_threat()
     {
         var result = VerifiedTargetThreatTaxonomies.GoldenMagicSound;
 
-        Assert.DoesNotContain(
+        var threat = Assert.Single(
             result.Threats,
-            threat => threat.Kind
-                == TargetThreatKind.PersistentDefeatMarks);
-        var warning = Assert.Single(result.Warnings);
-        Assert.Contains("36 defeat marks", warning.Message);
-        Assert.Contains("九色玉蟬法", warning.Message);
+            value => value.Code == "DEFEAT_MARK_RESET_LOOP");
+        Assert.Equal(TargetThreatKind.DefeatMarkReset, threat.Kind);
+        Assert.Equal(TargetThreatSeverity.Critical, threat.Severity);
+        Assert.Equal(
+            TargetThreatActivationTiming.Threshold,
+            threat.ActivationTiming);
+        var evidence = Assert.Single(threat.Evidence);
+        Assert.Equal(287, evidence.SourceSkillId);
+        Assert.Equal(911, evidence.RawEffectId);
+        Assert.Empty(result.Warnings);
     }
 
     [Fact]

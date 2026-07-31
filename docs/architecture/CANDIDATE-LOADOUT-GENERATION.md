@@ -40,13 +40,18 @@ Before combination search, each option must pass:
 3. strict current direction, explicit manual direction-change eligibility, or
    an explicitly allowed and immediately achievable breakthrough into the
    required direction;
-4. availability of the requested Direct or Reverse effect; and
-5. exact raw effect ID when the option comes from a verified counter.
+4. availability of the requested Direct or Reverse effect;
+5. exact raw effect ID when the option comes from a verified counter; and
+6. no known backlash-on-use match between an actively cast option's element
+   and the current inner-power state.
 
 Rejected options remain in diagnostics and are not included in the search.
-When a rejected counter option is already equipped, it falls back to a plain
-retention option so that an unusable direction-specific effect does not
-silently remove the player's current skill.
+When a direction- or effect-rejected counter option is already equipped, it
+may fall back to a plain retention option so that an unusable direction-
+specific effect does not silently remove the player's current skill. A known
+active-use backlash does not receive this fallback: it cannot be presented as
+part of a usable recommendation. Merely equipping Neigong or a passive remains
+distinct from actively casting a skill and is not blanket-prohibited.
 
 Each explored combination must then:
 

@@ -45,11 +45,17 @@ activate it correctly.
 | Reverse 万花听雨式 | Mitigation | Active agility | Mind resonance |
 | Direct 墨玉功 | Mitigation | Equipped passive | Distraction marks, mind resonance |
 | Reverse 伏龙刀法 | Mitigation | Active attack | Positive magic-sound pressure, distraction marks |
+| Reverse 七轮感应法 | Mitigation | Equipped passive | Repeatable defeat-mark reset |
 
 Reverse 金猊 is classified as the hard counter because its verified effect
 interrupts, clears, and temporarily prevents enemy Direct-practice skills. The
-other rules reduce power, clear marks, or shorten dangerous durations, so they
-mitigate the threat without guaranteeing suppression.
+other rules reduce power, clear marks, shorten dangerous durations, or pressure
+the resource behind the reset, so they mitigate the threat without guaranteeing
+suppression. In particular, Reverse 七轮感应法 adds a slowly decreasing
+random-type true-Qi damage state when the target receives a damage state. It
+can drain Qiqiao true-Qi, but the type is random and it first requires the
+target to receive a damage state; the helper must never describe it as a
+guaranteed reset lockout.
 
 ## Player-access evaluation
 
@@ -72,8 +78,10 @@ generation must still fit the skill into a feasible proposed loadout.
 
 For the confirmed current direction profile, neutral 金猊 fails the Reverse
 requirement and reverse 墨玉 fails the Direct requirement. Reverse 老君,
-reverse 萬花, and reverse 伏龍 pass direction/effect eligibility when the
-proposed context equips 老君 and actively runs 萬花.
+reverse 萬花, reverse 伏龍, and reverse 七轮 pass direction/effect eligibility
+when the proposed context equips the passives and actively runs 萬花. A
+separate current inner-power compatibility check may still reject an active
+attack such as 伏龍 for a specific inner-power state.
 
 Recommendation options keep this direction check strict by default. The
 presence of both raw Direct and Reverse effect IDs does not prove that the

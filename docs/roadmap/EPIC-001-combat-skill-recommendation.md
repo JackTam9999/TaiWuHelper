@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress |
+| Status | Complete |
 | Milestone | 1 |
 | Target release | TBD |
-| Last updated | 2026-07-31 |
+| Last updated | 2026-08-01 |
 
 ## Summary
 
@@ -349,38 +349,53 @@ relationships without parsing explanation text.
 
 ## Milestone acceptance criteria
 
-- [ ] A player can select the agreed golden target.
-- [ ] The service opens source data through read-only operations and leaves
+- [x] A player can select the agreed golden target.
+- [x] The service opens source data through read-only operations and leaves
       saves and all other game-owned data byte-for-byte unchanged.
-- [ ] No Domain, Application, Infrastructure, or API contract exposes a
+- [x] No Domain, Application, Infrastructure, or API contract exposes a
       game-data or game-state mutation operation.
-- [ ] The helper does not attach to, inject into, hook, patch, automate, or
+- [x] The helper does not attach to, inject into, hook, patch, automate, or
       write to the running game.
-- [ ] The target's critical threats are returned with evidence.
-- [ ] Every recommended skill is owned by the player.
-- [ ] Every required direction is available and correctly interpreted.
-- [ ] Actual effective cost is used for each skill.
-- [ ] All category and generic-slot totals are valid.
-- [ ] Weapon and combat conditions are disclosed.
-- [ ] The response identifies primary, alternative, and switchable skills.
-- [ ] Exact manual add, remove, retain, direction-change, and verified
+- [x] The target's critical threats are returned with evidence.
+- [x] Every recommended skill is owned by the player.
+- [x] Every required direction is available and correctly interpreted.
+- [x] Actual effective cost is used for each skill.
+- [x] All category and generic-slot totals are valid.
+- [x] Weapon and combat conditions are disclosed.
+- [x] The response identifies primary, alternative, and switchable skills.
+- [x] Exact manual add, remove, retain, direction-change, and verified
       breakthrough-prerequisite suggestions are returned for the player to
       perform.
-- [ ] A practical opening and battle sequence is included.
-- [ ] Safe, balanced, and aggressive results are deterministic for the same
+- [x] A practical opening and battle sequence is included.
+- [x] Safe, balanced, and aggressive results are deterministic for the same
       snapshot and request.
-- [ ] A local browser page presents all available styles from the same
+- [x] A local browser page presents all available styles from the same
       snapshot.
-- [ ] Critical warnings, target threats, skill reasons, capacity, direction,
+- [x] Critical warnings, target threats, skill reasons, capacity, direction,
       effective cost, timing, requirements, and evidence are visible.
-- [ ] The page provides a manual setup checklist and never provides an apply,
+- [x] The page provides a manual setup checklist and never provides an apply,
       equip, execute, or game-control operation.
-- [ ] Initial, loading, success, warning, empty, and failure states are
+- [x] Initial, loading, success, warning, empty, and failure states are
       implemented and keyboard accessible.
-- [ ] Unsupported runtime calculations are marked unavailable, not inferred.
-- [ ] Domain, Application, and Presentation behavior is covered by xUnit v3
+- [x] Unsupported runtime calculations are marked unavailable, not inferred.
+- [x] Domain, Application, and Presentation behavior is covered by xUnit v3
       tests.
-- [ ] One complete recommendation is manually verified in-game.
+- [x] The end-to-end recommendation workflow and final player-adjusted loadout
+      are verified by a real in-game victory; Reverse 七轮感应法 was separately
+      validated, while attributing individual contributions to the recorded
+      victory remains a future improvement.
+
+## Completion decision
+
+The product owner accepted Epic 1 as complete on 2026-08-01. The final target
+victory used a manually adjusted loadout, legendary-book effects, and all
+available beneficial pills. Reverse 七轮感应法 was not used. Therefore Epic
+completion establishes a usable, strictly read-only recommendation vertical
+slice and a successful player outcome; it does not claim that every proposed
+counter caused the victory or that consumable and legendary-book contributions
+were isolated. Reverse 七轮感应法 was separately validated in-game after the
+recorded victory, but it was not used to produce that particular outcome. Those
+measurements remain later improvements.
 
 ## Success measures
 

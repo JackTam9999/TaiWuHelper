@@ -62,9 +62,10 @@ component without weakening any hard feasibility rule.
 Inner-power compatibility is not a blanket element ban. Only options marked as
 actively cast attack, agility, or defense skills are evaluated as uses. Merely
 equipping a Neigong or passive assistance skill does not trigger the
-backlash-on-use rule. A known backlash scores zero and produces a visible
-known-risk caveat, but remains a policy-visible penalty rather than a hidden
-hard prohibition.
+backlash-on-use rule. A known backlash-on-use match is rejected before
+combination search because every intended activation would cause backlash
+damage and inner-qi disorder. Other mapped power-limit and requirement changes
+remain visible scoring inputs rather than hard prohibitions.
 
 ## Total and ranking
 
