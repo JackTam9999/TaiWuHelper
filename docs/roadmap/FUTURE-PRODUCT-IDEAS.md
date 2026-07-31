@@ -87,7 +87,10 @@ control the game.
 ### PI-004 — Bilingual martial-art catalogue
 
 Provide a searchable Chinese and English catalogue derived from permitted
-local game configuration and language resources. Candidate fields include:
+local game configuration and language resources. Store the derived catalogue
+in a helper-owned, rebuildable SQLite database so that the UI and recommendation
+engine can search and join skill data efficiently without repeatedly parsing
+all installed resources. Candidate fields include:
 
 - Stable skill identifier.
 - Chinese and English names.
@@ -98,10 +101,24 @@ local game configuration and language resources. Candidate fields include:
 - Verified counters, synergies, and evidence.
 - GameData and language-resource versions.
 
-The catalogue must not include or redistribute proprietary game binaries,
-complete game resources, or unlicensed artwork. Extracted fields must be
-reviewed for copyright and distribution risk before they are committed or
-published.
+The installed game files remain the source of truth for static skill data. The
+current save remains the source of truth for learned skills, breakthrough
+availability, practice direction, current equipment, and other player state.
+Save-derived state may be cached temporarily, but the catalogue must not replace
+or override a fresh read.
+
+Clean Architecture placement should keep catalogue models and query ports in
+the Domain/Application boundary, with importing and SQLite persistence in
+Infrastructure. Recommendation calculations may use only verified typed effect
+rules; retaining raw effect text in the local catalogue does not by itself make
+an effect safe to interpret or score.
+
+The generated database must live outside game-owned storage, be excluded from
+Git, and be invalidated or rebuilt when the relevant GameData or language
+resource version changes. The project must not commit or distribute a
+pre-populated catalogue, proprietary game binaries, complete game resources,
+extracted artwork, or other unlicensed content. Each installation builds its
+own catalogue from the player's locally installed resources.
 
 ### PI-005 — Shareable recommendation card
 
@@ -131,6 +148,8 @@ Possible records include:
 - GameData and language-resource versions.
 - Target observations and their provenance.
 - Confirmed name-to-identifier mappings.
+- A rebuildable local skill catalogue derived from installed configuration and
+  language resources, as described by PI-004.
 - Previous recommendation summaries.
 - Player feedback and manually reported outcomes.
 
@@ -139,7 +158,9 @@ records must be invalidated or marked stale when their save fingerprint,
 GameData version, language version, or relevant verified rule changes.
 
 Do not store complete saves, proprietary binaries, unnecessary raw game
-content, or any data intended to be written back into the game.
+content, or any data intended to be written back into the game. A generated
+catalogue database is a local cache and must never be committed or shipped as
+application content.
 
 ## Suggested promotion order
 
@@ -166,6 +187,7 @@ sharing, and repeat-use performance.
   `Confirmed`?
 - How should conflicting observations from different battles be represented?
 - Which extracted catalogue fields may be safely distributed?
+- Which raw effect fields are useful for local display, and which effects need
+  verified typed rules before the recommendation engine may use them?
 - What SQLite retention and deletion controls should the player have?
 - Which ideas justify separate epics rather than remaining small enhancements?
-

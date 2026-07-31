@@ -151,4 +151,16 @@ public sealed record CombatLoadoutOption
             isCurrentlyEquipped: true,
             evidenceReference);
     }
+
+    public static CombatLoadoutOption SelectCapacityProvider(
+        int skillId,
+        string evidenceReference)
+    {
+        return new CombatLoadoutOption(
+            new CombatSkillCandidate(skillId),
+            requirements: [],
+            threatCodes: [],
+            isCurrentlyEquipped: false,
+            evidenceReference);
+    }
 }

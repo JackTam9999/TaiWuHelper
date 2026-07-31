@@ -25,21 +25,24 @@ public static class CombatLoadoutGenerator
                 exploredCombinations: 0);
         }
 
-        var requiredOptions = eligibleOptions
-            .Where(option => IsRequiredCurrentNeigong(request.Player, option))
-            .ToArray();
         var retentionOptions = eligibleOptions
-            .Except(requiredOptions)
             .Where(IsPureRetentionOption)
+            .Where(option => SkillFor(request.Player, option).Category
+                != SkillCategory.Neigong)
             .OrderBy(option => EffectiveCost(request.Player, option))
             .ThenBy(option => option.Candidate.SkillId)
             .ToArray();
         var strategicOptions = eligibleOptions
-            .Except(requiredOptions)
             .Except(retentionOptions)
+            .Where(option =>
+                SkillFor(request.Player, option).Category
+                    != SkillCategory.Neigong
+                || !IsPureRetentionOption(option))
             .ToArray();
         List<GeneratedCombatLoadout> generated = [];
-        List<CombatLoadoutOption> selected = [.. requiredOptions];
+        List<CombatLoadoutOption> selected = [];
+        Dictionary<string, NeigongOptimizationResult?> neigongCache =
+            new(StringComparer.Ordinal);
         var explored = 0;
         var explorationTruncated = false;
 
@@ -106,7 +109,8 @@ public static class CombatLoadoutGenerator
         {
             var strategicSelectionCount = selected.Count;
             GeneratedCombatLoadout? best = null;
-            if (selected.Count > 0)
+            if (selected.Count > 0
+                || request.Player.EquippedSkills.NeigongSkillIds.Length > 0)
             {
                 best = TryEvaluateSelected();
             }
@@ -149,22 +153,20 @@ public static class CombatLoadoutGenerator
             }
 
             explored++;
-            return EvaluateCombination(request, selected, diagnostics);
+            return EvaluateCombination(
+                request,
+                selected,
+                diagnostics,
+                neigongCache);
         }
     }
 
-    private static bool IsRequiredCurrentNeigong(
+    private static CombatSkillSnapshot SkillFor(
         PlayerCombatSnapshot player,
         CombatLoadoutOption option)
     {
-        if (!option.IsCurrentlyEquipped)
-        {
-            return false;
-        }
-
-        var skill = player.LearnedSkills.Single(
+        return player.LearnedSkills.Single(
             value => value.SkillId == option.Candidate.SkillId);
-        return skill.Category == SkillCategory.Neigong;
     }
 
     private static bool IsPureRetentionOption(CombatLoadoutOption option)
@@ -263,7 +265,8 @@ public static class CombatLoadoutGenerator
     private static GeneratedCombatLoadout? EvaluateCombination(
         CombatLoadoutGenerationRequest request,
         List<CombatLoadoutOption> selected,
-        List<CombatLoadoutGenerationDiagnostic> diagnostics)
+        List<CombatLoadoutGenerationDiagnostic> diagnostics,
+        Dictionary<string, NeigongOptimizationResult?> neigongCache)
     {
         var activeAgility = GetSingleActiveSkill(
             selected,
@@ -282,7 +285,60 @@ public static class CombatLoadoutGenerator
             return null;
         }
 
-        var loadout = CreateLoadout(request.Player, selected);
+        var optimizationKey = CreateNeigongOptimizationKey(
+            request.Player,
+            selected);
+        if (!neigongCache.TryGetValue(
+                optimizationKey,
+                out var optimization))
+        {
+            optimization = NeigongLoadoutOptimizer.Optimize(
+                request.Player,
+                selected);
+            neigongCache[optimizationKey] = optimization;
+        }
+        if (optimization is null)
+        {
+            diagnostics.Add(
+                Diagnostic(
+                    CombatLoadoutGenerationDiagnosticCode
+                        .CombinationInfeasible,
+                    "No learned Neigong combination within the six-slot "
+                    + "Neigong budget can provide the required outer-skill "
+                    + "capacity.",
+                    feasibilityFailures:
+                    [
+                        new CombatLoadoutFeasibilityFailure(
+                            CombatLoadoutFeasibilityFailureCode
+                                .SlotBudgetInvalid,
+                            "The proposed outer skills exceed every "
+                            + "available Neigong-derived slot budget.")
+                    ]));
+            return null;
+        }
+
+        List<CombatLoadoutOption> optimizedSelection = [.. selected];
+        var selectedIds = optimizedSelection
+            .Select(option => option.Candidate.SkillId)
+            .ToHashSet();
+        var currentNeigongIds = request.Player.EquippedSkills
+            .NeigongSkillIds.ToHashSet();
+        foreach (var skillId in optimization.NeigongSkillIds
+                     .Where(selectedIds.Add))
+        {
+            optimizedSelection.Add(
+                currentNeigongIds.Contains(skillId)
+                    ? CombatLoadoutOption.RetainCurrentSkill(
+                        skillId,
+                        $"snapshot:player:equipped-neigong:{skillId}")
+                    : CombatLoadoutOption.SelectCapacityProvider(
+                        skillId,
+                        $"snapshot:player:learned-neigong:{skillId}:slots"));
+        }
+
+        var loadout = CreateLoadout(
+            request.Player,
+            optimizedSelection);
         var context = CreateRequirementContext(
             request.BaseRequirementContext,
             loadout,
@@ -290,9 +346,9 @@ public static class CombatLoadoutGenerator
             activeAgility.SkillId);
         var proposal = new ProposedCombatLoadout(
             loadout,
-            request.GenericSlotAllocation,
-            selected.Select(option => option.Candidate),
-            selected.SelectMany(option => option.Requirements),
+            optimization.GenericSlotAllocation,
+            optimizedSelection.Select(option => option.Candidate),
+            optimizedSelection.SelectMany(option => option.Requirements),
             context);
         var validation = CombatLoadoutFeasibilityValidator.Validate(
             request.Player,
@@ -313,8 +369,10 @@ public static class CombatLoadoutGenerator
 
         return new GeneratedCombatLoadout(
             validation.FeasibleLoadout!,
-            selected,
-            CreateStableKey(loadout));
+            optimizedSelection,
+            CreateStableKey(
+                loadout,
+                optimization.GenericSlotAllocation));
     }
 
     private static CombatLoadoutSnapshot CreateLoadout(
@@ -383,13 +441,41 @@ public static class CombatLoadoutGenerator
             skillIds.Length > 1);
     }
 
-    private static string CreateStableKey(CombatLoadoutSnapshot loadout)
+    private static string CreateStableKey(
+        CombatLoadoutSnapshot loadout,
+        GenericSlotAllocation genericSlots)
     {
-        return string.Join(
+        var skills = string.Join(
             "|",
             Enum.GetValues<SkillCategory>().Select(
                 category => $"{category}:"
                     + string.Join(",", loadout.Get(category))));
+        return $"{skills}|Generic:{genericSlots.Attack},"
+            + $"{genericSlots.Agility},{genericSlots.Defense},"
+            + $"{genericSlots.Assistance}";
+    }
+
+    private static string CreateNeigongOptimizationKey(
+        PlayerCombatSnapshot player,
+        IEnumerable<CombatLoadoutOption> selected)
+    {
+        var skillsById = player.LearnedSkills.ToDictionary(
+            skill => skill.SkillId);
+        var options = selected.ToArray();
+        var mandatory = options
+            .Where(option => skillsById[option.Candidate.SkillId].Category
+                == SkillCategory.Neigong)
+            .Select(option => option.Candidate.SkillId)
+            .Order();
+        var outerCosts = Enum.GetValues<SkillCategory>()
+            .Where(category => category != SkillCategory.Neigong)
+            .Select(category => options
+                .Where(option =>
+                    skillsById[option.Candidate.SkillId].Category
+                    == category)
+                .Sum(option => EffectiveCost(player, option)));
+        return $"N:{string.Join(',', mandatory)}|"
+            + $"O:{string.Join(',', outerCosts)}";
     }
 
     private static CombatLoadoutGenerationDiagnostic Diagnostic(

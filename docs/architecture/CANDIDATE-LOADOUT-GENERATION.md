@@ -54,8 +54,12 @@ Each explored combination must then:
 2. construct a proposed categorized loadout;
 3. construct its proposed requirement context;
 4. include all selected candidate and requirement specifications;
-5. use the requested generic-slot allocation; and
-6. pass `CombatLoadoutFeasibilityValidator`.
+5. select a learned Neigong combination whose effective cost fits the fixed
+   six-slot Neigong budget;
+6. derive outer capacities and generic-slot total from that proposed Neigong;
+7. allocate generic slots to required outer-category deficits while preserving
+   the current allocation where possible; and
+8. pass `CombatLoadoutFeasibilityValidator`.
 
 Only its accepted-only `FeasibleCombatLoadout` can enter the emitted result.
 
@@ -72,8 +76,22 @@ Hard limits prevent combinatorial growth:
 Requests may choose smaller exploration and result limits. Hitting either
 limit creates a diagnostic.
 
-Equipped Neigong options are required because they can contribute category
-capacity. Other plain current-skill options are treated as retention options.
+Current Neigong is not hard-pinned. `NeigongLoadoutOptimizer` searches learned
+Neigong combinations with a total effective cost no greater than six. A
+direction-specific strategic Neigong remains mandatory when its option is
+selected; other Neigong may be selected as capacity providers. The optimizer
+first maximizes retained current Neigong, then minimizes manual changes, and
+does not select an unbroken capacity-only Neigong whose direction is
+unavailable. Results are cached by mandatory Neigong and outer-category cost
+demand.
+
+Outer capacities start at `2/2/2/2`. Proposed Neigong contributes specific and
+generic slots, while persistent source-backed bonuses are carried forward.
+Generic slots go first to actual category deficits and then toward the current
+allocation. A changed allocation is returned as a manual instruction; the
+helper never applies it.
+
+Other plain current-skill options are treated as retention options.
 The bounded include-first traversal enumerates only strategic counter and
 replacement options; for each strategic combination it greedily retains every
 current skill that remains feasible, considering lower-cost skills first.

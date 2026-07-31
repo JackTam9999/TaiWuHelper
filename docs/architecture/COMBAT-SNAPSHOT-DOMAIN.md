@@ -402,3 +402,21 @@ by construction.
 Feasibility validation remains descriptive and read-only. It cannot equip the
 proposed loadout, reassign slots in the game, write a save, or control the game
 runtime.
+
+## Inner-power state
+
+`PlayerCombatSnapshot.InnerPowerState` records the configured state name,
+effect description, five-element power-limit and requirement adjustments, and
+the element that causes backlash when a matching skill is actively used.
+`CombatSkillSnapshot.Element` records the corresponding configured element.
+
+The standalone adapter derives the state from the character's persisted base
+five-element proportions and birth month. It deliberately does not call
+`Character.GetNeiliType()`, because that getter invokes `SpecialEffectDomain`
+and requires a live runtime environment unavailable during safe standalone
+save inspection. A warning states that runtime special-effect modifiers were
+not applied. Missing data remains unavailable rather than guessed.
+
+The recommendation layer evaluates this state only for actual active casts.
+Equipping a Pure Yang Neigong such as 遍體火漆法 is not itself classified as a
+Pure Yang skill use and is therefore not automatically rejected.

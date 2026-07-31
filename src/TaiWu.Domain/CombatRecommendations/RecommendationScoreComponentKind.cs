@@ -8,5 +8,6 @@ public enum RecommendationScoreComponentKind
     CurrentLoadoutCompatibility,
     DamagePotential,
     OpportunityCost,
-    ConditionalRisk
+    ConditionalRisk,
+    InnerPowerCompatibility
 }

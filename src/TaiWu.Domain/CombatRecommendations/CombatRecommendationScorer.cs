@@ -78,7 +78,8 @@ public static class CombatRecommendationScorer
                 ConditionalRiskScore(candidate),
                 "Penalizes unsatisfied or unknown conditional "
                 + "requirements.",
-                "domain:combat-requirements")
+                "domain:combat-requirements"),
+            InnerPowerCompatibilityComponent(request.Player, candidate)
         ];
 
         var weightedScore = components
@@ -229,6 +230,28 @@ public static class CombatRecommendationScorer
             proposal.Requirements,
             proposal.RequirementContext);
         return Clamp(100 - (evaluation.Warnings.Length * 25));
+    }
+
+    private static RecommendationScoreComponent
+        InnerPowerCompatibilityComponent(
+            PlayerCombatSnapshot player,
+            GeneratedCombatLoadout candidate)
+    {
+        var evaluation = InnerPowerCompatibilityEvaluator.Evaluate(
+            player,
+            candidate);
+        return evaluation.Score.IsAvailable
+            ? Available(
+                RecommendationScoreComponentKind.InnerPowerCompatibility,
+                evaluation.Score.Value,
+                "Compatibility of actively cast skills with the current "
+                + "inner-power state, including power, requirements, and "
+                + "backlash on use.",
+                InnerPowerCompatibilityEvaluator.EvidenceReference)
+            : Unavailable(
+                RecommendationScoreComponentKind.InnerPowerCompatibility,
+                evaluation.Score.UnavailableReason!,
+                InnerPowerCompatibilityEvaluator.EvidenceReference);
     }
 
     private static int SeverityWeight(TargetThreat threat) =>

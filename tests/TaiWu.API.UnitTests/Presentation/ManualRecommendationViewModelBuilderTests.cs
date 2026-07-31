@@ -103,6 +103,26 @@ public sealed class ManualRecommendationViewModelBuilderTests
                 .Select(item => item.Reference));
     }
 
+    [Fact]
+    public void Checklist_hides_unchanged_generic_slot_allocations()
+    {
+        var style = Style();
+        var unchangedCategories = style.Categories
+            .Select(category => category with
+            {
+                CurrentGenericSlots = category.GenericSlots
+            })
+            .ToArray();
+
+        var checklist = ManualSetupChecklistBuilder.Build(
+            style with { Categories = unchangedCategories });
+
+        Assert.DoesNotContain(
+            checklist,
+            item => item.Kind
+                == ManualChecklistItemKind.AllocateGenericSlots);
+    }
+
     private static RecommendationStyleViewModel Style()
     {
         const string candidateReference = "candidate:test";

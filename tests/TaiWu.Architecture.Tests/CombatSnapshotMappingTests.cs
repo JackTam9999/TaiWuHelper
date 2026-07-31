@@ -157,6 +157,36 @@ public sealed class CombatSnapshotMappingTests
     }
 
     [Theory]
+    [InlineData(0, CombatSkillElement.Metal)]
+    [InlineData(1, CombatSkillElement.Wood)]
+    [InlineData(2, CombatSkillElement.Water)]
+    [InlineData(3, CombatSkillElement.Fire)]
+    [InlineData(4, CombatSkillElement.Earth)]
+    [InlineData(5, CombatSkillElement.Mixed)]
+    public void Combat_skill_elements_preserve_GameData_order(
+        int source,
+        CombatSkillElement expected)
+    {
+        var mapped = CombatSnapshotMapping.MapCombatSkillElement(source);
+
+        Assert.True(mapped.IsAvailable);
+        Assert.Equal(expected, mapped.Value);
+    }
+
+    [Fact]
+    public void Inner_power_adjustments_map_all_five_elements()
+    {
+        var mapped = CombatSnapshotMapping.MapElementAdjustments(
+            [30, -30, 0, 10, -10]);
+
+        Assert.Equal(30, mapped.Metal);
+        Assert.Equal(-30, mapped.Wood);
+        Assert.Equal(0, mapped.Water);
+        Assert.Equal(10, mapped.Fire);
+        Assert.Equal(-10, mapped.Earth);
+    }
+
+    [Theory]
     [InlineData(0, EquipmentKind.Weapon)]
     [InlineData(1, EquipmentKind.Armor)]
     [InlineData(2, EquipmentKind.Accessory)]

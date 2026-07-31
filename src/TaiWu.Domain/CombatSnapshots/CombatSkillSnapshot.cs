@@ -13,7 +13,8 @@ public sealed record CombatSkillSnapshot
         SnapshotValue<int> directEffectId,
         SnapshotValue<int> reverseEffectId,
         SnapshotValue<BreakthroughDirectionAvailability>?
-            breakthroughDirections = null)
+            breakthroughDirections = null,
+        SnapshotValue<CombatSkillElement>? element = null)
     {
         if (skillId < 0)
         {
@@ -38,6 +39,13 @@ public sealed record CombatSkillSnapshot
         ArgumentNullException.ThrowIfNull(slotContribution);
         ArgumentNullException.ThrowIfNull(directEffectId);
         ArgumentNullException.ThrowIfNull(reverseEffectId);
+        if (element is { IsAvailable: true }
+            && !Enum.IsDefined(element.Value))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(element),
+                "Unknown combat-skill element.");
+        }
 
         if (gridCost.IsAvailable && gridCost.Value <= 0)
         {
@@ -69,6 +77,9 @@ public sealed record CombatSkillSnapshot
         BreakthroughDirections = breakthroughDirections
             ?? SnapshotValue<BreakthroughDirectionAvailability>.Unavailable(
                 "Breakthrough-direction availability was not captured.");
+        Element = element
+            ?? SnapshotValue<CombatSkillElement>.Unavailable(
+                "Combat-skill element was not captured.");
     }
 
     public int SkillId { get; }
@@ -92,6 +103,8 @@ public sealed record CombatSkillSnapshot
     public SnapshotValue<BreakthroughDirectionAvailability>
         BreakthroughDirections
     { get; }
+
+    public SnapshotValue<CombatSkillElement> Element { get; }
 
     private static void ValidateEffectId(
         SnapshotValue<int> effectId,

@@ -34,7 +34,25 @@ public static class CombatRecommendationResponseMapper
             recommendation.RequestedPolicy,
             threats,
             styles,
-            MapWarnings(recommendation));
+            MapWarnings(recommendation),
+            MapInnerPowerState(recommendation.Snapshot.Player));
+    }
+
+    private static InnerPowerStateResponse? MapInnerPowerState(
+        TaiWu.Domain.CombatSnapshots.PlayerCombatSnapshot player)
+    {
+        if (!player.InnerPowerState.IsAvailable)
+        {
+            return null;
+        }
+
+        var state = player.InnerPowerState.Value;
+        return new InnerPowerStateResponse(
+            state.DisplayName.IsAvailable ? state.DisplayName.Value : null,
+            state.EffectDescription.IsAvailable
+                ? state.EffectDescription.Value
+                : null,
+            state.BacklashOnUseElement);
     }
 
     private static CombatRecommendationStyleResponse MapStyle(
@@ -56,7 +74,8 @@ public static class CombatRecommendationResponseMapper
                 OpeningActions: [],
                 SwitchingConditions: [],
                 Caveats: [],
-                style.ManualPlan.Diagnostic);
+                style.ManualPlan.Diagnostic,
+                GenericSlots: null);
         }
 
         var candidateReference =
@@ -96,7 +115,21 @@ public static class CombatRecommendationResponseMapper
                     caveat.Explanation,
                     caveat.SkillId,
                     caveat.EvidenceReferences))],
-            Diagnostic: null);
+            Diagnostic: null,
+            GenericSlots: MapGenericSlots(
+                plan.SelectedRecommendation.Candidate.FeasibleLoadout
+                    .Proposal.GenericSlotAllocation));
+    }
+
+    private static GenericSlotPlanResponse MapGenericSlots(
+        TaiWu.Domain.CombatSnapshots.GenericSlotAllocation allocation)
+    {
+        return new GenericSlotPlanResponse(
+            allocation.TotalSlots,
+            allocation.Attack,
+            allocation.Agility,
+            allocation.Defense,
+            allocation.Assistance);
     }
 
     private static RecommendedSkillResponse MapSkill(

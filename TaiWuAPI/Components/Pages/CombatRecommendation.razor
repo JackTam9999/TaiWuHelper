@@ -205,6 +205,14 @@
             <span>@T("Weapon preference")</span>
             <strong>@(string.IsNullOrWhiteSpace(_form.PreferredWeapon) ? T("None") : _form.PreferredWeapon)</strong>
         </div>
+        @if (_model.InnerPowerState is not null)
+        {
+            <div title="@_model.InnerPowerState.EffectDescription">
+                <span>@T("Current inner-power state")</span>
+                <strong>@_model.InnerPowerState.Name</strong>
+                <small>@T("Applied to actively cast skills; equipping Neigong alone is not treated as a cast.")</small>
+            </div>
+        }
     </section>
 
     @if (_model.Warnings.Count > 0)

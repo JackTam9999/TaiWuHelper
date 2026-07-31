@@ -71,6 +71,8 @@ change either source.
 The typed response includes:
 
 - snapshot capture time, game-data version, and a shared snapshot reference;
+- the current inner-power state name, configured effect description, and
+  backlash-on-use element when available;
 - analyzed target threats;
 - Safe, Balanced, and Aggressive style results from that one snapshot;
 - the requested style;
@@ -79,7 +81,8 @@ The typed response includes:
 - manual loadout changes, including a required breakthrough when the save
   proves its exact direction is immediately achievable;
 - opening and pre-combat switching steps;
-- assumptions and unavailable-data caveats; and
+- assumptions, unavailable-data caveats, and known inner-power risks for
+  actively cast skills; and
 - snapshot, threat-analysis, and generation warnings.
 
 Every threat, candidate, skill, reason, manual change, plan step, caveat, and
@@ -92,6 +95,11 @@ For each selected skill, `requiresBreakthrough` is separate from
 `requiresManualDirectionChange`. A breakthrough prerequisite means the effect
 is usable only after the player completes that step; it is not current combat
 state.
+
+Each successful style also returns `genericSlots`, containing the total
+available generic slots and proposed allocation for attack, agility, defense,
+and assistance. The UI checklist shows an allocation step only when the
+proposed value differs from the current allocation.
 
 ## Errors
 

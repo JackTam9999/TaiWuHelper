@@ -1633,6 +1633,23 @@ game during verification.
 - Default tests: 393 discovered, 392 passed, and the opt-in local read skipped.
 - Opt-in local integration tests: 2 discovered and 2 passed.
 - A post-run read-only inspection confirmed the source save was unchanged.
+- The generator no longer hard-pins all current Neigong. It searches learned
+  Neigong combinations within the fixed six-slot budget, recalculates specific
+  and generic outer capacity, and returns any changed generic allocation as a
+  manual follow-up step.
+- Current inner-power state is derived without invoking the unsafe standalone
+  `SpecialEffectDomain` path. Scoring applies power, requirement, and
+  backlash-on-use effects only to actively cast skills; equipping a Pure Yang
+  Neigong alone is not a cast and is not blanket-prohibited.
+- The configured local save mapped to `金剛·金剛伏魔`, with Pure Yang as its
+  backlash-on-use element. A live API verification returned all three styles
+  in about 15.2 seconds and proposed generic allocation `2/2/1/1` for
+  摧破/輕靈/護體/奇竅.
+- The verification save SHA-256 remained
+  `B9E86B80B564035CBE7D15F2C5F297AF3ACDE5470509B0550D930ED91DDF1930`.
+- Updated default tests: 407 discovered, 406 passed, and the opt-in local
+  GameData read skipped explicitly. Opt-in local integration tests: 2
+  discovered and 2 passed. Formatting verification passed.
 
 ## Later backlog
 
@@ -1674,3 +1691,45 @@ The deterministic result remains authoritative.
 
 Add verified threat and counter rules incrementally by mechanic and target
 archetype.
+
+### M2-005 — Build a local version-aware skill catalogue
+
+**Priority:** P1
+
+**Estimate:** L
+
+**Dependencies:** Milestone 1
+
+Build a helper-owned, rebuildable SQLite catalogue from the player's installed
+game configuration and Chinese/English language resources. This item promotes
+[PI-004 and PI-006](./FUTURE-PRODUCT-IDEAS.md#pi-004--bilingual-martial-art-catalogue)
+into an actionable backlog candidate without adding it to EPIC-001.
+
+The catalogue covers static skill definitions and searchable localized names.
+The current save remains authoritative for learned skills, breakthrough
+availability and direction, current equipment, and other player-specific state.
+Raw effect descriptions may be stored for local display, but recommendation
+calculations may use only separately verified typed effect rules.
+
+#### Acceptance criteria
+
+- The Domain and Application layers expose catalogue models and query/import
+  ports without depending on SQLite or game assemblies.
+- Infrastructure imports permitted static skill fields from installed game
+  configuration and language resources using read-only access.
+- The SQLite schema records the source GameData and language-resource versions,
+  skill definitions, localized names, attributes, requirements, raw effect
+  references, and import metadata.
+- A source-version or schema-version change invalidates or rebuilds the local
+  catalogue deterministically.
+- Save-derived character state is not treated as static catalogue data and
+  cannot override a fresh save read.
+- The generated database resides outside game-owned storage, is excluded from
+  Git, and is never distributed pre-populated with extracted game content.
+- No importer, repository, API, or UI path can modify a save, game file, game
+  database, configuration value, running process, runtime memory, or in-game
+  state.
+- Player-facing UI uses localized skill names; stable numeric identifiers remain
+  internal metadata only.
+- xUnit v3 tests cover import mapping, version invalidation, repository queries,
+  language fallback, and the non-interference boundary.

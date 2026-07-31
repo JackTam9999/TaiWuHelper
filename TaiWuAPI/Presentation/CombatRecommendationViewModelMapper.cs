@@ -28,7 +28,8 @@ public static class CombatRecommendationViewModelMapper
                 snapshotReference,
                 recommendation.RequestedPolicy,
                 style,
-                skillNames))
+                skillNames,
+                recommendation.Snapshot.Player.GenericSlotAllocation))
             .ToArray();
 
         return new CombatRecommendationViewModel(
@@ -56,14 +57,35 @@ public static class CombatRecommendationViewModelMapper
                     value.Threat.ActivationTiming,
                     [.. value.Threat.Evidence.Select(evidence => evidence.Reference)]))],
             styles,
-            MapWarnings(recommendation, skillNames));
+            MapWarnings(recommendation, skillNames),
+            MapInnerPowerState(recommendation.Snapshot.Player));
+    }
+
+    private static InnerPowerStateViewModel? MapInnerPowerState(
+        PlayerCombatSnapshot player)
+    {
+        if (!player.InnerPowerState.IsAvailable)
+        {
+            return null;
+        }
+
+        var state = player.InnerPowerState.Value;
+        return new InnerPowerStateViewModel(
+            state.DisplayName.IsAvailable
+                ? state.DisplayName.Value
+                : "Unavailable",
+            state.EffectDescription.IsAvailable
+                ? state.EffectDescription.Value
+                : null,
+            state.BacklashOnUseElement);
     }
 
     private static RecommendationStyleViewModel MapStyle(
         string snapshotReference,
         RecommendationPolicy requestedPolicy,
         CombatRecommendationStyleResult style,
-        IReadOnlyDictionary<int, string> skillNames)
+        IReadOnlyDictionary<int, string> skillNames,
+        GenericSlotAllocation currentGenericSlots)
     {
         var styleReference = StyleReference(snapshotReference, style.Policy);
         var plan = style.ManualPlan.Plan;
@@ -119,7 +141,11 @@ public static class CombatRecommendationViewModelMapper
                         component.Explanation,
                         skillNames),
                     component.EvidenceReference))],
-            MapCategories(candidateReference, candidate, skills),
+            MapCategories(
+                candidateReference,
+                candidate,
+                skills,
+                currentGenericSlots),
             [.. plan.LoadoutChanges.Select(change => MapChange(
                 candidateReference,
                 change,
@@ -150,7 +176,8 @@ public static class CombatRecommendationViewModelMapper
     private static LoadoutCategoryViewModel[] MapCategories(
         string candidateReference,
         GeneratedCombatLoadout candidate,
-        RecommendedSkillViewModel[] skills)
+        RecommendedSkillViewModel[] skills,
+        GenericSlotAllocation currentGenericSlots)
     {
         var proposal = candidate.FeasibleLoadout.Proposal;
         return [.. Enum.GetValues<SkillCategory>()
@@ -174,7 +201,10 @@ public static class CombatRecommendationViewModelMapper
                     category == SkillCategory.Neigong
                         ? 0
                         : proposal.GenericSlotAllocation.Get(category),
-                    [.. skills.Where(skill => skill.Category == category)]);
+                    [.. skills.Where(skill => skill.Category == category)],
+                    category == SkillCategory.Neigong
+                        ? 0
+                        : currentGenericSlots.Get(category));
             })];
     }
 

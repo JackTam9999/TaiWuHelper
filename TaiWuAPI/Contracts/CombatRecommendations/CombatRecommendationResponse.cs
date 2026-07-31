@@ -12,7 +12,13 @@ public sealed record CombatRecommendationResponse(
     RecommendationPolicy RequestedStyle,
     IReadOnlyList<CombatThreatResponse> Threats,
     IReadOnlyList<CombatRecommendationStyleResponse> Styles,
-    IReadOnlyList<CombatRecommendationWarningResponse> Warnings);
+    IReadOnlyList<CombatRecommendationWarningResponse> Warnings,
+    InnerPowerStateResponse? InnerPowerState = null);
+
+public sealed record InnerPowerStateResponse(
+    string? Name,
+    string? EffectDescription,
+    CombatSkillElement? BacklashOnUseElement);
 
 public sealed record CombatThreatResponse(
     string Reference,
@@ -34,7 +40,15 @@ public sealed record CombatRecommendationStyleResponse(
     IReadOnlyList<CombatPlanStepResponse> OpeningActions,
     IReadOnlyList<CombatPlanStepResponse> SwitchingConditions,
     IReadOnlyList<RecommendationCaveatResponse> Caveats,
-    string? Diagnostic);
+    string? Diagnostic,
+    GenericSlotPlanResponse? GenericSlots = null);
+
+public sealed record GenericSlotPlanResponse(
+    int TotalAvailable,
+    int Attack,
+    int Agility,
+    int Defense,
+    int Assistance);
 
 public sealed record RecommendationScoreResponse(
     RecommendationScoreComponentKind Component,

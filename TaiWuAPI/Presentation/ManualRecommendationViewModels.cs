@@ -65,17 +65,19 @@ public static class ManualSetupChecklistBuilder
             .ThenBy(change => change.SkillId)
             .Select(MapChange);
         var genericAllocations = style.Categories
-            .Where(category => category.GenericSlots > 0)
+            .Where(category => category.Category != SkillCategory.Neigong)
+            .Where(category =>
+                category.GenericSlots != category.CurrentGenericSlots)
             .OrderBy(category => category.Category)
             .Select(category => new ManualChecklistItemViewModel(
                 $"{style.CandidateReference}:checklist:generic:"
                 + category.Category,
                 ManualChecklistItemKind.AllocateGenericSlots,
                 category.DisplayName,
-                $"Allocate {category.GenericSlots} 萬用 slot(s) to "
-                + $"{category.DisplayName}.",
-                "The selected recommendation requires these generic slots "
-                + "in this category.",
+                $"Set the 萬用 slots for {category.DisplayName} to "
+                + $"{category.GenericSlots}.",
+                "The optimized Neigong combination changes the available "
+                + "slots or this category needs a different allocation.",
                 ReasonReference: category.Reference,
                 EvidenceReferences: Array.Empty<string>()));
         var requirements = style.Categories

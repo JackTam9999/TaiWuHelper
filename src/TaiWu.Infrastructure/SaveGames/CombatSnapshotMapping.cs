@@ -25,6 +25,34 @@ internal static class CombatSnapshotMapping
         return equipType is >= 0 and <= 4;
     }
 
+    public static SnapshotValue<CombatSkillElement> MapCombatSkillElement(
+        int element)
+    {
+        return element is >= 0 and <= 5
+            ? SnapshotValue<CombatSkillElement>.Available(
+                (CombatSkillElement)element)
+            : SnapshotValue<CombatSkillElement>.Unavailable(
+                $"Unsupported GameData combat-skill element: {element}.");
+    }
+
+    public static ElementAdjustmentSet MapElementAdjustments(
+        IReadOnlyList<sbyte> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count < 5)
+        {
+            throw new InvalidDataException(
+                "An element-adjustment source must contain five values.");
+        }
+
+        return new ElementAdjustmentSet(
+            values[0],
+            values[1],
+            values[2],
+            values[3],
+            values[4]);
+    }
+
     public static SnapshotValue<PracticeDirection> MapPracticeDirection(
         int direction)
     {

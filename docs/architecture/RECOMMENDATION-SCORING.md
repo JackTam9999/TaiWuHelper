@@ -30,6 +30,7 @@ Every scored candidate exposes the following 0–100 components:
 | Damage potential | Caller-supplied evidence-backed damage score |
 | Opportunity cost | Share of available slot capacity left unused |
 | Conditional risk | Starts at 100; minus 25 per unresolved conditional requirement |
+| Inner-power compatibility | Scores actively cast attack, agility, and defense skills against the current inner-power state's power-limit, requirement, and backlash-on-use rules |
 
 Threat severities use fixed weights: Informational 1, Moderate 2, High 4, and
 Critical 8. All component scores are clamped to 0–100.
@@ -44,18 +45,26 @@ Each policy has a stable weight set totaling 100:
 
 | Component | Safe | Balanced | Aggressive |
 |---|---:|---:|---:|
-| Threat coverage | 30 | 25 | 15 |
-| Survival | 30 | 20 | 10 |
-| Execution reliability | 15 | 15 | 10 |
+| Threat coverage | 25 | 22 | 15 |
+| Survival | 25 | 18 | 10 |
+| Execution reliability | 15 | 12 | 10 |
 | Current-loadout compatibility | 5 | 10 | 10 |
-| Damage potential | 5 | 15 | 40 |
-| Opportunity cost | 5 | 10 | 10 |
-| Conditional risk | 10 | 5 | 5 |
+| Damage potential | 5 | 13 | 35 |
+| Opportunity cost | 5 | 8 | 10 |
+| Conditional risk | 5 | 5 | 5 |
+| Inner-power compatibility | 15 | 12 | 5 |
 
 Safe emphasizes verified threat handling and survival. Balanced gives more
 weight to compatibility, damage, and unused capacity while preserving a
 defensive bias. Aggressive makes verified damage evidence the largest
 component without weakening any hard feasibility rule.
+
+Inner-power compatibility is not a blanket element ban. Only options marked as
+actively cast attack, agility, or defense skills are evaluated as uses. Merely
+equipping a Neigong or passive assistance skill does not trigger the
+backlash-on-use rule. A known backlash scores zero and produces a visible
+known-risk caveat, but remains a policy-visible penalty rather than a hidden
+hard prohibition.
 
 ## Total and ranking
 

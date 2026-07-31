@@ -41,6 +41,7 @@ public static class CombatRecommendationExplanationBuilder
             .. ThreatEvidenceCaveats(threats)
         ];
         AddDamageCaveat(selected, caveats);
+        AddInnerPowerCaveats(player, selected, caveats);
 
         var skills = selected.Candidate.SelectedOptions
             .OrderBy(option =>
@@ -336,6 +337,46 @@ public static class CombatRecommendationExplanationBuilder
                 damage.Explanation,
                 skillId: null,
                 [damage.EvidenceReference]));
+    }
+
+    private static void AddInnerPowerCaveats(
+        PlayerCombatSnapshot player,
+        ScoredCombatLoadout selected,
+        List<RecommendationCaveat> caveats)
+    {
+        var evaluation = InnerPowerCompatibilityEvaluator.Evaluate(
+            player,
+            selected.Candidate);
+        foreach (var skill in evaluation.Evaluations)
+        {
+            if (skill.CausesBacklash)
+            {
+                caveats.Add(
+                    new RecommendationCaveat(
+                        RecommendationCaveatKind.KnownRisk,
+                        "INNER_POWER_BACKLASH_ON_USE",
+                        $"Actively using skill {skill.SkillId} under the "
+                        + "current inner-power state causes backlash damage "
+                        + "and inner-qi disorder. It is penalized, not "
+                        + "automatically prohibited.",
+                        skill.SkillId,
+                        [InnerPowerCompatibilityEvaluator
+                            .EvidenceReference]));
+            }
+            else if (skill.MaxPowerChange < 0)
+            {
+                caveats.Add(
+                    new RecommendationCaveat(
+                        RecommendationCaveatKind.KnownRisk,
+                        "INNER_POWER_MAX_POWER_REDUCED",
+                        $"The current inner-power state reduces skill "
+                        + $"{skill.SkillId}'s power limit by "
+                        + $"{Math.Abs(skill.MaxPowerChange.Value)}%.",
+                        skill.SkillId,
+                        [InnerPowerCompatibilityEvaluator
+                            .EvidenceReference]));
+            }
+        }
     }
 
     private static RecommendationCaveat Gap(

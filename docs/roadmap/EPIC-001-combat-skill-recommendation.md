@@ -5,7 +5,7 @@
 | Status | In progress |
 | Milestone | 1 |
 | Target release | TBD |
-| Last updated | 2026-07-29 |
+| Last updated | 2026-07-31 |
 
 ## Summary
 
@@ -33,6 +33,10 @@ Choosing combat skills is not a simple ranking problem:
 - A skill consumes one or more category-specific slots.
 - Mastery and legendary-book effects may reduce the effective cost.
 - Neigong skills can provide specific and generic slots.
+- The chosen Neigong combination must fit six base slots and may change all
+  four outer capacities and the available generic-slot allocation.
+- The character's current inner-power state may improve, weaken, or cause
+  backlash when an active skill of a particular element is used.
 - Direct, reverse, and neutral practice directions have different effects.
 - Some effects exist whenever equipped, while others only apply during an
   active defense or agility skill.

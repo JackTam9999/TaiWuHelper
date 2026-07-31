@@ -138,7 +138,8 @@ internal sealed class TaiwuCombatSnapshotReader(
                 genericSlotAllocation),
             genericSlotAllocation,
             legendaryBookCosts.Slots,
-            legendaryBookCosts.Assignments);
+            legendaryBookCosts.Assignments,
+            MapInnerPowerState(character, text, warnings));
     }
 
     private static TargetCombatSnapshot MapTarget(
@@ -323,7 +324,77 @@ internal sealed class TaiwuCombatSnapshotReader(
             slotContribution,
             MapEffectId(item.DirectEffectID, "direct", skillId),
             MapEffectId(item.ReverseEffectID, "reverse", skillId),
-            breakthroughDirections);
+            breakthroughDirections,
+            CombatSnapshotMapping.MapCombatSkillElement(
+                item.FiveElements));
+    }
+
+    private static SnapshotValue<InnerPowerStateSnapshot>
+        MapInnerPowerState(
+            Character character,
+            TaiwuGameTextContext text,
+            List<SnapshotWarning> warnings)
+    {
+        var stateId = NeiliProportionHelper.GetNeiliType(
+            character.GetBaseNeiliProportionOfFiveElements(),
+            character.GetBirthMonth());
+        var item = Config.NeiliType.Instance.GetItem(stateId);
+        if (item is null)
+        {
+            var reason = $"Inner-power state {stateId} is missing from "
+                + "configuration.";
+            warnings.Add(
+                new SnapshotWarning(
+                    "INNER_POWER_STATE_UNAVAILABLE",
+                    reason));
+            return SnapshotValue<InnerPowerStateSnapshot>.Unavailable(
+                reason);
+        }
+
+        try
+        {
+            CombatSkillElement? backlashElement =
+                item.InjuryOnUseType is >= 0 and <= 4
+                    ? (CombatSkillElement)item.InjuryOnUseType
+                    : null;
+            var result = SnapshotValue<InnerPowerStateSnapshot>.Available(
+                new InnerPowerStateSnapshot(
+                    stateId,
+                    MapText(
+                        text.Resolve("NeiliType", item.Name),
+                        $"Inner-power state {stateId} has no configured "
+                        + "name."),
+                    MapText(
+                        text.Resolve("NeiliType", item.EffectDesc),
+                        $"Inner-power state {stateId} has no configured "
+                        + "effect description."),
+                    CombatSnapshotMapping.MapElementAdjustments(
+                        item.MaxPowerChange),
+                    CombatSnapshotMapping.MapElementAdjustments(
+                    item.RequirementChange),
+                    backlashElement));
+            warnings.Add(
+                new SnapshotWarning(
+                    "INNER_POWER_RUNTIME_MODIFIERS_NOT_APPLIED",
+                    "The inner-power state was derived from persisted base "
+                    + "five-element proportions. Runtime SpecialEffect "
+                    + "modifiers are intentionally not executed by the "
+                    + "read-only standalone adapter."));
+            return result;
+        }
+        catch (Exception exception)
+            when (exception is InvalidDataException
+                  or ArgumentOutOfRangeException)
+        {
+            var reason = $"Inner-power state {stateId} is invalid: "
+                + exception.Message;
+            warnings.Add(
+                new SnapshotWarning(
+                    "INNER_POWER_STATE_UNAVAILABLE",
+                    reason));
+            return SnapshotValue<InnerPowerStateSnapshot>.Unavailable(
+                reason);
+        }
     }
 
     private static CombatLoadoutSnapshot MapLoadout(

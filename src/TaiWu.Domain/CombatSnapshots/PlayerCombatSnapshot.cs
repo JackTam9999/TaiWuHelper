@@ -14,7 +14,8 @@ public sealed record PlayerCombatSnapshot
         GenericSlotAllocation genericSlotAllocation,
         IEnumerable<LegendaryBookCostSlot> legendaryBookCostSlots,
         IEnumerable<LegendaryBookCostAssignment>
-            legendaryBookCostAssignments)
+            legendaryBookCostAssignments,
+        SnapshotValue<InnerPowerStateSnapshot>? innerPowerState = null)
     {
         if (characterId <= 0)
         {
@@ -46,6 +47,9 @@ public sealed record PlayerCombatSnapshot
             legendaryBookCostAssignments,
             LegendaryBookCostSlots,
             LearnedSkills);
+        InnerPowerState = innerPowerState
+            ?? SnapshotValue<InnerPowerStateSnapshot>.Unavailable(
+                "Current inner-power state was not captured.");
     }
 
     public int CharacterId { get; }
@@ -72,6 +76,8 @@ public sealed record PlayerCombatSnapshot
     {
         get;
     }
+
+    public SnapshotValue<InnerPowerStateSnapshot> InnerPowerState { get; }
 
     private static ImmutableArray<CombatSkillSnapshot> CopyUniqueSkills(
         IEnumerable<CombatSkillSnapshot> skills)

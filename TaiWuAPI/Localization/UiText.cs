@@ -60,6 +60,9 @@ public static class UiText
             ["Source freshness"] = "來源新鮮度",
             ["Unavailable"] = "無法取得",
             ["Weapon preference"] = "武器偏好",
+            ["Current inner-power state"] = "目前內力狀態",
+            ["Applied to actively cast skills; equipping Neigong alone is not treated as a cast."] =
+                "只套用於實際施展的功法；單純裝備內功不視為施展。",
             ["None"] = "無",
             ["Same snapshot · three policies"] = "同一快照 · 三種策略",
             ["Recommendation ready"] = "推薦已完成",
@@ -69,6 +72,7 @@ public static class UiText
             ["Threats identified"] = "已識別威脅",
             ["Manual changes"] = "手動變更",
             ["Conditional caveats"] = "條件式注意事項",
+            ["Inner-power compatibility"] = "內力狀態相容性",
             ["No feasible recommendation was produced."] = "未能產生可行的推薦。",
             ["Manual configuration"] = "手動配置",
             ["Recommended loadout"] = "推薦運功配置",
@@ -373,6 +377,8 @@ public static class UiText
                 "可行總格位容量中尚未使用的比例。",
             ["Penalizes unsatisfied or unknown conditional requirements."] =
                 "對未滿足或未知的條件式需求扣分。",
+            ["Compatibility of actively cast skills with the current inner-power state, including power, requirements, and backlash on use."] =
+                "評估實際施展功法與目前內力狀態的相容性，包括威力、發揮需求及施展反噬。",
             ["This threat input is observational or hypothetical and may not represent stable game data."] =
                 "此威脅輸入來自觀察或假設，可能無法代表穩定的遊戲資料。",
             ["Effective used capacity requires combat-skill cost rules that are not evaluated by the read-only adapter."] =

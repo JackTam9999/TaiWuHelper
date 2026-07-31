@@ -10,7 +10,8 @@ public sealed record RecommendationPolicyWeights
         int currentLoadoutCompatibility,
         int damagePotential,
         int opportunityCost,
-        int conditionalRisk)
+        int conditionalRisk,
+        int innerPowerCompatibility)
     {
         Policy = policy;
         ThreatCoverage = threatCoverage;
@@ -20,6 +21,7 @@ public sealed record RecommendationPolicyWeights
         DamagePotential = damagePotential;
         OpportunityCost = opportunityCost;
         ConditionalRisk = conditionalRisk;
+        InnerPowerCompatibility = innerPowerCompatibility;
     }
 
     public RecommendationPolicy Policy { get; }
@@ -38,6 +40,8 @@ public sealed record RecommendationPolicyWeights
 
     public int ConditionalRisk { get; }
 
+    public int InnerPowerCompatibility { get; }
+
     public int Get(RecommendationScoreComponentKind component) =>
         component switch
         {
@@ -54,6 +58,8 @@ public sealed record RecommendationPolicyWeights
                 OpportunityCost,
             RecommendationScoreComponentKind.ConditionalRisk =>
                 ConditionalRisk,
+            RecommendationScoreComponentKind.InnerPowerCompatibility =>
+                InnerPowerCompatibility,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(component),
                 component,
@@ -65,31 +71,34 @@ public sealed record RecommendationPolicyWeights
         {
             RecommendationPolicy.Safe => new(
                 policy,
-                threatCoverage: 30,
-                survival: 30,
+                threatCoverage: 25,
+                survival: 25,
                 executionReliability: 15,
                 currentLoadoutCompatibility: 5,
                 damagePotential: 5,
                 opportunityCost: 5,
-                conditionalRisk: 10),
+                conditionalRisk: 5,
+                innerPowerCompatibility: 15),
             RecommendationPolicy.Balanced => new(
                 policy,
-                threatCoverage: 25,
-                survival: 20,
-                executionReliability: 15,
+                threatCoverage: 22,
+                survival: 18,
+                executionReliability: 12,
                 currentLoadoutCompatibility: 10,
-                damagePotential: 15,
-                opportunityCost: 10,
-                conditionalRisk: 5),
+                damagePotential: 13,
+                opportunityCost: 8,
+                conditionalRisk: 5,
+                innerPowerCompatibility: 12),
             RecommendationPolicy.Aggressive => new(
                 policy,
                 threatCoverage: 15,
                 survival: 10,
                 executionReliability: 10,
                 currentLoadoutCompatibility: 10,
-                damagePotential: 40,
+                damagePotential: 35,
                 opportunityCost: 10,
-                conditionalRisk: 5),
+                conditionalRisk: 5,
+                innerPowerCompatibility: 5),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(policy),
                 policy,

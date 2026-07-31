@@ -15,7 +15,13 @@ public sealed record CombatRecommendationViewModel(
     string InformationOnlyNotice,
     IReadOnlyList<ThreatViewModel> Threats,
     IReadOnlyList<RecommendationStyleViewModel> Styles,
-    IReadOnlyList<RecommendationWarningViewModel> Warnings);
+    IReadOnlyList<RecommendationWarningViewModel> Warnings,
+    InnerPowerStateViewModel? InnerPowerState = null);
+
+public sealed record InnerPowerStateViewModel(
+    string Name,
+    string? EffectDescription,
+    CombatSkillElement? BacklashOnUseElement);
 
 public sealed record ThreatViewModel(
     string Reference,
@@ -62,7 +68,8 @@ public sealed record LoadoutCategoryViewModel(
     int? RemainingSlots,
     string? RemainingSlotsUnavailableReason,
     int GenericSlots,
-    IReadOnlyList<RecommendedSkillViewModel> Skills);
+    IReadOnlyList<RecommendedSkillViewModel> Skills,
+    int CurrentGenericSlots = 0);
 
 public sealed record RecommendedSkillViewModel(
     string Reference,
