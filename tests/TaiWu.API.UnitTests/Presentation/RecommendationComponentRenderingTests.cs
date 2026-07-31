@@ -162,6 +162,7 @@ public sealed partial class RecommendationComponentRenderingTests
             ManualChecklistItemKind.AddSkill,
             "金猊鎮魔刀",
             "Add 金猊鎮魔刀 manually.",
+            "Add the skill because it is part of the highest-ranked feasible loadout.",
             "reason:add",
             ["evidence:add"]);
 
@@ -177,6 +178,11 @@ public sealed partial class RecommendationComponentRenderingTests
             "Instructions only: TaiWu Helper cannot perform these steps.",
             text);
         Assert.Contains("Add 金猊鎮魔刀 manually.", text);
+        Assert.Contains("Why this step", text);
+        Assert.Contains(
+            "Add the skill because it is part of the highest-ranked feasible loadout.",
+            text);
+        Assert.DoesNotContain("evidence source", text);
         Assert.DoesNotContain(
             "skill 604",
             text,
@@ -196,6 +202,7 @@ public sealed partial class RecommendationComponentRenderingTests
             ManualChecklistItemKind.AddSkill,
             "伏龍刀法",
             "Add 伏龍刀法 to Attack manually.",
+            "Add the skill because it is part of the highest-ranked feasible loadout.",
             "reason:add",
             ["evidence:add"]);
 

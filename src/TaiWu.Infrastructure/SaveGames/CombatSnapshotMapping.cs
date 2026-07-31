@@ -28,17 +28,39 @@ internal static class CombatSnapshotMapping
     public static SnapshotValue<PracticeDirection> MapPracticeDirection(
         int direction)
     {
+        // GameData uses None=-1, Direct=0, and Reverse=1. These values do not
+        // match the Domain enum and must be translated by meaning.
         return direction switch
         {
             -1 => SnapshotValue<PracticeDirection>.Available(
-                PracticeDirection.Reverse),
-            0 => SnapshotValue<PracticeDirection>.Available(
                 PracticeDirection.Neutral),
-            1 => SnapshotValue<PracticeDirection>.Available(
+            0 => SnapshotValue<PracticeDirection>.Available(
                 PracticeDirection.Direct),
+            1 => SnapshotValue<PracticeDirection>.Available(
+                PracticeDirection.Reverse),
             _ => SnapshotValue<PracticeDirection>.Unavailable(
                 $"Unsupported GameData practice direction: {direction}.")
         };
+    }
+
+    public static SnapshotValue<PracticeDirection> MapPracticeDirection(
+        int direction,
+        bool isBrokenOut,
+        int skillId)
+    {
+        if (skillId < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(skillId),
+                skillId,
+                "Skill ID cannot be negative.");
+        }
+
+        return isBrokenOut
+            ? MapPracticeDirection(direction)
+            : SnapshotValue<PracticeDirection>.Unavailable(
+                $"Skill {skillId} has not completed breakthrough, so its "
+                + "practice direction is not active.");
     }
 
     public static SkillSlotContribution MapSlotContribution(

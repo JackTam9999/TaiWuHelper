@@ -38,6 +38,13 @@ mutation cannot change a constructed snapshot.
 | `0` | `Neutral`; neither direction-specific effect is active |
 | `1` | `Direct` |
 
+These are Domain values, not GameData's raw constants. The installed GameData
+contract uses `None=-1`, `Direct=0`, and `Reverse=1`; Infrastructure maps those
+values by name rather than casting between enums. Before breakthrough,
+GameData reports `None`. The snapshot therefore leaves practice direction
+unavailable with an explicit breakthrough reason, so a direction-specific
+effect cannot enter candidate scoring.
+
 ### Slot categories
 
 `SkillCategory` explicitly represents `Neigong`, `Attack`, `Agility`,
@@ -281,6 +288,8 @@ The validator applies these rules:
   `ReverseEffectId`.
 - Neutral means the direct and reverse counts are tied; it activates neither
   direction-specific effect.
+- An incomplete breakthrough leaves direction unavailable and prevents any
+  Direct- or Reverse-specific effect from being recommended.
 - Unknown direction, an opposite direction, and unavailable effect data are
   separate rejection reasons.
 

@@ -47,6 +47,7 @@ public sealed class ManualChecklistStateTests
             ManualChecklistItemKind.AddSkill,
             "Test skill",
             "Add a skill manually.",
+            "The selected recommendation requires this change.",
             "reason:test",
             ["evidence:test"]);
 }

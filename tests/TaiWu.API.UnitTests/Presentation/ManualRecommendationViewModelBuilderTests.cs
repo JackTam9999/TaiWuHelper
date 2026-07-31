@@ -37,6 +37,9 @@ public sealed class ManualRecommendationViewModelBuilderTests
             item => item.Instruction.Contains(
                 "金猊鎮魔刀",
                 StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            checklist,
+            item => item.SubjectName == "老君拂塵功");
         Assert.All(
             checklist,
             item => Assert.DoesNotMatch(

@@ -398,7 +398,9 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("TaiWu.Infrastructure", checklistState);
         Assert.DoesNotContain("IRecommendCombatLoadout", checklist);
         Assert.DoesNotContain("IFindTargets", checklist);
-        Assert.Contains("Reason and evidence", checklist);
+        Assert.Contains("Why this step", checklist);
+        Assert.Contains("@T(item.Reason)", checklist);
+        Assert.DoesNotContain("EvidenceCount", checklist);
         Assert.Contains("Reason and evidence", battlePlan);
         Assert.Contains("navigator.clipboard.writeText", helperScript);
         Assert.Contains("window.print()", helperScript);

@@ -66,6 +66,14 @@ internal static partial class DynamicUiText
                 + "個已探索組合中。";
         }
 
+        match = SkillBreakthroughUnavailablePattern().Match(english);
+        if (match.Success)
+        {
+            return $"{Skill(match.Groups["skill"].Value)}尚未完成突破，"
+                + $"因此{Direction(match.Groups["required"].Value)}效果"
+                + "目前不可用。";
+        }
+
         match = SkillCannotActivatePattern().Match(english);
         if (match.Success)
         {
@@ -100,6 +108,13 @@ internal static partial class DynamicUiText
         {
             return $"將{Skill(match.Groups["skill"].Value)}保留在"
                 + $"{Category(match.Groups["category"].Value)}欄。";
+        }
+
+        match = ChangeDirectionReasonPattern().Match(english);
+        if (match.Success)
+        {
+            return "調整正逆練，使本次推薦所使用的已驗證"
+                + $"{Direction(match.Groups["direction"].Value)}效果生效。";
         }
 
         match = ChangeDirectionPattern().Match(english);
@@ -389,6 +404,11 @@ internal static partial class DynamicUiText
     private static partial Regex OccurrencePattern();
 
     [GeneratedRegex(
+        @"^(?<skill>.+) requires (?<required>Direct|Reverse), but its practice direction is unavailable: .+ has not completed breakthrough, so its practice direction is not active\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SkillBreakthroughUnavailablePattern();
+
+    [GeneratedRegex(
         @"^(?<skill>.+) is (?<current>Direct|Reverse|Neutral) and cannot activate its (?<required>Direct|Reverse) effect\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex SkillCannotActivatePattern();
@@ -417,6 +437,11 @@ internal static partial class DynamicUiText
         @"^Change (?<skill>.+) to (?<direction>.+)\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex ChangeDirectionPattern();
+
+    [GeneratedRegex(
+        @"^Change direction manually to activate the verified (?<direction>Direct|Reverse|Neutral) effect used by this recommendation\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex ChangeDirectionReasonPattern();
 
     [GeneratedRegex(
         @"^Allocate (?<count>\d+) 萬用 slot\(s\) to (?<category>.+)\.$",

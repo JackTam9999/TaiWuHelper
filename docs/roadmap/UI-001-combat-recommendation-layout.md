@@ -182,10 +182,17 @@ Show an ordered, copyable checklist containing:
 
 - Skills for the player to add manually.
 - Skills for the player to remove manually.
-- Skills to retain.
 - Practice-direction changes.
 - Generic-slot allocation.
 - Weapon and Neili checks.
+
+The checklist contains follow-up actions only. Skills that remain unchanged
+may retain their status on the loadout cards, but are omitted from the setup
+checklist, copied checklist, and printed checklist.
+
+Expanding an item shows a localized, player-readable reason for that action.
+Internal reason and evidence references remain available for traceability but
+the UI does not replace the explanation with a technical reference count.
 
 Checklist state is temporary helper UI state only. Checking an item does not
 communicate with or change the game.

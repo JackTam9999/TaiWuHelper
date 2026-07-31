@@ -290,8 +290,11 @@ internal sealed class TaiwuCombatSnapshotReader(
                     + exception.Message));
         }
 
-        var direction = CombatSkillStateHelper.GetCombatSkillDirection(
-            skill.GetActivationState());
+        var activationState = skill.GetActivationState();
+        var direction = CombatSnapshotMapping.MapPracticeDirection(
+            CombatSkillStateHelper.GetCombatSkillDirection(activationState),
+            CombatSkillStateHelper.IsBrokenOut(activationState),
+            skillId);
         var mastered =
             DomainManager.Extra.IsCombatSkillMasteredByCharacter(
                 characterId,
@@ -308,7 +311,7 @@ internal sealed class TaiwuCombatSnapshotReader(
                 : SnapshotValue<int>.Unavailable(
                     $"Skill {skillId} has no positive configured GridCost."),
             SnapshotValue<bool>.Available(mastered),
-            CombatSnapshotMapping.MapPracticeDirection(direction),
+            direction,
             slotContribution,
             MapEffectId(item.DirectEffectID, "direct", skillId),
             MapEffectId(item.ReverseEffectID, "reverse", skillId));

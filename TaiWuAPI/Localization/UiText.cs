@@ -129,6 +129,13 @@ public static class UiText
                 "僅提供操作說明：太吾助手不能執行這些步驟。",
             ["No manual setup differences were produced."] = "沒有需要手動變更的設定。",
             ["Reason and evidence"] = "原因與證據",
+            ["Why this step"] = "為何需要此步驟",
+            ["The selected recommendation requires these generic slots in this category."] =
+                "所選推薦配置需要將這些萬用欄位分配至此類別。",
+            ["This skill has a weapon condition that must be checked manually."] =
+                "此功法具有需要玩家手動確認的兵器條件。",
+            ["This skill has a resource condition that must be checked manually."] =
+                "此功法具有需要玩家手動確認的資源條件。",
             ["Recommendation checklist copied."] = "已複製推薦檢查表。",
             ["Remove"] = "移除",
             ["Add"] = "加入",

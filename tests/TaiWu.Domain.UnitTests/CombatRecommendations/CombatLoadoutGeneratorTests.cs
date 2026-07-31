@@ -330,7 +330,53 @@ public sealed class CombatLoadoutGeneratorTests
             result.Diagnostics,
             diagnostic => diagnostic.Code
                     == CombatLoadoutGenerationDiagnosticCode.OptionRejected
-                && diagnostic.SkillId == skill.SkillId);
+                    && diagnostic.SkillId == skill.SkillId);
+    }
+
+    [Fact]
+    public void Counter_without_active_practice_direction_is_not_retained()
+    {
+        var unavailableCounter = CreateSkill(
+            100,
+            directionValue: SnapshotValue<PracticeDirection>.Unavailable(
+                "Skill 100 has not completed breakthrough."));
+        var retained = CreateSkill(101);
+        var player = CreatePlayer(
+            [unavailableCounter, retained],
+            CreateLoadout(
+                attack: [unavailableCounter.SkillId, retained.SkillId]));
+        var counterOption = new CombatLoadoutOption(
+            new CombatSkillCandidate(
+                unavailableCounter.SkillId,
+                requiredDirection: PracticeDirection.Reverse),
+            requirements: [],
+            threatCodes: ["THREAT"],
+            isCurrentlyEquipped: true,
+            evidenceReference: "local-config:reverse-effect",
+            CombatCounterStrength.Mitigation,
+            CombatCounterActivationTiming.CombatStartPassive,
+            expectedEffectId: unavailableCounter.ReverseEffectId.Value);
+
+        var result = Generate(
+            player,
+            [
+                counterOption,
+                Option(retained, isCurrentlyEquipped: true)
+            ]);
+
+        var candidate = Assert.Single(result.Candidates);
+        Assert.DoesNotContain(
+            candidate.SelectedOptions,
+            option => option.Candidate.SkillId
+                == unavailableCounter.SkillId);
+        Assert.Equal(
+            retained.SkillId,
+            Assert.Single(candidate.SelectedOptions).Candidate.SkillId);
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Code
+                    == CombatLoadoutGenerationDiagnosticCode.OptionRejected
+                && diagnostic.SkillId == unavailableCounter.SkillId);
     }
 
     [Fact]
@@ -454,7 +500,8 @@ public sealed class CombatLoadoutGeneratorTests
     private static CombatSkillSnapshot CreateSkill(
         int skillId,
         SkillCategory category = SkillCategory.Attack,
-        PracticeDirection direction = PracticeDirection.Direct)
+        PracticeDirection direction = PracticeDirection.Direct,
+        SnapshotValue<PracticeDirection>? directionValue = null)
     {
         return new CombatSkillSnapshot(
             skillId,
@@ -462,7 +509,8 @@ public sealed class CombatLoadoutGeneratorTests
             category,
             SnapshotValue<int>.Available(1),
             SnapshotValue<bool>.Available(false),
-            SnapshotValue<PracticeDirection>.Available(direction),
+            directionValue
+                ?? SnapshotValue<PracticeDirection>.Available(direction),
             SkillSlotContribution.None,
             SnapshotValue<int>.Available(1000 + skillId),
             SnapshotValue<int>.Available(2000 + skillId));

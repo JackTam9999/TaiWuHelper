@@ -1316,8 +1316,9 @@ show the evidence-backed combat sequence.
 
 #### Acceptance criteria
 
-- [x] The checklist includes manual add, remove, retain, direction, generic
-      allocation, weapon, and Neili steps where relevant.
+- [x] The checklist includes only follow-up actions: manual add, remove,
+      direction, generic allocation, weapon, and Neili steps where relevant;
+      unchanged retained skills are omitted.
 - [x] Checklist completion changes helper UI state only.
 - [x] The battle plan covers before-combat, opening, normal execution,
       trigger-based reactions, and switching conditions when available.
@@ -1327,9 +1328,10 @@ show the evidence-backed combat sequence.
 
 #### Evidence
 
-- `ManualSetupChecklistBuilder` deterministically maps Remove, Add, Retain, and
+- `ManualSetupChecklistBuilder` deterministically maps Remove, Add, and
   ChangeDirection instructions, non-zero 萬用 allocations, and verified Weapon
-  or Resource requirements into stable checklist items.
+  or Resource requirements into stable checklist items. Retain changes remain
+  available to loadout cards but are excluded from the actionable checklist.
 - Resource requirements retain their evaluated text, including Neili
   thresholds where present, rather than inventing unavailable values.
 - Checklist completion is an in-component `HashSet` keyed by stable item
@@ -1342,6 +1344,8 @@ show the evidence-backed combat sequence.
 - Every checklist and battle-plan item carries a reason reference or evidence
   reference. Selecting a threat highlights linked battle-plan items through
   their structured threat references.
+- Expanded checklist items show the localized recommendation reason rather
+  than an opaque count of internal reason and evidence references.
 - The checklist permanently states
   `Instructions only: TaiWu Helper cannot perform these steps.`
 - Copy sends only the numbered recommendation checklist and non-interference
@@ -1349,8 +1353,9 @@ show the evidence-backed combat sequence.
   navigation, and interactive actions, leaving recommendation content only.
 - The small M1-028 preview was removed after the full battle plan superseded
   it, avoiding two competing plan presentations.
-- Three xUnit v3 cases cover every checklist kind, all five populated plan
-  phases, reason/evidence linkage, Neili wording, and deterministic references.
+- Three xUnit v3 cases cover every actionable checklist kind, omission of
+  retained skills, all five populated plan phases, reason/evidence linkage,
+  Neili wording, and deterministic references.
 - An architecture test verifies helper-local checkbox state, reason/evidence
   display, clipboard/print-only JavaScript, print isolation, and absence of
   network or mutation operations.
@@ -1566,7 +1571,7 @@ game during verification.
 #### Acceptance criteria
 
 - [x] Returned slot totals match the game UI.
-- [x] Every returned skill and direction can be equipped.
+- [ ] Every returned skill and direction can be equipped.
 - [ ] Required weapon and execution conditions are accurate.
 - [ ] The battle plan addresses the documented critical threat.
 - [ ] Differences are recorded as rule corrections, not silently ignored.
@@ -1585,32 +1590,30 @@ game during verification.
   explicitly warn when runtime modifiers are unavailable, and the API accepts
   all five displayed used/capacity pairs as newer current-screen evidence.
 - Counter direction is strict unless separate evidence permits a manual
-  change. The known-neutral skill 604 is therefore retained but not treated as
-  the unavailable Reverse hard counter. The current disk snapshot instead
-  selects already-Reverse skills 624 and 686 as mitigations.
+  change. A later breakthrough screen proved that 老君拂塵功 cannot currently
+  activate its Reverse effect and exposed a direction-mapping defect: GameData
+  uses `-1 = None`, `0 = Direct`, and `1 = Reverse`, which does not match the
+  Domain enum's numeric order.
 - The disk snapshot is older than the latest in-game outer-skill layout, so no
   candidate is accepted as manually verified yet.
 - The complete local-only current-screen evidence was resolved to stable skill
   IDs and submitted with displayed capacities `6/6`, `10/10`, `8/8`, `8/8`,
   and `2/2`. Its timestamp is newer than the configured save.
-- The reproducible Safe candidate retains every observed skill except Neutral
-  金猊鎮魔刀 (604). It replaces that three-slot skill with already-Reverse
-  伏龍刀法 (624, one slot) and already-Reverse 老君拂塵功 (686, two slots),
-  preserving every displayed category total without requesting a direction
-  change.
-- The recommendation instructs the player to confirm 老君拂塵功 before combat
-  and use 伏龍刀法 at the opening only when its live requirements are met.
+- The previously reproducible Safe candidate is invalidated because it treated
+  GameData `None` as Reverse for 老君拂塵功. The corrected adapter maps direction
+  values by meaning and exposes direction as unavailable until breakthrough is
+  complete.
 - A newer complete screen superseded the earlier observation. Re-running the
   API with the newer screen returns its exact `41,21,5,42,0,97 / 599,598,616,
   603,602,624,686 / 148,158,1,146,147,149,128 / 289,253,266,2,292,251,244 /
   252,280` loadout with no remaining manual changes.
-- The newer screen confirms `6/6`, `10/10`, `8/8`, `8/8`, and `2/2`, and the
-  supplied detail screens confirm the configured Reverse descriptions for
-  伏龍刀法 and 老君拂塵功.
+- The newer loadout screen confirms `6/6`, `10/10`, `8/8`, `8/8`, and `2/2`.
+  The supplied detail screens confirm configured Reverse descriptions, but do
+  not prove current access to those directions.
 - The remaining acceptance work is deliberately manual and battle-only:
-  activate 伏龍刀法 with the selected weapon, observe 老君拂塵功's six-layer
-  combat-start state, and verify that the plan controls the documented target
-  pressure.
+  first generate a corrected loadout without unavailable Reverse effects, then
+  activate any selected counter with its required weapon and verify that the
+  plan controls the documented target pressure.
 - `dotnet format TaiWu.slnx --no-restore --verify-no-changes` passed.
 - Default tests: 306 discovered, 305 passed, and the opt-in local read skipped.
 - Opt-in local integration tests: 2 discovered and 2 passed.

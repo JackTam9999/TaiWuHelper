@@ -37,9 +37,9 @@ public sealed class CombatSnapshotMappingTests
     }
 
     [Theory]
-    [InlineData(-1, PracticeDirection.Reverse)]
-    [InlineData(0, PracticeDirection.Neutral)]
-    [InlineData(1, PracticeDirection.Direct)]
+    [InlineData(-1, PracticeDirection.Neutral)]
+    [InlineData(0, PracticeDirection.Direct)]
+    [InlineData(1, PracticeDirection.Reverse)]
     public void Practice_direction_preserves_GameData_semantics(
         int source,
         PracticeDirection expected)
@@ -52,13 +52,42 @@ public sealed class CombatSnapshotMappingTests
     }
 
     [Fact]
-    public void Unknown_practice_direction_remains_unavailable()
+    public void Skill_without_completed_breakthrough_has_no_active_direction()
     {
-        var direction =
-            CombatSnapshotMapping.MapPracticeDirection(2);
+        var direction = CombatSnapshotMapping.MapPracticeDirection(
+            direction: -1,
+            isBrokenOut: false,
+            skillId: 686);
 
         Assert.False(direction.IsAvailable);
-        Assert.Contains("2", direction.UnavailableReason);
+        Assert.Contains("686", direction.UnavailableReason);
+        Assert.Contains("breakthrough", direction.UnavailableReason);
+    }
+
+    [Fact]
+    public void Broken_out_reverse_skill_maps_as_reverse()
+    {
+        var direction = CombatSnapshotMapping.MapPracticeDirection(
+            direction: 1,
+            isBrokenOut: true,
+            skillId: 686);
+
+        Assert.True(direction.IsAvailable);
+        Assert.Equal(PracticeDirection.Reverse, direction.Value);
+    }
+
+    [Theory]
+    [InlineData(-2)]
+    [InlineData(2)]
+    public void Unknown_practice_direction_remains_unavailable(int source)
+    {
+        var direction =
+            CombatSnapshotMapping.MapPracticeDirection(source);
+
+        Assert.False(direction.IsAvailable);
+        Assert.Contains(
+            source.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            direction.UnavailableReason);
     }
 
     [Fact]

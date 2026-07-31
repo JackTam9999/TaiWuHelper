@@ -48,6 +48,12 @@ public sealed class UiTextTests
                 "伏龍刀法為逆練，並非正練。"
             },
             {
+                "老君拂塵功 requires Reverse, but its practice direction is "
+                + "unavailable: 老君拂塵功 has not completed breakthrough, "
+                + "so its practice direction is not active.",
+                "老君拂塵功尚未完成突破，因此逆練效果目前不可用。"
+            },
+            {
                 "老君拂塵功 satisfies EquippedPassive.",
                 "老君拂塵功已滿足裝備後被動生效條件。"
             },
@@ -66,6 +72,11 @@ public sealed class UiTextTests
             {
                 "Change 金猊鎮魔刀 to 逆練 (Reverse).",
                 "將金猊鎮魔刀改為逆練。"
+            },
+            {
+                "Change direction manually to activate the verified Reverse "
+                + "effect used by this recommendation.",
+                "調整正逆練，使本次推薦所使用的已驗證逆練效果生效。"
             },
             {
                 "Allocate 4 萬用 slot(s) to 摧破.",

@@ -43,11 +43,8 @@
                         </span>
                     </label>
                     <details>
-                        <summary>@T("Reason and evidence")</summary>
-                        <strong>@item.SubjectName</strong>
-                        <span>
-                            @EvidenceCount(item) @T("evidence source(s)")
-                        </span>
+                        <summary>@T("Why this step")</summary>
+                        <p>@T(item.Reason)</p>
                     </details>
                 </li>
             }
@@ -80,10 +77,6 @@
         _state.Toggle(reference);
     }
 
-    private static int EvidenceCount(ManualChecklistItemViewModel item) =>
-        item.EvidenceReferences.Count
-        + (item.ReasonReference is null ? 0 : 1);
-
     private async Task CopyAsync()
     {
         var text = string.Join(
@@ -110,7 +103,6 @@
     {
         ManualChecklistItemKind.RemoveSkill => T("Remove"),
         ManualChecklistItemKind.AddSkill => T("Add"),
-        ManualChecklistItemKind.RetainSkill => T("Keep"),
         ManualChecklistItemKind.ChangeDirection => T("Direction"),
         ManualChecklistItemKind.AllocateGenericSlots => "萬用",
         ManualChecklistItemKind.ConfirmWeapon => T("Weapon"),

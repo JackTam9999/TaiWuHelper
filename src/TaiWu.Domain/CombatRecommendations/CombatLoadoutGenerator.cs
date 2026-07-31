@@ -216,7 +216,8 @@ public static class CombatLoadoutGenerator
                             validation.Rejections.Select(
                                 rejection => rejection.Reason)),
                     option.Candidate.SkillId));
-            if (option.IsCurrentlyEquipped)
+            if (option.IsCurrentlyEquipped
+                && CanRetainRejectedOption(validation))
             {
                 eligible.Add(
                     CombatLoadoutOption.RetainCurrentSkill(
@@ -231,6 +232,15 @@ public static class CombatLoadoutGenerator
             .ThenByDescending(option => option.ThreatCodes.Length)
             .ThenByDescending(option => option.IsCurrentlyEquipped)
             .ThenBy(option => option.Candidate.SkillId)];
+    }
+
+    private static bool CanRetainRejectedOption(
+        CombatSkillCandidateValidationResult validation)
+    {
+        return !validation.Rejections.Any(
+            rejection => rejection.Code
+                == CombatSkillCandidateRejectionCode
+                    .DirectionStatusUnavailable);
     }
 
     private static bool HasExpectedEffect(

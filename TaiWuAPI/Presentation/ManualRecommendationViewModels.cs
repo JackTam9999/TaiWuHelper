@@ -8,7 +8,6 @@ public enum ManualChecklistItemKind
 {
     RemoveSkill,
     AddSkill,
-    RetainSkill,
     ChangeDirection,
     AllocateGenericSlots,
     ConfirmWeapon,
@@ -20,6 +19,7 @@ public sealed record ManualChecklistItemViewModel(
     ManualChecklistItemKind Kind,
     string SubjectName,
     string Instruction,
+    string Reason,
     string? ReasonReference,
     IReadOnlyList<string> EvidenceReferences);
 
@@ -58,6 +58,7 @@ public static class ManualSetupChecklistBuilder
         }
 
         var changes = style.ManualChanges
+            .Where(change => change.Kind != ManualLoadoutChangeKind.Retain)
             .OrderBy(change => ChangeOrder(change.Kind))
             .ThenBy(change => change.Category)
             .ThenBy(change => change.SkillId)
@@ -72,6 +73,8 @@ public static class ManualSetupChecklistBuilder
                 category.DisplayName,
                 $"Allocate {category.GenericSlots} 萬用 slot(s) to "
                 + $"{category.DisplayName}.",
+                "The selected recommendation requires these generic slots "
+                + "in this category.",
                 ReasonReference: category.Reference,
                 EvidenceReferences: Array.Empty<string>()));
         var requirements = style.Categories
@@ -93,6 +96,11 @@ public static class ManualSetupChecklistBuilder
                 SkillName(value.Skill),
                 $"Confirm for {SkillName(value.Skill)}: "
                 + value.Condition.Evaluation,
+                value.Condition.Kind == RecommendationConditionKind.Weapon
+                    ? "This skill has a weapon condition that must be "
+                        + "checked manually."
+                    : "This skill has a resource condition that must be "
+                        + "checked manually.",
                 value.Skill.Reasons.FirstOrDefault()?.Reference,
                 [value.Condition.EvidenceReference]));
 
@@ -115,8 +123,6 @@ public static class ManualSetupChecklistBuilder
                     ManualChecklistItemKind.RemoveSkill,
                 ManualLoadoutChangeKind.Add =>
                     ManualChecklistItemKind.AddSkill,
-                ManualLoadoutChangeKind.Retain =>
-                    ManualChecklistItemKind.RetainSkill,
                 ManualLoadoutChangeKind.ChangeDirection =>
                     ManualChecklistItemKind.ChangeDirection,
                 _ => throw new ArgumentOutOfRangeException(nameof(change))
@@ -128,13 +134,12 @@ public static class ManualSetupChecklistBuilder
                     $"Remove {change.SkillName} manually.",
                 ManualLoadoutChangeKind.Add =>
                     $"Add {change.SkillName} to {change.Category} manually.",
-                ManualLoadoutChangeKind.Retain =>
-                    $"Keep {change.SkillName} in {change.Category}.",
                 ManualLoadoutChangeKind.ChangeDirection =>
                     $"Change {change.SkillName} to "
                     + $"{DirectionLabel(change.RequiredDirection)}.",
                 _ => throw new ArgumentOutOfRangeException(nameof(change))
             },
+            change.Reason.Summary,
             change.Reason.Reference,
             change.Reason.EvidenceReferences);
     }
@@ -143,8 +148,7 @@ public static class ManualSetupChecklistBuilder
     {
         ManualLoadoutChangeKind.Remove => 0,
         ManualLoadoutChangeKind.Add => 1,
-        ManualLoadoutChangeKind.Retain => 2,
-        ManualLoadoutChangeKind.ChangeDirection => 3,
+        ManualLoadoutChangeKind.ChangeDirection => 2,
         _ => throw new ArgumentOutOfRangeException(nameof(kind))
     };
 
