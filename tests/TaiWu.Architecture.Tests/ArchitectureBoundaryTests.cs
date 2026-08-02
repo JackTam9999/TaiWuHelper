@@ -866,9 +866,16 @@ public sealed partial class ArchitectureBoundaryTests
             "() => ShowStyle(style.Style)",
             "() => Toggle(item.Reference)",
             "() => ToggleObservationSkill(skill.SkillId)",
+            "ApplyFiltersAsync",
+            "ChangeAsync",
+            "ClearFiltersAsync",
             "CopyAsync",
             "GetRecommendationAsync",
+            "NextPageAsync",
+            "PreviousPageAsync",
             "PrintAsync",
+            "RebuildAsync",
+            "ReloadAsync",
             "RetryRead",
             "SearchTargetsAsync"
         }.Order(StringComparer.Ordinal);
@@ -891,6 +898,45 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("ISaveGameReader", page);
         Assert.DoesNotContain("using GameData", page);
         Assert.DoesNotContain("GameData.", page);
+
+        var atlasPage = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Pages",
+                "SkillCatalogue.razor"));
+        Assert.Contains("ReadCombatSkillCatalogueStatus(", atlasPage);
+        Assert.Contains("ReadCharacterCombatSkillAtlas(", atlasPage);
+        Assert.Contains("EnsureCombatSkillCatalogue(", atlasPage);
+        Assert.Contains("characterId: null", atlasPage);
+        Assert.DoesNotContain("ISaveGameReader", atlasPage);
+        Assert.DoesNotContain("DefaultSaveFilePath", atlasPage);
+        Assert.DoesNotContain("using GameData", atlasPage);
+        Assert.Contains("aria-live", atlasPage);
+        Assert.Contains("Candidate limit reached", atlasPage);
+
+        var atlasCard = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Skills",
+                "SkillAtlasCard.razor"));
+        Assert.Contains("<details>", atlasCard);
+        Assert.Contains("<summary>", atlasCard);
+        Assert.Contains("role=\"list\"", atlasCard);
+        Assert.Contains("@T(\"Learned\")", atlasCard);
+        Assert.DoesNotContain(
+            "<svg",
+            atlasCard,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            "<img",
+            atlasCard,
+            StringComparison.OrdinalIgnoreCase);
+
+        var style = File.ReadAllText(
+            Path.Combine(apiRoot, "wwwroot", "app.css"));
+        Assert.Contains("@media (max-width: 620px)", style);
+        Assert.Contains("@media (prefers-reduced-motion: reduce)", style);
+        Assert.Contains(".skill-card-grid", style);
 
         var checklist = File.ReadAllText(
             Path.Combine(
@@ -1015,6 +1061,7 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("CountReadNormalPages", mapping);
         Assert.Contains("before != after", labels);
         Assert.Contains("TaiwuLanguageCatalog.ReadAsync", labels);
+        Assert.Contains("DomainManager.Taiwu.GetTaiwuCharId()", source);
         Assert.Contains("fingerprintProvider.CaptureAsync", labels);
         Assert.DoesNotContain("File.Write", labels);
         Assert.DoesNotContain("SaveGameReport", source);

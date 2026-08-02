@@ -1075,6 +1075,11 @@ public sealed class CombatSkillCatalogueUseCaseTests
     [Fact]
     public void Contracts_are_bounded_immutable_and_path_free()
     {
+        Assert.Null(new CharacterCombatSkillProgressReadRequest().CharacterId);
+        Assert.Null(
+            new CharacterCombatSkillAtlasRequest(
+                characterId: null,
+                CatalogueLanguage.English).CharacterId);
         Assert.Throws<ArgumentOutOfRangeException>(
             () => new CombatSkillCatalogueFilter(candidateLimit: 0));
         Assert.Throws<ArgumentOutOfRangeException>(

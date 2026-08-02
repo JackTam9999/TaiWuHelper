@@ -79,7 +79,11 @@ rules used by recommendations, feasibility, scoring, or loadout generation.
 
 ## Character skill atlas
 
-`GET /api/character-skill-atlas?characterId={id}`
+`GET /api/character-skill-atlas`
+
+When `characterId` is omitted, the read-only save adapter selects the current
+Taiwu recorded in the configured save. A non-negative `characterId` can be
+supplied for an explicit character overlay.
 
 The atlas accepts the same `query`, language, static filters, `offset`, and
 `limit` parameters as catalogue search, plus independent progress filters:

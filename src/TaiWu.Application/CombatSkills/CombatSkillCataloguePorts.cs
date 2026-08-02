@@ -40,7 +40,7 @@ public interface ICharacterCombatSkillProgressReader
 public sealed record CharacterCombatSkillProgressReadRequest
 {
     public CharacterCombatSkillProgressReadRequest(
-        int characterId,
+        int? characterId = null,
         CatalogueLanguage preferredLanguage =
             CatalogueLanguage.TraditionalChinese)
     {
@@ -64,7 +64,7 @@ public sealed record CharacterCombatSkillProgressReadRequest
         PreferredLanguage = preferredLanguage;
     }
 
-    public int CharacterId { get; }
+    public int? CharacterId { get; }
 
     public CatalogueLanguage PreferredLanguage { get; }
 }

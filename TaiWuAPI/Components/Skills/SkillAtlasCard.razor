@@ -1,0 +1,214 @@
+@using TaiWu.Application.CombatSkills
+@using TaiWu.Domain.CombatSkills
+@using TaiWu.Domain.CombatSnapshots
+
+<article class="skill-atlas-card" data-reference="@Entry.StableKey">
+    <details>
+        <summary>
+            <span class="skill-glyph" aria-hidden="true">@CategoryGlyph</span>
+            <span class="skill-card-title">
+                <strong>@DisplayName</strong>
+                <small>@StaticSummary</small>
+            </span>
+            <span class="skill-card-cost" aria-label="@T("Base grid cost")">
+                @CostText
+            </span>
+        </summary>
+
+        <div class="skill-card-body">
+            <div class="skill-badges"
+                 role="list"
+                 aria-label="@T("Character progress")">
+                @if (IsTrue(Entry.Learned))
+                {
+                    <span class="progress-badge learned" role="listitem">@T("Learned")</span>
+                }
+                @if (Breakthrough?.CanBreakthroughNow == true)
+                {
+                    <span class="progress-badge ready" role="listitem">@T("Ready to break through")</span>
+                }
+                @if (Breakthrough?.IsBrokenOut == true)
+                {
+                    <span class="progress-badge broken" role="listitem">@T("Broken through")</span>
+                }
+                @if (ActiveDirection is { } direction)
+                {
+                    <span class="progress-badge direction" role="listitem">@DirectionLabel(direction)</span>
+                }
+                @if (IsTrue(Progress?.AttainmentMastered))
+                {
+                    <span class="progress-badge mastered" role="listitem">@T("Mastered")</span>
+                }
+                @if (IsTrue(Progress?.Simplified))
+                {
+                    <span class="progress-badge simplified" role="listitem">@T("Simplified")</span>
+                }
+                @if (IsTrue(Progress?.Activated))
+                {
+                    <span class="progress-badge active" role="listitem">@T("Activated")</span>
+                }
+                @if (IsTrue(Progress?.Equipped))
+                {
+                    <span class="progress-badge equipped" role="listitem">@T("Equipped")</span>
+                }
+                @if (!HasPositiveProgressBadge)
+                {
+                    <span class="progress-badge neutral" role="listitem">@T("Not learned")</span>
+                }
+            </div>
+
+            <dl class="skill-card-facts">
+                <div>
+                    <dt>@T("Study progress")</dt>
+                    <dd>@StudyText</dd>
+                </div>
+                <div>
+                    <dt>@T("Proficiency")</dt>
+                    <dd>@ProficiencyText</dd>
+                </div>
+                <div>
+                    <dt>@T("Base grid cost")</dt>
+                    <dd>@BaseCostText</dd>
+                </div>
+                <div>
+                    <dt>@T("Current effective cost")</dt>
+                    <dd>@EffectiveCostText</dd>
+                </div>
+            </dl>
+
+            @if (Entry.Issues != CombatSkillQueryIssue.None)
+            {
+                <p class="skill-partial-note">
+                    @T("Some fields are unavailable or use a fallback. Open the detail view for provenance.")
+                </p>
+            }
+        </div>
+    </details>
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public CharacterCombatSkillAtlasEntry Entry { get; set; } = default!;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private CharacterCombatSkillProgress? Progress => Entry.Progress;
+
+    private BreakthroughDirectionAvailability? Breakthrough =>
+        Progress?.Breakthrough.IsAvailable == true
+            ? Progress.Breakthrough.Value
+            : null;
+
+    private PracticeDirection? ActiveDirection =>
+        Progress?.ActiveDirection.IsAvailable == true
+            ? Progress.ActiveDirection.Value
+            : null;
+
+    private string DisplayName => Entry.DisplayName.Value.IsAvailable
+        ? Entry.DisplayName.Value.Value.Text
+        : T("Unnamed skill");
+
+    private string StaticSummary => string.Join(
+        " · ",
+        new[] { CategoryText, GradeText }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private string CategoryText =>
+        Entry.Definition?.Category.IsAvailable == true
+            ? CategoryLabel(Entry.Definition.Category.Value)
+            : T("Unknown category");
+
+    private string GradeText => Entry.Definition?.Grade.IsAvailable == true
+        ? $"{T("Grade")} {Entry.Definition.Grade.Value.Value}"
+        : T("Grade unavailable");
+
+    private string CategoryGlyph =>
+        Entry.Definition?.Category.IsAvailable == true
+            ? Entry.Definition.Category.Value switch
+            {
+                CombatSkillDiscipline.Neigong => "內",
+                CombatSkillDiscipline.Agility => "身",
+                CombatSkillDiscipline.SpecialTechnique => "絕",
+                CombatSkillDiscipline.FistAndPalm => "掌",
+                CombatSkillDiscipline.Finger => "指",
+                CombatSkillDiscipline.Leg => "腿",
+                CombatSkillDiscipline.HiddenWeapon => "暗",
+                CombatSkillDiscipline.Sword => "劍",
+                CombatSkillDiscipline.Blade => "刀",
+                CombatSkillDiscipline.LongWeapon => "長",
+                CombatSkillDiscipline.ExoticWeapon => "奇",
+                CombatSkillDiscipline.FlexibleWeapon => "軟",
+                CombatSkillDiscipline.Archery => "弓",
+                CombatSkillDiscipline.Music => "樂",
+                _ => "功"
+            }
+            : "?";
+
+    private string CostText => Entry.BaseGridCost.IsAvailable
+        ? Entry.BaseGridCost.Value.Value.ToString()
+        : "—";
+
+    private string BaseCostText => Entry.BaseGridCost.IsAvailable
+        ? Entry.BaseGridCost.Value.Value.ToString()
+        : T("Unavailable");
+
+    private string EffectiveCostText =>
+        Entry.CurrentEffectiveGridCost.IsAvailable
+            ? Entry.CurrentEffectiveGridCost.Value.ToString()
+            : T("Unavailable");
+
+    private string ProficiencyText =>
+        Progress?.Proficiency.Current.IsAvailable == true
+            ? Progress.Proficiency.Maximum.IsAvailable
+                ? $"{Progress.Proficiency.Current.Value} / {Progress.Proficiency.Maximum.Value}"
+                : Progress.Proficiency.Current.Value.ToString()
+            : T("Unavailable");
+
+    private string StudyText => Progress is null
+        ? T("Not learned")
+        : Progress.StudySummary.TotalCount == 0
+            ? T("Unavailable")
+            : $"{Progress.StudySummary.ReadCount} / {Progress.StudySummary.TotalCount} {T("studied")}";
+
+    private bool HasPositiveProgressBadge => IsTrue(Entry.Learned)
+        || Breakthrough?.CanBreakthroughNow == true
+        || Breakthrough?.IsBrokenOut == true
+        || ActiveDirection is not null
+        || IsTrue(Progress?.AttainmentMastered)
+        || IsTrue(Progress?.Simplified)
+        || IsTrue(Progress?.Activated)
+        || IsTrue(Progress?.Equipped);
+
+    private static bool IsTrue(SkillProgressField<bool>? field) =>
+        field?.IsAvailable == true && field.Value;
+
+    private string DirectionLabel(PracticeDirection direction) =>
+        direction == PracticeDirection.Direct
+            ? T("Direct practice")
+            : T("Reverse practice");
+
+    private string CategoryLabel(CombatSkillDiscipline category) =>
+        Language == TaiwuLanguage.Chinese
+            ? category switch
+            {
+                CombatSkillDiscipline.Neigong => "內功",
+                CombatSkillDiscipline.Agility => "身法",
+                CombatSkillDiscipline.SpecialTechnique => "絕技",
+                CombatSkillDiscipline.FistAndPalm => "拳掌",
+                CombatSkillDiscipline.Finger => "指法",
+                CombatSkillDiscipline.Leg => "腿法",
+                CombatSkillDiscipline.HiddenWeapon => "暗器",
+                CombatSkillDiscipline.Sword => "劍法",
+                CombatSkillDiscipline.Blade => "刀法",
+                CombatSkillDiscipline.LongWeapon => "長兵",
+                CombatSkillDiscipline.ExoticWeapon => "奇門",
+                CombatSkillDiscipline.FlexibleWeapon => "軟兵",
+                CombatSkillDiscipline.Archery => "御射",
+                CombatSkillDiscipline.Music => "樂器",
+                _ => category.ToString()
+            }
+            : category.ToString();
+
+    private string T(string english) => UiText.Get(Language, english);
+}

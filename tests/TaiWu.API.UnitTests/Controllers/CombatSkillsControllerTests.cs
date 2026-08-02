@@ -224,13 +224,17 @@ public sealed class CombatSkillsControllerTests
 
         var response = Response<CharacterCombatSkillAtlasResponse>(
             await controller.Read(
-                characterId: 42,
+                characterId: null,
                 cancellationToken: CancellationToken));
 
         Assert.Equal(CharacterProgressReadStatus.SaveMissing, response.ProgressStatus);
         Assert.Equal("The configured save is unavailable.", response.ProgressFailureReason);
         Assert.Empty(response.Entries);
         Assert.DoesNotContain("secret", Serialize(response));
+        await reader.Received(1).ReadAsync(
+            Arg.Is<CharacterCombatSkillProgressReadRequest>(request =>
+                request != null && request.CharacterId == null),
+            CancellationToken);
     }
 
     [Fact]

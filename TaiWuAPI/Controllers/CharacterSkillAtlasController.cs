@@ -18,7 +18,7 @@ public sealed class CharacterSkillAtlasController(
         StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<CharacterCombatSkillAtlasResponse>> Read(
-        [FromQuery] int characterId,
+        [FromQuery] int? characterId = null,
         [FromQuery] CatalogueLanguage language = CatalogueLanguage.English,
         [FromQuery] string? query = null,
         [FromQuery] CombatSkillDiscipline? category = null,

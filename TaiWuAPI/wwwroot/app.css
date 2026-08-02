@@ -105,6 +105,28 @@ a {
     gap: 14px;
 }
 
+.primary-navigation {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-inline: auto 24px;
+}
+
+.primary-navigation a {
+    padding: 8px 12px;
+    border-radius: 3px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.primary-navigation a:hover,
+.primary-navigation a.active {
+    color: var(--ink);
+    background: rgba(215, 182, 107, 0.12);
+}
+
 .language-switcher {
     padding: 3px;
     border: 1px solid var(--line);
@@ -212,6 +234,10 @@ h1 {
     font-weight: 500;
     line-height: 0.98;
     letter-spacing: -0.04em;
+}
+
+h1:focus {
+    outline: none;
 }
 
 h2 {
@@ -1355,6 +1381,394 @@ select {
     padding: 100px 0;
 }
 
+.atlas-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.7fr);
+    gap: 46px;
+    align-items: end;
+    padding: 58px 0 34px;
+}
+
+.atlas-hero h1 {
+    margin-bottom: 16px;
+}
+
+.atlas-shell {
+    display: grid;
+    gap: 22px;
+    padding: 30px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--panel);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.16);
+}
+
+.atlas-heading h2,
+.compact-heading h3,
+.skill-category-heading h3 {
+    margin: 0;
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-weight: 500;
+}
+
+.atlas-metadata {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border-block: 1px solid var(--line);
+}
+
+.atlas-metadata > div {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 16px 18px;
+    border-right: 1px solid var(--line);
+}
+
+.atlas-metadata > div:last-child {
+    border-right: 0;
+}
+
+.atlas-metadata span,
+.skill-card-facts dt {
+    color: var(--muted);
+    font-size: 0.69rem;
+    font-weight: 750;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.atlas-metadata strong {
+    overflow: hidden;
+    color: #dce7e2;
+    font-size: 0.88rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.atlas-source-state {
+    border-color: rgba(215, 182, 107, 0.3);
+}
+
+.atlas-controls {
+    display: grid;
+    gap: 20px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    background: rgba(8, 23, 23, 0.42);
+}
+
+.compact-heading h3 {
+    font-size: 1.42rem;
+}
+
+.text-button {
+    padding: 8px 4px;
+    border: 0;
+    color: var(--gold);
+    background: transparent;
+    font-size: 0.8rem;
+    font-weight: 750;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.atlas-primary-filters {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.7fr) minmax(170px, 0.8fr) minmax(120px, 0.45fr) auto;
+    gap: 14px;
+    align-items: end;
+}
+
+.atlas-search-field,
+.atlas-filter-field {
+    display: grid;
+    gap: 7px;
+}
+
+.atlas-search-field > span,
+.atlas-filter-field > span {
+    color: #d4ddd8;
+    font-size: 0.76rem;
+    font-weight: 750;
+}
+
+.atlas-search-button {
+    min-height: 44px;
+}
+
+.atlas-advanced-filters {
+    border-top: 1px solid var(--line);
+    padding-top: 15px;
+}
+
+.atlas-advanced-filters > summary {
+    width: fit-content;
+    color: var(--gold);
+    font-size: 0.82rem;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.atlas-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.atlas-filter-grid input,
+.atlas-filter-grid select {
+    min-height: 40px;
+    padding-block: 7px;
+    font-size: 0.82rem;
+}
+
+.atlas-warning-list {
+    padding: 16px 18px;
+    border-left: 3px solid var(--gold);
+    background: rgba(215, 182, 107, 0.08);
+}
+
+.atlas-warning-list strong {
+    color: var(--gold);
+}
+
+.atlas-warning-list ul {
+    display: grid;
+    gap: 5px;
+    margin: 9px 0 0;
+    padding-left: 20px;
+    color: #c8d3ce;
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.atlas-empty {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    min-height: 250px;
+    place-content: center;
+    border: 1px dashed rgba(205, 221, 211, 0.2);
+    text-align: center;
+}
+
+.atlas-empty > span {
+    display: grid;
+    width: 56px;
+    height: 56px;
+    place-items: center;
+    border: 1px solid rgba(215, 182, 107, 0.35);
+    border-radius: 50%;
+    color: var(--gold);
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 1.3rem;
+}
+
+.atlas-empty p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.atlas-result-heading,
+.skill-category-heading,
+.atlas-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.atlas-result-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.atlas-result-heading strong {
+    color: var(--ink);
+}
+
+.skill-category-list {
+    display: grid;
+    gap: 32px;
+}
+
+.skill-category-section {
+    display: grid;
+    gap: 13px;
+}
+
+.skill-category-heading {
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+}
+
+.skill-category-heading h3 {
+    font-size: 1.35rem;
+}
+
+.skill-category-heading span {
+    color: var(--muted);
+    font-size: 0.74rem;
+}
+
+.skill-card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(210px, 1fr));
+    gap: 12px;
+}
+
+.skill-atlas-card {
+    min-width: 0;
+    border: 1px solid rgba(205, 221, 211, 0.14);
+    border-radius: 3px;
+    background: linear-gradient(145deg, rgba(27, 48, 46, 0.94), rgba(11, 27, 28, 0.92));
+}
+
+.skill-atlas-card:has(details[open]) {
+    border-color: rgba(215, 182, 107, 0.38);
+}
+
+.skill-atlas-card summary {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 11px;
+    align-items: center;
+    min-height: 78px;
+    padding: 13px;
+    list-style: none;
+    cursor: pointer;
+}
+
+.skill-atlas-card summary::-webkit-details-marker {
+    display: none;
+}
+
+.skill-glyph {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid rgba(215, 182, 107, 0.33);
+    border-radius: 50%;
+    color: var(--gold);
+    background: rgba(215, 182, 107, 0.08);
+    font-family: Georgia, "Microsoft JhengHei", serif;
+}
+
+.skill-card-title {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+}
+
+.skill-card-title strong,
+.skill-card-title small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.skill-card-title strong {
+    color: #edf2ee;
+    font-size: 0.9rem;
+}
+
+.skill-card-title small {
+    color: var(--muted);
+    font-size: 0.68rem;
+}
+
+.skill-card-cost {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border: 1px solid rgba(101, 182, 162, 0.33);
+    border-radius: 50%;
+    color: #bce4d8;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.skill-card-body {
+    display: grid;
+    gap: 14px;
+    padding: 0 13px 14px;
+    border-top: 1px solid var(--line);
+}
+
+.skill-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 12px;
+}
+
+.progress-badge {
+    padding: 4px 7px;
+    border: 1px solid rgba(205, 221, 211, 0.18);
+    border-radius: 999px;
+    color: #c8d3ce;
+    background: rgba(205, 221, 211, 0.06);
+    font-size: 0.63rem;
+    font-weight: 800;
+}
+
+.progress-badge.learned,
+.progress-badge.equipped,
+.progress-badge.active {
+    border-color: rgba(101, 182, 162, 0.38);
+    color: #bce4d8;
+    background: rgba(44, 112, 96, 0.15);
+}
+
+.progress-badge.ready,
+.progress-badge.broken,
+.progress-badge.mastered,
+.progress-badge.direction {
+    border-color: rgba(215, 182, 107, 0.38);
+    color: #ecd495;
+    background: rgba(215, 182, 107, 0.1);
+}
+
+.skill-card-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.skill-card-facts > div {
+    display: grid;
+    gap: 3px;
+}
+
+.skill-card-facts dd {
+    margin: 0;
+    color: #dce7e2;
+    font-size: 0.76rem;
+}
+
+.skill-partial-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+.atlas-pagination {
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.atlas-pagination span {
+    color: var(--muted);
+    font-size: 0.76rem;
+}
+
 @media (max-width: 1279px) {
     .briefing-grid {
         grid-template-columns: 1fr;
@@ -1362,6 +1776,10 @@ select {
 
     .threat-panel {
         position: static;
+    }
+
+    .skill-card-grid {
+        grid-template-columns: repeat(3, minmax(210px, 1fr));
     }
 }
 
@@ -1371,6 +1789,7 @@ select {
     }
 
     .hero,
+    .atlas-hero,
     .control-grid,
     .manual-plan-grid {
         grid-template-columns: 1fr;
@@ -1390,6 +1809,27 @@ select {
     .result-summary {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .atlas-metadata {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .atlas-metadata > div:nth-child(2n) {
+        border-right: 0;
+    }
+
+    .atlas-primary-filters,
+    .atlas-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .atlas-search-field {
+        grid-column: 1 / -1;
+    }
+
+    .skill-card-grid {
+        grid-template-columns: repeat(2, minmax(210px, 1fr));
+    }
 }
 
 @media (max-width: 620px) {
@@ -1401,6 +1841,25 @@ select {
     .section-heading,
     .request-row {
         align-items: flex-start;
+    }
+
+    .app-header {
+        flex-wrap: wrap;
+        gap: 9px;
+        padding-block: 10px;
+    }
+
+    .primary-navigation {
+        order: 3;
+        width: 100%;
+        margin: 0;
+        border-top: 1px solid var(--line);
+        padding-top: 7px;
+    }
+
+    .primary-navigation a {
+        flex: 1;
+        text-align: center;
     }
 
     .section-heading,
@@ -1427,7 +1886,8 @@ select {
     }
 
     .control-panel,
-    .result-shell {
+    .result-shell,
+    .atlas-shell {
         padding: 20px;
     }
 
@@ -1438,6 +1898,33 @@ select {
     .result-summary,
     .skill-list {
         grid-template-columns: 1fr;
+    }
+
+    .atlas-metadata,
+    .atlas-primary-filters,
+    .atlas-filter-grid,
+    .skill-card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .atlas-metadata > div {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .atlas-metadata > div:last-child {
+        border-bottom: 0;
+    }
+
+    .atlas-result-heading,
+    .skill-category-heading,
+    .atlas-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .atlas-pagination button {
+        width: 100%;
     }
 
     .evidence-list {

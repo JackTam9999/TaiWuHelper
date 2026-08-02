@@ -35,7 +35,7 @@ Accept: application/json
 
 ###
 
-GET {{TaiWu_HostAddress}}/api/character-skill-atlas?characterId=42&language=English&learned=true&limit=25
+GET {{TaiWu_HostAddress}}/api/character-skill-atlas?language=English&learned=true&limit=25
 Accept: application/json
 
 ###

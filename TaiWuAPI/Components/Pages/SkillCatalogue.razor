@@ -1,0 +1,668 @@
+@page "/skills"
+@implements IAsyncDisposable
+@using TaiWu.Application.CombatSkills
+@using TaiWu.Domain.CombatSkills
+@using TaiWu.Domain.CombatSnapshots
+@inject ICombatSkillDefinitionSource DefinitionSource
+@inject ICombatSkillCatalogueRepository CatalogueRepository
+@inject ICharacterCombatSkillProgressReader ProgressReader
+@inject ILogger<SkillCatalogue> Logger
+
+<PageTitle>TaiWu Helper · @T("Skill atlas")</PageTitle>
+
+<section class="atlas-hero">
+    <div>
+        <p class="eyebrow">@T("Version-aware skill catalogue")</p>
+        <h1>@T("Your martial arts, mapped.")</h1>
+        <p class="hero-copy">
+            @T("Search every installed combat skill and compare it with the current Taiwu's learned, studied, breakthrough, mastery and equipped state.")
+        </p>
+    </div>
+    <div class="boundary-card" role="note">
+        <strong>@T("Read-only atlas")</strong>
+        <span>@T("The catalogue is a helper-owned cache. Save progress is read only and never copied back into the game.")</span>
+    </div>
+</section>
+
+<section class="atlas-shell"
+         aria-labelledby="skill-atlas-heading"
+         aria-busy="@_loading.ToString().ToLowerInvariant()">
+    <div class="section-heading atlas-heading">
+        <div>
+            <p class="eyebrow">@T("Catalogue and character overlay")</p>
+            <h2 id="skill-atlas-heading">@T("Combat skill atlas")</h2>
+        </div>
+        @if (_loading || _rebuilding)
+        {
+            <span class="working-status" role="status">
+                @(_rebuilding ? T("Rebuilding local catalogue…") : T("Reading catalogue and save…"))
+            </span>
+        }
+    </div>
+
+    @if (_catalogue is not null)
+    {
+        <div class="atlas-metadata" aria-label="@T("Atlas freshness")">
+            <div>
+                <span>@T("Catalogue")</span>
+                <strong>@CatalogueStatusLabel(_catalogue.Status)</strong>
+            </div>
+            <div>
+                <span>GameData</span>
+                <strong>@(_catalogue.InstalledSource?.GameDataVersion ?? T("Unavailable"))</strong>
+            </div>
+            <div>
+                <span>@T("Catalogue built")</span>
+                <strong>@FormatTime(_catalogue.BuiltAtUtc)</strong>
+            </div>
+            <div>
+                <span>@T("Save read")</span>
+                <strong>@FormatTime(_atlas?.ProgressMetadata?.SaveSnapshot.ReadAtUtc)</strong>
+            </div>
+            <div>
+                <span>@T("Matching skills")</span>
+                <strong>@(_atlas?.TotalMatches ?? 0)</strong>
+            </div>
+        </div>
+    }
+
+    @if (_failure is not null)
+    {
+        <section class="message-card page-state problem-state"
+                 role="alert"
+                 aria-live="assertive">
+            <div>
+                <span class="state-label">@T("Failure")</span>
+                <strong>@T("The skill atlas could not be read")</strong>
+                <p>@T(_failure)</p>
+            </div>
+            <button type="button"
+                    class="secondary-button"
+                    @onclick="ReloadAsync"
+                    disabled="@IsBusy">
+                @T("Retry read")
+            </button>
+        </section>
+    }
+    else if (!_loading && _catalogue is not null
+        && _catalogue.Status != CombatSkillCatalogueStatus.Current)
+    {
+        <section class="message-card page-state atlas-source-state"
+                 role="status"
+                 aria-live="polite">
+            <div>
+                <span class="state-label">@CatalogueStatusLabel(_catalogue.Status)</span>
+                <strong>@CatalogueStateTitle(_catalogue.Status)</strong>
+                <p>@CatalogueStateMessage(_catalogue.Status)</p>
+            </div>
+            @if (CanRebuild(_catalogue.Status))
+            {
+                <button type="button"
+                        class="primary-button"
+                        @onclick="RebuildAsync"
+                        disabled="@IsBusy">
+                    @T("Build local catalogue")
+                </button>
+            }
+        </section>
+    }
+    else if (!_loading && _atlas is not null
+        && _atlas.ProgressStatus != CharacterProgressReadStatus.Available)
+    {
+        <section class="message-card page-state problem-state"
+                 role="alert"
+                 aria-live="assertive">
+            <div>
+                <span class="state-label">@ProgressStatusLabel(_atlas.ProgressStatus)</span>
+                <strong>@T("Character progress is unavailable")</strong>
+                <p>@ProgressStateMessage(_atlas.ProgressStatus)</p>
+            </div>
+            <button type="button"
+                    class="secondary-button"
+                    @onclick="ReloadAsync"
+                    disabled="@IsBusy">
+                @T("Retry read")
+            </button>
+        </section>
+    }
+
+    @if (_catalogue?.Status == CombatSkillCatalogueStatus.Current)
+    {
+        <section class="atlas-controls" aria-labelledby="atlas-filter-heading">
+            <div class="section-heading compact-heading">
+                <div>
+                    <p class="eyebrow">@T("Search and filters")</p>
+                    <h3 id="atlas-filter-heading">@T("Find a combat skill")</h3>
+                </div>
+                <button type="button"
+                        class="text-button"
+                        @onclick="ClearFiltersAsync"
+                        disabled="@IsBusy">
+                    @T("Clear filters")
+                </button>
+            </div>
+
+            <div class="atlas-primary-filters">
+                <label class="atlas-search-field" for="atlas-search">
+                    <span>@T("Skill name")</span>
+                    <input id="atlas-search"
+                           @bind="_filters.Query"
+                           @bind:event="oninput"
+                           placeholder="@T("Traditional Chinese or English name")"
+                           autocomplete="off" />
+                </label>
+
+                <label class="atlas-filter-field" for="atlas-category">
+                    <span>@T("Category")</span>
+                    <select id="atlas-category" @bind="_filters.Category">
+                        <option value="">@T("All categories")</option>
+                        @foreach (var category in Enum.GetValues<CombatSkillDiscipline>())
+                        {
+                            <option value="@category">@CategoryLabel(category)</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="atlas-filter-field" for="atlas-grade">
+                    <span>@T("Grade")</span>
+                    <select id="atlas-grade" @bind="_filters.Grade">
+                        <option value="">@T("All grades")</option>
+                        @for (var grade = CombatSkillGrade.Minimum;
+                            grade <= CombatSkillGrade.Maximum;
+                            grade++)
+                        {
+                            <option value="@grade">@grade</option>
+                        }
+                    </select>
+                </label>
+
+                <button type="button"
+                        class="primary-button atlas-search-button"
+                        @onclick="ApplyFiltersAsync"
+                        disabled="@IsBusy">
+                    @T("Apply filters")
+                </button>
+            </div>
+
+            <details class="atlas-advanced-filters">
+                <summary>@T("More catalogue and progress filters")</summary>
+                <div class="atlas-filter-grid">
+                    <label class="atlas-filter-field" for="atlas-faction">
+                        <span>@T("Faction")</span>
+                        <input id="atlas-faction"
+                               type="number"
+                               min="0"
+                               @bind="_filters.Faction"
+                               placeholder="@T("Any")" />
+                    </label>
+                    <label class="atlas-filter-field" for="atlas-element">
+                        <span>@T("Element")</span>
+                        <select id="atlas-element" @bind="_filters.Element">
+                            <option value="">@T("Any")</option>
+                            @foreach (var element in Enum.GetValues<CombatSkillElement>())
+                            {
+                                <option value="@element">@T(element.ToString())</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="atlas-filter-field" for="atlas-equipment">
+                        <span>@T("Equipment type")</span>
+                        <select id="atlas-equipment" @bind="_filters.EquipmentType">
+                            <option value="">@T("Any")</option>
+                            @foreach (var equipment in Enum.GetValues<CombatSkillEquipmentType>())
+                            {
+                                <option value="@equipment">@T(equipment.ToString())</option>
+                            }
+                        </select>
+                    </label>
+                    <TriStateFilter Id="atlas-learned"
+                                    Label="@T("Learned state")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Learned")"
+                                    NoLabel="@T("Not learned")"
+                                    @bind-Value="_filters.Learned" />
+                    <TriStateFilter Id="atlas-proficiency"
+                                    Label="@T("Proficiency available")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Available")"
+                                    NoLabel="@T("Unavailable")"
+                                    @bind-Value="_filters.HasProficiency" />
+                    <TriStateFilter Id="atlas-study-complete"
+                                    Label="@T("All details studied")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Complete")"
+                                    NoLabel="@T("Incomplete")"
+                                    @bind-Value="_filters.StudyComplete" />
+                    <TriStateFilter Id="atlas-ready"
+                                    Label="@T("Breakthrough ready")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Ready")"
+                                    NoLabel="@T("Not ready")"
+                                    @bind-Value="_filters.BreakthroughReady" />
+                    <TriStateFilter Id="atlas-broken"
+                                    Label="@T("Breakthrough completed")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Completed")"
+                                    NoLabel="@T("Not completed")"
+                                    @bind-Value="_filters.BrokenThrough" />
+                    <label class="atlas-filter-field" for="atlas-direction">
+                        <span>@T("Practice direction")</span>
+                        <select id="atlas-direction" @bind="_filters.ActiveDirection">
+                            <option value="">@T("Any")</option>
+                            <option value="@PracticeDirection.Direct">@T("Direct practice")</option>
+                            <option value="@PracticeDirection.Reverse">@T("Reverse practice")</option>
+                        </select>
+                    </label>
+                    <TriStateFilter Id="atlas-mastered"
+                                    Label="@T("Attainment mastery")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Mastered")"
+                                    NoLabel="@T("Not mastered")"
+                                    @bind-Value="_filters.AttainmentMastered" />
+                    <TriStateFilter Id="atlas-simplified"
+                                    Label="@T("Simplified")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Yes")"
+                                    NoLabel="@T("No")"
+                                    @bind-Value="_filters.Simplified" />
+                    <TriStateFilter Id="atlas-activated"
+                                    Label="@T("Activated")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Yes")"
+                                    NoLabel="@T("No")"
+                                    @bind-Value="_filters.Activated" />
+                    <TriStateFilter Id="atlas-equipped"
+                                    Label="@T("Equipped")"
+                                    AllLabel="@T("Any")"
+                                    YesLabel="@T("Yes")"
+                                    NoLabel="@T("No")"
+                                    @bind-Value="_filters.Equipped" />
+                </div>
+            </details>
+        </section>
+    }
+
+    @if (_atlas?.ProgressMetadata?.Warnings.Length > 0)
+    {
+        <section class="atlas-warning-list" role="status" aria-live="polite">
+            <strong>@T("Partial character data")</strong>
+            <ul>
+                @foreach (var warning in _atlas.ProgressMetadata.Warnings)
+                {
+                    <li>@T(warning.Reason)</li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (!_loading && _atlas?.ProgressStatus == CharacterProgressReadStatus.Available)
+    {
+        @if (_atlas.Entries.Length == 0)
+        {
+            <section class="atlas-empty" role="status">
+                <span aria-hidden="true">空</span>
+                <strong>@T("No skills match these filters")</strong>
+                <p>@T("Clear one or more filters and try again.")</p>
+            </section>
+        }
+        else
+        {
+            <div class="atlas-result-heading">
+                <p>
+                    <strong>@T("Showing") @_atlas.Entries.Length</strong>
+                    @T("of") @_atlas.TotalMatches @T("matching skills")
+                </p>
+                @if (_atlas.CandidateSetMayBeTruncated)
+                {
+                    <span class="validation-label">@T("Candidate limit reached")</span>
+                }
+            </div>
+
+            <div class="skill-category-list">
+                @foreach (var group in _atlas.Entries
+                    .GroupBy(CategoryOf)
+                    .OrderBy(group => group.Key.HasValue ? (int)group.Key.Value : int.MaxValue))
+                {
+                    <section class="skill-category-section"
+                             aria-labelledby="@CategoryHeadingId(group.Key)">
+                        <div class="skill-category-heading">
+                            <h3 id="@CategoryHeadingId(group.Key)">@CategoryHeading(group.Key)</h3>
+                            <span>@group.Count() @T("skills")</span>
+                        </div>
+                        <div class="skill-card-grid">
+                            @foreach (var entry in group)
+                            {
+                                <SkillAtlasCard @key="entry.StableKey" Entry="entry" />
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <nav class="atlas-pagination" aria-label="@T("Skill catalogue pages")">
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="PreviousPageAsync"
+                        disabled="@(IsBusy || _atlas.Offset == 0)">
+                    @T("Previous page")
+                </button>
+                <span>@PageSummary</span>
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="NextPageAsync"
+                        disabled="@(IsBusy || _atlas.Offset + _atlas.Entries.Length >= _atlas.TotalMatches)">
+                    @T("Next page")
+                </button>
+            </nav>
+        }
+    }
+</section>
+
+@code {
+    private const int PageSize = 60;
+    private readonly AtlasFilters _filters = new();
+    private CombatSkillCatalogueStatusResult? _catalogue;
+    private CharacterCombatSkillAtlasResult? _atlas;
+    private CancellationTokenSource? _readCancellation;
+    private TaiwuLanguage? _lastLanguage;
+    private string? _failure;
+    private bool _loading;
+    private bool _rebuilding;
+    private int _offset;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private bool IsBusy => _loading || _rebuilding;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_lastLanguage == Language)
+        {
+            return;
+        }
+
+        _lastLanguage = Language;
+        _offset = 0;
+        await LoadAsync();
+    }
+
+    private Task ReloadAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var cancellation = ReplaceCancellation();
+        _loading = true;
+        _failure = null;
+        try
+        {
+            _catalogue = await new ReadCombatSkillCatalogueStatus(
+                    DefinitionSource,
+                    CatalogueRepository)
+                .ExecuteAsync(cancellation.Token);
+            if (_catalogue.Status != CombatSkillCatalogueStatus.Current)
+            {
+                _atlas = null;
+                return;
+            }
+
+            await ReadAtlasAsync(cancellation.Token);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogWarning(exception, "The local skill atlas read failed.");
+            _failure = "The configured local sources could not be read safely.";
+            _atlas = null;
+        }
+        finally
+        {
+            if (!cancellation.IsCancellationRequested)
+            {
+                _loading = false;
+            }
+        }
+    }
+
+    private async Task ReadAtlasAsync(CancellationToken cancellationToken)
+    {
+        _atlas = await new ReadCharacterCombatSkillAtlas(
+                DefinitionSource,
+                CatalogueRepository,
+                ProgressReader)
+            .ExecuteAsync(
+                new CharacterCombatSkillAtlasRequest(
+                    characterId: null,
+                    PreferredLanguage,
+                    _filters.Query,
+                    _filters.DefinitionFilter,
+                    _filters.ProgressFilter,
+                    _offset,
+                    PageSize),
+                cancellationToken);
+    }
+
+    private async Task RebuildAsync()
+    {
+        _rebuilding = true;
+        _failure = null;
+        try
+        {
+            await new EnsureCombatSkillCatalogue(
+                    DefinitionSource,
+                    CatalogueRepository)
+                .ExecuteAsync();
+            _offset = 0;
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogWarning(exception, "The local catalogue rebuild failed.");
+            _failure = "The local catalogue could not be rebuilt safely.";
+        }
+        finally
+        {
+            _rebuilding = false;
+        }
+    }
+
+    private Task ApplyFiltersAsync()
+    {
+        _offset = 0;
+        return LoadAsync();
+    }
+
+    private Task ClearFiltersAsync()
+    {
+        _filters.Clear();
+        _offset = 0;
+        return LoadAsync();
+    }
+
+    private Task PreviousPageAsync()
+    {
+        _offset = Math.Max(0, _offset - PageSize);
+        return LoadAsync();
+    }
+
+    private Task NextPageAsync()
+    {
+        _offset += PageSize;
+        return LoadAsync();
+    }
+
+    private CatalogueLanguage PreferredLanguage =>
+        Language == TaiwuLanguage.Chinese
+            ? CatalogueLanguage.TraditionalChinese
+            : CatalogueLanguage.English;
+
+    private string PageSummary => _atlas is null
+        ? string.Empty
+        : $"{T("Page")} {(_atlas.Offset / PageSize) + 1} · {_atlas.TotalMatches} {T("results")}";
+
+    private static CombatSkillDiscipline? CategoryOf(
+        CharacterCombatSkillAtlasEntry entry) =>
+        entry.Definition?.Category.IsAvailable == true
+            ? entry.Definition.Category.Value
+            : null;
+
+    private string CategoryHeading(CombatSkillDiscipline? category) =>
+        category.HasValue
+            ? CategoryLabel(category.Value)
+            : T("Unknown category");
+
+    private static string CategoryHeadingId(CombatSkillDiscipline? category) =>
+        $"skill-category-{(category.HasValue ? ((int)category.Value).ToString() : "unknown")}";
+
+    private string CategoryLabel(CombatSkillDiscipline category) =>
+        Language == TaiwuLanguage.Chinese
+            ? category switch
+            {
+                CombatSkillDiscipline.Neigong => "內功",
+                CombatSkillDiscipline.Agility => "身法",
+                CombatSkillDiscipline.SpecialTechnique => "絕技",
+                CombatSkillDiscipline.FistAndPalm => "拳掌",
+                CombatSkillDiscipline.Finger => "指法",
+                CombatSkillDiscipline.Leg => "腿法",
+                CombatSkillDiscipline.HiddenWeapon => "暗器",
+                CombatSkillDiscipline.Sword => "劍法",
+                CombatSkillDiscipline.Blade => "刀法",
+                CombatSkillDiscipline.LongWeapon => "長兵",
+                CombatSkillDiscipline.ExoticWeapon => "奇門",
+                CombatSkillDiscipline.FlexibleWeapon => "軟兵",
+                CombatSkillDiscipline.Archery => "御射",
+                CombatSkillDiscipline.Music => "樂器",
+                _ => category.ToString()
+            }
+            : category.ToString();
+
+    private string CatalogueStatusLabel(CombatSkillCatalogueStatus status) =>
+        T(status.ToString());
+
+    private string CatalogueStateTitle(CombatSkillCatalogueStatus status) =>
+        status switch
+        {
+            CombatSkillCatalogueStatus.Missing => T("Local catalogue not built"),
+            CombatSkillCatalogueStatus.Stale => T("Local catalogue is out of date"),
+            CombatSkillCatalogueStatus.Rebuilding => T("Local catalogue is rebuilding"),
+            CombatSkillCatalogueStatus.UnsupportedVersion => T("Installed version is unsupported"),
+            CombatSkillCatalogueStatus.MissingSources => T("Installed skill sources are missing"),
+            _ => T("Local catalogue is unavailable")
+        };
+
+    private string CatalogueStateMessage(CombatSkillCatalogueStatus status) =>
+        status switch
+        {
+            CombatSkillCatalogueStatus.Missing =>
+                T("Build the helper-owned cache from the installed read-only sources."),
+            CombatSkillCatalogueStatus.Stale =>
+                T("The installed sources changed. Rebuild the helper-owned cache before reading the atlas."),
+            CombatSkillCatalogueStatus.Rebuilding =>
+                T("Wait for the atomic cache replacement to finish, then retry."),
+            CombatSkillCatalogueStatus.UnsupportedVersion =>
+                T("This installed GameData version does not have a verified importer."),
+            CombatSkillCatalogueStatus.MissingSources =>
+                T("The installed game or language resources could not be located."),
+            _ => T("The helper-owned cache could not be read safely.")
+        };
+
+    private string ProgressStatusLabel(CharacterProgressReadStatus status) =>
+        T(status.ToString());
+
+    private string ProgressStateMessage(CharacterProgressReadStatus status) =>
+        status switch
+        {
+            CharacterProgressReadStatus.SaveMissing =>
+                T("Configure an existing local save and retry."),
+            CharacterProgressReadStatus.UnsupportedVersion =>
+                T("This save version does not have a verified progress mapping."),
+            _ => T("The configured save could not be read safely. Close the game while making a stable golden verification if needed.")
+        };
+
+    private static bool CanRebuild(CombatSkillCatalogueStatus status) =>
+        status is CombatSkillCatalogueStatus.Missing
+            or CombatSkillCatalogueStatus.Stale
+            or CombatSkillCatalogueStatus.Corrupt
+            or CombatSkillCatalogueStatus.RepositoryFailed;
+
+    private string FormatTime(DateTimeOffset? value) =>
+        value?.ToLocalTime().ToString("g") ?? T("Unavailable");
+
+    private CancellationTokenSource ReplaceCancellation()
+    {
+        _readCancellation?.Cancel();
+        _readCancellation?.Dispose();
+        _readCancellation = new CancellationTokenSource();
+        return _readCancellation;
+    }
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    public ValueTask DisposeAsync()
+    {
+        _readCancellation?.Cancel();
+        _readCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private sealed class AtlasFilters
+    {
+        public string? Query { get; set; }
+        public CombatSkillDiscipline? Category { get; set; }
+        public int? Grade { get; set; }
+        public int? Faction { get; set; }
+        public CombatSkillElement? Element { get; set; }
+        public CombatSkillEquipmentType? EquipmentType { get; set; }
+        public bool? Learned { get; set; }
+        public bool? HasProficiency { get; set; }
+        public bool? StudyComplete { get; set; }
+        public bool? BreakthroughReady { get; set; }
+        public bool? BrokenThrough { get; set; }
+        public PracticeDirection? ActiveDirection { get; set; }
+        public bool? AttainmentMastered { get; set; }
+        public bool? Simplified { get; set; }
+        public bool? Activated { get; set; }
+        public bool? Equipped { get; set; }
+
+        public CombatSkillCatalogueFilter DefinitionFilter => new(
+            Category,
+            Grade.HasValue ? new CombatSkillGrade(Grade.Value) : null,
+            Faction.HasValue ? new CombatSkillFactionId(Faction.Value) : null,
+            Element,
+            EquipmentType);
+
+        public CharacterCombatSkillProgressFilter ProgressFilter => new(
+            Learned,
+            HasProficiency,
+            StudyComplete,
+            BreakthroughReady,
+            BrokenThrough,
+            ActiveDirection,
+            AttainmentMastered,
+            Simplified,
+            Activated,
+            Equipped);
+
+        public void Clear()
+        {
+            Query = null;
+            Category = null;
+            Grade = null;
+            Faction = null;
+            Element = null;
+            EquipmentType = null;
+            Learned = null;
+            HasProficiency = null;
+            StudyComplete = null;
+            BreakthroughReady = null;
+            BrokenThrough = null;
+            ActiveDirection = null;
+            AttainmentMastered = null;
+            Simplified = null;
+            Activated = null;
+            Equipped = null;
+        }
+    }
+}

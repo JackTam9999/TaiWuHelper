@@ -82,12 +82,14 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
 
     private CharacterCombatSkillProgressReadResult Project(
         TaiwuArchiveReadContext context,
-        int characterId,
+        int? requestedCharacterId,
         string gameDataVersion,
         CombatSkillStudyDetailLabelSet labels,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var characterId = requestedCharacterId
+            ?? DomainManager.Taiwu.GetTaiwuCharId();
         if (!DomainManager.Character.TryGetElement_Objects(
                 characterId,
                 out Character character))

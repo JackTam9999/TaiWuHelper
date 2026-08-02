@@ -763,7 +763,7 @@ and the current character atlas.
 
 ### E2-013 — Build the searchable catalogue and character-atlas page
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -777,29 +777,48 @@ hierarchy of the game without copying proprietary artwork.
 
 #### Acceptance criteria
 
-- [ ] The page can be reached directly and through local navigation.
-- [ ] Search accepts Traditional Chinese or English names.
-- [ ] Filters cover category, grade, faction, equipment type, element, and
+- [x] The page can be reached directly and through local navigation.
+- [x] Search accepts Traditional Chinese or English names.
+- [x] Filters cover category, grade, faction, equipment type, element, and
       independent progress facts including breakthrough and mastery.
-- [ ] Skills can be grouped by the familiar combat-skill categories.
-- [ ] Each skill card shows localized name, grade, category, and independently
+- [x] Skills can be grouped by the familiar combat-skill categories.
+- [x] Each skill card shows localized name, grade, category, and independently
       applicable progress badges.
-- [ ] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
+- [x] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
       appear only when supported by the corresponding typed fact.
-- [ ] Catalogue freshness, build version, save read time, and warnings are
+- [x] Catalogue freshness, build version, save read time, and warnings are
       visible without opening developer tools.
-- [ ] Loading, rebuilding, empty, partial, stale, unsupported, and failure
+- [x] Loading, rebuilding, empty, partial, stale, unsupported, and failure
       states are usable and translated.
-- [ ] Large catalogues use bounded paging or virtualization and remain
+- [x] Large catalogues use bounded paging or virtualization and remain
       responsive.
-- [ ] Keyboard users can search, filter, move through results, and open a skill.
-- [ ] Status is never communicated by color alone.
-- [ ] No game icon or artwork is required or redistributed.
+- [x] Keyboard users can search, filter, move through results, and open a skill.
+- [x] Status is never communicated by color alone.
+- [x] No game icon or artwork is required or redistributed.
 
-#### Evidence when complete
+#### Evidence
 
-- Presentation-state and component-rendering tests.
-- Responsive screenshots using helper-owned presentation assets.
+- `SkillCatalogueRenderingTests` covers the current catalogue/current-Taiwu
+  page, freshness, filters, positive-only progress labels, missing-cache rebuild
+  action, unsupported state, and accessible expandable cards.
+- `ArchitectureBoundaryTests` protects the read-only page boundary, automatic
+  current-Taiwu selection, semantic list/details markup, responsive grid, and
+  reduced-motion treatment.
+- Live validation used the current save and the explicitly rebuilt helper-owned
+  GameData `1.0.0` catalogue: 946 definitions matched the character overlay.
+  Traditional Chinese search for `黑血蠱降` returned the English-localized
+  `Corruptive Gu Infection` card; switching language displayed `黑血蠱降` and
+  the translated category without horizontal overflow.
+- Responsive browser verification measured `1280x720` desktop and `390x844`
+  mobile viewports with no horizontal overflow. Local-only screenshots are
+  `E2-013-atlas-desktop.png` (SHA-256
+  `F72EB68536BCBECAF88EB299E31AA540D5DD6183D9948A54F88D998E7EBCE3BD`)
+  and `E2-013-atlas-mobile.png` (SHA-256
+  `78030A1BF148F53E2C470CB7100896B200E8B09C10742E50B90A76A701B90778`).
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal` with installed
+  catalogue verification enabled: 609 total, 606 passed, 0 failed, and 3
+  opt-in historical save assertions skipped because no pinned save path was
+  supplied.
 
 ### E2-014 — Build the skill detail and accessible study-detail view
 

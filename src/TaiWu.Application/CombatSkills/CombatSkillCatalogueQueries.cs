@@ -294,7 +294,7 @@ public sealed record CharacterCombatSkillProgressFilter
 public sealed record CharacterCombatSkillAtlasRequest
 {
     public CharacterCombatSkillAtlasRequest(
-        int characterId,
+        int? characterId,
         CatalogueLanguage preferredLanguage,
         string? query = null,
         CombatSkillCatalogueFilter? definitionFilter = null,
@@ -363,7 +363,7 @@ public sealed record CharacterCombatSkillAtlasRequest
         Limit = limit;
     }
 
-    public int CharacterId { get; }
+    public int? CharacterId { get; }
 
     public CatalogueLanguage PreferredLanguage { get; }
 
