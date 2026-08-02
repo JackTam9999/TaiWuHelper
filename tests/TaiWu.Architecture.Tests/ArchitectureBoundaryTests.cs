@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.GameData;
 using TaiWu.Application.SaveGames;
 using TaiWu.Domain.CombatSnapshots;
@@ -609,6 +610,46 @@ public sealed partial class ArchitectureBoundaryTests
                     .Select(File.ReadAllText)));
 
         Assert.DoesNotMatch(CataloguePathContractPattern(), contractSource);
+    }
+
+    [Fact]
+    public void Catalogue_application_ports_are_path_free_and_inner_layer_only()
+    {
+        var ports = new[]
+        {
+            typeof(ICombatSkillDefinitionSource),
+            typeof(ICombatSkillCatalogueRepository),
+            typeof(ICharacterCombatSkillProgressReader)
+        };
+        var signatureTypes = ports
+            .SelectMany(port => port.GetMethods())
+            .SelectMany(method =>
+                method.GetParameters()
+                    .Select(parameter => parameter.ParameterType)
+                    .Append(method.ReturnType))
+            .SelectMany(FlattenType)
+            .Where(type => type.Assembly != typeof(object).Assembly)
+            .Distinct()
+            .ToArray();
+
+        Assert.True(
+            typeof(IReadOnlyGameDataSource).IsAssignableFrom(
+                typeof(ICombatSkillDefinitionSource)));
+        Assert.DoesNotContain(
+            ports.SelectMany(port => port.GetMethods())
+                .SelectMany(method => method.GetParameters()),
+            parameter => parameter.Name?.Contains(
+                "path",
+                StringComparison.OrdinalIgnoreCase) == true);
+        Assert.All(
+            signatureTypes,
+            type => Assert.Contains(
+                type.Assembly,
+                new[]
+                {
+                    typeof(ICombatSkillDefinitionSource).Assembly,
+                    typeof(CombatSkillSnapshot).Assembly
+                }));
     }
 
     [Fact]

@@ -335,7 +335,7 @@ independent and carries provenance or an unavailability reason.
 
 ### E2-005 — Add catalogue and atlas Application ports and use cases
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -348,28 +348,36 @@ SQLite, or UI adapters.
 
 #### Acceptance criteria
 
-- [ ] A definition-source port reads installed static definitions without
+- [x] A definition-source port reads installed static definitions without
       exposing GameData objects.
-- [ ] A catalogue repository port queries and replaces helper-owned derived
+- [x] A catalogue repository port queries and replaces helper-owned derived
       definitions without accepting arbitrary paths.
-- [ ] A progress-reader port returns immutable save-derived progress.
-- [ ] Use cases exist for ensuring catalogue freshness, searching definitions,
+- [x] A progress-reader port returns immutable save-derived progress.
+- [x] Use cases exist for ensuring catalogue freshness, searching definitions,
       reading details, reading the character atlas, and reading catalogue
       status.
-- [ ] Search filters are typed and bounded; paging or result limits are
+- [x] Search filters are typed and bounded; paging or result limits are
       deterministic.
-- [ ] Language selection and fallback are Application policies, not SQL or UI
+- [x] Language selection and fallback are Application policies, not SQL or UI
       string parsing.
-- [ ] Cancellation and failure results distinguish missing sources, stale
+- [x] Cancellation and failure results distinguish missing sources, stale
       catalogue, rebuild failure, unsupported version, and save-read failure.
-- [ ] Application has no dependency on Infrastructure, SQLite, GameData, or
+- [x] Application has no dependency on Infrastructure, SQLite, GameData, or
       ASP.NET Core.
-- [ ] Use-case tests cover orchestration and every failure/status path.
+- [x] Use-case tests cover orchestration and every failure/status path.
 
-#### Evidence when complete
+#### Evidence
 
-- Application unit tests using substitutes for each query port.
-- Architecture dependency tests.
+- [Combat-skill catalogue Application boundary](../../architecture/COMBAT-SKILL-CATALOGUE-APPLICATION.md).
+- `CombatSkillCatalogueUseCaseTests` cover freshness, source and repository
+  failures, rebuild results, bilingual matching and fallback, deterministic
+  paging, details, atlas joining, save failures, cancellation, immutability,
+  and path-free contracts.
+- `ArchitectureBoundaryTests` proves the three ports expose only Application,
+  Domain, and framework types, contain no path parameter, and retain the
+  read-only GameData-source marker.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 517 total,
+  515 passed, 0 failed, and 2 opt-in integration assertions skipped.
 
 ## Slice 3: Import and catalogue lifecycle
 
