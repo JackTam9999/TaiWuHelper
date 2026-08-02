@@ -488,7 +488,7 @@ manifest data, and import diagnostics at the validated helper-owned path.
 
 ### E2-008 — Add source manifest, invalidation, and deterministic rebuild
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -501,29 +501,49 @@ schema, importer, GameData, or language resources change.
 
 #### Acceptance criteria
 
-- [ ] The manifest records schema version, importer version, relevant GameData
+- [x] The manifest records schema version, importer version, relevant GameData
       identity, each imported language-resource identity, build time, and
       import counts.
-- [ ] Source identity uses stable version metadata and hashes where needed to
+- [x] Source identity uses stable version metadata and hashes where needed to
       avoid false-current results.
-- [ ] Identical sources do not trigger unnecessary rebuilds.
-- [ ] A relevant source or schema change never reports the old catalogue as
+- [x] Identical sources do not trigger unnecessary rebuilds.
+- [x] A relevant source or schema change never reports the old catalogue as
       current.
-- [ ] Rebuild produces an equivalent catalogue and stable query order for
+- [x] Rebuild produces an equivalent catalogue and stable query order for
       identical input.
-- [ ] Build occurs transactionally or in a separate validated helper-owned
+- [x] Build occurs transactionally or in a separate validated helper-owned
       file before the complete result becomes visible.
-- [ ] Missing, empty, interrupted, and corrupt helper databases recover with a
+- [x] Missing, empty, interrupted, and corrupt helper databases recover with a
       clear status and no source-file changes.
-- [ ] A rebuild failure preserves a previously valid catalogue only when it is
+- [x] A rebuild failure preserves a previously valid catalogue only when it is
       clearly reported as stale; it never presents it as current.
-- [ ] Concurrent ensure requests result in one controlled rebuild.
-- [ ] Tests cover every invalidation input and recovery path.
+- [x] Concurrent ensure requests result in one controlled rebuild.
+- [x] Tests cover every invalidation input and recovery path.
 
-#### Evidence when complete
+#### Evidence
 
-- Catalogue lifecycle tests with synthetic source manifests.
-- Local repeat-import comparison showing stable counts and content identity.
+- [Combat-skill catalogue lifecycle](../../architecture/COMBAT-SKILL-CATALOGUE-LIFECYCLE.md)
+  defines the five-part source identity, schema/importer bump rules, state
+  transitions, typed recovery outcomes, concurrency gate, and non-interference
+  boundary.
+- [Helper-owned combat-skill catalogue schema](../../architecture/COMBAT-SKILL-CATALOGUE-SQLITE.md)
+  records schema version 2, importer and diagnostic manifest counts, and the
+  validated sibling-file recovery protocol.
+- Application lifecycle tests independently invalidate GameData version,
+  importer version, GameData fingerprint, Traditional Chinese fingerprint,
+  English fingerprint, and definition count; eight concurrent ensure callers
+  produce one rebuild and seven current results.
+- `SqliteCombatSkillCatalogueStoreTests`: 16 tests now include manifest-count
+  reconciliation, no-write current detection, recovery from empty, malformed,
+  and old-schema databases, and an interrupted corrupt recovery that preserves
+  the original corrupt file with a typed status and no rebuild-file residue.
+- `Bilingual_catalogue_import_is_repeatable_and_read_only` imported and stored
+  all 946 configured definitions twice in stable order, compared complete
+  field-level content identities, and proved the three installed sources
+  unchanged. The comparison fingerprint and database are not committed.
+- With the catalogue integration assertion enabled,
+  `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 551 total,
+  549 passed, 0 failed, and 2 save-dependent integration assertions skipped.
 
 ## Slice 4: Character skill progress
 

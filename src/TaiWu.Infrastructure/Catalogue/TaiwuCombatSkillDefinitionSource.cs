@@ -12,6 +12,8 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
     ICombatSkillConfigurationReader configurationReader)
     : ICombatSkillDefinitionSource
 {
+    internal const int ImporterVersion = 1;
+
     public async Task<CombatSkillDefinitionSourceResult> ReadAsync(
         CancellationToken cancellationToken = default)
     {
@@ -125,6 +127,7 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
             return CombatSkillDefinitionSourceResult.Available(
                 new CombatSkillCatalogueSourceIdentity(
                     installedVersion,
+                    ImporterVersion,
                     before.GameData.Sha256,
                     before.TraditionalChinese.Sha256,
                     before.English.Sha256),

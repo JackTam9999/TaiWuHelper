@@ -84,6 +84,9 @@ internal sealed class CatalogueStoragePathProvider
 
     internal string DatabasePath => EnsureOwnedFilePath(_databasePath);
 
+    internal string RebuildDatabasePath => EnsureOwnedFilePath(
+        Path.Combine(_catalogueDirectory, RebuildDatabaseFileName));
+
     internal string EnsureOwnedFilePath(string candidatePath)
     {
         var normalizedCandidate = NormalizeRequiredFile(

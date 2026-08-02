@@ -4,11 +4,27 @@ public sealed class EnsureCombatSkillCatalogue(
     ICombatSkillDefinitionSource definitionSource,
     ICombatSkillCatalogueRepository repository)
 {
+    private static readonly SemaphoreSlim EnsureGate = new(1, 1);
+
     public async Task<EnsureCombatSkillCatalogueResult> ExecuteAsync(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        await EnsureGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await ExecuteControlledAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            EnsureGate.Release();
+        }
+    }
 
+    private async Task<EnsureCombatSkillCatalogueResult> ExecuteControlledAsync(
+        CancellationToken cancellationToken)
+    {
         CombatSkillDefinitionSourceResult installed;
         try
         {
@@ -45,10 +61,7 @@ public sealed class EnsureCombatSkillCatalogue(
         }
         catch (Exception exception)
         {
-            return Failure(
-                EnsureCombatSkillCatalogueStatus.RebuildFailed,
-                exception.Message,
-                identity);
+            return RepositoryUnavailableFailure(exception.Message, identity);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -60,6 +73,11 @@ public sealed class EnsureCombatSkillCatalogue(
                 installed.Definitions.Length,
                 identity,
                 Reason: null);
+        }
+
+        if (stored.State == CatalogueRepositoryState.Failed)
+        {
+            return RebuildFailure(stored.Reason, identity, stored);
         }
 
         CatalogueReplaceResult replacement;
@@ -78,10 +96,7 @@ public sealed class EnsureCombatSkillCatalogue(
         }
         catch (Exception exception)
         {
-            return Failure(
-                EnsureCombatSkillCatalogueStatus.RebuildFailed,
-                exception.Message,
-                identity);
+            return RebuildFailure(exception.Message, identity, stored);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -94,7 +109,8 @@ public sealed class EnsureCombatSkillCatalogue(
             : Failure(
                 EnsureCombatSkillCatalogueStatus.RebuildFailed,
                 replacement.Reason,
-                identity);
+                identity,
+                stored);
     }
 
     private static EnsureCombatSkillCatalogueStatus MapSourceFailure(
@@ -112,11 +128,78 @@ public sealed class EnsureCombatSkillCatalogue(
     private static EnsureCombatSkillCatalogueResult Failure(
         EnsureCombatSkillCatalogueStatus status,
         string? reason,
-        CombatSkillCatalogueSourceIdentity? identity = null) => new(
-            status,
+        CombatSkillCatalogueSourceIdentity? identity = null,
+        CombatSkillCatalogueRepositorySnapshot? retained = null)
+    {
+        if (status != EnsureCombatSkillCatalogueStatus.RebuildFailed
+            || retained is null)
+        {
+            return new EnsureCombatSkillCatalogueResult(
+                status,
+                0,
+                identity,
+                NormalizeReason(reason));
+        }
+
+        return RebuildFailure(reason, identity!, retained);
+    }
+
+    private static EnsureCombatSkillCatalogueResult RebuildFailure(
+        string? reason,
+        CombatSkillCatalogueSourceIdentity identity,
+        CombatSkillCatalogueRepositorySnapshot retained)
+    {
+        var recovery = retained.State switch
+        {
+            CatalogueRepositoryState.Ready =>
+                CatalogueRecoveryStatus.StaleCataloguePreserved,
+            CatalogueRepositoryState.Corrupt =>
+                CatalogueRecoveryStatus.CorruptCatalogueRemains,
+            CatalogueRepositoryState.Failed =>
+                CatalogueRecoveryStatus.RepositoryUnavailable,
+            CatalogueRepositoryState.Missing => CatalogueRecoveryStatus.None,
+            _ => throw new ArgumentOutOfRangeException(nameof(retained))
+        };
+        var recoveryReason = recovery switch
+        {
+            CatalogueRecoveryStatus.StaleCataloguePreserved =>
+                " The previously committed catalogue remains available but is stale.",
+            CatalogueRecoveryStatus.CorruptCatalogueRemains =>
+                " The corrupt helper-owned catalogue still requires recovery.",
+            CatalogueRecoveryStatus.RepositoryUnavailable =>
+                " The helper-owned catalogue is unavailable; no rebuild was attempted.",
+            _ => string.Empty
+        };
+
+        return new EnsureCombatSkillCatalogueResult(
+            EnsureCombatSkillCatalogueStatus.RebuildFailed,
             0,
             identity,
-            string.IsNullOrWhiteSpace(reason)
-                ? "The catalogue operation failed without a diagnostic."
-                : reason.Trim());
+            NormalizeReason(reason) + recoveryReason,
+            recovery,
+            retained.State == CatalogueRepositoryState.Ready
+                ? retained.SourceIdentity
+                : null,
+            retained.State == CatalogueRepositoryState.Ready
+                ? retained.DefinitionCount
+                : 0,
+            retained.State == CatalogueRepositoryState.Ready
+                ? retained.BuiltAtUtc
+                : null);
+    }
+
+    private static EnsureCombatSkillCatalogueResult RepositoryUnavailableFailure(
+        string? reason,
+        CombatSkillCatalogueSourceIdentity identity) => new(
+            EnsureCombatSkillCatalogueStatus.RebuildFailed,
+            0,
+            identity,
+            NormalizeReason(reason)
+            + " The helper-owned catalogue is unavailable; no rebuild was attempted.",
+            CatalogueRecoveryStatus.RepositoryUnavailable);
+
+    private static string NormalizeReason(string? reason) =>
+        string.IsNullOrWhiteSpace(reason)
+            ? "The catalogue operation failed without a diagnostic."
+            : reason.Trim();
 }

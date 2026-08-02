@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.Security.Cryptography;
+using System.Text;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.Localization;
@@ -7,6 +9,7 @@ using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.SaveGames;
+using TaiWu.Infrastructure.Catalogue;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -63,6 +66,7 @@ public sealed class LocalGameDataIntegrationTests
             Assert.Equal(DefinitionSourceReadStatus.Available, second.Status);
             Assert.NotNull(first.SourceIdentity);
             Assert.Equal(first.SourceIdentity, second.SourceIdentity);
+            Assert.Equal(1, first.SourceIdentity!.ImporterVersion);
             Assert.True(first.Definitions.Length > 0);
             Assert.Equal(
                 first.Definitions.Select(definition => definition.SkillId),
@@ -104,6 +108,46 @@ public sealed class LocalGameDataIntegrationTests
                 first.Diagnostics,
                 diagnostic => diagnostic.Severity
                     == CombatSkillImportDiagnosticSeverity.Error);
+
+            var helperRoot = Path.Combine(
+                Path.GetTempPath(),
+                $"taiwu-catalogue-integration-{Guid.NewGuid():N}");
+            try
+            {
+                var store = new SqliteCombatSkillCatalogueStore(
+                    new CatalogueStoragePathProvider(
+                        helperRoot,
+                        [gameDirectory]));
+                Assert.True((await store.ReplaceAsync(
+                    first.SourceIdentity,
+                    first.Definitions,
+                    first.Diagnostics,
+                    TestContext.Current.CancellationToken)).Succeeded);
+                var firstStored = await store.QueryAsync(
+                    new CombatSkillCatalogueFilter(),
+                    TestContext.Current.CancellationToken);
+                Assert.True((await store.ReplaceAsync(
+                    second.SourceIdentity!,
+                    second.Definitions,
+                    second.Diagnostics,
+                    TestContext.Current.CancellationToken)).Succeeded);
+                var secondStored = await store.QueryAsync(
+                    new CombatSkillCatalogueFilter(),
+                    TestContext.Current.CancellationToken);
+
+                Assert.Equal(first.Definitions.Length, firstStored.Count);
+                Assert.Equal(firstStored.Count, secondStored.Count);
+                Assert.Equal(
+                    CatalogueContentIdentity(firstStored),
+                    CatalogueContentIdentity(secondStored));
+            }
+            finally
+            {
+                if (Directory.Exists(helperRoot))
+                {
+                    Directory.Delete(helperRoot, recursive: true);
+                }
+            }
         }
         finally
         {
@@ -111,6 +155,86 @@ public sealed class LocalGameDataIntegrationTests
             AssertUnchanged(before, after);
         }
     }
+
+    private static string CatalogueContentIdentity(
+        IEnumerable<CombatSkillDefinition> definitions)
+    {
+        var content = new StringBuilder();
+        foreach (var definition in definitions.OrderBy(value => value.SkillId))
+        {
+            content.Append("skill:").Append(definition.SkillId).Append('|');
+            foreach (var name in definition.Names.Values.OrderBy(value => value.Language))
+            {
+                content.Append("name:").Append((int)name.Language)
+                    .Append(':').Append(name.Text).Append('|');
+                AppendSource(content, name.Source);
+            }
+
+            AppendField(content, "category", definition.Category);
+            AppendField(content, "grade", definition.Grade);
+            AppendField(content, "faction", definition.Faction);
+            AppendField(content, "element", definition.Element);
+            AppendField(content, "equipment", definition.EquipmentType);
+            AppendField(content, "grid", definition.BaseGridCost);
+            AppendField(content, "slots", definition.SlotContribution);
+            AppendField(
+                content,
+                "preparation",
+                definition.Timing.PreparationProgress);
+            AppendField(content, "cost", definition.Timing.BreathStanceCost);
+            AppendField(content, "speed", definition.Timing.CastSpeed);
+            AppendField(content, "direct", definition.Effects.Direct);
+            AppendField(content, "reverse", definition.Effects.Reverse);
+            AppendField(content, "neutral", definition.Effects.Neutral);
+            foreach (var requirement in definition.Requirements)
+            {
+                content.Append("requirement:")
+                    .Append(requirement.RequirementId.Value).Append('|');
+                AppendField(content, "required", requirement.RequiredValue);
+                AppendSource(content, requirement.Source);
+            }
+
+            foreach (var description in definition.RawDescriptions)
+            {
+                content.Append("description:").Append((int)description.Kind)
+                    .Append(':').Append((int)description.Language)
+                    .Append(':').Append(description.Text).Append('|');
+                AppendSource(content, description.Source);
+            }
+
+            AppendSource(content, definition.SourceRecord);
+        }
+
+        return Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(content.ToString())));
+    }
+
+    private static void AppendField<T>(
+        StringBuilder content,
+        string key,
+        CatalogueField<T> field)
+    {
+        content.Append(key).Append(':').Append((int)field.Status).Append(':');
+        if (field.IsAvailable)
+        {
+            content.Append(Convert.ToString(
+                field.Value,
+                CultureInfo.InvariantCulture));
+        }
+
+        content.Append(':').Append(field.Reason).Append('|');
+        if (field.Source is not null)
+        {
+            AppendSource(content, field.Source);
+        }
+    }
+
+    private static void AppendSource(
+        StringBuilder content,
+        CatalogueSourceReference source) => content
+        .Append("source:").Append((int)source.Kind)
+        .Append(':').Append(source.SourceIdentity)
+        .Append(':').Append(source.RecordIdentity).Append('|');
 
     [Fact]
     public async Task Golden_snapshot_is_repeatable_and_preserves_source_files()

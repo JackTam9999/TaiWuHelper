@@ -17,6 +17,12 @@ public sealed class CatalogueStoragePathProviderTests
                 CatalogueStoragePathProvider.CatalogueDirectoryName,
                 CatalogueStoragePathProvider.DatabaseFileName),
             provider.DatabasePath);
+        Assert.Equal(
+            Path.Combine(
+                fixture.HelperData,
+                CatalogueStoragePathProvider.CatalogueDirectoryName,
+                CatalogueStoragePathProvider.RebuildDatabaseFileName),
+            provider.RebuildDatabasePath);
         Assert.False(Directory.Exists(provider.CatalogueDirectory));
         Assert.False(File.Exists(provider.DatabasePath));
     }

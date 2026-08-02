@@ -38,7 +38,12 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
                 CombatSkillImportDiagnosticSeverity.Warning,
                 "WARNING",
                 "combat-skill:2",
-                "Preserved warning.")
+                "Preserved warning."),
+            new CombatSkillImportDiagnostic(
+                CombatSkillImportDiagnosticSeverity.Error,
+                "ERROR",
+                "combat-skill:1",
+                "Preserved error.")
         };
 
         var replacement = await store.ReplaceAsync(
@@ -89,10 +94,25 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
             $"Data Source={fixture.Provider.DatabasePath};Mode=ReadOnly;Pooling=False");
         await connection.OpenAsync(CancellationToken);
         Assert.Equal(
-            1L,
+            2L,
             await ScalarAsync(
                 connection,
                 "SELECT COUNT(*) FROM import_diagnostics;"));
+        Assert.Equal(
+            Identity.ImporterVersion,
+            await ScalarAsync(
+                connection,
+                "SELECT importer_version FROM catalogue_manifest;"));
+        Assert.Equal(
+            1L,
+            await ScalarAsync(
+                connection,
+                "SELECT warning_count FROM catalogue_manifest;"));
+        Assert.Equal(
+            1L,
+            await ScalarAsync(
+                connection,
+                "SELECT error_count FROM catalogue_manifest;"));
         Assert.Equal(
             2L,
             await ScalarAsync(
@@ -416,6 +436,158 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
     }
 
     [Fact]
+    public async Task Manifest_count_mismatch_is_reported_as_corrupt()
+    {
+        using var fixture = StoreFixture.Create();
+        var store = fixture.CreateStore();
+        Assert.True((await store.ReplaceAsync(
+            Identity,
+            [Definition(1, "One", CombatSkillDiscipline.Finger)],
+            [
+                new CombatSkillImportDiagnostic(
+                    CombatSkillImportDiagnosticSeverity.Warning,
+                    "WARNING",
+                    "combat-skill:1",
+                    "warning")
+            ],
+            CancellationToken)).Succeeded);
+        await ExecuteAsync(
+            fixture.Provider.DatabasePath,
+            "UPDATE catalogue_manifest SET warning_count = 2;");
+
+        var state = await store.ReadStateAsync(CancellationToken);
+
+        Assert.Equal(CatalogueRepositoryState.Corrupt, state.State);
+        Assert.Contains("diagnostic counts", state.Reason);
+    }
+
+    [Fact]
+    public async Task Ensure_recovers_empty_malformed_and_old_schema_databases()
+    {
+        foreach (var condition in new[] { "empty", "malformed", "old-schema" })
+        {
+            using var fixture = StoreFixture.Create();
+            var store = fixture.CreateStore();
+            Directory.CreateDirectory(fixture.Provider.CatalogueDirectory);
+            if (condition == "empty")
+            {
+                await using var connection = new SqliteConnection(
+                    $"Data Source={fixture.Provider.DatabasePath};"
+                    + "Mode=ReadWriteCreate;Pooling=False");
+                await connection.OpenAsync(CancellationToken);
+            }
+            else if (condition == "malformed")
+            {
+                await File.WriteAllTextAsync(
+                    fixture.Provider.DatabasePath,
+                    "not a sqlite database",
+                    CancellationToken);
+            }
+            else
+            {
+                Assert.True((await store.ReplaceAsync(
+                    OlderIdentity,
+                    [Definition(2, "Old", CombatSkillDiscipline.Sword)],
+                    diagnostics: [],
+                    CancellationToken)).Succeeded);
+                await ExecuteAsync(
+                    fixture.Provider.DatabasePath,
+                    "UPDATE catalogue_manifest SET schema_version = 1;");
+            }
+
+            var result = await new EnsureCombatSkillCatalogue(
+                    new FixedDefinitionSource(
+                        CombatSkillDefinitionSourceResult.Available(
+                            Identity,
+                            [Definition(1, "One", CombatSkillDiscipline.Finger)])),
+                    store)
+                .ExecuteAsync(CancellationToken);
+
+            Assert.Equal(EnsureCombatSkillCatalogueStatus.Rebuilt, result.Status);
+            var state = await store.ReadStateAsync(CancellationToken);
+            Assert.Equal(CatalogueRepositoryState.Ready, state.State);
+            Assert.Equal(Identity, state.SourceIdentity);
+            Assert.False(File.Exists(fixture.Provider.RebuildDatabasePath));
+        }
+    }
+
+    [Fact]
+    public async Task Identical_sources_are_current_without_touching_the_database()
+    {
+        using var fixture = StoreFixture.Create();
+        var store = fixture.CreateStore();
+        var definitions = new[]
+        {
+            Definition(2, "Second", CombatSkillDiscipline.Sword),
+            Definition(1, "First", CombatSkillDiscipline.Finger)
+        };
+        Assert.True((await store.ReplaceAsync(
+            Identity,
+            definitions,
+            diagnostics: [],
+            CancellationToken)).Succeeded);
+        var beforeWriteTime = File.GetLastWriteTimeUtc(
+            fixture.Provider.DatabasePath);
+        var beforeLength = new FileInfo(fixture.Provider.DatabasePath).Length;
+
+        var result = await new EnsureCombatSkillCatalogue(
+                new FixedDefinitionSource(
+                    CombatSkillDefinitionSourceResult.Available(
+                        Identity,
+                        definitions.Reverse())),
+                store)
+            .ExecuteAsync(CancellationToken);
+        var queried = await store.QueryAsync(
+            new CombatSkillCatalogueFilter(),
+            CancellationToken);
+
+        Assert.Equal(EnsureCombatSkillCatalogueStatus.Current, result.Status);
+        Assert.Equal([1, 2], queried.Select(definition => definition.SkillId));
+        Assert.Equal(
+            beforeWriteTime,
+            File.GetLastWriteTimeUtc(fixture.Provider.DatabasePath));
+        Assert.Equal(
+            beforeLength,
+            new FileInfo(fixture.Provider.DatabasePath).Length);
+    }
+
+    [Fact]
+    public async Task Interrupted_corrupt_recovery_keeps_corrupt_file_and_clear_status()
+    {
+        using var fixture = StoreFixture.Create();
+        Directory.CreateDirectory(fixture.Provider.CatalogueDirectory);
+        const string corruptContent = "not a sqlite database";
+        await File.WriteAllTextAsync(
+            fixture.Provider.DatabasePath,
+            corruptContent,
+            CancellationToken);
+        var store = fixture.CreateStore(
+            writeCheckpoint: (_, _) => ValueTask.FromException(
+                new InvalidDataException("Injected recovery failure.")));
+
+        var result = await new EnsureCombatSkillCatalogue(
+                new FixedDefinitionSource(
+                    CombatSkillDefinitionSourceResult.Available(
+                        Identity,
+                        [Definition(1, "One", CombatSkillDiscipline.Finger)])),
+                store)
+            .ExecuteAsync(CancellationToken);
+
+        Assert.Equal(
+            EnsureCombatSkillCatalogueStatus.RebuildFailed,
+            result.Status);
+        Assert.Equal(
+            CatalogueRecoveryStatus.CorruptCatalogueRemains,
+            result.RecoveryStatus);
+        Assert.Equal(
+            corruptContent,
+            await File.ReadAllTextAsync(
+                fixture.Provider.DatabasePath,
+                CancellationToken));
+        Assert.False(File.Exists(fixture.Provider.RebuildDatabasePath));
+    }
+
+    [Fact]
     public async Task Cancellation_is_propagated_without_creating_storage()
     {
         using var fixture = StoreFixture.Create();
@@ -441,12 +613,14 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
 
     private static CombatSkillCatalogueSourceIdentity Identity { get; } = new(
         "1.0.0-current",
+        1,
         new string('A', 64),
         new string('B', 64),
         new string('C', 64));
 
     private static CombatSkillCatalogueSourceIdentity OlderIdentity { get; } = new(
         "1.0.0-older",
+        1,
         new string('D', 64),
         new string('E', 64),
         new string('F', 64));
@@ -598,6 +772,16 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
             await command.ExecuteScalarAsync(CancellationToken));
     }
 
+    private static async Task ExecuteAsync(string databasePath, string sql)
+    {
+        await using var connection = new SqliteConnection(
+            $"Data Source={databasePath};Mode=ReadWrite;Pooling=False");
+        await connection.OpenAsync(CancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        await command.ExecuteNonQueryAsync(CancellationToken);
+    }
+
     private static async Task<bool> IndexExistsAsync(
         SqliteConnection connection,
         string indexName)
@@ -662,5 +846,17 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
     private sealed class FixedTimeProvider(DateTimeOffset utc) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => utc;
+    }
+
+    private sealed class FixedDefinitionSource(
+        CombatSkillDefinitionSourceResult result)
+        : ICombatSkillDefinitionSource
+    {
+        public Task<CombatSkillDefinitionSourceResult> ReadAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(result);
+        }
     }
 }

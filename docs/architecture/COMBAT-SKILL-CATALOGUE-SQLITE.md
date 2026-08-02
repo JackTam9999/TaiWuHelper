@@ -19,14 +19,14 @@ database match the repository's `combat-skill-catalogue*.db` ignore rules.
 They are local derived data and are never publish inputs or committed
 artifacts.
 
-## Schema version 1
+## Schema version 2
 
 All tables are SQLite `STRICT` tables. Foreign keys use cascade deletion only
 inside the helper-owned database.
 
 | Table | Stored data and key |
 |---|---|
-| `catalogue_manifest` | One row (`singleton_id = 1`) containing schema version, installed GameData version, three source fingerprints, UTC build time, and definition count. |
+| `catalogue_manifest` | One row (`singleton_id = 1`) containing schema version, importer version, installed GameData version, three source fingerprints, UTC build time, definition count, warning count, and error count. |
 | `definitions` | One row per non-negative stable skill ID, with definition-level source provenance. |
 | `localized_names` | Optional Traditional Chinese or English value and provenance, keyed by `(skill_id, language)`, plus a normalized search value. |
 | `definition_fields` | Typed category, grade, faction, element, equipment, grid cost, slot contribution, timing, and effect-reference values keyed by `(skill_id, field_key)`. Status, reason, and optional provenance preserve unavailable and unsupported facts. |
@@ -64,9 +64,15 @@ mid-write failure rolls the transaction back. A previously committed catalogue
 therefore remains intact.
 
 `ReadStateAsync` distinguishes missing, ready, corrupt, and inaccessible
-storage. It validates the schema version and reconciles the manifest definition
-count with stored rows. Failure messages are sanitized and do not reveal the
-local catalogue path.
+storage. It validates the schema version and reconciles manifest definition,
+warning, and error counts with stored rows. Failure messages are sanitized and
+do not reveal the local catalogue path.
 
-Source invalidation, rebuild coordination across lifecycle requests, and
-recovery decisions build on this atomic repository in E2-008.
+When the existing file is structurally corrupt or uses an old schema, the
+adapter commits a complete database at the separately validated
+`combat-skill-catalogue.rebuild.db` sibling and then replaces the corrupt file.
+If that build fails, it removes the transient rebuild file and leaves the old
+corrupt file untouched for an explicitly reported future recovery attempt.
+
+Source invalidation, rebuild coordination, and recovery decisions are defined
+in [Combat-skill catalogue lifecycle](./COMBAT-SKILL-CATALOGUE-LIFECYCLE.md).

@@ -15,7 +15,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
     Func<int, CancellationToken, ValueTask>? writeCheckpoint = null)
     : ICombatSkillCatalogueRepository
 {
-    internal const int SchemaVersion = 1;
+    internal const int SchemaVersion = 2;
 
     private const string CategoryField = "category";
     private const string GradeField = "grade";
@@ -93,6 +93,26 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 return CorruptSnapshot(
                     "The catalogue manifest definition count does not match "
                     + "the stored definitions.");
+            }
+
+            var actualWarningCount = await CountDiagnosticsAsync(
+                    connection,
+                    transaction,
+                    CombatSkillImportDiagnosticSeverity.Warning,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            var actualErrorCount = await CountDiagnosticsAsync(
+                    connection,
+                    transaction,
+                    CombatSkillImportDiagnosticSeverity.Error,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            if (actualWarningCount != manifest.WarningCount
+                || actualErrorCount != manifest.ErrorCount)
+            {
+                return CorruptSnapshot(
+                    "The catalogue manifest diagnostic counts do not match "
+                    + "the stored diagnostics.");
             }
 
             await transaction.CommitAsync(cancellationToken)
@@ -241,71 +261,35 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             var catalogueDirectory = pathProvider.CatalogueDirectory;
             Directory.CreateDirectory(catalogueDirectory);
             var databasePath = pathProvider.DatabasePath;
-            await using var connection = CreateConnection(
-                databasePath,
-                SqliteOpenMode.ReadWriteCreate);
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            await ConfigureWriterAsync(connection, cancellationToken)
+            var state = await ReadStateAsync(cancellationToken)
                 .ConfigureAwait(false);
-            await using var transaction = (SqliteTransaction)
-                await connection.BeginTransactionAsync(
-                        IsolationLevel.Serializable,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-            try
+            if (state.State == CatalogueRepositoryState.Failed)
             {
-                await RecreateSchemaAsync(
-                        connection,
-                        transaction,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-                foreach (var definition in orderedDefinitions)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await InsertDefinitionAsync(
-                            connection,
-                            transaction,
-                            definition,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                    await _writeCheckpoint(
-                            definition.SkillId,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                }
+                return CatalogueReplaceResult.Failure(
+                    state.Reason
+                    ?? "The helper-owned catalogue is unavailable.");
+            }
 
-                for (var index = 0;
-                     index < orderedDiagnostics.Length;
-                     index++)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await InsertDiagnosticAsync(
-                            connection,
-                            transaction,
-                            index,
-                            orderedDiagnostics[index],
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                }
-
-                await InsertManifestAsync(
-                        connection,
-                        transaction,
+            if (state.State == CatalogueRepositoryState.Corrupt)
+            {
+                await RecoverCorruptDatabaseAsync(
+                        databasePath,
                         sourceIdentity,
-                        orderedDefinitions.Length,
-                        _timeProvider.GetUtcNow(),
+                        orderedDefinitions,
+                        orderedDiagnostics,
                         cancellationToken)
-                    .ConfigureAwait(false);
-                await transaction.CommitAsync(cancellationToken)
                     .ConfigureAwait(false);
                 return CatalogueReplaceResult.Success();
             }
-            catch
-            {
-                await transaction.RollbackAsync(CancellationToken.None)
-                    .ConfigureAwait(false);
-                throw;
-            }
+
+            await WriteCompleteDatabaseAsync(
+                    databasePath,
+                    sourceIdentity,
+                    orderedDefinitions,
+                    orderedDiagnostics,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return CatalogueReplaceResult.Success();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -324,6 +308,118 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         finally
         {
             _replacementGate.Release();
+        }
+    }
+
+    private async Task RecoverCorruptDatabaseAsync(
+        string databasePath,
+        CombatSkillCatalogueSourceIdentity sourceIdentity,
+        ImmutableArray<CombatSkillDefinition> definitions,
+        ImmutableArray<CombatSkillImportDiagnostic> diagnostics,
+        CancellationToken cancellationToken)
+    {
+        var rebuildPath = pathProvider.RebuildDatabasePath;
+        if (File.Exists(rebuildPath))
+        {
+            File.Delete(rebuildPath);
+        }
+
+        try
+        {
+            await WriteCompleteDatabaseAsync(
+                    rebuildPath,
+                    sourceIdentity,
+                    definitions,
+                    diagnostics,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            File.Replace(
+                rebuildPath,
+                databasePath,
+                destinationBackupFileName: null,
+                ignoreMetadataErrors: true);
+        }
+        finally
+        {
+            if (File.Exists(rebuildPath))
+            {
+                File.Delete(rebuildPath);
+            }
+        }
+    }
+
+    private async Task WriteCompleteDatabaseAsync(
+        string databasePath,
+        CombatSkillCatalogueSourceIdentity sourceIdentity,
+        ImmutableArray<CombatSkillDefinition> definitions,
+        ImmutableArray<CombatSkillImportDiagnostic> diagnostics,
+        CancellationToken cancellationToken)
+    {
+        await using var connection = CreateConnection(
+            databasePath,
+            SqliteOpenMode.ReadWriteCreate);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await ConfigureWriterAsync(connection, cancellationToken)
+            .ConfigureAwait(false);
+        await using var transaction = (SqliteTransaction)
+            await connection.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        try
+        {
+            await RecreateSchemaAsync(
+                    connection,
+                    transaction,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            foreach (var definition in definitions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await InsertDefinitionAsync(
+                        connection,
+                        transaction,
+                        definition,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                await _writeCheckpoint(
+                        definition.SkillId,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            for (var index = 0; index < diagnostics.Length; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await InsertDiagnosticAsync(
+                        connection,
+                        transaction,
+                        index,
+                        diagnostics[index],
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            await InsertManifestAsync(
+                    connection,
+                    transaction,
+                    sourceIdentity,
+                    definitions.Length,
+                    diagnostics.Count(diagnostic => diagnostic.Severity
+                        == CombatSkillImportDiagnosticSeverity.Warning),
+                    diagnostics.Count(diagnostic => diagnostic.Severity
+                        == CombatSkillImportDiagnosticSeverity.Error),
+                    _timeProvider.GetUtcNow(),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+            throw;
         }
     }
 
@@ -403,11 +499,14 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 singleton_id INTEGER NOT NULL PRIMARY KEY CHECK (singleton_id = 1),
                 schema_version INTEGER NOT NULL,
                 game_data_version TEXT NOT NULL,
+                importer_version INTEGER NOT NULL CHECK (importer_version >= 1),
                 game_data_fingerprint TEXT NOT NULL CHECK (length(game_data_fingerprint) = 64),
                 traditional_chinese_fingerprint TEXT NOT NULL CHECK (length(traditional_chinese_fingerprint) = 64),
                 english_fingerprint TEXT NOT NULL CHECK (length(english_fingerprint) = 64),
                 built_at_utc TEXT NOT NULL,
-                definition_count INTEGER NOT NULL CHECK (definition_count >= 0)
+                definition_count INTEGER NOT NULL CHECK (definition_count >= 0),
+                warning_count INTEGER NOT NULL CHECK (warning_count >= 0),
+                error_count INTEGER NOT NULL CHECK (error_count >= 0)
             ) STRICT;
 
             CREATE TABLE definitions (
@@ -510,6 +609,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         SqliteTransaction transaction,
         CombatSkillCatalogueSourceIdentity identity,
         int definitionCount,
+        int warningCount,
+        int errorCount,
         DateTimeOffset builtAtUtc,
         CancellationToken cancellationToken)
     {
@@ -520,25 +621,34 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 singleton_id,
                 schema_version,
                 game_data_version,
+                importer_version,
                 game_data_fingerprint,
                 traditional_chinese_fingerprint,
                 english_fingerprint,
                 built_at_utc,
-                definition_count)
+                definition_count,
+                warning_count,
+                error_count)
             VALUES (
                 1,
                 $schemaVersion,
                 $gameDataVersion,
+                $importerVersion,
                 $gameDataFingerprint,
                 $traditionalChineseFingerprint,
                 $englishFingerprint,
                 $builtAtUtc,
-                $definitionCount);
+                $definitionCount,
+                $warningCount,
+                $errorCount);
             """;
         command.Parameters.AddWithValue("$schemaVersion", SchemaVersion);
         command.Parameters.AddWithValue(
             "$gameDataVersion",
             identity.GameDataVersion);
+        command.Parameters.AddWithValue(
+            "$importerVersion",
+            identity.ImporterVersion);
         command.Parameters.AddWithValue(
             "$gameDataFingerprint",
             identity.GameDataFingerprint);
@@ -552,6 +662,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             "$builtAtUtc",
             builtAtUtc.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
         command.Parameters.AddWithValue("$definitionCount", definitionCount);
+        command.Parameters.AddWithValue("$warningCount", warningCount);
+        command.Parameters.AddWithValue("$errorCount", errorCount);
         await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -917,11 +1029,14 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             SELECT
                 schema_version,
                 game_data_version,
+                importer_version,
                 game_data_fingerprint,
                 traditional_chinese_fingerprint,
                 english_fingerprint,
                 built_at_utc,
-                definition_count
+                definition_count,
+                warning_count,
+                error_count
             FROM catalogue_manifest
             WHERE singleton_id = 1;
             """;
@@ -937,15 +1052,18 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             reader.GetInt32(0),
             new CombatSkillCatalogueSourceIdentity(
                 reader.GetString(1),
-                reader.GetString(2),
+                reader.GetInt32(2),
                 reader.GetString(3),
-                reader.GetString(4)),
+                reader.GetString(4),
+                reader.GetString(5)),
             DateTimeOffset.ParseExact(
-                reader.GetString(5),
+                reader.GetString(6),
                 "O",
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind),
-            reader.GetInt32(6));
+            reader.GetInt32(7),
+            reader.GetInt32(8),
+            reader.GetInt32(9));
         if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             throw new InvalidDataException(
@@ -963,6 +1081,26 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = "SELECT COUNT(*) FROM definitions;";
+        return Convert.ToInt32(
+            await command.ExecuteScalarAsync(cancellationToken)
+                .ConfigureAwait(false),
+            CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<int> CountDiagnosticsAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        CombatSkillImportDiagnosticSeverity severity,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM import_diagnostics
+            WHERE severity = $severity;
+            """;
+        command.Parameters.AddWithValue("$severity", (int)severity);
         return Convert.ToInt32(
             await command.ExecuteScalarAsync(cancellationToken)
                 .ConfigureAwait(false),
@@ -1411,7 +1549,9 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         int SchemaVersion,
         CombatSkillCatalogueSourceIdentity SourceIdentity,
         DateTimeOffset BuiltAtUtc,
-        int DefinitionCount);
+        int DefinitionCount,
+        int WarningCount,
+        int ErrorCount);
 
     private sealed record StoredField(
         CatalogueFieldStatus Status,

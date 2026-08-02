@@ -7,6 +7,7 @@ public sealed record CombatSkillCatalogueSourceIdentity
 {
     public CombatSkillCatalogueSourceIdentity(
         string gameDataVersion,
+        int importerVersion,
         string gameDataFingerprint,
         string traditionalChineseFingerprint,
         string englishFingerprint)
@@ -19,6 +20,15 @@ public sealed record CombatSkillCatalogueSourceIdentity
         }
 
         GameDataVersion = gameDataVersion.Trim();
+        if (importerVersion < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(importerVersion),
+                importerVersion,
+                "An importer version must be positive.");
+        }
+
+        ImporterVersion = importerVersion;
         GameDataFingerprint = ValidateFingerprint(
             gameDataFingerprint,
             nameof(gameDataFingerprint));
@@ -31,6 +41,8 @@ public sealed record CombatSkillCatalogueSourceIdentity
     }
 
     public string GameDataVersion { get; }
+
+    public int ImporterVersion { get; }
 
     public string GameDataFingerprint { get; }
 
@@ -331,7 +343,8 @@ public enum CombatSkillCatalogueStatus
     MissingSources = 3,
     UnsupportedVersion = 4,
     SourceReadFailed = 5,
-    RepositoryFailed = 6
+    RepositoryFailed = 6,
+    Corrupt = 7
 }
 
 public sealed record CombatSkillCatalogueStatusResult(
@@ -352,11 +365,23 @@ public enum EnsureCombatSkillCatalogueStatus
     RebuildFailed = 5
 }
 
+public enum CatalogueRecoveryStatus
+{
+    None = 0,
+    StaleCataloguePreserved = 1,
+    CorruptCatalogueRemains = 2,
+    RepositoryUnavailable = 3
+}
+
 public sealed record EnsureCombatSkillCatalogueResult(
     EnsureCombatSkillCatalogueStatus Status,
     int DefinitionCount,
     CombatSkillCatalogueSourceIdentity? SourceIdentity,
-    string? Reason);
+    string? Reason,
+    CatalogueRecoveryStatus RecoveryStatus = CatalogueRecoveryStatus.None,
+    CombatSkillCatalogueSourceIdentity? RetainedSourceIdentity = null,
+    int RetainedDefinitionCount = 0,
+    DateTimeOffset? RetainedBuiltAtUtc = null);
 
 public enum CharacterProgressReadStatus
 {

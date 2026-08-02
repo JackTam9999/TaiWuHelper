@@ -40,6 +40,9 @@ public sealed class TaiwuCombatSkillDefinitionSourceTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(DefinitionSourceReadStatus.Available, result.Status);
+        Assert.Equal(
+            TaiwuCombatSkillDefinitionSource.ImporterVersion,
+            result.SourceIdentity!.ImporterVersion);
         Assert.Equal([1, 2], result.Definitions.Select(value => value.SkillId));
         var diagnostic = Assert.Single(result.Diagnostics);
         Assert.Equal(

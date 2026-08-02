@@ -71,7 +71,14 @@ public sealed class ReadCombatSkillCatalogueStatus(
                 stored.SourceIdentity,
                 stored.BuiltAtUtc,
                 "The helper-owned catalogue has not been built."),
-            CatalogueRepositoryState.Corrupt or CatalogueRepositoryState.Failed =>
+            CatalogueRepositoryState.Corrupt => new(
+                CombatSkillCatalogueStatus.Corrupt,
+                0,
+                identity,
+                stored.SourceIdentity,
+                stored.BuiltAtUtc,
+                stored.Reason),
+            CatalogueRepositoryState.Failed =>
                 RepositoryFailure(installed, stored.Reason),
             CatalogueRepositoryState.Ready
                 when stored.SourceIdentity != identity

@@ -76,7 +76,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
     [InlineData(CatalogueRepositoryState.Missing,
         CombatSkillCatalogueStatus.Missing)]
     [InlineData(CatalogueRepositoryState.Corrupt,
-        CombatSkillCatalogueStatus.RepositoryFailed)]
+        CombatSkillCatalogueStatus.Corrupt)]
     [InlineData(CatalogueRepositoryState.Failed,
         CombatSkillCatalogueStatus.RepositoryFailed)]
     public async Task Status_preserves_repository_state(
@@ -152,9 +152,8 @@ public sealed class CombatSkillCatalogueUseCaseTests
     [Theory]
     [InlineData(CatalogueRepositoryState.Missing)]
     [InlineData(CatalogueRepositoryState.Corrupt)]
-    [InlineData(CatalogueRepositoryState.Failed)]
     [InlineData(CatalogueRepositoryState.Ready)]
-    public async Task Ensure_replaces_missing_stale_or_unhealthy_catalogue(
+    public async Task Ensure_replaces_missing_stale_or_corrupt_catalogue(
         CatalogueRepositoryState state)
     {
         var definitions = Definitions();
@@ -192,6 +191,60 @@ public sealed class CombatSkillCatalogueUseCaseTests
             Arg.Is<IReadOnlyList<CombatSkillImportDiagnostic>>(values =>
                 values != null && values.Count == 0),
             CancellationToken);
+    }
+
+    [Fact]
+    public async Task Ensure_does_not_write_when_repository_is_unavailable()
+    {
+        var repository = Repository(new CombatSkillCatalogueRepositorySnapshot(
+            CatalogueRepositoryState.Failed,
+            sourceIdentity: null,
+            definitionCount: 0,
+            builtAtUtc: null,
+            "access denied"));
+
+        var result = await new EnsureCombatSkillCatalogue(
+                Source(Available(CurrentIdentity, Definitions())),
+                repository)
+            .ExecuteAsync(CancellationToken);
+
+        Assert.Equal(
+            EnsureCombatSkillCatalogueStatus.RebuildFailed,
+            result.Status);
+        Assert.Equal(
+            CatalogueRecoveryStatus.RepositoryUnavailable,
+            result.RecoveryStatus);
+        await repository.DidNotReceive().ReplaceAsync(
+            Arg.Any<CombatSkillCatalogueSourceIdentity>(),
+            Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+            Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Ensure_converts_repository_read_exception_to_unavailable()
+    {
+        var repository = Substitute.For<ICombatSkillCatalogueRepository>();
+        repository.ReadStateAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<CombatSkillCatalogueRepositorySnapshot>(
+                new IOException("read failed")));
+
+        var result = await new EnsureCombatSkillCatalogue(
+                Source(Available(CurrentIdentity, Definitions())),
+                repository)
+            .ExecuteAsync(CancellationToken);
+
+        Assert.Equal(
+            EnsureCombatSkillCatalogueStatus.RebuildFailed,
+            result.Status);
+        Assert.Equal(
+            CatalogueRecoveryStatus.RepositoryUnavailable,
+            result.RecoveryStatus);
+        await repository.DidNotReceive().ReplaceAsync(
+            Arg.Any<CombatSkillCatalogueSourceIdentity>(),
+            Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+            Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Theory]
@@ -254,6 +307,97 @@ public sealed class CombatSkillCatalogueUseCaseTests
             EnsureCombatSkillCatalogueStatus.RebuildFailed,
             thrownFailure.Status);
         Assert.Equal("replace exploded", thrownFailure.Reason);
+    }
+
+    [Fact]
+    public async Task Rebuild_failure_reports_preserved_catalogue_as_stale()
+    {
+        var definitions = Definitions();
+        var repository = Repository(Ready(OlderIdentity, definitions.Length));
+        repository.ReplaceAsync(
+                Arg.Any<CombatSkillCatalogueSourceIdentity>(),
+                Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+                Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(CatalogueReplaceResult.Failure("injected failure"));
+
+        var result = await new EnsureCombatSkillCatalogue(
+                Source(Available(CurrentIdentity, definitions)),
+                repository)
+            .ExecuteAsync(CancellationToken);
+
+        Assert.Equal(
+            EnsureCombatSkillCatalogueStatus.RebuildFailed,
+            result.Status);
+        Assert.Equal(
+            CatalogueRecoveryStatus.StaleCataloguePreserved,
+            result.RecoveryStatus);
+        Assert.Equal(OlderIdentity, result.RetainedSourceIdentity);
+        Assert.Equal(definitions.Length, result.RetainedDefinitionCount);
+        Assert.Contains("stale", result.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Every_source_identity_input_invalidates_the_catalogue()
+    {
+        var definitions = Definitions();
+        var storedIdentities = new[]
+        {
+            Identity("different-version", 1, '0', 'A', 'B'),
+            Identity("1.0.0-current", 2, '0', 'A', 'B'),
+            Identity("1.0.0-current", 1, '1', 'A', 'B'),
+            Identity("1.0.0-current", 1, '0', 'C', 'B'),
+            Identity("1.0.0-current", 1, '0', 'A', 'D')
+        };
+
+        foreach (var storedIdentity in storedIdentities)
+        {
+            var status = await new ReadCombatSkillCatalogueStatus(
+                    Source(Available(CurrentIdentity, definitions)),
+                    Repository(Ready(storedIdentity, definitions.Length)))
+                .ExecuteAsync(CancellationToken);
+
+            Assert.Equal(CombatSkillCatalogueStatus.Stale, status.Status);
+        }
+    }
+
+    [Fact]
+    public async Task Concurrent_ensure_requests_perform_one_controlled_rebuild()
+    {
+        var definitions = Definitions();
+        var source = Source(Available(CurrentIdentity, definitions));
+        var repository = Substitute.For<ICombatSkillCatalogueRepository>();
+        var current = false;
+        var replacements = 0;
+        repository.ReadStateAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => current
+                ? Ready(CurrentIdentity, definitions.Length)
+                : MissingRepository());
+        repository.ReplaceAsync(
+                Arg.Any<CombatSkillCatalogueSourceIdentity>(),
+                Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+                Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                Interlocked.Increment(ref replacements);
+                current = true;
+                return CatalogueReplaceResult.Success();
+            });
+
+        var results = await Task.WhenAll(
+            Enumerable.Range(0, 8)
+                .Select(_ => new EnsureCombatSkillCatalogue(source, repository)
+                    .ExecuteAsync(CancellationToken)));
+
+        Assert.Equal(1, replacements);
+        Assert.Single(
+            results,
+            result => result.Status == EnsureCombatSkillCatalogueStatus.Rebuilt);
+        Assert.Equal(
+            7,
+            results.Count(result =>
+                result.Status == EnsureCombatSkillCatalogueStatus.Current));
     }
 
     [Fact]
@@ -525,10 +669,19 @@ public sealed class CombatSkillCatalogueUseCaseTests
         Assert.Equal(
             new string('0', 64),
             CurrentIdentity.GameDataFingerprint);
+        Assert.Equal(1, CurrentIdentity.ImporterVersion);
         Assert.Throws<ArgumentException>(
             () => new CombatSkillCatalogueSourceIdentity(
                 "version",
+                1,
                 "not-a-hash",
+                new string('A', 64),
+                new string('B', 64)));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CombatSkillCatalogueSourceIdentity(
+                "version",
+                0,
+                new string('0', 64),
                 new string('A', 64),
                 new string('B', 64)));
 
@@ -560,6 +713,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
     private static CombatSkillCatalogueSourceIdentity CurrentIdentity { get; } =
         new(
             "1.0.0-current",
+            1,
             new string('0', 64),
             new string('A', 64),
             new string('B', 64));
@@ -567,9 +721,22 @@ public sealed class CombatSkillCatalogueUseCaseTests
     private static CombatSkillCatalogueSourceIdentity OlderIdentity { get; } =
         new(
             "1.0.0-older",
+            1,
             new string('1', 64),
             new string('C', 64),
             new string('D', 64));
+
+    private static CombatSkillCatalogueSourceIdentity Identity(
+        string gameDataVersion,
+        int importerVersion,
+        char gameDataFingerprint,
+        char traditionalChineseFingerprint,
+        char englishFingerprint) => new(
+            gameDataVersion,
+            importerVersion,
+            new string(gameDataFingerprint, 64),
+            new string(traditionalChineseFingerprint, 64),
+            new string(englishFingerprint, 64));
 
     private static CombatSkillDefinition[] Definitions() =>
     [
