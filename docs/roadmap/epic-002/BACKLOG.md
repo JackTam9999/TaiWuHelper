@@ -236,7 +236,7 @@ Reverse bits for breakthrough eligibility but does not preserve each detail.
 
 ### E2-003 — Define static combat-skill catalogue models
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -249,25 +249,36 @@ their provenance without depending on GameData, SQLite, HTTP, or Presentation.
 
 #### Acceptance criteria
 
-- [ ] A definition uses the stable combat-skill identifier as its identity.
-- [ ] Traditional Chinese and English names are independent optional values
+- [x] A definition uses the stable combat-skill identifier as its identity.
+- [x] Traditional Chinese and English names are independent optional values
       with source provenance and deterministic fallback.
-- [ ] Category, grade, faction, element, equipment type, base grid cost,
+- [x] Category, grade, faction, element, equipment type, base grid cost,
       specific-grid contribution, and generic-grid contribution are typed.
-- [ ] Requirements, timing, effect IDs, and raw display descriptions distinguish
+- [x] Requirements, timing, effect IDs, and raw display descriptions distinguish
       verified typed mechanics from unverified text.
-- [ ] Unsupported and unavailable fields preserve a reason.
-- [ ] Definitions cannot contain duplicate localized names for the same
+- [x] Unsupported and unavailable fields preserve a reason.
+- [x] Definitions cannot contain duplicate localized names for the same
       language, invalid grades, invalid costs, or unknown enum values without an
       explicit unsupported representation.
-- [ ] Source-record identifiers used for diagnostics do not leak
+- [x] Source-record identifiers used for diagnostics do not leak
       Infrastructure types.
-- [ ] Domain tests cover validation, equality, immutability, language fallback,
+- [x] Domain tests cover validation, equality, immutability, language fallback,
       and unavailable values.
 
-#### Evidence when complete
+#### Evidence
 
-- Domain model tests and an architecture reference document.
+- [Combat-skill catalogue Domain model](../../architecture/COMBAT-SKILL-CATALOGUE-DOMAIN.md).
+- `TaiWu.Domain.CombatSkills` contains identity-based immutable definitions,
+  bilingual name fallback, typed fields, opaque source references, and explicit
+  available, unavailable, and unsupported states.
+- `CombatSkillDefinitionTests`: 18 cases covering typed construction, stable-ID
+  equality, provenance, validation, fallback, immutable copies, and raw-text
+  separation; the full Domain suite passes 214/214.
+- `ArchitectureBoundaryTests`: 67/67 passed, including the existing inner-layer
+  dependency guard that prevents Domain references to Infrastructure, API, or
+  GameData assemblies.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 462 total,
+  460 passed, 0 failed, and 2 opt-in integration assertions skipped.
 
 ### E2-004 — Define character skill-progress and study-detail models
 
