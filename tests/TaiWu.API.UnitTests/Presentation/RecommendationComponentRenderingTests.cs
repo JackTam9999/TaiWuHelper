@@ -401,7 +401,7 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("戰前簡報", text);
         Assert.Contains("跳至主要內容", text);
         Assert.Contains("推薦內容", text);
-        Assert.Contains("lang=\"zh-Hans\"", html);
+        Assert.Contains("lang=\"zh-Hant\"", html);
         Assert.Contains("class=\"active\"", html);
     }
 

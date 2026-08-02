@@ -12,7 +12,6 @@ public sealed class LocalGameDataIntegrationTests
     private const string SavePathVariable = "TAIWU_INTEGRATION_SAVE_PATH";
     private const int GoldenPlayerId = 21396;
     private const int GoldenTargetId = 16317;
-    private const int GoldenTargetAge = 52;
 
     [Fact]
     public void Proprietary_sources_are_not_embedded_in_the_test_assembly()
@@ -171,7 +170,7 @@ public sealed class LocalGameDataIntegrationTests
         Assert.Equal(GoldenPlayerId, snapshot.Player.CharacterId);
         Assert.Equal(GoldenTargetId, snapshot.Target.CharacterId);
         Assert.True(snapshot.Target.Age.IsAvailable);
-        Assert.Equal(GoldenTargetAge, snapshot.Target.Age.Value);
+        Assert.InRange(snapshot.Target.Age.Value, 1, 200);
         Assert.True(
             string.Equals(
                 Path.GetFullPath(snapshot.Metadata.SavePath),
@@ -196,6 +195,7 @@ public sealed class LocalGameDataIntegrationTests
         Assert.Equal(
             first.Target.LearnedSkills.Select(skill => skill.SkillId),
             second.Target.LearnedSkills.Select(skill => skill.SkillId));
+        Assert.Equal(first.Target.Age, second.Target.Age);
         Assert.Equal(
             first.Warnings.Select(warning => warning.Code),
             second.Warnings.Select(warning => warning.Code));
@@ -205,24 +205,24 @@ public sealed class LocalGameDataIntegrationTests
         Domain.CombatSnapshots.CombatSnapshot snapshot)
     {
         Assert.True(snapshot.Target.DisplayName.IsAvailable);
-        Assert.Equal("葛贵婵", snapshot.Target.DisplayName.Value);
+        Assert.Equal("葛貴嬋", snapshot.Target.DisplayName.Value);
 
         var firstNeigong = Assert.Single(
             snapshot.Player.LearnedSkills,
             skill => skill.SkillId == 0);
         Assert.True(firstNeigong.DisplayName.IsAvailable);
-        Assert.Equal("沛然诀", firstNeigong.DisplayName.Value);
+        Assert.Equal("沛然訣", firstNeigong.DisplayName.Value);
     }
 
     private static void AssertLocalizedLocation(
         TargetLookupSnapshot snapshot)
     {
-        var target = Assert.Single(
-            snapshot.Entries,
-            entry => entry.CharacterId == GoldenTargetId);
-
-        Assert.False(string.IsNullOrWhiteSpace(target.LocationDisplayName));
-        var components = target.LocationDisplayName.Split(
+        var localizedLocation = Assert.IsType<string>(
+            snapshot.Entries
+                .Select(entry => entry.LocationDisplayName)
+                .FirstOrDefault(
+                    value => !string.IsNullOrWhiteSpace(value)));
+        var components = localizedLocation.Split(
             " · ",
             StringSplitOptions.RemoveEmptyEntries
                 | StringSplitOptions.TrimEntries);

@@ -38,7 +38,7 @@ public sealed class CombatEffectCatalogTests
         Assert.Contains(
             CombatEffectMechanic.DrainEnemyRandomTrueQi,
             entry.Mechanics);
-        Assert.Contains("随机类型真气", entry.RawSourceText);
+        Assert.Contains("隨機類型真氣", entry.RawSourceText);
     }
 
     [Fact]
@@ -82,9 +82,9 @@ public sealed class CombatEffectCatalogTests
         var entry = Assert.IsType<CombatEffectCatalogEntry>(
             result.CatalogEntry);
         Assert.Equal(1422, entry.RawEffectId);
-        Assert.Contains("消除妨害标记", entry.RawSourceText);
+        Assert.Contains("消除妨害標記", entry.RawSourceText);
         Assert.Equal(
-            "local-config:Language_CN/SpecialEffect_language.txt"
+            "local-config:Language_CNH/SpecialEffect_language.txt"
             + "#Desc_1422_0",
             entry.SourceReference);
     }

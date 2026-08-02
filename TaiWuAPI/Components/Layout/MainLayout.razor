@@ -43,7 +43,7 @@
 
 @code {
     private string LanguageCode =>
-        LanguageState.Current == TaiwuLanguage.Chinese ? "zh-Hans" : "en";
+        LanguageState.Current == TaiwuLanguage.Chinese ? "zh-Hant" : "en";
 
     private string T(string english) =>
         UiText.Get(LanguageState.Current, english);

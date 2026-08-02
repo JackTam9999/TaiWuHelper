@@ -40,7 +40,26 @@ internal sealed class TaiwuGameTextResolver
         var catalog = _catalogs.GetOrAdd(
             catalogPath,
             LoadCatalog);
-        return catalog.GetValueOrDefault(key, key);
+        if (catalog.TryGetValue(key, out var value))
+        {
+            return value;
+        }
+
+        const string gameSurnamePrefix = "SurName_";
+        if (string.Equals(pack, "Name", StringComparison.Ordinal)
+            && key.StartsWith(gameSurnamePrefix, StringComparison.Ordinal))
+        {
+            var traditionalChineseKey =
+                $"Surname_{key[gameSurnamePrefix.Length..]}";
+            if (catalog.TryGetValue(
+                    traditionalChineseKey,
+                    out var traditionalChineseValue))
+            {
+                return traditionalChineseValue;
+            }
+        }
+
+        return key;
     }
 
     private static string FindLanguageDirectory(
@@ -66,7 +85,7 @@ internal sealed class TaiwuGameTextResolver
         var languageFolder = language switch
         {
             TaiwuLanguage.English => "Language_EN",
-            TaiwuLanguage.Chinese => "Language_CN",
+            TaiwuLanguage.Chinese => "Language_CNH",
             _ => throw new ArgumentOutOfRangeException(
                 nameof(language),
                 language,

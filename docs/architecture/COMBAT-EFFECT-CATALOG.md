@@ -49,19 +49,19 @@ records:
 
 | Skill ID | Skill | Direction | Effect ID | Typed mechanic |
 |---:|---|---|---:|---|
-| 604 | 金猊镇魔刀 | Direct | 338 | Suppress enemy Reverse practice |
-| 604 | 金猊镇魔刀 | Reverse | 1064 | Suppress enemy Direct practice |
-| 686 | 老君拂尘功 | Direct | 696 | Remove own injury marks |
-| 686 | 老君拂尘功 | Reverse | 1422 | Remove own hindrance marks |
-| 134 | 万花听雨式 | Direct | 247 | Extend enemy mind-resonance duration |
-| 134 | 万花听雨式 | Reverse | 973 | Shorten own mind-resonance duration |
+| 604 | 金猊鎮魔刀 | Direct | 338 | Suppress enemy Reverse practice |
+| 604 | 金猊鎮魔刀 | Reverse | 1064 | Suppress enemy Direct practice |
+| 686 | 老君拂塵功 | Direct | 696 | Remove own injury marks |
+| 686 | 老君拂塵功 | Reverse | 1422 | Remove own hindrance marks |
+| 134 | 萬花聽雨式 | Direct | 247 | Extend enemy mind-resonance duration |
+| 134 | 萬花聽雨式 | Reverse | 973 | Shorten own mind-resonance duration |
 | 267 | 墨玉功 | Direct | 165 | Shorten own distraction-mark duration |
 | 267 | 墨玉功 | Reverse | 891 | Extend enemy distraction-mark duration |
-| 624 | 伏龙刀法 | Direct | 508 | Increase own attack-skill power |
-| 624 | 伏龙刀法 | Reverse | 1234 | Reduce enemy attack-skill power |
+| 624 | 伏龍刀法 | Direct | 508 | Increase own attack-skill power |
+| 624 | 伏龍刀法 | Reverse | 1234 | Reduce enemy attack-skill power |
 | 611 | 鬼庖丁刀法 | Direct | 439 | Transfer own hindrance marks |
 | 611 | 鬼庖丁刀法 | Reverse | 1165 | Transfer own hindrance marks |
-| 291 | 七轮感应法 | Reverse | 915 | Amplify enemy damage states; drain a random true-Qi type |
+| 291 | 七輪感應法 | Reverse | 915 | Amplify enemy damage states; drain a random true-Qi type |
 
 Direction is part of the catalog key. Similar-looking Direct and Reverse
 effects are never collapsed, and common typed mechanics do not imply identical
@@ -76,7 +76,7 @@ On 2026-07-30:
 3. Direct and Reverse effect IDs were read through the existing read-only
    snapshot inspection.
 4. Exact descriptions were selected by effect ID from
-   `Language_CN/SpecialEffect_language.txt`.
+   `Language_CNH/SpecialEffect_language.txt`.
 5. The inspection compared the save fingerprint before and after reading and
    reported no change.
 

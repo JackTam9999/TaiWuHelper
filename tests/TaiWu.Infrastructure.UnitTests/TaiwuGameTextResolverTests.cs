@@ -23,7 +23,7 @@ public sealed class TaiwuGameTextResolverTests
             "Chant of Abundance",
             english.Resolve("CombatSkill", "Name_0"));
         Assert.Equal(
-            "沛然诀",
+            "沛然訣",
             chinese.Resolve("CombatSkill", "Name_0"));
     }
 
@@ -45,10 +45,13 @@ public sealed class TaiwuGameTextResolverTests
                 "Name_714Name_126_Woman_Apart_12",
                 " "));
         Assert.Equal(
-            "贵婵",
+            "貴嬋",
             chinese.ResolveNameParts(
                 "Name_714Name_126_Woman_Apart_12",
                 string.Empty));
+        Assert.Equal(
+            "葛",
+            chinese.ResolveNameParts("SurName_602", string.Empty));
     }
 
     [Fact]
@@ -104,11 +107,11 @@ public sealed class TaiwuGameTextResolverTests
                              "Gui",
                              "Chan"),
                          (
-                             "Language_CN",
-                             "沛然诀",
+                             "Language_CNH",
+                             "沛然訣",
                              "葛",
-                             "贵",
-                             "婵")
+                             "貴",
+                             "嬋")
                      })
             {
                 var languagePath = Path.Combine(
@@ -126,7 +129,9 @@ public sealed class TaiwuGameTextResolverTests
                 await File.WriteAllLinesAsync(
                     Path.Combine(languagePath, "Name_language.txt"),
                     [
-                        "SurName_602",
+                        folder == "Language_CNH"
+                            ? "Surname_602"
+                            : "SurName_602",
                         surname,
                         "Name_714",
                         firstName,
