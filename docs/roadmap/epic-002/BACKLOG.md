@@ -282,7 +282,7 @@ their provenance without depending on GameData, SQLite, HTTP, or Presentation.
 
 ### E2-004 — Define character skill-progress and study-detail models
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -296,23 +296,37 @@ independent and carries provenance or an unavailability reason.
 
 #### Acceptance criteria
 
-- [ ] Progress is keyed by character ID, save-snapshot identity, and skill ID.
-- [ ] Obtained or learned state uses the exact terminology verified by E2-002.
-- [ ] Current proficiency, maximum proficiency, and percentage validate their
+- [x] Progress is keyed by character ID, save-snapshot identity, and skill ID.
+- [x] Obtained or learned state uses the exact terminology verified by E2-002.
+- [x] Current proficiency, maximum proficiency, and percentage validate their
       ranges and handle unavailable values.
-- [ ] Study details have stable ID, display order, group, label, and a state of
+- [x] Study details have stable ID, display order, group, label, and a state of
       studied, not studied, or unavailable.
-- [ ] Aggregate study completeness is derived from detail state and does not
+- [x] Aggregate study completeness is derived from detail state and does not
       count unavailable details as incomplete.
-- [ ] Breakthrough readiness, available breakthrough directions, completed
+- [x] Breakthrough readiness, available breakthrough directions, completed
       breakthrough, active direction, mastery, activation, and equipment are
       separate properties.
-- [ ] Impossible combinations proven by E2-002 are rejected, while unproven
+- [x] Impossible combinations proven by E2-002 are rejected, while unproven
       combinations remain representable as unavailable or conflicting.
-- [ ] Existing `CombatSkillSnapshot` responsibilities are either reused through
+- [x] Existing `CombatSkillSnapshot` responsibilities are either reused through
       composition or migrated without duplicating contradictory concepts.
-- [ ] Domain tests cover partial progress, unknown details, direct/reverse
+- [x] Domain tests cover partial progress, unknown details, direct/reverse
       combinations, mastery, and equipped state.
+
+#### Evidence
+
+- [Character combat-skill progress Domain model](../../architecture/CHARACTER-COMBAT-SKILL-PROGRESS-DOMAIN.md).
+- `CharacterCombatSkillProgress` is keyed by character, save fingerprint/read
+  time, and stable skill ID; it contains independent learned, proficiency,
+  detail, breakthrough, direction, attainment-mastery, simplification,
+  activation, and equipment facts.
+- `SkillProgressField<T>` preserves available, unavailable, and conflicting
+  values with opaque per-field sources; conflicts retain both observations.
+- `CharacterCombatSkillProgressTests`: 23 cases; the full Domain suite passes
+  237/237.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 485 total,
+  483 passed, 0 failed, and 2 opt-in integration assertions skipped.
 
 #### Evidence when complete
 
