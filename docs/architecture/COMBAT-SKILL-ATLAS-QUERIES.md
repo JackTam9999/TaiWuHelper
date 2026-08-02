@@ -34,11 +34,12 @@ text are normalized with Unicode NFKC, invariant uppercase, trimmed ends, and
 collapsed whitespace. This makes equivalent full-width, case, and whitespace
 forms deterministic without language-dependent collation.
 
-Exact bilingual matches rank first. Remaining entries are ordered by name
-availability, normalized selected display name, and numeric skill ID. Language
-selection uses the requested language when present and the other supported
-language as a deterministic fallback. Missing or fallback localization raises
-`PartialLocalization`.
+Exact bilingual matches rank first. Catalogue search can then use selected
+display name, numeric skill ID, or grade; each option has a stable skill-ID
+tie-breaker. Atlas entries use name availability, normalized selected display
+name, and skill ID. Language selection uses the requested language when
+present and the other supported language as a deterministic fallback. Missing
+or fallback localization raises `PartialLocalization`.
 
 Offset and limit are validated before reading data. The query processes at
 most the catalogue contract's candidate bound, exposes

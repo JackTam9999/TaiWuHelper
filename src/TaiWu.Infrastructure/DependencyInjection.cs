@@ -31,6 +31,12 @@ public static class DependencyInjection
         services.AddSingleton<
             ICombatSkillDefinitionSource,
             TaiwuCombatSkillDefinitionSource>();
+        services.AddSingleton(provider =>
+            CatalogueStoragePathProvider.CreateDefault(
+                ProtectedGameOwnedDirectories(provider)));
+        services.AddSingleton<ICombatSkillCatalogueRepository>(provider =>
+            new SqliteCombatSkillCatalogueStore(
+                provider.GetRequiredService<CatalogueStoragePathProvider>()));
         services.AddSingleton<CombatSkillStudyDetailLabelSource>();
         services.AddSingleton<ICharacterCombatSkillProgressReader>(provider =>
             new TaiwuCharacterCombatSkillProgressReader(
@@ -43,5 +49,52 @@ public static class DependencyInjection
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<ITargetLookupReader, TaiwuTargetLookupReader>();
         return services;
+    }
+
+    private static IReadOnlyList<string> ProtectedGameOwnedDirectories(
+        IServiceProvider provider)
+    {
+        List<string> directories = [];
+        var catalogueSources = provider
+            .GetRequiredService<ITaiwuCatalogueSourcePathProvider>()
+            .Resolve();
+        if (catalogueSources.Paths is { } sources)
+        {
+            var backendDirectory = Path.GetDirectoryName(
+                sources.GameDataConfigurationAssembly);
+            var gameDirectory = backendDirectory is null
+                ? null
+                : Directory.GetParent(backendDirectory)?.FullName;
+            if (gameDirectory is not null)
+            {
+                directories.Add(gameDirectory);
+            }
+        }
+
+        var save = provider
+            .GetRequiredService<ITaiwuSaveFilePathProvider>()
+            .Resolve();
+        var saveDirectory = save.SaveFilePath is null
+            ? null
+            : Path.GetDirectoryName(save.SaveFilePath);
+        if (saveDirectory is not null)
+        {
+            directories.Add(saveDirectory);
+        }
+
+        if (directories.Count == 0)
+        {
+            var runtimeDirectory = Path.GetDirectoryName(
+                typeof(Config.CombatSkill).Assembly.Location);
+            if (runtimeDirectory is null)
+            {
+                throw new InvalidOperationException(
+                    "A protected Taiwu runtime directory is unavailable.");
+            }
+
+            directories.Add(runtimeDirectory);
+        }
+
+        return directories;
     }
 }

@@ -653,6 +653,55 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Combat_skill_api_is_query_only_except_named_cache_maintenance()
+    {
+        var controllers = new[]
+        {
+            typeof(CombatSkillsController),
+            typeof(CharacterSkillAtlasController)
+        };
+        var actions = controllers
+            .SelectMany(controller => controller.GetMethods(
+                BindingFlags.Instance
+                | BindingFlags.Public
+                | BindingFlags.DeclaredOnly))
+            .Where(method =>
+                method.GetCustomAttributes<HttpMethodAttribute>().Any())
+            .ToArray();
+
+        Assert.DoesNotContain(
+            actions.SelectMany(action => action.GetParameters()),
+            parameter => parameter.Name?.Contains(
+                "path",
+                StringComparison.OrdinalIgnoreCase) == true
+                || parameter.GetCustomAttribute<FromBodyAttribute>() is not null);
+        Assert.DoesNotContain(
+            actions,
+            action => action.GetCustomAttribute<HttpPutAttribute>() is not null
+                || action.GetCustomAttribute<HttpPatchAttribute>() is not null
+                || action.GetCustomAttribute<HttpDeleteAttribute>() is not null);
+        var maintenance = Assert.Single(
+            actions,
+            action => action.GetCustomAttribute<HttpPostAttribute>() is not null);
+        Assert.Equal(
+            "catalogue-cache/rebuild",
+            maintenance.GetCustomAttribute<HttpPostAttribute>()!.Template);
+
+        var repositoryRoot = FindRepositoryRoot();
+        var sources = controllers.Select(controller => File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Controllers",
+                $"{controller.Name}.cs")));
+        var combined = string.Join(Environment.NewLine, sources);
+        Assert.DoesNotContain("SaveGameOptions", combined);
+        Assert.DoesNotContain("DefaultSaveFilePath", combined);
+        Assert.DoesNotContain("File.", combined);
+        Assert.DoesNotContain("Directory.", combined);
+    }
+
+    [Fact]
     public void Production_persistence_is_confined_to_named_catalogue_store()
     {
         var repositoryRoot = FindRepositoryRoot();

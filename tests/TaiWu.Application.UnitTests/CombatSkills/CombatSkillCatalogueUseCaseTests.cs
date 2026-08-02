@@ -551,6 +551,59 @@ public sealed class CombatSkillCatalogueUseCaseTests
     }
 
     [Fact]
+    public async Task Search_supports_stable_skill_id_and_grade_sorting()
+    {
+        var definitions = new[]
+        {
+            DefinitionWithFields(
+                30,
+                CombatSkillDiscipline.Finger,
+                grade: 1,
+                faction: 1,
+                CombatSkillElement.Wood,
+                CombatSkillEquipmentType.Attack,
+                (CatalogueLanguage.English, "Zulu")),
+            DefinitionWithFields(
+                10,
+                CombatSkillDiscipline.Finger,
+                grade: 5,
+                faction: 1,
+                CombatSkillElement.Wood,
+                CombatSkillEquipmentType.Attack,
+                (CatalogueLanguage.English, "Alpha")),
+            DefinitionWithFields(
+                20,
+                CombatSkillDiscipline.Finger,
+                grade: 1,
+                faction: 1,
+                CombatSkillElement.Wood,
+                CombatSkillEquipmentType.Attack,
+                (CatalogueLanguage.English, "Middle"))
+        };
+        var useCase = new SearchCombatSkillDefinitions(
+            Source(Available(CurrentIdentity, definitions)),
+            CurrentRepository(definitions));
+
+        var byId = await useCase.ExecuteAsync(
+            new CombatSkillSearchRequest(
+                CatalogueLanguage.English,
+                sort: CombatSkillSearchSort.SkillId),
+            CancellationToken);
+        Assert.Equal(
+            [10, 20, 30],
+            byId.Items.Select(item => item.Definition.SkillId));
+
+        var byGrade = await useCase.ExecuteAsync(
+            new CombatSkillSearchRequest(
+                CatalogueLanguage.English,
+                sort: CombatSkillSearchSort.Grade),
+            CancellationToken);
+        Assert.Equal(
+            [20, 30, 10],
+            byGrade.Items.Select(item => item.Definition.SkillId));
+    }
+
+    [Fact]
     public async Task Search_does_not_query_a_noncurrent_catalogue()
     {
         var definitions = Definitions();

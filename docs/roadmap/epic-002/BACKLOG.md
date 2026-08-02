@@ -703,7 +703,7 @@ views.
 
 ### E2-012 — Add information-only catalogue and atlas API endpoints
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -716,28 +716,48 @@ and the current character atlas.
 
 #### Acceptance criteria
 
-- [ ] `GET /api/combat-skills` supports bounded search, filter, sort, and paging
+- [x] `GET /api/combat-skills` supports bounded search, filter, sort, and paging
       parameters.
-- [ ] `GET /api/combat-skills/{skillId}` returns joined definition and current
+- [x] `GET /api/combat-skills/{skillId}` returns joined definition and current
       character progress when available.
-- [ ] `GET /api/character-skill-atlas` returns the current atlas and snapshot
+- [x] `GET /api/character-skill-atlas` returns the current atlas and snapshot
       metadata.
-- [ ] Catalogue status is returned directly or embedded consistently in query
+- [x] Catalogue status is returned directly or embedded consistently in query
       responses.
-- [ ] Validation failures use stable problem responses and do not expose local
+- [x] Validation failures use stable problem responses and do not expose local
       filesystem paths.
-- [ ] API responses distinguish missing, stale, rebuilding, partial,
+- [x] API responses distinguish missing, stale, rebuilding, partial,
       unsupported, and failed states.
-- [ ] No endpoint accepts a game/save path or changes any game-owned state.
-- [ ] Any explicit catalogue rebuild operation can affect only the trusted
+- [x] No endpoint accepts a game/save path or changes any game-owned state.
+- [x] Any explicit catalogue rebuild operation can affect only the trusted
       helper-owned cache and is clearly named as cache maintenance.
-- [ ] Controller tests cover success, validation, partial data, rebuild status,
+- [x] Controller tests cover success, validation, partial data, rebuild status,
       unsupported versions, and failure mapping.
-- [ ] API documentation includes source precedence and raw-text limitations.
+- [x] API documentation includes source precedence and raw-text limitations.
 
-#### Evidence when complete
+#### Evidence
 
-- Controller tests and `docs/api/COMBAT-SKILLS.md`.
+- [Combat-skill catalogue and character-atlas API](../../api/COMBAT-SKILLS.md).
+- `CombatSkillsController` exposes status, bounded definition search, joined
+  detail, and explicitly named `catalogue-cache/rebuild`; the separate
+  `CharacterSkillAtlasController` exposes the read-only atlas.
+- API response contracts project available/unavailable/conflicting values
+  safely, retain catalogue/save provenance and warnings, and replace local
+  exception or path details with stable public reasons.
+- Search supports deterministic `DisplayName`, `SkillId`, and `Grade` sorting;
+  full-width/case/whitespace normalization and stable ID tie-breaks remain in
+  Application.
+- Production DI now resolves the guarded singleton SQLite catalogue repository
+  using the fixed helper-owned path provider and protected game/save roots.
+- `CombatSkillsControllerTests` cover success, filters, sort, paging,
+  validation, joined/partial serialization, safe missing-save and unsupported
+  states, all catalogue statuses, rebuild, and route/mutation boundaries.
+- `ArchitectureBoundaryTests`: 73/73 passed, including the API path/body/verb
+  boundary; `CatalogueDependencyInjectionTests` verifies production repository
+  wiring without creating a database.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal` with installed
+  catalogue verification enabled: 605 total, 602 passed, 0 failed, and 3
+  opt-in save assertions skipped because no save path was supplied.
 
 ## Slice 6: Catalogue and atlas UI
 

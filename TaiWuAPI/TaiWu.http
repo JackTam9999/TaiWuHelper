@@ -19,3 +19,28 @@ GET {{TaiWu_HostAddress}}/api/targets?query=何春石
 Accept: application/json
 
 ###
+
+GET {{TaiWu_HostAddress}}/api/combat-skills/status
+Accept: application/json
+
+###
+
+GET {{TaiWu_HostAddress}}/api/combat-skills?query=body&language=English&sort=Grade&limit=25
+Accept: application/json
+
+###
+
+GET {{TaiWu_HostAddress}}/api/combat-skills/456?language=English&characterId=42
+Accept: application/json
+
+###
+
+GET {{TaiWu_HostAddress}}/api/character-skill-atlas?characterId=42&language=English&learned=true&limit=25
+Accept: application/json
+
+###
+
+POST {{TaiWu_HostAddress}}/api/combat-skills/catalogue-cache/rebuild
+Accept: application/json
+
+###

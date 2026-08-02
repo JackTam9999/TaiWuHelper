@@ -14,7 +14,8 @@ public sealed record CombatSkillSearchRequest
         string? query = null,
         CombatSkillCatalogueFilter? filter = null,
         int offset = 0,
-        int limit = 50)
+        int limit = 50,
+        CombatSkillSearchSort sort = CombatSkillSearchSort.DisplayName)
     {
         if (!Enum.IsDefined(preferredLanguage))
         {
@@ -48,6 +49,14 @@ public sealed record CombatSkillSearchRequest
                 $"Search limit must be 1..{MaximumPageSize}.");
         }
 
+        if (!Enum.IsDefined(sort))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sort),
+                sort,
+                "Unknown combat-skill search sort.");
+        }
+
         var actualFilter = filter ?? new CombatSkillCatalogueFilter();
         if (offset > actualFilter.CandidateLimit)
         {
@@ -62,6 +71,7 @@ public sealed record CombatSkillSearchRequest
         Filter = actualFilter;
         Offset = offset;
         Limit = limit;
+        Sort = sort;
     }
 
     public CatalogueLanguage PreferredLanguage { get; }
@@ -73,6 +83,15 @@ public sealed record CombatSkillSearchRequest
     public int Offset { get; }
 
     public int Limit { get; }
+
+    public CombatSkillSearchSort Sort { get; }
+}
+
+public enum CombatSkillSearchSort
+{
+    DisplayName = 0,
+    SkillId = 1,
+    Grade = 2
 }
 
 public sealed record CombatSkillDisplayName(

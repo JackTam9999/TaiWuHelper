@@ -56,22 +56,15 @@ public sealed class SearchCombatSkillDefinitions(
         }
 
         var normalizedQuery = NormalizeSearchText(request.Query);
-        var matches = candidates
+        var ranked = candidates
             .Where(definition => Matches(definition, normalizedQuery))
             .Select(definition => new RankedItem(
                 new CombatSkillSearchItem(
                     definition,
                     ResolveName(definition, request.PreferredLanguage)),
                 IsExactMatch(definition, normalizedQuery)))
-            .OrderByDescending(item => item.IsExactMatch)
-            .ThenBy(
-                item => item.Item.DisplayName.Value.IsAvailable ? 0 : 1)
-            .ThenBy(
-                item => item.Item.DisplayName.Value.IsAvailable
-                    ? item.Item.DisplayName.Value.Value.Text
-                    : string.Empty,
-                StringComparer.Ordinal)
-            .ThenBy(item => item.Item.Definition.SkillId)
+            .ToImmutableArray();
+        var matches = Order(ranked, request.Sort)
             .Select(item => item.Item)
             .ToImmutableArray();
         var page = matches
@@ -86,6 +79,37 @@ public sealed class SearchCombatSkillDefinitions(
             request.Limit,
             candidates.Count >= request.Filter.CandidateLimit,
             page);
+    }
+
+    private static IOrderedEnumerable<RankedItem> Order(
+        IEnumerable<RankedItem> values,
+        CombatSkillSearchSort sort)
+    {
+        var ranked = values.OrderByDescending(value => value.IsExactMatch);
+        return sort switch
+        {
+            CombatSkillSearchSort.DisplayName => ranked
+                .ThenBy(value =>
+                    value.Item.DisplayName.Value.IsAvailable ? 0 : 1)
+                .ThenBy(
+                    value => value.Item.DisplayName.Value.IsAvailable
+                        ? NormalizeSearchText(
+                            value.Item.DisplayName.Value.Value.Text)
+                        : string.Empty,
+                    StringComparer.Ordinal)
+                .ThenBy(value => value.Item.Definition.SkillId),
+            CombatSkillSearchSort.SkillId => ranked
+                .ThenBy(value => value.Item.Definition.SkillId),
+            CombatSkillSearchSort.Grade => ranked
+                .ThenBy(value =>
+                    value.Item.Definition.Grade.IsAvailable ? 0 : 1)
+                .ThenBy(value =>
+                    value.Item.Definition.Grade.IsAvailable
+                        ? value.Item.Definition.Grade.Value.Value
+                        : int.MaxValue)
+                .ThenBy(value => value.Item.Definition.SkillId),
+            _ => throw new ArgumentOutOfRangeException(nameof(sort), sort, null)
+        };
     }
 
     internal static CombatSkillDisplayName ResolveName(
