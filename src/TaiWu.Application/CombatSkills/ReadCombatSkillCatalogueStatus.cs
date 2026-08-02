@@ -8,6 +8,16 @@ public sealed class ReadCombatSkillCatalogueStatus(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (EnsureCombatSkillCatalogue.IsRebuilding)
+        {
+            return new CombatSkillCatalogueStatusResult(
+                CombatSkillCatalogueStatus.Rebuilding,
+                DefinitionCount: 0,
+                InstalledSource: null,
+                StoredSource: null,
+                BuiltAtUtc: null,
+                "The helper-owned catalogue is rebuilding.");
+        }
 
         CombatSkillDefinitionSourceResult installed;
         try

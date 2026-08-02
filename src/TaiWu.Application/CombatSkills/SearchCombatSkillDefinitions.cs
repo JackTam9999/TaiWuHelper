@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text;
 using TaiWu.Domain.CombatSkills;
 
 namespace TaiWu.Application.CombatSkills;
@@ -54,13 +55,14 @@ public sealed class SearchCombatSkillDefinitions(
                 request);
         }
 
+        var normalizedQuery = NormalizeSearchText(request.Query);
         var matches = candidates
-            .Where(definition => Matches(definition, request.Query))
+            .Where(definition => Matches(definition, normalizedQuery))
             .Select(definition => new RankedItem(
                 new CombatSkillSearchItem(
                     definition,
                     ResolveName(definition, request.PreferredLanguage)),
-                IsExactMatch(definition, request.Query)))
+                IsExactMatch(definition, normalizedQuery)))
             .OrderByDescending(item => item.IsExactMatch)
             .ThenBy(
                 item => item.Item.DisplayName.Value.IsAvailable ? 0 : 1)
@@ -111,18 +113,37 @@ public sealed class SearchCombatSkillDefinitions(
 
     private static bool Matches(
         CombatSkillDefinition definition,
-        string? query) => query is null || definition.Names.Values.Any(
-            name => name.Text.Contains(
-                query,
-                StringComparison.OrdinalIgnoreCase));
+        string? normalizedQuery) => normalizedQuery is null
+        || definition.Names.Values.Any(name =>
+            NormalizeSearchText(name.Text)!.Contains(
+                normalizedQuery,
+                StringComparison.Ordinal));
 
     private static bool IsExactMatch(
         CombatSkillDefinition definition,
-        string? query) => query is not null && definition.Names.Values.Any(
-            name => string.Equals(
-                name.Text,
-                query,
-                StringComparison.OrdinalIgnoreCase));
+        string? normalizedQuery) => normalizedQuery is not null
+        && definition.Names.Values.Any(name => string.Equals(
+            NormalizeSearchText(name.Text),
+            normalizedQuery,
+            StringComparison.Ordinal));
+
+    internal static string? NormalizeSearchText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var compatibilityNormalized = value
+            .Normalize(NormalizationForm.FormKC)
+            .ToUpperInvariant();
+        return string.Join(
+            ' ',
+            compatibilityNormalized.Split(
+                (char[]?)null,
+                StringSplitOptions.RemoveEmptyEntries
+                | StringSplitOptions.TrimEntries));
+    }
 
     private static CombatSkillSearchResult Empty(
         CombatSkillCatalogueStatusResult catalogue,

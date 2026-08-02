@@ -36,6 +36,7 @@ definition count with the stored manifest:
 | Installed version is unsupported | `UnsupportedVersion` |
 | Source read fails | `SourceReadFailed` |
 | Stored catalogue is corrupt, failed, or unreadable | `RepositoryFailed` |
+| An explicit atomic replacement is in progress | `Rebuilding` |
 
 Only `EnsureCombatSkillCatalogue` requests replacement. It leaves a current
 catalogue untouched, rebuilds a missing, stale, corrupt, or recoverably failed
@@ -58,14 +59,17 @@ preserve the actual localized value, its source, and whether fallback was
 used. SQL adapters therefore filter structure but do not parse UI language
 strings or choose display text.
 
-`ReadCombatSkillDetails` returns one static definition. A missing stable ID is
-an ordinary not-found result, distinct from catalogue unavailability.
+`ReadCombatSkillDetails` returns one static definition and can optionally join
+the selected character's progress. A missing stable ID is an ordinary
+not-found result, distinct from catalogue unavailability. Progress without a
+definition remains available with a diagnostic.
 
 `ReadCharacterCombatSkillAtlas` first requires a current catalogue, then asks
 the progress port for the selected character. Save missing, save read failure,
-and unsupported save version remain distinct. Entries are ordered by stable
-skill ID and retain progress even if a definition is unexpectedly absent;
-that entry receives an explicit unavailable display-name reason.
+and unsupported save version remain distinct. It returns a stable ordered,
+bounded union of definitions and progress. Full join, normalization, filter,
+cost, issue, and paging semantics are documented in
+[Combat-skill catalogue and character-atlas queries](COMBAT-SKILL-ATLAS-QUERIES.md).
 
 ## Dependency and safety guarantees
 

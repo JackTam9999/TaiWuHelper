@@ -5,6 +5,10 @@ public sealed class EnsureCombatSkillCatalogue(
     ICombatSkillCatalogueRepository repository)
 {
     private static readonly SemaphoreSlim EnsureGate = new(1, 1);
+    private static int _isRebuilding;
+
+    internal static bool IsRebuilding =>
+        Volatile.Read(ref _isRebuilding) != 0;
 
     public async Task<EnsureCombatSkillCatalogueResult> ExecuteAsync(
         CancellationToken cancellationToken = default)
@@ -81,6 +85,7 @@ public sealed class EnsureCombatSkillCatalogue(
         }
 
         CatalogueReplaceResult replacement;
+        Interlocked.Exchange(ref _isRebuilding, 1);
         try
         {
             replacement = await repository.ReplaceAsync(
@@ -97,6 +102,10 @@ public sealed class EnsureCombatSkillCatalogue(
         catch (Exception exception)
         {
             return RebuildFailure(exception.Message, identity, stored);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isRebuilding, 0);
         }
 
         cancellationToken.ThrowIfCancellationRequested();

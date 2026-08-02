@@ -344,7 +344,8 @@ public enum CombatSkillCatalogueStatus
     UnsupportedVersion = 4,
     SourceReadFailed = 5,
     RepositoryFailed = 6,
-    Corrupt = 7
+    Corrupt = 7,
+    Rebuilding = 8
 }
 
 public sealed record CombatSkillCatalogueStatusResult(

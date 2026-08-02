@@ -419,6 +419,59 @@ public sealed class CombatSkillCatalogueUseCaseTests
     }
 
     [Fact]
+    public async Task Status_explicitly_reports_an_active_rebuild()
+    {
+        var definitions = Definitions();
+        var repository = Repository(MissingRepository());
+        var entered = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        repository.ReplaceAsync(
+                Arg.Any<CombatSkillCatalogueSourceIdentity>(),
+                Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+                Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(async _ =>
+            {
+                entered.SetResult();
+                await release.Task;
+                return CatalogueReplaceResult.Success();
+            });
+        var ensure = new EnsureCombatSkillCatalogue(
+                Source(Available(CurrentIdentity, definitions)),
+                repository)
+            .ExecuteAsync(CancellationToken);
+        await entered.Task;
+
+        var statusSource = Substitute.For<ICombatSkillDefinitionSource>();
+        var statusRepository = Substitute.For<ICombatSkillCatalogueRepository>();
+        CombatSkillCatalogueStatusResult status;
+        EnsureCombatSkillCatalogueResult ensureResult;
+        try
+        {
+            status = await new ReadCombatSkillCatalogueStatus(
+                    statusSource,
+                    statusRepository)
+                .ExecuteAsync(CancellationToken);
+        }
+        finally
+        {
+            release.TrySetResult();
+            ensureResult = await ensure;
+        }
+
+        Assert.Equal(CombatSkillCatalogueStatus.Rebuilding, status.Status);
+        await statusSource.DidNotReceive().ReadAsync(
+            Arg.Any<CancellationToken>());
+        await statusRepository.DidNotReceive().ReadStateAsync(
+            Arg.Any<CancellationToken>());
+        Assert.Equal(
+            EnsureCombatSkillCatalogueStatus.Rebuilt,
+            ensureResult.Status);
+    }
+
+    [Fact]
     public async Task Search_matches_both_languages_and_resolves_requested_language()
     {
         var definitions = Definitions();
@@ -475,6 +528,26 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 Assert.Equal(2, second.Definition.SkillId);
                 Assert.True(second.DisplayName.UsedFallback);
             });
+        Assert.True(result.Issues.HasFlag(
+            CombatSkillQueryIssue.PartialLocalization));
+    }
+
+    [Fact]
+    public async Task Search_normalizes_compatibility_width_case_and_whitespace()
+    {
+        var definitions = Definitions();
+        var result = await new SearchCombatSkillDefinitions(
+                Source(Available(CurrentIdentity, definitions)),
+                CurrentRepository(definitions))
+            .ExecuteAsync(
+                new CombatSkillSearchRequest(
+                    CatalogueLanguage.TraditionalChinese,
+                    "  Ｃｏｒｒｕｐｔｉｖｅ　Ｇｕ  "),
+                CancellationToken);
+
+        var match = Assert.Single(result.Items);
+        Assert.Equal(1, match.Definition.SkillId);
+        Assert.Equal("combat-skill:1", match.StableKey);
     }
 
     [Fact]
@@ -600,26 +673,312 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 CancellationToken);
 
         Assert.Equal(CharacterProgressReadStatus.Available, result.ProgressStatus);
-        Assert.Collection(
+        Assert.Equal(4, result.TotalMatches);
+        Assert.NotNull(result.ProgressMetadata);
+        var known = Assert.Single(
             result.Entries,
-            known =>
-            {
-                Assert.Equal(2, known.Progress.SkillId);
-                Assert.NotNull(known.Definition);
-                Assert.True(known.DisplayName.UsedFallback);
-            },
-            unknown =>
-            {
-                Assert.Equal(999, unknown.Progress.SkillId);
-                Assert.Null(unknown.Definition);
-                Assert.False(unknown.DisplayName.Value.IsAvailable);
-            });
+            entry => entry.SkillId == 2);
+        Assert.NotNull(known.Progress);
+        Assert.Same(definitions[1], known.Definition);
+        Assert.True(known.DisplayName.UsedFallback);
+        Assert.Equal(3, known.BaseGridCost.Value.Value);
+        Assert.Equal(3, known.CurrentEffectiveGridCost.Value);
+
+        var unlearned = Assert.Single(
+            result.Entries,
+            entry => entry.SkillId == 1);
+        Assert.Null(unlearned.Progress);
+        Assert.False(unlearned.Learned.Value);
+        Assert.False(unlearned.CurrentEffectiveGridCost.IsAvailable);
+
+        var unknown = Assert.Single(
+            result.Entries,
+            entry => entry.SkillId == 999);
+        Assert.Null(unknown.Definition);
+        Assert.False(unknown.DisplayName.Value.IsAvailable);
+        Assert.Contains(
+            unknown.Diagnostics,
+            diagnostic => diagnostic.Code == "STATIC_DEFINITION_MISSING");
+        Assert.True(result.Issues.HasFlag(
+            CombatSkillQueryIssue.MissingDefinition));
+        Assert.True(result.Issues.HasFlag(
+            CombatSkillQueryIssue.UnsupportedStudyMapping));
         await progressReader.Received(1).ReadAsync(
             Arg.Is<CharacterCombatSkillProgressReadRequest>(request =>
                 request != null
                 && request.CharacterId == 42
                 && request.PreferredLanguage == CatalogueLanguage.English),
             CancellationToken);
+    }
+
+    [Fact]
+    public async Task Atlas_applies_all_static_filters_and_bilingual_query()
+    {
+        var definitions = new[]
+        {
+            DefinitionWithFields(
+                10,
+                CombatSkillDiscipline.Finger,
+                grade: 5,
+                faction: 1,
+                CombatSkillElement.Wood,
+                CombatSkillEquipmentType.Attack,
+                (CatalogueLanguage.English, "Finger Art")),
+            DefinitionWithFields(
+                11,
+                CombatSkillDiscipline.Sword,
+                grade: 3,
+                faction: 2,
+                CombatSkillElement.Metal,
+                CombatSkillEquipmentType.Defense,
+                (CatalogueLanguage.TraditionalChinese, "劍法"),
+                (CatalogueLanguage.English, "Silver Blade"))
+        };
+        var result = await new ReadCharacterCombatSkillAtlas(
+                Source(Available(CurrentIdentity, definitions)),
+                CurrentRepository(definitions),
+                ProgressReader([]))
+            .ExecuteAsync(
+                new CharacterCombatSkillAtlasRequest(
+                    42,
+                    CatalogueLanguage.TraditionalChinese,
+                    query: "silver",
+                    definitionFilter: new CombatSkillCatalogueFilter(
+                        category: CombatSkillDiscipline.Sword,
+                        grade: new CombatSkillGrade(3),
+                        faction: new CombatSkillFactionId(2),
+                        element: CombatSkillElement.Metal,
+                        equipmentType: CombatSkillEquipmentType.Defense)),
+                CancellationToken);
+
+        var entry = Assert.Single(result.Entries);
+        Assert.Equal(11, entry.SkillId);
+        Assert.False(entry.Learned.Value);
+        Assert.Equal("劍法", entry.DisplayName.Value.Value.Text);
+    }
+
+    [Fact]
+    public async Task Atlas_filters_every_independent_progress_fact()
+    {
+        var definitions = Definitions();
+        var completed = new BreakthroughDirectionAvailability(
+            isBrokenOut: true,
+            canBreakthroughNow: false,
+            availableDirections: []);
+        var ready = new BreakthroughDirectionAvailability(
+            isBrokenOut: false,
+            canBreakthroughNow: true,
+            [PracticeDirection.Reverse]);
+        var progress = new[]
+        {
+            Progress(
+                42,
+                1,
+                studyComplete: true,
+                breakthrough: completed,
+                activeDirection: PracticeDirection.Direct,
+                attainmentMastered: true,
+                simplified: true,
+                activated: true,
+                equipped: true),
+            Progress(
+                42,
+                2,
+                studyComplete: false,
+                breakthrough: ready)
+        };
+        var useCase = new ReadCharacterCombatSkillAtlas(
+            Source(Available(CurrentIdentity, definitions)),
+            CurrentRepository(definitions),
+            ProgressReader(
+                progress,
+                [new("TEST_WARNING", "A partial progress warning.")]));
+
+        var completedResult = await useCase.ExecuteAsync(
+            new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                progressFilter: new CharacterCombatSkillProgressFilter(
+                    learned: true,
+                    hasProficiency: true,
+                    studyComplete: true,
+                    brokenThrough: true,
+                    activeDirection: PracticeDirection.Direct,
+                    attainmentMastered: true,
+                    simplified: true,
+                    activated: true,
+                    equipped: true)),
+            CancellationToken);
+        var completedEntry = Assert.Single(completedResult.Entries);
+        Assert.Equal(1, completedEntry.SkillId);
+        Assert.Equal(3, completedEntry.BaseGridCost.Value.Value);
+        Assert.Equal(2, completedEntry.CurrentEffectiveGridCost.Value);
+        Assert.True(completedResult.Issues.HasFlag(
+            CombatSkillQueryIssue.ProgressWarnings));
+
+        var readyResult = await useCase.ExecuteAsync(
+            new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                progressFilter: new CharacterCombatSkillProgressFilter(
+                    breakthroughReady: true,
+                    brokenThrough: false)),
+            CancellationToken);
+        Assert.Equal(2, Assert.Single(readyResult.Entries).SkillId);
+
+        var unlearnedResult = await useCase.ExecuteAsync(
+            new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                progressFilter: new CharacterCombatSkillProgressFilter(
+                    learned: false)),
+            CancellationToken);
+        var unlearned = Assert.Single(unlearnedResult.Entries);
+        Assert.Equal(3, unlearned.SkillId);
+        Assert.Null(unlearned.Progress);
+    }
+
+    [Fact]
+    public async Task Atlas_filters_do_not_treat_unavailable_boolean_facts_as_false()
+    {
+        var definitions = Definitions();
+        var progress = new[]
+        {
+            Progress(
+                42,
+                1,
+                proficiencyAvailable: false,
+                attainmentMastered: false),
+            Progress(42, 2)
+        };
+        var useCase = new ReadCharacterCombatSkillAtlas(
+            Source(Available(CurrentIdentity, definitions)),
+            CurrentRepository(definitions),
+            ProgressReader(progress));
+
+        var explicitFalse = await useCase.ExecuteAsync(
+            new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                progressFilter: new CharacterCombatSkillProgressFilter(
+                    attainmentMastered: false)),
+            CancellationToken);
+        Assert.Equal(1, Assert.Single(explicitFalse.Entries).SkillId);
+
+        var unavailableProficiency = await useCase.ExecuteAsync(
+            new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                progressFilter: new CharacterCombatSkillProgressFilter(
+                    hasProficiency: false)),
+            CancellationToken);
+        Assert.Equal(1, Assert.Single(unavailableProficiency.Entries).SkillId);
+    }
+
+    [Fact]
+    public async Task Atlas_paging_and_virtualization_keys_are_repeatable()
+    {
+        var definitions = Definitions();
+        var useCase = new ReadCharacterCombatSkillAtlas(
+            Source(Available(CurrentIdentity, definitions)),
+            CurrentRepository(definitions),
+            ProgressReader([Progress(42, 2)]));
+        var request = new CharacterCombatSkillAtlasRequest(
+            42,
+            CatalogueLanguage.English,
+            offset: 1,
+            limit: 2);
+
+        var first = await useCase.ExecuteAsync(request, CancellationToken);
+        var second = await useCase.ExecuteAsync(request, CancellationToken);
+
+        Assert.Equal(3, first.TotalMatches);
+        Assert.Equal(
+            first.Entries.Select(entry => entry.StableKey),
+            second.Entries.Select(entry => entry.StableKey));
+        Assert.Equal(2, first.Entries.Length);
+    }
+
+    [Fact]
+    public async Task Details_can_join_definition_and_character_progress()
+    {
+        var definitions = Definitions();
+        var progress = Progress(42, 2, simplified: true);
+        var reader = ProgressReader([progress]);
+        var useCase = new ReadCombatSkillDetails(
+            Source(Available(CurrentIdentity, definitions)),
+            CurrentRepository(definitions),
+            reader);
+
+        var result = await useCase.ExecuteAsync(
+            new CombatSkillDetailsRequest(
+                2,
+                CatalogueLanguage.English,
+                characterId: 42),
+            CancellationToken);
+
+        Assert.True(result.Found);
+        Assert.Equal(CharacterProgressReadStatus.Available, result.ProgressStatus);
+        Assert.NotNull(result.ProgressMetadata);
+        Assert.Same(progress, result.CharacterState!.Progress);
+        Assert.Equal(3, result.CharacterState.BaseGridCost.Value.Value);
+        Assert.Equal(2, result.CharacterState.CurrentEffectiveGridCost.Value);
+        Assert.True(result.Issues.HasFlag(
+            CombatSkillQueryIssue.PartialLocalization));
+    }
+
+    [Fact]
+    public async Task Details_preserves_progress_without_a_static_definition()
+    {
+        var definitions = Definitions();
+        var progress = Progress(42, 999);
+        var result = await new ReadCombatSkillDetails(
+                Source(Available(CurrentIdentity, definitions)),
+                CurrentRepository(definitions),
+                ProgressReader([progress]))
+            .ExecuteAsync(
+                new CombatSkillDetailsRequest(
+                    999,
+                    CatalogueLanguage.English,
+                    characterId: 42),
+                CancellationToken);
+
+        Assert.False(result.Found);
+        Assert.Same(progress, result.CharacterState!.Progress);
+        Assert.True(result.Issues.HasFlag(
+            CombatSkillQueryIssue.MissingDefinition));
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Code == "STATIC_DEFINITION_MISSING");
+    }
+
+    [Theory]
+    [InlineData(CharacterProgressReadStatus.SaveMissing)]
+    [InlineData(CharacterProgressReadStatus.SaveReadFailed)]
+    [InlineData(CharacterProgressReadStatus.UnsupportedVersion)]
+    public async Task Details_preserves_explicit_progress_failure_state(
+        CharacterProgressReadStatus status)
+    {
+        var definitions = Definitions();
+        var reader = Substitute.For<ICharacterCombatSkillProgressReader>();
+        reader.ReadAsync(
+                Arg.Any<CharacterCombatSkillProgressReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(FailedProgress(status));
+        var result = await new ReadCombatSkillDetails(
+                Source(Available(CurrentIdentity, definitions)),
+                CurrentRepository(definitions),
+                reader)
+            .ExecuteAsync(
+                new CombatSkillDetailsRequest(
+                    1,
+                    CatalogueLanguage.English,
+                    characterId: 42),
+                CancellationToken);
+
+        Assert.Equal(status, result.ProgressStatus);
+        Assert.Equal("save diagnostic", result.ProgressFailureReason);
+        Assert.Null(result.CharacterState);
     }
 
     [Fact]
@@ -673,6 +1032,21 @@ public sealed class CombatSkillCatalogueUseCaseTests
             () => new CombatSkillSearchRequest(
                 CatalogueLanguage.English,
                 new string('x', CombatSkillSearchRequest.MaximumQueryLength + 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                limit: CombatSkillSearchRequest.MaximumPageSize + 1));
+        Assert.Throws<ArgumentException>(
+            () => new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                new string(
+                    'x',
+                    CombatSkillSearchRequest.MaximumQueryLength + 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CharacterCombatSkillProgressFilter(
+                activeDirection: PracticeDirection.Neutral));
 
         var portParameters = typeof(ICombatSkillCatalogueRepository)
             .GetMethods()
@@ -824,6 +1198,23 @@ public sealed class CombatSkillCatalogueUseCaseTests
 
     private static CombatSkillDefinition Definition(
         int skillId,
+        params (CatalogueLanguage Language, string Text)[] names) =>
+        DefinitionWithFields(
+            skillId,
+            CombatSkillDiscipline.Finger,
+            grade: 5,
+            faction: 1,
+            CombatSkillElement.Wood,
+            CombatSkillEquipmentType.Attack,
+            names);
+
+    private static CombatSkillDefinition DefinitionWithFields(
+        int skillId,
+        CombatSkillDiscipline category,
+        int grade,
+        int faction,
+        CombatSkillElement element,
+        CombatSkillEquipmentType equipmentType,
         params (CatalogueLanguage Language, string Text)[] names)
     {
         var source = new CatalogueSourceReference(
@@ -845,19 +1236,19 @@ public sealed class CombatSkillCatalogueUseCaseTests
                             : "language-cnh:test",
                         $"combat-skill-name:{skillId}")))),
             CatalogueField<CombatSkillDiscipline>.Available(
-                CombatSkillDiscipline.Finger,
+                category,
                 source),
             CatalogueField<CombatSkillGrade>.Available(
-                new CombatSkillGrade(5),
+                new CombatSkillGrade(grade),
                 source),
             CatalogueField<CombatSkillFactionId>.Available(
-                new CombatSkillFactionId(1),
+                new CombatSkillFactionId(faction),
                 source),
             CatalogueField<CombatSkillElement>.Available(
-                CombatSkillElement.Wood,
+                element,
                 source),
             CatalogueField<CombatSkillEquipmentType>.Available(
-                CombatSkillEquipmentType.Attack,
+                equipmentType,
                 source),
             CatalogueField<CombatSkillGridCost>.Available(
                 new CombatSkillGridCost(3),
@@ -880,31 +1271,78 @@ public sealed class CombatSkillCatalogueUseCaseTests
 
     private static CharacterCombatSkillProgress Progress(
         int characterId,
-        int skillId)
+        int skillId,
+        bool learned = true,
+        bool proficiencyAvailable = true,
+        bool? studyComplete = null,
+        BreakthroughDirectionAvailability? breakthrough = null,
+        PracticeDirection? activeDirection = null,
+        bool? attainmentMastered = null,
+        bool simplified = false,
+        bool activated = false,
+        bool equipped = false)
     {
         var progressSource = new SkillProgressSource(
             SkillProgressSourceKind.SaveSnapshot,
             $"save:{new string('E', 64)}",
             "test");
+        var actualBreakthrough = breakthrough is null
+            ? SkillProgressField<BreakthroughDirectionAvailability>.Unavailable(
+                "test")
+            : SkillProgressField<BreakthroughDirectionAvailability>.Available(
+                breakthrough,
+                progressSource);
+        var details = studyComplete is null
+            ? null
+            : new[]
+            {
+                new CombatSkillStudyDetailProgress(
+                    "outline-0",
+                    0,
+                    CombatSkillStudyDetailGroup.Outline,
+                    CatalogueField<string>.Available(
+                        "Outline",
+                        new CatalogueSourceReference(
+                            CatalogueSourceKind.EnglishLanguageResource,
+                            "language-en:test",
+                            "LK_CombatSkill_First_Page_Type_0")),
+                    SkillProgressField<CombatSkillStudyState>.Available(
+                        studyComplete.Value
+                            ? CombatSkillStudyState.Read
+                            : CombatSkillStudyState.NotRead,
+                        progressSource),
+                    SkillProgressField<bool>.Available(
+                        activated,
+                        progressSource))
+            };
         return new CharacterCombatSkillProgress(
             characterId,
             new SaveSnapshotIdentity(
                 new string('E', 64),
                 DateTimeOffset.Parse("2026-08-02T12:00:00Z")),
             skillId,
-            SkillProgressField<bool>.Available(true, progressSource),
+            SkillProgressField<bool>.Available(learned, progressSource),
             new CombatSkillProficiencyProgress(
-                SkillProgressField<int>.Available(50, progressSource),
+                proficiencyAvailable
+                    ? SkillProgressField<int>.Available(50, progressSource)
+                    : SkillProgressField<int>.Unavailable("test"),
                 SkillProgressField<int>.Available(100, progressSource),
                 SkillProgressField<decimal>.Available(50m, progressSource)),
-            studyDetails: null,
-            SkillProgressField<BreakthroughDirectionAvailability>.Unavailable(
-                "test"),
-            SkillProgressField<PracticeDirection>.Unavailable("test"),
-            SkillProgressField<bool>.Unavailable("test"),
-            SkillProgressField<bool>.Available(false, progressSource),
-            SkillProgressField<bool>.Available(false, progressSource),
-            SkillProgressField<bool>.Available(false, progressSource));
+            details,
+            actualBreakthrough,
+            activeDirection is null
+                ? SkillProgressField<PracticeDirection>.Unavailable("test")
+                : SkillProgressField<PracticeDirection>.Available(
+                    activeDirection.Value,
+                    progressSource),
+            attainmentMastered is null
+                ? SkillProgressField<bool>.Unavailable("test")
+                : SkillProgressField<bool>.Available(
+                    attainmentMastered.Value,
+                    progressSource),
+            SkillProgressField<bool>.Available(simplified, progressSource),
+            SkillProgressField<bool>.Available(activated, progressSource),
+            SkillProgressField<bool>.Available(equipped, progressSource));
     }
 
     private static CombatSkillDefinitionSourceResult Available(
@@ -947,6 +1385,27 @@ public sealed class CombatSkillCatalogueUseCaseTests
         var source = Substitute.For<ICombatSkillDefinitionSource>();
         source.ReadAsync(Arg.Any<CancellationToken>()).Returns(result);
         return source;
+    }
+
+    private static ICharacterCombatSkillProgressReader ProgressReader(
+        IReadOnlyList<CharacterCombatSkillProgress> progress,
+        IReadOnlyList<CharacterCombatSkillProgressWarning>? warnings = null)
+    {
+        var reader = Substitute.For<ICharacterCombatSkillProgressReader>();
+        var snapshot = progress.FirstOrDefault()?.SaveSnapshot
+            ?? new SaveSnapshotIdentity(
+                new string('E', 64),
+                DateTimeOffset.Parse("2026-08-02T12:00:00Z"));
+        reader.ReadAsync(
+                Arg.Any<CharacterCombatSkillProgressReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(CharacterCombatSkillProgressReadResult.Available(
+                new CharacterCombatSkillProgressMetadata(
+                    snapshot,
+                    "1.0.0-test",
+                    warnings),
+                progress));
+        return reader;
     }
 
     private static ICombatSkillCatalogueRepository Repository(

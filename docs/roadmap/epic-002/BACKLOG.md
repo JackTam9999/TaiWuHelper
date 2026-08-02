@@ -648,7 +648,7 @@ set of typed study details and aggregate completeness used by the atlas.
 
 ### E2-011 — Build catalogue search and character-atlas queries
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -662,29 +662,44 @@ views.
 
 #### Acceptance criteria
 
-- [ ] The join never copies save-derived progress into authoritative static
+- [x] The join never copies save-derived progress into authoritative static
       catalogue state.
-- [ ] Catalogue entries without progress use the exact verified negative or
+- [x] Catalogue entries without progress use the exact verified negative or
       unknown possession label from E2-002.
-- [ ] Progress entries without a static definition remain visible with a
+- [x] Progress entries without a static definition remain visible with a
       diagnostic instead of disappearing.
-- [ ] Search matches Traditional Chinese and English names using deterministic
+- [x] Search matches Traditional Chinese and English names using deterministic
       normalization and fallback.
-- [ ] Filters cover category, grade, faction, equipment type, element, and each
+- [x] Filters cover category, grade, faction, equipment type, element, and each
       independent progress fact required by the epic.
-- [ ] Base grid cost and current character-effective cost remain distinct.
-- [ ] List and detail results carry catalogue freshness, save freshness,
+- [x] Base grid cost and current character-effective cost remain distinct.
+- [x] List and detail results carry catalogue freshness, save freshness,
       provenance, completeness, and warnings.
-- [ ] Paging or virtualization keys are stable across identical queries.
-- [ ] Catalogue rebuild, missing save, stale catalogue, partial localization,
+- [x] Paging or virtualization keys are stable across identical queries.
+- [x] Catalogue rebuild, missing save, stale catalogue, partial localization,
       and unsupported study mapping have explicit result states.
-- [ ] Application tests cover joins, filters, language matching, ordering, and
+- [x] Application tests cover joins, filters, language matching, ordering, and
       all partial-data paths.
 
-#### Evidence when complete
+#### Evidence
 
-- Application use-case test suite.
-- Query contract documentation.
+- [Combat-skill catalogue and character-atlas query contracts](../../architecture/COMBAT-SKILL-ATLAS-QUERIES.md).
+- `ReadCharacterCombatSkillAtlas` builds a deterministic in-memory union by
+  stable skill ID, preserves immutable definition/progress values, retains
+  progress-only entries with diagnostics, and derives exact unlearned state
+  from complete learned-collection absence.
+- Search and atlas requests apply bilingual NFKC/case/whitespace normalization,
+  typed static and independent progress filters, deterministic fallback,
+  bounded paging, and stable `combat-skill:{id}` keys.
+- Atlas and details expose separate base/effective costs, catalogue and save
+  freshness, provenance, warnings, partial-data flags, and explicit rebuild or
+  failure states.
+- `CombatSkillCatalogueUseCaseTests`: 77/77 passed, including join, every
+  filter, unavailable-versus-false semantics, normalization, ordering, paging,
+  detail, rebuild, and partial/failure paths.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal` with installed
+  catalogue verification enabled: 585 total, 582 passed, 0 failed, and 3
+  opt-in save assertions skipped because no save path was supplied.
 
 ### E2-012 — Add information-only catalogue and atlas API endpoints
 
