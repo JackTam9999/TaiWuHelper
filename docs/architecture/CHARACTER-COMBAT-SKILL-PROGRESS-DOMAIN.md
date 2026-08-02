@@ -85,6 +85,8 @@ missing entries.
 
 `CombatSkillStudySummary` is derived:
 
+- `AvailableCount` is `ReadCount + NotReadCount` and excludes unavailable or
+  conflicting detail states from the known denominator;
 - any known `NotRead` detail proves `IsComplete=false`;
 - if every known detail is `Read` but at least one detail is unavailable or
   conflicting, completeness is unavailable, not false;
@@ -92,7 +94,8 @@ missing entries.
 - zero details produces unavailable completeness.
 
 Unavailable details are counted separately and never added to the not-read
-count.
+count. `MissingStudyDetails` exposes the exact ordered known-`NotRead` details;
+`UnavailableStudyDetails` remains a separate ordered collection.
 
 ## Verified combination rules
 

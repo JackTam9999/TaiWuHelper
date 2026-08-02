@@ -935,6 +935,20 @@ public sealed partial class ArchitectureBoundaryTests
                 "TaiWu.Infrastructure",
                 "SaveGames",
                 "TaiwuCharacterCombatSkillProgressReader.cs"));
+        var mapping = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "CombatSkillProgressMapping.cs"));
+        var labels = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "Catalogue",
+                "CombatSkillStudyDetailLabelSource.cs"));
 
         Assert.Contains("GetCharCombatSkills(characterId)", source);
         Assert.Contains("TryGetElement_CombatSkillProficiencies", source);
@@ -944,6 +958,16 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain(
             "typeof(Config.CombatSkill).Assembly.Location",
             source);
+        Assert.Contains("labelSource.ReadAsync", source);
+        Assert.Contains("request.PreferredLanguage", source);
+        Assert.Contains("CombatSkillStudyDetailDecoder.Decode", mapping);
+        Assert.Contains("studyDetails.Details", mapping);
+        Assert.Contains("normalReadDetails", mapping);
+        Assert.DoesNotContain("CountReadNormalPages", mapping);
+        Assert.Contains("before != after", labels);
+        Assert.Contains("TaiwuLanguageCatalog.ReadAsync", labels);
+        Assert.Contains("fingerprintProvider.CaptureAsync", labels);
+        Assert.DoesNotContain("File.Write", labels);
         Assert.DoesNotContain("SaveGameReport", source);
         Assert.DoesNotContain("LegacyReport", source);
         Assert.DoesNotContain("SKILL|", source);

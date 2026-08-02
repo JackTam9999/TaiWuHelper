@@ -26,7 +26,7 @@ public sealed class LocalGameDataIntegrationTests
     private const string Epic2GoldenSaveSha256 =
         "C9EB00A368A6CE25B2D816DAE941AFAC67B6217ED561FF7563F613C3B297CECA";
     private const string Epic2CharacterProgressGoldenSaveSha256 =
-        "77D88A43934E6369F9475AA3742B3161C79A2E9E749BCA6258A2A91391EA0673";
+        "9C30C00CF1ABD05973435B14B724A0A41A1B0DCD7847A8CA04D4E60E2B53C916";
     private const int GoldenPlayerId = 21396;
     private const int GoldenTargetId = 16317;
 
@@ -364,6 +364,17 @@ public sealed class LocalGameDataIntegrationTests
 
     private static string[] DiscoverGameOwnedReadDependencies(string savePath)
     {
+        var catalogueSources = new TaiwuCatalogueSourcePathProvider().Resolve();
+        var languagePaths = catalogueSources.IsAvailable
+            ? new[]
+            {
+                catalogueSources.Paths!
+                    .TraditionalChineseCombatSkillLanguage,
+                catalogueSources.Paths.EnglishCombatSkillLanguage,
+                catalogueSources.Paths.TraditionalChineseUiLanguage,
+                catalogueSources.Paths.EnglishUiLanguage
+            }
+            : [];
         var paths = Directory
             .EnumerateFiles(
                 AppContext.BaseDirectory,
@@ -371,6 +382,7 @@ public sealed class LocalGameDataIntegrationTests
                 SearchOption.TopDirectoryOnly)
             .Where(IsGameRuntimeFile)
             .Append(savePath)
+            .Concat(languagePaths.Where(File.Exists))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Order(StringComparer.OrdinalIgnoreCase)
@@ -603,7 +615,7 @@ public sealed class LocalGameDataIntegrationTests
         Assert.Equal(
             TaiwuCharacterCombatSkillProgressReader.SupportedGameDataVersion,
             result.Metadata.GameDataVersion);
-        Assert.Equal(501, result.Progress.Length);
+        Assert.Equal(506, result.Progress.Length);
         Assert.Equal(
             result.Progress.Select(progress => progress.SkillId).Order(),
             result.Progress.Select(progress => progress.SkillId));
@@ -613,9 +625,11 @@ public sealed class LocalGameDataIntegrationTests
         Assert.Contains(
             result.Metadata.Warnings,
             warning => warning.Code == "PROFICIENCY_PERCENTAGE_UNAVAILABLE");
-        Assert.Contains(
+        Assert.DoesNotContain(
             result.Metadata.Warnings,
-            warning => warning.Code == "STUDY_DETAILS_PENDING_DECODER");
+            warning => warning.Code.StartsWith(
+                "STUDY_DETAIL_",
+                StringComparison.Ordinal));
 
         var reverse = Assert.Single(
             result.Progress,
@@ -641,6 +655,34 @@ public sealed class LocalGameDataIntegrationTests
         Assert.True(zeroState.Learned.Value);
         Assert.False(zeroState.Activated.Value);
         Assert.False(zeroState.Breakthrough.Value.IsBrokenOut);
+        Assert.Equal(15, zeroState.StudyDetails.Length);
+        Assert.Equal(15, zeroState.MissingStudyDetails.Length);
+        Assert.Equal(15, zeroState.StudySummary.AvailableCount);
+        Assert.False(zeroState.StudySummary.IsComplete.Value);
+
+        var fullyRead = Assert.Single(
+            result.Progress,
+            progress => progress.SkillId == 456);
+        Assert.Equal(15, fullyRead.StudySummary.ReadCount);
+        Assert.True(fullyRead.StudySummary.IsComplete.Value);
+        Assert.Empty(fullyRead.MissingStudyDetails);
+        Assert.Equal(
+            [
+                "outline-2", "outline-3", "outline-4",
+                "direct-0", "direct-1", "direct-2", "direct-3", "direct-4",
+                "reverse-4", "reverse-3", "reverse-2", "reverse-1",
+                "reverse-0", "outline-0", "outline-1"
+            ],
+            fullyRead.StudyDetails.Select(detail => detail.DetailId));
+        Assert.Equal("解", fullyRead.StudyDetails[0].Label.Value);
+        Assert.Equal(
+            CatalogueSourceKind.TraditionalChineseLanguageResource,
+            fullyRead.StudyDetails[0].Label.Source!.Kind);
+        Assert.All(
+            fullyRead.StudyDetails.Where(detail =>
+                detail.Group
+                == Domain.CombatSkills.CombatSkillStudyDetailGroup.Reverse),
+            detail => Assert.True(detail.IsActive.Value));
 
         var ready = Assert.Single(
             result.Progress,
@@ -655,7 +697,11 @@ public sealed class LocalGameDataIntegrationTests
             progress =>
             {
                 Assert.False(progress.AttainmentMastered.IsAvailable);
-                Assert.Empty(progress.StudyDetails);
+                Assert.Equal(15, progress.StudyDetails.Length);
+                Assert.Equal(
+                    15,
+                    progress.StudySummary.AvailableCount
+                    + progress.StudySummary.UnavailableCount);
                 Assert.Equal(
                     result.Metadata.SaveSnapshot,
                     progress.SaveSnapshot);
@@ -675,7 +721,17 @@ public sealed class LocalGameDataIntegrationTests
             FieldSignature(progress.AttainmentMastered),
             FieldSignature(progress.Simplified),
             FieldSignature(progress.Activated),
-            FieldSignature(progress.Equipped));
+            FieldSignature(progress.Equipped),
+            string.Join(
+                ';',
+                progress.StudyDetails.Select(detail => string.Join(
+                    ':',
+                    detail.DetailId,
+                    detail.DisplayOrder,
+                    detail.Group,
+                    detail.Label.IsAvailable ? detail.Label.Value : "?",
+                    FieldSignature(detail.ReadState),
+                    FieldSignature(detail.IsActive)))));
 
     private static string FieldSignature<T>(SkillProgressField<T> field) =>
         field.IsAvailable

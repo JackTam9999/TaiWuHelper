@@ -9,6 +9,24 @@ namespace TaiWu.Application.UnitTests.CombatSkills;
 public sealed class CombatSkillCatalogueUseCaseTests
 {
     [Fact]
+    public void Progress_read_request_carries_validated_language_selection()
+    {
+        var defaultRequest = new CharacterCombatSkillProgressReadRequest(42);
+        var english = new CharacterCombatSkillProgressReadRequest(
+            42,
+            CatalogueLanguage.English);
+
+        Assert.Equal(
+            CatalogueLanguage.TraditionalChinese,
+            defaultRequest.PreferredLanguage);
+        Assert.Equal(CatalogueLanguage.English, english.PreferredLanguage);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new CharacterCombatSkillProgressReadRequest(
+                42,
+                (CatalogueLanguage)999));
+    }
+
+    [Fact]
     public async Task Status_is_current_only_when_manifest_and_count_match()
     {
         var definitions = Definitions();
@@ -598,7 +616,9 @@ public sealed class CombatSkillCatalogueUseCaseTests
             });
         await progressReader.Received(1).ReadAsync(
             Arg.Is<CharacterCombatSkillProgressReadRequest>(request =>
-                request != null && request.CharacterId == 42),
+                request != null
+                && request.CharacterId == 42
+                && request.PreferredLanguage == CatalogueLanguage.English),
             CancellationToken);
     }
 

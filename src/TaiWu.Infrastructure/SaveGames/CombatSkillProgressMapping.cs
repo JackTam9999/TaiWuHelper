@@ -1,6 +1,8 @@
+using GameData.Domains.CombatSkill;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Infrastructure.Catalogue;
 
 namespace TaiWu.Infrastructure.SaveGames;
 
@@ -20,13 +22,25 @@ internal static class CombatSkillProgressMapping
         int characterId,
         SaveSnapshotIdentity snapshot,
         RawCharacterCombatSkillProgress raw,
+        string gameDataVersion,
+        CombatSkillStudyDetailLabelSet labels,
         ICollection<CharacterCombatSkillProgressWarning> warnings)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(raw);
+        ArgumentException.ThrowIfNullOrWhiteSpace(gameDataVersion);
+        ArgumentNullException.ThrowIfNull(labels);
         ArgumentNullException.ThrowIfNull(warnings);
 
         var saveIdentity = $"save:{snapshot.Sha256}";
+        var studyDetails = CombatSkillStudyDetailDecoder.Decode(
+            gameDataVersion,
+            saveIdentity,
+            raw.SkillId,
+            raw.ReadingState,
+            raw.ActivationState,
+            labels,
+            warnings);
         var learned = SkillProgressField<bool>.Available(
             raw.Learned,
             SaveSource(saveIdentity, raw.SkillId, "learned-membership"));
@@ -34,15 +48,11 @@ internal static class CombatSkillProgressMapping
             saveIdentity,
             raw,
             warnings);
-        var breakthrough = MapSnapshotValue(
-            CombatSnapshotMapping.MapBreakthroughDirectionAvailability(
-                raw.ReadingState,
-                raw.ActivationState,
-                raw.MeetsBreakthroughReadingRequirement,
-                raw.SkillId),
-            SaveSource(saveIdentity, raw.SkillId, "breakthrough"),
-            warnings,
-            "BREAKTHROUGH_STATE_UNAVAILABLE");
+        var breakthrough = MapBreakthrough(
+            saveIdentity,
+            raw,
+            studyDetails,
+            warnings);
         var direction = MapSnapshotValue(
             CombatSnapshotMapping.MapActivePracticeDirection(
                 raw.ActivationState,
@@ -53,6 +63,7 @@ internal static class CombatSkillProgressMapping
         var activated = MapActivation(
             saveIdentity,
             raw,
+            studyDetails,
             warnings);
 
         return new CharacterCombatSkillProgress(
@@ -61,7 +72,7 @@ internal static class CombatSkillProgressMapping
             raw.SkillId,
             learned,
             proficiency,
-            studyDetails: null,
+            studyDetails.Details,
             breakthrough,
             direction,
             SkillProgressField<bool>.Unavailable(
@@ -122,29 +133,134 @@ internal static class CombatSkillProgressMapping
     private static SkillProgressField<bool> MapActivation(
         string saveIdentity,
         RawCharacterCombatSkillProgress raw,
+        CombatSkillStudyDetailDecodeResult studyDetails,
         ICollection<CharacterCombatSkillProgressWarning> warnings)
     {
-        var details = CombatSnapshotMapping.MapStudyDetails(
-            raw.ReadingState,
-            raw.ActivationState,
-            raw.SkillId);
         var source = SaveSource(
             saveIdentity,
             raw.SkillId,
             "activation-state");
-        if (details.IsAvailable)
+        if (studyDetails.IsVersionSupported
+            && studyDetails.IsActivationStateSupported)
         {
             return SkillProgressField<bool>.Available(
-                details.Value.Any(detail => detail.IsActive),
+                studyDetails.Details.Any(detail => detail.IsActive.Value),
                 source);
         }
 
-        var reason = details.UnavailableReason
+        var reason = studyDetails.UnavailableReason
             ?? $"Skill {raw.SkillId} has an unsupported activation state.";
         warnings.Add(new CharacterCombatSkillProgressWarning(
             "ACTIVATION_STATE_UNSUPPORTED",
             reason));
         return SkillProgressField<bool>.Unavailable(reason, source);
+    }
+
+    private static SkillProgressField<BreakthroughDirectionAvailability>
+        MapBreakthrough(
+            string saveIdentity,
+            RawCharacterCombatSkillProgress raw,
+            CombatSkillStudyDetailDecodeResult studyDetails,
+            ICollection<CharacterCombatSkillProgressWarning> warnings)
+    {
+        var source = SaveSource(
+            saveIdentity,
+            raw.SkillId,
+            "breakthrough");
+        if (!studyDetails.IsVersionSupported
+            || !studyDetails.IsReadingStateSupported
+            || !studyDetails.IsActivationStateSupported)
+        {
+            return BreakthroughUnavailable(
+                raw.SkillId,
+                studyDetails.UnavailableReason,
+                source,
+                warnings);
+        }
+
+        if (CombatSkillStateHelper.IsBrokenOut((ushort)raw.ActivationState))
+        {
+            return SkillProgressField<BreakthroughDirectionAvailability>
+                .Available(
+                    new BreakthroughDirectionAvailability(
+                        isBrokenOut: true,
+                        canBreakthroughNow: false,
+                        availableDirections: []),
+                    source);
+        }
+
+        if (!raw.MeetsBreakthroughReadingRequirement)
+        {
+            return SkillProgressField<BreakthroughDirectionAvailability>
+                .Available(
+                    new BreakthroughDirectionAvailability(
+                        isBrokenOut: false,
+                        canBreakthroughNow: false,
+                        availableDirections: []),
+                    source);
+        }
+
+        var normalReadDetails = studyDetails.Details.Where(detail =>
+            detail.Group is Domain.CombatSkills.CombatSkillStudyDetailGroup.Direct
+                or Domain.CombatSkills.CombatSkillStudyDetailGroup.Reverse
+            && detail.ReadState.Value == CombatSkillStudyState.Read);
+        var directCount = normalReadDetails.Count(detail =>
+            detail.Group
+            == Domain.CombatSkills.CombatSkillStudyDetailGroup.Direct);
+        var reverseCount = normalReadDetails.Count(detail =>
+            detail.Group
+            == Domain.CombatSkills.CombatSkillStudyDetailGroup.Reverse);
+        if (directCount + reverseCount < 5)
+        {
+            return BreakthroughUnavailable(
+                raw.SkillId,
+                $"Skill {raw.SkillId} was reported as satisfying the "
+                + "reading prerequisite, but its decoded details do not "
+                + "contain the required five normal pages.",
+                source,
+                warnings);
+        }
+
+        List<PracticeDirection> directions = [];
+        if (directCount >= 3)
+        {
+            directions.Add(PracticeDirection.Direct);
+        }
+
+        if (reverseCount >= 3)
+        {
+            directions.Add(PracticeDirection.Reverse);
+        }
+
+        return directions.Count == 0
+            ? BreakthroughUnavailable(
+                raw.SkillId,
+                $"Skill {raw.SkillId} can break through, but its decoded "
+                + "details do not produce a Direct or Reverse result.",
+                source,
+                warnings)
+            : SkillProgressField<BreakthroughDirectionAvailability>.Available(
+                new BreakthroughDirectionAvailability(
+                    isBrokenOut: false,
+                    canBreakthroughNow: true,
+                    directions),
+                source);
+    }
+
+    private static SkillProgressField<BreakthroughDirectionAvailability>
+        BreakthroughUnavailable(
+            int skillId,
+            string? reason,
+            SkillProgressSource source,
+            ICollection<CharacterCombatSkillProgressWarning> warnings)
+    {
+        var actualReason = reason
+            ?? $"Skill {skillId} has unavailable decoded study details.";
+        warnings.Add(new CharacterCombatSkillProgressWarning(
+            "BREAKTHROUGH_STATE_UNAVAILABLE",
+            actualReason));
+        return SkillProgressField<BreakthroughDirectionAvailability>
+            .Unavailable(actualReason, source);
     }
 
     private static SkillProgressField<T> MapSnapshotValue<T>(

@@ -117,11 +117,18 @@ public sealed class CharacterCombatSkillProgressTests
                 "Activation is partial."));
 
         Assert.Equal(3, progress.StudySummary.TotalCount);
+        Assert.Equal(2, progress.StudySummary.AvailableCount);
         Assert.Equal(1, progress.StudySummary.ReadCount);
         Assert.Equal(1, progress.StudySummary.NotReadCount);
         Assert.Equal(1, progress.StudySummary.UnavailableCount);
         Assert.True(progress.StudySummary.IsComplete.IsAvailable);
         Assert.False(progress.StudySummary.IsComplete.Value);
+        Assert.Equal(
+            ["direct-0"],
+            progress.MissingStudyDetails.Select(detail => detail.DetailId));
+        Assert.Equal(
+            ["reverse-0"],
+            progress.UnavailableStudyDetails.Select(detail => detail.DetailId));
     }
 
     [Fact]
@@ -137,6 +144,7 @@ public sealed class CharacterCombatSkillProgressTests
                 "Activation is partial."));
 
         Assert.Equal(0, progress.StudySummary.NotReadCount);
+        Assert.Equal(1, progress.StudySummary.AvailableCount);
         Assert.Equal(1, progress.StudySummary.UnavailableCount);
         Assert.False(progress.StudySummary.IsComplete.IsAvailable);
         Assert.Contains(

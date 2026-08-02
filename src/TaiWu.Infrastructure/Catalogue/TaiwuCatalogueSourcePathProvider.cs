@@ -5,7 +5,16 @@ namespace TaiWu.Infrastructure.Catalogue;
 internal sealed record TaiwuCatalogueSourcePaths(
     string GameDataConfigurationAssembly,
     string TraditionalChineseCombatSkillLanguage,
-    string EnglishCombatSkillLanguage);
+    string EnglishCombatSkillLanguage)
+{
+    internal string TraditionalChineseUiLanguage => Path.Combine(
+        Path.GetDirectoryName(TraditionalChineseCombatSkillLanguage)!,
+        "ui_language.txt");
+
+    internal string EnglishUiLanguage => Path.Combine(
+        Path.GetDirectoryName(EnglishCombatSkillLanguage)!,
+        "ui_language.txt");
+}
 
 internal sealed record TaiwuCatalogueSourcePathResult(
     TaiwuCatalogueSourcePaths? Paths,

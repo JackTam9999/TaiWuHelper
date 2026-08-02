@@ -31,7 +31,8 @@ public sealed class ReadCharacterCombatSkillAtlas(
         {
             progress = await progressReader.ReadAsync(
                     new CharacterCombatSkillProgressReadRequest(
-                        request.CharacterId),
+                        request.CharacterId,
+                        request.PreferredLanguage),
                     cancellationToken)
                 .ConfigureAwait(false);
         }

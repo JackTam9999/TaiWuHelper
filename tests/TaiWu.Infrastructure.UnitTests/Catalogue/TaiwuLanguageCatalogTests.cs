@@ -75,6 +75,14 @@ public sealed class TaiwuLanguageCatalogTests
                 "CombatSkill_language.txt"),
             result.Paths.EnglishCombatSkillLanguage,
             StringComparison.Ordinal);
+        Assert.EndsWith(
+            Path.Combine("Language_CNH", "ui_language.txt"),
+            result.Paths.TraditionalChineseUiLanguage,
+            StringComparison.Ordinal);
+        Assert.EndsWith(
+            Path.Combine("Language_EN", "ui_language.txt"),
+            result.Paths.EnglishUiLanguage,
+            StringComparison.Ordinal);
     }
 
     private sealed class TemporaryDirectory : IDisposable

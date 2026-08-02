@@ -89,12 +89,14 @@ public sealed record CombatSkillStudySummary
 {
     internal CombatSkillStudySummary(
         int totalCount,
+        int availableCount,
         int readCount,
         int notReadCount,
         int unavailableCount,
         SkillProgressField<bool> isComplete)
     {
         TotalCount = totalCount;
+        AvailableCount = availableCount;
         ReadCount = readCount;
         NotReadCount = notReadCount;
         UnavailableCount = unavailableCount;
@@ -102,6 +104,8 @@ public sealed record CombatSkillStudySummary
     }
 
     public int TotalCount { get; }
+
+    public int AvailableCount { get; }
 
     public int ReadCount { get; }
 

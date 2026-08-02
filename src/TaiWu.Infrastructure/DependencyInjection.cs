@@ -31,10 +31,13 @@ public static class DependencyInjection
         services.AddSingleton<
             ICombatSkillDefinitionSource,
             TaiwuCombatSkillDefinitionSource>();
+        services.AddSingleton<CombatSkillStudyDetailLabelSource>();
         services.AddSingleton<ICharacterCombatSkillProgressReader>(provider =>
             new TaiwuCharacterCombatSkillProgressReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
+                provider.GetRequiredService<
+                    CombatSkillStudyDetailLabelSource>(),
                 TimeProvider.System));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();

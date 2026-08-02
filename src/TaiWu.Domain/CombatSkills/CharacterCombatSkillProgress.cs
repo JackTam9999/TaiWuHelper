@@ -95,6 +95,14 @@ public sealed class CharacterCombatSkillProgress :
         Learned = learned;
         Proficiency = proficiency;
         StudyDetails = details;
+        MissingStudyDetails = details
+            .Where(detail =>
+                detail.ReadState.IsAvailable
+                && detail.ReadState.Value == CombatSkillStudyState.NotRead)
+            .ToImmutableArray();
+        UnavailableStudyDetails = details
+            .Where(detail => !detail.ReadState.IsAvailable)
+            .ToImmutableArray();
         StudySummary = Summarize(details);
         Breakthrough = breakthrough;
         ActiveDirection = activeDirection;
@@ -115,6 +123,13 @@ public sealed class CharacterCombatSkillProgress :
     public CombatSkillProficiencyProgress Proficiency { get; }
 
     public ImmutableArray<CombatSkillStudyDetailProgress> StudyDetails { get; }
+
+    public ImmutableArray<CombatSkillStudyDetailProgress> MissingStudyDetails
+    { get; }
+
+    public ImmutableArray<CombatSkillStudyDetailProgress>
+        UnavailableStudyDetails
+    { get; }
 
     public CombatSkillStudySummary StudySummary { get; }
 
@@ -263,6 +278,7 @@ public sealed class CharacterCombatSkillProgress :
 
         return new CombatSkillStudySummary(
             details.Length,
+            read + notRead,
             read,
             notRead,
             unavailable,

@@ -4,16 +4,18 @@ using GameData.Domains.CombatSkill;
 using System.Diagnostics;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSkills;
+using TaiWu.Infrastructure.Catalogue;
 
 namespace TaiWu.Infrastructure.SaveGames;
 
 internal sealed class TaiwuCharacterCombatSkillProgressReader(
     TaiwuArchiveReadSession readSession,
     ITaiwuSaveFilePathProvider saveFilePathProvider,
+    CombatSkillStudyDetailLabelSource labelSource,
     TimeProvider timeProvider) : ICharacterCombatSkillProgressReader
 {
     internal const string SupportedGameDataVersion =
-        "1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a";
+        CombatSkillStudyDetailDecoder.SupportedGameDataVersion;
 
     public async Task<CharacterCombatSkillProgressReadResult> ReadAsync(
         CharacterCombatSkillProgressReadRequest request,
@@ -43,12 +45,17 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
 
         try
         {
+            var labels = await labelSource.ReadAsync(
+                    request.PreferredLanguage,
+                    cancellationToken)
+                .ConfigureAwait(false);
             return await readSession.ReadAsync(
                     located.SaveFilePath!,
                     (context, token) => Project(
                         context,
                         request.CharacterId,
                         gameDataVersion,
+                        labels,
                         token),
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -77,6 +84,7 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
         TaiwuArchiveReadContext context,
         int characterId,
         string gameDataVersion,
+        CombatSkillStudyDetailLabelSet labels,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -92,6 +100,7 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
             context.SourceFingerprint.Sha256,
             timeProvider.GetUtcNow());
         List<CharacterCombatSkillProgressWarning> warnings = [];
+        warnings.AddRange(labels.Warnings);
         if (context.LoadWarning is not null)
         {
             warnings.Add(new CharacterCombatSkillProgressWarning(
@@ -107,11 +116,6 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
         warnings.Add(new CharacterCombatSkillProgressWarning(
             "PROFICIENCY_PERCENTAGE_UNAVAILABLE",
             "The displayed proficiency percentage conversion is not verified."));
-        warnings.Add(new CharacterCombatSkillProgressWarning(
-            "STUDY_DETAILS_PENDING_DECODER",
-            "Individual study details remain unavailable until the "
-            + "version-specific E2-010 decoder is applied."));
-
         HashSet<short> equippedSkillIds = [];
         character.GetCombatSkillEquipment().GetValidSkills(equippedSkillIds);
         var sourceSkills =
@@ -141,6 +145,8 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
                 characterId,
                 snapshot,
                 raw,
+                gameDataVersion,
+                labels,
                 warnings));
         }
 

@@ -39,7 +39,10 @@ public interface ICharacterCombatSkillProgressReader
 
 public sealed record CharacterCombatSkillProgressReadRequest
 {
-    public CharacterCombatSkillProgressReadRequest(int characterId)
+    public CharacterCombatSkillProgressReadRequest(
+        int characterId,
+        CatalogueLanguage preferredLanguage =
+            CatalogueLanguage.TraditionalChinese)
     {
         if (characterId < 0)
         {
@@ -49,10 +52,21 @@ public sealed record CharacterCombatSkillProgressReadRequest
                 "A character ID cannot be negative.");
         }
 
+        if (!Enum.IsDefined(preferredLanguage))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(preferredLanguage),
+                preferredLanguage,
+                "Unknown catalogue language.");
+        }
+
         CharacterId = characterId;
+        PreferredLanguage = preferredLanguage;
     }
 
     public int CharacterId { get; }
+
+    public CatalogueLanguage PreferredLanguage { get; }
 }
 
 public sealed record CombatSkillCatalogueFilter

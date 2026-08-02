@@ -599,7 +599,7 @@ session and do not parse legacy diagnostic lines.
 
 ### E2-010 — Decode individual study details and completeness
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -612,26 +612,37 @@ set of typed study details and aggregate completeness used by the atlas.
 
 #### Acceptance criteria
 
-- [ ] The decoder is selected only for game versions covered by verified
+- [x] The decoder is selected only for game versions covered by verified
       evidence.
-- [ ] Every verified detail has stable ID, order, group, localized label source,
+- [x] Every verified detail has stable ID, order, group, localized label source,
       and studied state.
-- [ ] Unrecognized bits or values are preserved in diagnostics and make the
+- [x] Unrecognized bits or values are preserved in diagnostics and make the
       affected completeness result partial or unavailable.
-- [ ] Studied count excludes unavailable details from both numerator and any
+- [x] Studied count excludes unavailable details from both numerator and any
       claimed complete denominator.
-- [ ] Missing-detail output lists exact verified details, not only a percentage.
-- [ ] Breakthrough-direction availability uses the same decoded source rather
+- [x] Missing-detail output lists exact verified details, not only a percentage.
+- [x] Breakthrough-direction availability uses the same decoded source rather
       than an independent contradictory bit-count implementation.
-- [ ] Unsupported game versions produce a clear warning and no fabricated
+- [x] Unsupported game versions produce a clear warning and no fabricated
       detail map.
-- [ ] Tests cover none, partial, complete, Direct, Reverse, mixed, unknown-bit,
+- [x] Tests cover none, partial, complete, Direct, Reverse, mixed, unknown-bit,
       malformed, and unsupported-version cases.
 
 #### Evidence when complete
 
-- Decoder truth table tied to E2-002 evidence.
-- Domain and mapping tests for every verified detail.
+- [Versioned combat-skill study-detail decoder](../../architecture/COMBAT-SKILL-STUDY-DETAIL-DECODER.md),
+  including the truth table tied to E2-002 evidence.
+- Domain, Application, label-source, mapping, architecture, and opt-in golden
+  integration tests cover every verified detail and failure mode.
+- The 2026-08-02 golden save fingerprint is
+  `9C30C00CF1ABD05973435B14B724A0A41A1B0DCD7847A8CA04D4E60E2B53C916`.
+  Two reads produced the same 506-entry overlay. Skill `456` had all 15 details
+  read with the five Reverse details active; skill `498` exposed the exact 15
+  missing details. All guarded save, GameData, and selected language-resource
+  fingerprints matched before and after.
+- Focused golden integration: 1 passed, 0 failed, 0 skipped. Full solution with
+  local catalogue integration: 571 passed, 0 failed, and 3 intentionally
+  save-dependent assertions skipped.
 
 ## Slice 5: Joined queries and API
 

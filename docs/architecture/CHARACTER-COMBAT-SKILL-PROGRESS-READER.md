@@ -29,17 +29,18 @@ skill ID, the adapter maps these facts independently:
 | Proficiency current | `ExtraDomain.TryGetElement_CombatSkillProficiencies(CombatSkillKey, out int)`; a missing key is unavailable and an out-of-range value becomes unavailable with a warning. |
 | Proficiency maximum | Verified GameData limit `999999999`, with E2-002 rule provenance. |
 | Proficiency percentage | Unavailable because the persisted-to-visible conversion remains unverified. |
-| Breakthrough | The existing E2-002 mapper combines reading state, activation state, `CanBreakout`, completed breakthrough, and achievable directions. |
+| Breakthrough | The E2-010 mapper combines the decoded detail collection, activation state, `CanBreakout`, completed breakthrough, and achievable directions. |
 | Active direction | Derived only from a supported activation state with completed breakthrough. |
 | Attainment mastery | Unavailable because the save rule for the player-facing `已大成` label remains unverified. |
 | Simplified | `ExtraDomain.IsCombatSkillMasteredByCharacter`; deliberately not labeled attainment mastery. |
 | Activated | Whether any supported activation-state page bit is active. |
 | Equipped | Membership in `CombatSkillEquipment.GetValidSkills`. |
 
-Individual study-detail values remain empty with an explicit metadata warning
-until E2-010 applies the version-selected detail decoder. This prevents E2-009
-from creating a second partial decoder while retaining all raw inputs needed by
-the already verified breakthrough/activation mapping.
+The version-selected E2-010 decoder emits all 15 verified detail identities in
+clockwise wheel order. Read and active states remain independent; exact missing
+details and aggregate completeness are derived by the Domain model. Labels are
+read from the selected installed UI language resource with fingerprint
+provenance.
 
 ## Snapshot metadata and failures
 
