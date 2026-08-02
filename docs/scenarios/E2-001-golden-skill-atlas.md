@@ -81,25 +81,25 @@ language packs by the same stable `Name_<skillId>` key.
 | Reverse broken-through/mastered | 40 is visibly Reverse and `已大成` |
 | Equipped or activated | 40 and 41 are equipped in the persisted snapshot; several skills have non-zero raw activation states |
 | Partial study details | 456 has five visually highlighted wheel sectors; their meaning remains a required E2-002 result |
-| Missing or unsupported | Per-detail semantics, not-obtained semantics, and the save's all-false mastery result remain explicitly unsupported or conflicting |
+| Missing or unsupported | The save rule for `已大成`, the visible percentage conversion, and runtime power remain explicitly unavailable |
 
-## Deliberate conflicts
+## Resolved source distinctions
 
-The read-only diagnostic snapshot reports `mastered=False` for every one of its
-484 combat-skill records, while the newer screen labels multiple skills
-`已大成`. It also reports `read=32767` for 黑血蠱降 while the newer detail
-screen shows `50%` and only five visually highlighted sectors.
+E2-002 established that the apparent conflicts are separate measurements; see
+[combat-skill progress semantics](../architecture/COMBAT-SKILL-PROGRESS-SEMANTICS.md).
+The diagnostic `mastered=False` value is membership in the martial-art
+simplification list (`功法精解`), not the `已大成` attainment label.
 
-These differences are not corrected in evidence. They establish requirements
-for E2-002 and the eventual atlas:
+For 黑血蠱降, `read=32767` means all fifteen page details were read, while
+`active=31744` selects the five Reverse details. That activation mask exactly
+matches the five orange sectors `用`, `奇`, `巧`, `化`, and `絕` in the newer
+screen. The visible `50%` is a separate measurement whose persisted conversion
+is unavailable in this older disk snapshot.
 
-- Mastery must be mapped from verified semantics and carry source freshness.
-- The centre percentage, segmented indicator, and wheel sectors must not be
-  assumed to be the same measurement.
-- A newer screen observation and an older save value may both be retained with
-  provenance; the UI must not silently overwrite or merge them.
-- Zero raw reading and activation values must not be labeled `未取得` until the
-  collection and possession semantics are verified.
+The eventual atlas must therefore preserve source freshness, keep the centre
+percentage separate from page state, and retain read and active bits
+independently. Zero reading and activation values also do not mean
+`未取得`: the installed learned-skill API includes skill `498`.
 
 ## Fingerprint preservation
 

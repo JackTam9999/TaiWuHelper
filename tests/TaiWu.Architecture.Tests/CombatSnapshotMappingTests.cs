@@ -54,9 +54,8 @@ public sealed class CombatSnapshotMappingTests
     [Fact]
     public void Skill_without_completed_breakthrough_has_no_active_direction()
     {
-        var direction = CombatSnapshotMapping.MapPracticeDirection(
-            direction: -1,
-            isBrokenOut: false,
+        var direction = CombatSnapshotMapping.MapActivePracticeDirection(
+            activationState: 0,
             skillId: 686);
 
         Assert.False(direction.IsAvailable);
@@ -64,16 +63,20 @@ public sealed class CombatSnapshotMappingTests
         Assert.Contains("breakthrough", direction.UnavailableReason);
     }
 
-    [Fact]
-    public void Broken_out_reverse_skill_maps_as_reverse()
+    [Theory]
+    [InlineData(40, 14881, PracticeDirection.Reverse)]
+    [InlineData(41, 996, PracticeDirection.Direct)]
+    public void Golden_broken_out_skill_maps_its_active_direction(
+        int skillId,
+        int activationState,
+        PracticeDirection expected)
     {
-        var direction = CombatSnapshotMapping.MapPracticeDirection(
-            direction: 1,
-            isBrokenOut: true,
-            skillId: 686);
+        var direction = CombatSnapshotMapping.MapActivePracticeDirection(
+            activationState,
+            skillId);
 
         Assert.True(direction.IsAvailable);
-        Assert.Equal(PracticeDirection.Reverse, direction.Value);
+        Assert.Equal(expected, direction.Value);
     }
 
     [Fact]
@@ -82,8 +85,8 @@ public sealed class CombatSnapshotMappingTests
         var availability = CombatSnapshotMapping
             .MapBreakthroughDirectionAvailability(
                 readingState: 9928,
-                isBrokenOut: false,
-                canBreakthroughNow: true,
+                activationState: 9920,
+                meetsReadingRequirement: true,
                 skillId: 686);
 
         Assert.True(availability.IsAvailable);
@@ -102,8 +105,8 @@ public sealed class CombatSnapshotMappingTests
         var availability = CombatSnapshotMapping
             .MapBreakthroughDirectionAvailability(
                 outlineAndAllNormalPages,
-                isBrokenOut: false,
-                canBreakthroughNow: true,
+                activationState: 0,
+                meetsReadingRequirement: true,
                 skillId: 100);
 
         Assert.True(availability.IsAvailable);
@@ -118,13 +121,137 @@ public sealed class CombatSnapshotMappingTests
         var availability = CombatSnapshotMapping
             .MapBreakthroughDirectionAvailability(
                 readingState: 9928,
-                isBrokenOut: false,
-                canBreakthroughNow: false,
+                activationState: 9920,
+                meetsReadingRequirement: false,
                 skillId: 686);
 
         Assert.True(availability.IsAvailable);
         Assert.False(availability.Value.CanBreakthroughNow);
         Assert.Empty(availability.Value.AvailableDirections);
+    }
+
+    [Fact]
+    public void Completed_breakthrough_is_not_reported_as_immediately_ready()
+    {
+        const int completeReadingState = 32767;
+        const int outlineAndDirectPages = 1 | (31 << 5);
+
+        var availability = CombatSnapshotMapping
+            .MapBreakthroughDirectionAvailability(
+                completeReadingState,
+                outlineAndDirectPages,
+                meetsReadingRequirement: true,
+                skillId: 41);
+
+        Assert.True(availability.IsAvailable);
+        Assert.True(availability.Value.IsBrokenOut);
+        Assert.False(availability.Value.CanBreakthroughNow);
+        Assert.Empty(availability.Value.AvailableDirections);
+    }
+
+    [Fact]
+    public void Reading_prerequisite_must_match_the_page_bits()
+    {
+        var availability = CombatSnapshotMapping
+            .MapBreakthroughDirectionAvailability(
+                readingState: 1,
+                activationState: 0,
+                meetsReadingRequirement: true,
+                skillId: 100);
+
+        Assert.False(availability.IsAvailable);
+        Assert.Contains("five normal pages", availability.UnavailableReason);
+    }
+
+    [Fact]
+    public void Study_details_preserve_read_and_active_bits_independently()
+    {
+        const int completeReadingState = 32767;
+        const int allReversePagesActive = 31 << 10;
+
+        var mapped = CombatSnapshotMapping.MapStudyDetails(
+            completeReadingState,
+            allReversePagesActive,
+            skillId: 456);
+
+        Assert.True(mapped.IsAvailable);
+        Assert.Equal(15, mapped.Value.Count);
+        Assert.All(mapped.Value, detail => Assert.True(detail.IsRead));
+        Assert.All(
+            mapped.Value.Where(detail =>
+                detail.Group == CombatSkillStudyDetailGroup.Reverse),
+            detail => Assert.True(detail.IsActive));
+        Assert.All(
+            mapped.Value.Where(detail =>
+                detail.Group != CombatSkillStudyDetailGroup.Reverse),
+            detail => Assert.False(detail.IsActive));
+    }
+
+    [Fact]
+    public void Study_details_have_stable_groups_keys_and_wheel_order()
+    {
+        var mapped = CombatSnapshotMapping.MapStudyDetails(
+            readingState: 0,
+            activationState: 0,
+            skillId: 498);
+
+        Assert.True(mapped.IsAvailable);
+        Assert.Equal(
+            Enumerable.Range(0, 15),
+            mapped.Value.Select(detail => detail.InternalIndex));
+        Assert.Equal(
+            Enumerable.Range(0, 15),
+            mapped.Value.OrderBy(detail => detail.WheelOrder)
+                .Select(detail => detail.WheelOrder));
+        Assert.Equal(
+            [
+                "outline-2", "outline-3", "outline-4",
+                "direct-0", "direct-1", "direct-2", "direct-3", "direct-4",
+                "reverse-4", "reverse-3", "reverse-2", "reverse-1",
+                "reverse-0", "outline-0", "outline-1"
+            ],
+            mapped.Value.OrderBy(detail => detail.WheelOrder)
+                .Select(detail => detail.StableId));
+        Assert.Equal("outline-0", mapped.Value[0].StableId);
+        Assert.Equal(
+            "LK_CombatSkill_First_Page_Type_0",
+            mapped.Value[0].LocalizationKey);
+        Assert.Equal("direct-0", mapped.Value[5].StableId);
+        Assert.Equal(
+            "LK_CombatSkill_Direct_Page_0",
+            mapped.Value[5].LocalizationKey);
+        Assert.Equal("reverse-4", mapped.Value[14].StableId);
+        Assert.Equal(
+            "LK_CombatSkill_Reverse_Page_4",
+            mapped.Value[14].LocalizationKey);
+    }
+
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(32768, 0)]
+    [InlineData(0, -1)]
+    [InlineData(0, 32768)]
+    public void Unsupported_study_state_remains_unavailable(
+        int readingState,
+        int activationState)
+    {
+        var mapped = CombatSnapshotMapping.MapStudyDetails(
+            readingState,
+            activationState,
+            skillId: 100);
+
+        Assert.False(mapped.IsAvailable);
+    }
+
+    [Fact]
+    public void Unsupported_activation_state_has_no_practice_direction()
+    {
+        var direction = CombatSnapshotMapping.MapActivePracticeDirection(
+            activationState: 32768,
+            skillId: 100);
+
+        Assert.False(direction.IsAvailable);
+        Assert.Contains("activation state", direction.UnavailableReason);
     }
 
     [Theory]

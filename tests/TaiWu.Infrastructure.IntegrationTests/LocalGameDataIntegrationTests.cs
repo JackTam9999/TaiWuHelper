@@ -2,7 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Security.Cryptography;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.Localization;
+using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
+using TaiWu.Domain.SaveGames;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -10,6 +12,8 @@ namespace TaiWu.Infrastructure.IntegrationTests;
 public sealed class LocalGameDataIntegrationTests
 {
     private const string SavePathVariable = "TAIWU_INTEGRATION_SAVE_PATH";
+    private const string Epic2GoldenSaveSha256 =
+        "C9EB00A368A6CE25B2D816DAE941AFAC67B6217ED561FF7563F613C3B297CECA";
     private const int GoldenPlayerId = 21396;
     private const int GoldenTargetId = 16317;
 
@@ -230,6 +234,92 @@ public sealed class LocalGameDataIntegrationTests
         Assert.All(
             components,
             component => Assert.DoesNotContain("_", component));
+    }
+
+    [Fact]
+    public async Task Golden_skill_progression_is_repeatable_and_read_only()
+    {
+        var savePath = RequireSavePath();
+        var guardedPaths = DiscoverGameOwnedReadDependencies(savePath);
+        var before = await CaptureAsync(guardedPaths);
+        Assert.SkipUnless(
+            string.Equals(
+                before[savePath].Sha256,
+                Epic2GoldenSaveSha256,
+                StringComparison.OrdinalIgnoreCase),
+            "E2-002 skipped: the configured save does not match the "
+            + "E2-001 golden fingerprint.");
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var reader = provider.GetRequiredService<ISaveGameReader>();
+
+            var first = await reader.ReadAsync(
+                new SaveGameReadRequest(savePath),
+                TestContext.Current.CancellationToken);
+            var second = await reader.ReadAsync(
+                new SaveGameReadRequest(savePath),
+                TestContext.Current.CancellationToken);
+
+            AssertGoldenSkillProgress(first);
+            AssertGoldenSkillProgress(second);
+            Assert.Equal(first.Lines, second.Lines);
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            AssertUnchanged(before, after);
+        }
+    }
+
+    private static void AssertGoldenSkillProgress(SaveGameReport rawReport)
+    {
+        AssertRawSkill(
+            rawReport,
+            skillId: 40,
+            "read=32767",
+            "active=14881");
+        AssertRawSkill(
+            rawReport,
+            skillId: 41,
+            "read=32767",
+            "active=996");
+        AssertRawSkill(
+            rawReport,
+            skillId: 361,
+            "read=4",
+            "active=0");
+        AssertRawSkill(
+            rawReport,
+            skillId: 456,
+            "read=32767",
+            "active=31744");
+        AssertRawSkill(
+            rawReport,
+            skillId: 498,
+            "read=0",
+            "active=0");
+        AssertRawSkill(
+            rawReport,
+            skillId: 686,
+            "read=9928",
+            "active=9920");
+    }
+
+    private static void AssertRawSkill(
+        SaveGameReport report,
+        int skillId,
+        params string[] expectedFields)
+    {
+        var line = Assert.Single(
+            report.Lines,
+            value => value.StartsWith(
+                $"SKILL|{skillId}|",
+                StringComparison.Ordinal));
+        Assert.All(expectedFields, field => Assert.Contains(field, line));
     }
 
     private static void AssertUnchanged(

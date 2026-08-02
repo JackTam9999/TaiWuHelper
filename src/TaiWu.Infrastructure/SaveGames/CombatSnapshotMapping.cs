@@ -1,3 +1,4 @@
+using GameData.Domains.CombatSkill;
 using TaiWu.Domain.CombatSnapshots;
 
 namespace TaiWu.Infrastructure.SaveGames;
@@ -71,9 +72,8 @@ internal static class CombatSnapshotMapping
         };
     }
 
-    public static SnapshotValue<PracticeDirection> MapPracticeDirection(
-        int direction,
-        bool isBrokenOut,
+    public static SnapshotValue<PracticeDirection> MapActivePracticeDirection(
+        int activationState,
         int skillId)
     {
         if (skillId < 0)
@@ -84,18 +84,35 @@ internal static class CombatSnapshotMapping
                 "Skill ID cannot be negative.");
         }
 
-        return isBrokenOut
-            ? MapPracticeDirection(direction)
-            : SnapshotValue<PracticeDirection>.Unavailable(
+        if (!IsSupportedPageState(activationState))
+        {
+            return SnapshotValue<PracticeDirection>.Unavailable(
+                $"Skill {skillId} has unsupported activation state "
+                + $"{activationState}.");
+        }
+
+        var source = (ushort)activationState;
+        if (!CombatSkillStateHelper.IsBrokenOut(source))
+        {
+            return SnapshotValue<PracticeDirection>.Unavailable(
                 $"Skill {skillId} has not completed breakthrough, so its "
                 + "practice direction is not active.");
+        }
+
+        var mapped = MapPracticeDirection(
+            CombatSkillStateHelper.GetCombatSkillDirection(source));
+        return mapped is { IsAvailable: true, Value: PracticeDirection.Neutral }
+            ? SnapshotValue<PracticeDirection>.Unavailable(
+                $"Skill {skillId} is broken through but has no Direct or "
+                + "Reverse practice direction.")
+            : mapped;
     }
 
     public static SnapshotValue<BreakthroughDirectionAvailability>
         MapBreakthroughDirectionAvailability(
             int readingState,
-            bool isBrokenOut,
-            bool canBreakthroughNow,
+            int activationState,
+            bool meetsReadingRequirement,
             int skillId)
     {
         if (skillId < 0)
@@ -106,36 +123,48 @@ internal static class CombatSnapshotMapping
                 "Skill ID cannot be negative.");
         }
 
-        if (readingState < 0)
+        if (!IsSupportedPageState(readingState))
         {
             return SnapshotValue<BreakthroughDirectionAvailability>
                 .Unavailable(
-                    $"Skill {skillId} has invalid reading state "
+                    $"Skill {skillId} has unsupported reading state "
                     + $"{readingState}.");
         }
 
+        if (!IsSupportedPageState(activationState))
+        {
+            return SnapshotValue<BreakthroughDirectionAvailability>
+                .Unavailable(
+                    $"Skill {skillId} has unsupported activation state "
+                    + $"{activationState}.");
+        }
+
+        var isBrokenOut = CombatSkillStateHelper.IsBrokenOut(
+            (ushort)activationState);
         if (isBrokenOut)
         {
-            if (canBreakthroughNow)
-            {
-                return SnapshotValue<BreakthroughDirectionAvailability>
-                    .Unavailable(
-                        $"Skill {skillId} is already broken through but was "
-                        + "reported as immediately breakable.");
-            }
-
             return AvailableBreakthrough(
                 isBrokenOut: true,
                 canBreakthroughNow: false,
                 availableDirections: []);
         }
 
-        if (!canBreakthroughNow)
+        if (!meetsReadingRequirement)
         {
             return AvailableBreakthrough(
                 isBrokenOut: false,
                 canBreakthroughNow: false,
                 availableDirections: []);
+        }
+
+        if (!CombatSkillStateHelper.IsReadNormalPagesMeetConditionOfBreakout(
+                (ushort)readingState))
+        {
+            return SnapshotValue<BreakthroughDirectionAvailability>
+                .Unavailable(
+                    $"Skill {skillId} was reported as satisfying the reading "
+                    + "prerequisite, but its reading state does not contain "
+                    + "the required five normal pages.");
         }
 
         var directPageCount = CountReadNormalPages(
@@ -163,6 +192,95 @@ internal static class CombatSnapshotMapping
                 isBrokenOut: false,
                 canBreakthroughNow: true,
                 directions);
+    }
+
+    public static SnapshotValue<IReadOnlyList<CombatSkillStudyDetail>>
+        MapStudyDetails(
+            int readingState,
+            int activationState,
+            int skillId)
+    {
+        if (skillId < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(skillId),
+                skillId,
+                "Skill ID cannot be negative.");
+        }
+
+        if (!IsSupportedPageState(readingState))
+        {
+            return SnapshotValue<IReadOnlyList<CombatSkillStudyDetail>>
+                .Unavailable(
+                    $"Skill {skillId} has unsupported reading state "
+                    + $"{readingState}.");
+        }
+
+        if (!IsSupportedPageState(activationState))
+        {
+            return SnapshotValue<IReadOnlyList<CombatSkillStudyDetail>>
+                .Unavailable(
+                    $"Skill {skillId} has unsupported activation state "
+                    + $"{activationState}.");
+        }
+
+        List<CombatSkillStudyDetail> details = [];
+        for (var internalIndex = 0;
+             internalIndex < CombatSkillStateHelper.TotalPagesCount;
+             internalIndex++)
+        {
+            var (group, groupIndex, key) = DetailIdentity(internalIndex);
+            var mask = 1 << internalIndex;
+            details.Add(
+                new CombatSkillStudyDetail(
+                    $"{group.ToString().ToLowerInvariant()}-{groupIndex}",
+                    group,
+                    groupIndex,
+                    internalIndex,
+                    WheelOrderByInternalIndex[internalIndex],
+                    mask,
+                    key,
+                    (readingState & mask) != 0,
+                    (activationState & mask) != 0));
+        }
+
+        return SnapshotValue<IReadOnlyList<CombatSkillStudyDetail>>.Available(
+            details);
+    }
+
+    private static readonly int[] WheelOrderByInternalIndex =
+    [
+        13, 14, 0, 1, 2,
+        3, 4, 5, 6, 7,
+        12, 11, 10, 9, 8
+    ];
+
+    private static (
+        CombatSkillStudyDetailGroup Group,
+        int GroupIndex,
+        string LocalizationKey) DetailIdentity(int internalIndex)
+    {
+        return internalIndex switch
+        {
+            < 5 => (
+                CombatSkillStudyDetailGroup.Outline,
+                internalIndex,
+                $"LK_CombatSkill_First_Page_Type_{internalIndex}"),
+            < 10 => (
+                CombatSkillStudyDetailGroup.Direct,
+                internalIndex - 5,
+                $"LK_CombatSkill_Direct_Page_{internalIndex - 5}"),
+            _ => (
+                CombatSkillStudyDetailGroup.Reverse,
+                internalIndex - 10,
+                $"LK_CombatSkill_Reverse_Page_{internalIndex - 10}")
+        };
+    }
+
+    private static bool IsSupportedPageState(int state)
+    {
+        return state >= 0
+               && (state & ~CombatSkillStateHelper.CompleteReadingState) == 0;
     }
 
     private static SnapshotValue<BreakthroughDirectionAvailability>
@@ -225,3 +343,21 @@ internal static class CombatSnapshotMapping
         };
     }
 }
+
+internal enum CombatSkillStudyDetailGroup
+{
+    Outline = 0,
+    Direct = 1,
+    Reverse = 2
+}
+
+internal sealed record CombatSkillStudyDetail(
+    string StableId,
+    CombatSkillStudyDetailGroup Group,
+    int GroupIndex,
+    int InternalIndex,
+    int WheelOrder,
+    int BitMask,
+    string LocalizationKey,
+    bool IsRead,
+    bool IsActive);

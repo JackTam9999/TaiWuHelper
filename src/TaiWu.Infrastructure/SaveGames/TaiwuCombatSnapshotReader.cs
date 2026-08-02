@@ -294,15 +294,13 @@ internal sealed class TaiwuCombatSnapshotReader(
 
         var readingState = skill.GetReadingState();
         var activationState = skill.GetActivationState();
-        var isBrokenOut = CombatSkillStateHelper.IsBrokenOut(activationState);
-        var direction = CombatSnapshotMapping.MapPracticeDirection(
-            CombatSkillStateHelper.GetCombatSkillDirection(activationState),
-            isBrokenOut,
+        var direction = CombatSnapshotMapping.MapActivePracticeDirection(
+            activationState,
             skillId);
         var breakthroughDirections = CombatSnapshotMapping
             .MapBreakthroughDirectionAvailability(
                 readingState,
-                isBrokenOut,
+                activationState,
                 skill.CanBreakout(),
                 skillId);
         var mastered =

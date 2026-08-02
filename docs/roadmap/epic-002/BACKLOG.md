@@ -178,7 +178,7 @@ The set should include, where the save permits:
 
 ### E2-002 — Verify combat-skill progression and study-detail semantics
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -197,32 +197,40 @@ Reverse bits for breakthrough eligibility but does not preserve each detail.
 
 #### Acceptance criteria
 
-- [ ] Collection membership is given a verified label such as obtained or
+- [x] Collection membership is given a verified label such as obtained or
       learned; ambiguous terminology is not used as fact.
-- [ ] The valid range and meaning of proficiency power and maximum power are
+- [x] The valid range and meaning of proficiency power and maximum power are
       documented.
-- [ ] The relationship between saved proficiency and the in-game percentage is
+- [x] The relationship between saved proficiency and the in-game percentage is
       verified or marked unavailable.
-- [ ] Every study-detail bit or field for the detected version has a stable ID,
+- [x] Every study-detail bit or field for the detected version has a stable ID,
       group, ordering, localized label source, and studied-state rule.
-- [ ] Common, Direct, Reverse, mutually exclusive, and optional details are
+- [x] Common, Direct, Reverse, mutually exclusive, and optional details are
       identified only when verified.
-- [ ] The rule connecting studied details to available breakthrough directions
+- [x] The rule connecting studied details to available breakthrough directions
       is documented and tested against the golden scenario.
-- [ ] Breakthrough-ready, broken-through, activation, direction, and mastery
+- [x] Breakthrough-ready, broken-through, activation, direction, and mastery
       are proven to be separate or explicitly related facts.
-- [ ] Unknown activation, reading-state, or version values produce unavailable
+- [x] Unknown activation, reading-state, or version values produce unavailable
       results rather than inferred labels.
-- [ ] The evidence records the inspected game version and the APIs or fields
+- [x] The evidence records the inspected game version and the APIs or fields
       used without copying proprietary implementations.
-- [ ] Existing Epic 1 breakthrough behavior remains valid or receives a
+- [x] Existing Epic 1 breakthrough behavior remains valid or receives a
       separately reviewed correction with regression tests.
 
-#### Evidence when complete
+#### Evidence
 
-- `docs/architecture/COMBAT-SKILL-PROGRESS-SEMANTICS.md`.
-- Mapping tests using minimal synthetic values.
-- Golden-save integration assertions guarded by the existing opt-in mechanism.
+- [Combat-skill progress semantics](../../architecture/COMBAT-SKILL-PROGRESS-SEMANTICS.md).
+- `CombatSnapshotMappingTests` now cover 15 stable read/active details,
+  localization keys, wheel ordering, invalid bitfields, readiness, and
+  completed-breakthrough precedence.
+- `LocalGameDataIntegrationTests` contains a target-independent raw golden-skill
+  assertion guarded by the opt-in variable and the E2-001 save SHA-256.
+- The configured save advanced after evidence capture; the fingerprint guard
+  correctly skipped stale expectations without exposing its current path or
+  hash.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 444 total,
+  442 passed, 0 failed, and 2 opt-in integration assertions skipped.
 
 ## Slice 2: Domain and Application contracts
 
