@@ -161,6 +161,129 @@ public sealed class LocalGameDataIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Joined_atlas_is_repeatable_and_preserves_all_inspected_sources()
+    {
+        var savePath = RequireSavePath();
+        var gameDirectory = RequireGameDirectoryForCatalogue();
+        var guardedPaths = CatalogueSourcePaths(gameDirectory)
+            .Concat(DiscoverGameOwnedReadDependencies(savePath))
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var before = await CaptureAsync(guardedPaths);
+        var helperRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"taiwu-atlas-integration-{Guid.NewGuid():N}");
+
+        try
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [ConfiguredTaiwuSaveFilePathProvider.ConfigurationKey] =
+                        savePath
+                })
+                .Build();
+            await using var provider = new ServiceCollection()
+                .AddSingleton<IConfiguration>(configuration)
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var source =
+                provider.GetRequiredService<ICombatSkillDefinitionSource>();
+            var progressReader = provider
+                .GetRequiredService<ICharacterCombatSkillProgressReader>();
+            var imported = await source.ReadAsync(
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(DefinitionSourceReadStatus.Available, imported.Status);
+            Assert.NotNull(imported.SourceIdentity);
+            Assert.True(imported.Definitions.Length > 100);
+            var store = new SqliteCombatSkillCatalogueStore(
+                new CatalogueStoragePathProvider(
+                    helperRoot,
+                    [
+                        gameDirectory,
+                        Path.GetDirectoryName(savePath)!
+                    ]));
+            Assert.True((await store.ReplaceAsync(
+                imported.SourceIdentity!,
+                imported.Definitions,
+                imported.Diagnostics,
+                TestContext.Current.CancellationToken)).Succeeded);
+
+            var useCase = new ReadCharacterCombatSkillAtlas(
+                source,
+                store,
+                progressReader);
+            var request = new CharacterCombatSkillAtlasRequest(
+                characterId: null,
+                CatalogueLanguage.TraditionalChinese,
+                limit: 100);
+            var first = await useCase.ExecuteAsync(
+                request,
+                TestContext.Current.CancellationToken);
+            var second = await useCase.ExecuteAsync(
+                request,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(CombatSkillCatalogueStatus.Current, first.Catalogue.Status);
+            Assert.Equal(CharacterProgressReadStatus.Available, first.ProgressStatus);
+            Assert.Equal(CombatSkillCatalogueStatus.Current, second.Catalogue.Status);
+            Assert.Equal(CharacterProgressReadStatus.Available, second.ProgressStatus);
+            Assert.NotNull(first.ProgressMetadata);
+            Assert.NotNull(second.ProgressMetadata);
+            Assert.True(
+                string.Equals(
+                    before[savePath].Sha256,
+                    first.ProgressMetadata.SaveSnapshot.Sha256,
+                    StringComparison.OrdinalIgnoreCase),
+                "The atlas fingerprint did not match the guarded save.");
+            Assert.True(
+                string.Equals(
+                    first.ProgressMetadata.SaveSnapshot.Sha256,
+                    second.ProgressMetadata.SaveSnapshot.Sha256,
+                    StringComparison.OrdinalIgnoreCase),
+                "Consecutive atlas reads produced different save fingerprints.");
+            Assert.Equal(imported.Definitions.Length, first.TotalMatches);
+            Assert.Equal(first.TotalMatches, second.TotalMatches);
+            Assert.Equal(100, first.Entries.Length);
+            Assert.False(first.CandidateSetMayBeTruncated);
+            Assert.Contains(
+                first.Entries,
+                entry => entry.Definition is not null
+                         && entry.Progress is not null);
+            Assert.Equal(
+                first.Entries.Select(AtlasEntrySignature),
+                second.Entries.Select(AtlasEntrySignature));
+        }
+        finally
+        {
+            if (Directory.Exists(helperRoot))
+            {
+                Directory.Delete(helperRoot, recursive: true);
+            }
+
+            var after = await CaptureAsync(guardedPaths);
+            AssertUnchanged(before, after);
+        }
+    }
+
+    private static string AtlasEntrySignature(
+        CharacterCombatSkillAtlasEntry entry) => string.Join(
+        '|',
+        entry.StableKey,
+        entry.DisplayName.Value.IsAvailable
+            ? entry.DisplayName.Value.Value.Text
+            : "?",
+        entry.BaseGridCost.IsAvailable
+            ? entry.BaseGridCost.Value.Value
+            : -1,
+        FieldSignature(entry.Learned),
+        FieldSignature(entry.CurrentEffectiveGridCost),
+        entry.Progress is null ? "-" : ProgressSignature(entry.Progress));
+
     private static string CatalogueContentIdentity(
         IEnumerable<CombatSkillDefinition> definitions)
     {
@@ -247,6 +370,13 @@ public sealed class LocalGameDataIntegrationTests
         var savePath = RequireSavePath();
         var guardedPaths = DiscoverGameOwnedReadDependencies(savePath);
         var before = await CaptureAsync(guardedPaths);
+        Assert.SkipUnless(
+            string.Equals(
+                before[savePath].Sha256,
+                Epic2GoldenSaveSha256,
+                StringComparison.OrdinalIgnoreCase),
+            "M1-024 skipped: the configured save does not match the "
+            + "golden snapshot fingerprint.");
 
         try
         {

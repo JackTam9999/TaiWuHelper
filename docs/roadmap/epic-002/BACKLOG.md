@@ -939,7 +939,7 @@ recommendation workflow depend on catalogue availability.
 
 ### E2-016 — Add end-to-end automated catalogue and atlas verification
 
-**Status:** Planned
+**Status:** Done
 
 **Priority:** P1
 
@@ -952,31 +952,46 @@ API, UI, and non-interference behavior as one vertical slice.
 
 #### Acceptance criteria
 
-- [ ] Domain tests cover definition, provenance, progress, study-detail, and
+- [x] Domain tests cover definition, provenance, progress, study-detail, and
       completeness invariants.
-- [ ] Application tests cover catalogue lifecycle, joins, filters, language
+- [x] Application tests cover catalogue lifecycle, joins, filters, language
       fallback, status propagation, and failures.
-- [ ] Infrastructure tests cover import mapping, source preservation, SQLite
+- [x] Infrastructure tests cover import mapping, source preservation, SQLite
       transactions, path guards, invalidation, corruption recovery, and
       deterministic rebuild.
-- [ ] API tests cover every endpoint and status mapping.
-- [ ] Presentation tests cover filters, progress badges, detail states,
+- [x] API tests cover every endpoint and status mapping.
+- [x] Presentation tests cover filters, progress badges, detail states,
       accessibility semantics, and recommendation deep links.
-- [ ] Architecture tests prevent SQLite, GameData, or filesystem dependencies
+- [x] Architecture tests prevent SQLite, GameData, or filesystem dependencies
       from crossing inward.
-- [ ] Architecture tests keep game-owned writes and process-control APIs
+- [x] Architecture tests keep game-owned writes and process-control APIs
       forbidden.
-- [ ] Opt-in local integration tests compare two identical imports and verify
+- [x] Opt-in local integration tests compare two identical imports and verify
       stable content and ordering.
-- [ ] Opt-in local integration tests fingerprint all inspected game and save
+- [x] Opt-in local integration tests fingerprint all inspected game and save
       sources before and after import and atlas reads.
-- [ ] The full default suite passes without requiring a proprietary save in CI.
+- [x] The full default suite passes without requiring a proprietary save in CI.
 
 #### Evidence when complete
 
 - Updated testing documentation with test counts and commands.
 - Local integration result recording versions, counts, hashes, and skipped
   conditions without proprietary content.
+
+#### Completion evidence
+
+- `docs/reviews/E2-016-automated-verification.md` maps every acceptance area to
+  its primary test classes and records reproducible commands.
+- The default suite passed 616 total tests: 611 passed, 0 failed, and 5 opt-in
+  local-data tests skipped.
+- Installed-catalogue verification passed 612 tests with 4 save-dependent
+  skips. It deterministically imported all 946 GameData `1.0.0` definitions.
+- The new current-save vertical check passed independently: it imported and
+  persisted the catalogue, produced two identical 946-match atlas views, and
+  verified every inspected game/save fingerprint was unchanged.
+- The complete local integration project passed 3 of 6 tests against the
+  current save. Three pinned historical assertions skipped cleanly because the
+  current save no longer matches their golden fingerprints.
 
 ### E2-017 — Validate the atlas against the game and close Epic 2
 
