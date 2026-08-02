@@ -435,7 +435,7 @@ read-only adapter.
 
 ### E2-007 — Implement the helper-owned SQLite catalogue store
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -448,27 +448,43 @@ manifest data, and import diagnostics at the validated helper-owned path.
 
 #### Acceptance criteria
 
-- [ ] The schema stores definitions, localized values, typed attributes, raw
+- [x] The schema stores definitions, localized values, typed attributes, raw
       display references, source manifest, and diagnostics without storing
       complete source files.
-- [ ] Schema constraints enforce unique stable IDs and unique language values
+- [x] Schema constraints enforce unique stable IDs and unique language values
       per skill and language.
-- [ ] Search indexes support normalized Chinese and English name queries and
+- [x] Search indexes support normalized Chinese and English name queries and
       required filters.
-- [ ] Insert and replacement order is deterministic.
-- [ ] A reader never observes a partially built catalogue.
-- [ ] Transactions roll back completely on import or persistence failure.
-- [ ] Database creation and replacement use only the path from E2-000.
-- [ ] The generated database and transient files are excluded from Git and
+- [x] Insert and replacement order is deterministic.
+- [x] A reader never observes a partially built catalogue.
+- [x] Transactions roll back completely on import or persistence failure.
+- [x] Database creation and replacement use only the path from E2-000.
+- [x] The generated database and transient files are excluded from Git and
       publish artifacts.
-- [ ] Repository queries map to Domain models without leaking SQLite types.
-- [ ] Tests cover round trips, ordering, constraints, rollback, concurrent
+- [x] Repository queries map to Domain models without leaking SQLite types.
+- [x] Tests cover round trips, ordering, constraints, rollback, concurrent
       readers, malformed data, and path enforcement.
 
-#### Evidence when complete
+#### Evidence
 
-- SQLite schema documentation.
-- Repository and path-boundary tests.
+- [Helper-owned combat-skill catalogue schema](../../architecture/COMBAT-SKILL-CATALOGUE-SQLITE.md)
+  documents the seven strict tables, constraints, indexes, deterministic
+  ordering, atomic replacement, and sanitized status behavior.
+- `SqliteCombatSkillCatalogueStoreTests`: 12 tests cover missing storage,
+  complete Domain/provenance round trips, unavailable and unsupported fields,
+  typed filtering, stable limits, unique-key constraints, replacement,
+  rollback, concurrent readers, malformed and incomplete databases, and
+  pre-write cancellation.
+- `ArchitectureBoundaryTests` proves the adapter remains internal,
+  Infrastructure-owned, dependent on `CatalogueStoragePathProvider`, and the
+  only production source allowed to use persistence APIs. It also checks the
+  generated-file exclusions and pinned SQLite packages.
+- `CatalogueStoragePathProviderTests`: 18 existing path-boundary tests continue
+  to protect fixed filenames, game/save directories, traversal, reparse points,
+  and overlapping configuration.
+- With the E2-006 catalogue assertion enabled,
+  `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 543 total,
+  541 passed, 0 failed, and 2 save-dependent integration assertions skipped.
 
 ### E2-008 — Add source manifest, invalidation, and deterministic rebuild
 

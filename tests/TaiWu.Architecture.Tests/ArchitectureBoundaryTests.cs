@@ -701,6 +701,65 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Named_catalogue_store_is_an_internal_path_safe_adapter()
+    {
+        var storeType = typeof(SqliteCombatSkillCatalogueStore);
+
+        Assert.Equal(typeof(DependencyInjection).Assembly, storeType.Assembly);
+        Assert.Equal("TaiWu.Infrastructure.Catalogue", storeType.Namespace);
+        Assert.False(storeType.IsPublic);
+        Assert.True(
+            typeof(ICombatSkillCatalogueRepository).IsAssignableFrom(storeType));
+
+        var constructors = storeType.GetConstructors(
+            BindingFlags.Instance
+            | BindingFlags.Public
+            | BindingFlags.NonPublic);
+        Assert.NotEmpty(constructors);
+        Assert.All(
+            constructors,
+            constructor =>
+            {
+                var parameters = constructor.GetParameters();
+                Assert.Contains(
+                    parameters,
+                    parameter => parameter.ParameterType
+                        == typeof(CatalogueStoragePathProvider));
+                Assert.DoesNotContain(
+                    parameters,
+                    parameter => parameter.ParameterType == typeof(string)
+                        || parameter.ParameterType == typeof(FileInfo)
+                        || parameter.ParameterType == typeof(DirectoryInfo));
+            });
+    }
+
+    [Fact]
+    public void Catalogue_database_is_generated_and_uses_the_pinned_native_runtime()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var ignore = File.ReadAllText(
+            Path.Combine(repositoryRoot, ".gitignore"));
+        var infrastructureProject = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "TaiWu.Infrastructure.csproj"));
+
+        Assert.Contains("combat-skill-catalogue*.db", ignore);
+        Assert.Contains("combat-skill-catalogue*.db-*", ignore);
+        Assert.Contains(
+            "Microsoft.Data.Sqlite\" Version=\"10.0.10\"",
+            infrastructureProject);
+        Assert.Contains(
+            "SQLitePCLRaw.lib.e_sqlite3\" Version=\"2.1.12\"",
+            infrastructureProject);
+        Assert.DoesNotContain(
+            "$(TaiwuBackendDirectory)\\e_sqlite3.dll",
+            infrastructureProject);
+    }
+
+    [Fact]
     public void Presentation_events_are_read_only_or_helper_local()
     {
         var repositoryRoot = FindRepositoryRoot();

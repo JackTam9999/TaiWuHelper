@@ -26,6 +26,7 @@ public interface ICombatSkillCatalogueRepository
     Task<CatalogueReplaceResult> ReplaceAsync(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IReadOnlyList<CombatSkillDefinition> definitions,
+        IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
         CancellationToken cancellationToken = default);
 }
 

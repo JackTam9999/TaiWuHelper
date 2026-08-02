@@ -145,6 +145,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
         await repository.DidNotReceive().ReplaceAsync(
             Arg.Any<CombatSkillCatalogueSourceIdentity>(),
             Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+            Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -171,6 +172,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
         repository.ReplaceAsync(
                 Arg.Any<CombatSkillCatalogueSourceIdentity>(),
                 Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+                Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
                 Arg.Any<CancellationToken>())
             .Returns(CatalogueReplaceResult.Success());
 
@@ -187,6 +189,8 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 values != null
                 && values.Select(value => value.SkillId)
                     .SequenceEqual(new[] { 1, 2, 3 })),
+            Arg.Is<IReadOnlyList<CombatSkillImportDiagnostic>>(values =>
+                values != null && values.Count == 0),
             CancellationToken);
     }
 
@@ -211,6 +215,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
         await repository.DidNotReceive().ReplaceAsync(
             Arg.Any<CombatSkillCatalogueSourceIdentity>(),
             Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+            Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -222,6 +227,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
         repository.ReplaceAsync(
                 Arg.Any<CombatSkillCatalogueSourceIdentity>(),
                 Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+                Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
                 Arg.Any<CancellationToken>())
             .Returns(CatalogueReplaceResult.Failure("disk full"));
         var failedResult = await new EnsureCombatSkillCatalogue(
@@ -236,6 +242,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
         repository.ReplaceAsync(
                 Arg.Any<CombatSkillCatalogueSourceIdentity>(),
                 Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+                Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromException<CatalogueReplaceResult>(
                 new IOException("replace exploded")));

@@ -68,6 +68,7 @@ public sealed class EnsureCombatSkillCatalogue(
             replacement = await repository.ReplaceAsync(
                     identity,
                     installed.Definitions,
+                    installed.Diagnostics,
                     cancellationToken)
                 .ConfigureAwait(false);
         }
