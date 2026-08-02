@@ -30,7 +30,9 @@ public sealed partial class SkillCatalogueRenderingTests
         var text = VisibleText(html);
 
         Assert.Contains("Black Blood Gu", text);
-        Assert.Contains("黑血蠱降", text);
+        Assert.DoesNotContain("黑血蠱降", text);
+        Assert.DoesNotContain("Chinese and English names", text);
+        Assert.Contains("Faction Ranshan Sect Available", text);
         Assert.Contains("Static definition", text);
         Assert.Contains("Current Taiwu state", text);
         Assert.Contains("Base grid cost 3 Available", text);
@@ -50,6 +52,8 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Not studied", text);
         Assert.Contains("Unavailable", text);
         Assert.Contains("Display-only raw text", text);
+        Assert.Contains("Raw effect description.", text);
+        Assert.DoesNotContain("原始效果描述", text);
         Assert.Contains("Source and availability", text);
         Assert.DoesNotContain("Opened from a combat recommendation", text);
         Assert.Contains("data-study-status=\"studied\"", html);
@@ -180,8 +184,10 @@ public sealed partial class SkillCatalogueRenderingTests
             DetailedProgressReader(progress),
             TaiwuLanguage.English));
 
-        Assert.Contains("Traditional Chinese name 黑血蠱降 Available", text);
-        Assert.Contains("English name 黑血蠱降 (fallback) Fallback", text);
+        Assert.Contains("黑血蠱降", text);
+        Assert.DoesNotContain("Traditional Chinese name", text);
+        Assert.DoesNotContain("English name", text);
+        Assert.DoesNotContain("Chinese and English names", text);
         Assert.Contains("Partial or fallback data", text);
     }
 

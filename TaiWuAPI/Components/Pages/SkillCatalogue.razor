@@ -149,17 +149,17 @@
                     <input id="atlas-search"
                            @bind="_filters.Query"
                            @bind:event="oninput"
-                           placeholder="@T("Traditional Chinese or English name")"
+                           placeholder="@T("Search in this language")"
                            autocomplete="off" />
                 </label>
 
-                <label class="atlas-filter-field" for="atlas-category">
-                    <span>@T("Category")</span>
-                    <select id="atlas-category" @bind="_filters.Category">
-                        <option value="">@T("All categories")</option>
-                        @foreach (var category in Enum.GetValues<CombatSkillDiscipline>())
+                <label class="atlas-filter-field" for="atlas-faction">
+                    <span>@T("Faction")</span>
+                    <select id="atlas-faction" @bind="_filters.Faction">
+                        <option value="">@T("All factions")</option>
+                        @foreach (var factionId in _factionIds)
                         {
-                            <option value="@category">@CategoryLabel(category)</option>
+                            <option value="@factionId">@FactionLabel(factionId)</option>
                         }
                     </select>
                 </label>
@@ -188,13 +188,15 @@
             <details class="atlas-advanced-filters">
                 <summary>@T("More catalogue and progress filters")</summary>
                 <div class="atlas-filter-grid">
-                    <label class="atlas-filter-field" for="atlas-faction">
-                        <span>@T("Faction")</span>
-                        <input id="atlas-faction"
-                               type="number"
-                               min="0"
-                               @bind="_filters.Faction"
-                               placeholder="@T("Any")" />
+                    <label class="atlas-filter-field" for="atlas-category">
+                        <span>@T("Category")</span>
+                        <select id="atlas-category" @bind="_filters.Category">
+                            <option value="">@T("All categories")</option>
+                            @foreach (var category in Enum.GetValues<CombatSkillDiscipline>())
+                            {
+                                <option value="@category">@CategoryLabel(category)</option>
+                            }
+                        </select>
                     </label>
                     <label class="atlas-filter-field" for="atlas-element">
                         <span>@T("Element")</span>
@@ -319,15 +321,15 @@
                 }
             </div>
 
-            <div class="skill-category-list">
+            <div class="skill-faction-list">
                 @foreach (var group in _atlas.Entries
-                    .GroupBy(CategoryOf)
-                    .OrderBy(group => group.Key.HasValue ? (int)group.Key.Value : int.MaxValue))
+                    .GroupBy(FactionOf)
+                    .OrderBy(group => group.Key ?? int.MaxValue))
                 {
-                    <section class="skill-category-section"
-                             aria-labelledby="@CategoryHeadingId(group.Key)">
-                        <div class="skill-category-heading">
-                            <h3 id="@CategoryHeadingId(group.Key)">@CategoryHeading(group.Key)</h3>
+                    <section class="skill-faction-section"
+                             aria-labelledby="@FactionHeadingId(group.Key)">
+                        <div class="skill-faction-heading">
+                            <h3 id="@FactionHeadingId(group.Key)">@FactionHeading(group.Key)</h3>
                             <span>@group.Count() @T("skills")</span>
                         </div>
                         <div class="skill-card-grid">
@@ -370,6 +372,7 @@
     private bool _loading;
     private bool _rebuilding;
     private int _offset;
+    private int[] _factionIds = [];
 
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
@@ -404,9 +407,11 @@
             if (_catalogue.Status != CombatSkillCatalogueStatus.Current)
             {
                 _atlas = null;
+                _factionIds = [];
                 return;
             }
 
+            await ReadFactionOptionsAsync(cancellation.Token);
             await ReadAtlasAsync(cancellation.Token);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
@@ -445,6 +450,20 @@
                 cancellationToken);
     }
 
+    private async Task ReadFactionOptionsAsync(
+        CancellationToken cancellationToken)
+    {
+        var definitions = await CatalogueRepository.QueryAsync(
+            new CombatSkillCatalogueFilter(),
+            cancellationToken);
+        _factionIds = definitions
+            .Where(definition => definition.Faction.IsAvailable)
+            .Select(definition => definition.Faction.Value.Value)
+            .Distinct()
+            .Order()
+            .ToArray();
+    }
+
     private async Task RebuildAsync()
     {
         _rebuilding = true;
@@ -455,6 +474,7 @@
                     DefinitionSource,
                     CatalogueRepository)
                 .ExecuteAsync();
+            _factionIds = [];
             _offset = 0;
             await LoadAsync();
         }
@@ -503,41 +523,24 @@
         ? string.Empty
         : $"{T("Page")} {(_atlas.Offset / PageSize) + 1} · {_atlas.TotalMatches} {T("results")}";
 
-    private static CombatSkillDiscipline? CategoryOf(
+    private static int? FactionOf(
         CharacterCombatSkillAtlasEntry entry) =>
-        entry.Definition?.Category.IsAvailable == true
-            ? entry.Definition.Category.Value
+        entry.Definition?.Faction.IsAvailable == true
+            ? entry.Definition.Faction.Value.Value
             : null;
 
-    private string CategoryHeading(CombatSkillDiscipline? category) =>
-        category.HasValue
-            ? CategoryLabel(category.Value)
-            : T("Unknown category");
+    private string FactionHeading(int? factionId) => factionId.HasValue
+        ? FactionLabel(factionId.Value)
+        : T("Unknown faction");
 
-    private static string CategoryHeadingId(CombatSkillDiscipline? category) =>
-        $"skill-category-{(category.HasValue ? ((int)category.Value).ToString() : "unknown")}";
+    private static string FactionHeadingId(int? factionId) =>
+        $"skill-faction-{(factionId?.ToString() ?? "unknown")}";
 
     private string CategoryLabel(CombatSkillDiscipline category) =>
-        Language == TaiwuLanguage.Chinese
-            ? category switch
-            {
-                CombatSkillDiscipline.Neigong => "內功",
-                CombatSkillDiscipline.Agility => "身法",
-                CombatSkillDiscipline.SpecialTechnique => "絕技",
-                CombatSkillDiscipline.FistAndPalm => "拳掌",
-                CombatSkillDiscipline.Finger => "指法",
-                CombatSkillDiscipline.Leg => "腿法",
-                CombatSkillDiscipline.HiddenWeapon => "暗器",
-                CombatSkillDiscipline.Sword => "劍法",
-                CombatSkillDiscipline.Blade => "刀法",
-                CombatSkillDiscipline.LongWeapon => "長兵",
-                CombatSkillDiscipline.ExoticWeapon => "奇門",
-                CombatSkillDiscipline.FlexibleWeapon => "軟兵",
-                CombatSkillDiscipline.Archery => "御射",
-                CombatSkillDiscipline.Music => "樂器",
-                _ => category.ToString()
-            }
-            : category.ToString();
+        CombatSkillUiText.Category(Language, category);
+
+    private string FactionLabel(int factionId) =>
+        CombatSkillUiText.Faction(Language, factionId);
 
     private string CatalogueStatusLabel(CombatSkillCatalogueStatus status) =>
         T(status.ToString());

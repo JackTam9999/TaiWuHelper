@@ -93,26 +93,6 @@
             </div>
         </header>
 
-        <section class="bilingual-name-panel" aria-labelledby="localized-names-heading">
-            <div class="section-heading compact-heading">
-                <div>
-                    <p class="eyebrow">@T("Explicit language availability")</p>
-                    <h2 id="localized-names-heading">@T("Chinese and English names")</h2>
-                </div>
-            </div>
-            <dl class="skill-detail-facts bilingual-name-facts">
-                @foreach (var language in NameLanguages)
-                {
-                    var view = NameView(definition, language);
-                    <SkillDetailFact Label="@NameLanguageLabel(language)"
-                                     Value="@view.Value"
-                                     Status="@view.Status"
-                                     Reason="@view.Reason"
-                                     SourceKind="@T(view.Source?.Kind.ToString() ?? "Unavailable")" />
-                }
-            </dl>
-        </section>
-
         @if (IsPartial)
         {
             <section class="atlas-warning-list detail-warning" role="status">
@@ -139,7 +119,7 @@
                 <dl class="skill-detail-facts">
                     @StaticFact(T("Category"), definition.Category, value => CategoryLabel(value))
                     @StaticFact(T("Grade"), definition.Grade, value => value.Value.ToString())
-                    @StaticFact(T("Faction"), definition.Faction, value => value.Value.ToString())
+                    @StaticFact(T("Faction"), definition.Faction, value => CombatSkillUiText.Faction(Language, value))
                     @StaticFact(T("Element"), definition.Element, value => T(value.ToString()))
                     @StaticFact(T("Equipment type"), definition.EquipmentType, value => T(value.ToString()))
                     @StaticFact(T("Base grid cost"), definition.BaseGridCost, value => value.Value.ToString())
@@ -248,20 +228,18 @@
                     <h2 id="raw-description-heading">@T("Raw descriptions")</h2>
                 </div>
             </div>
-            @if (definition.RawDescriptions.Length == 0)
+            @if (!SelectedDescriptions(definition).Any())
             {
                 <p class="detail-empty-note">@T("No localized raw descriptions are available.")</p>
             }
             else
             {
                 <div class="raw-description-list">
-                    @foreach (var description in definition.RawDescriptions
-                        .OrderBy(value => value.Language)
-                        .ThenBy(value => value.Kind))
+                    @foreach (var description in SelectedDescriptions(definition))
                     {
                         <article>
                             <div>
-                                <span>@T(description.Language.ToString()) · @T(description.Kind.ToString())</span>
+                                <span>@T(description.Kind.ToString())</span>
                                 <strong class="mechanic-trust-label">
                                     @(description.IsVerifiedMechanic
                                         ? T("Verified mechanic")
@@ -287,12 +265,6 @@
 </div>
 
 @code {
-    private static readonly CatalogueLanguage[] NameLanguages =
-    [
-        CatalogueLanguage.TraditionalChinese,
-        CatalogueLanguage.English
-    ];
-
     private CombatSkillDetailsResult? _result;
     private CancellationTokenSource? _readCancellation;
     private (int SkillId, TaiwuLanguage Language)? _lastRequest;
@@ -461,70 +433,18 @@
     private string ProgressStatus<TValue>(SkillProgressField<TValue> field) =>
         T(field.Status.ToString());
 
-    private NameFactView NameView(
-        CombatSkillDefinition definition,
-        CatalogueLanguage language)
-    {
-        var exact = definition.Names.Get(language);
-        if (exact.IsAvailable)
-        {
-            return new NameFactView(
-                exact.Value.Text,
-                T("Available"),
-                Reason: null,
-                exact.Source);
-        }
-
-        var fallbackLanguage = language == CatalogueLanguage.TraditionalChinese
-            ? CatalogueLanguage.English
-            : CatalogueLanguage.TraditionalChinese;
-        var fallback = definition.Names.Get(fallbackLanguage);
-        return fallback.IsAvailable
-            ? new NameFactView(
-                $"{fallback.Value.Text} ({T("fallback")})",
-                T("Fallback"),
-                exact.Reason,
-                fallback.Source)
-            : new NameFactView(
-                T("Unavailable"),
-                T("Unavailable"),
-                exact.Reason,
-                Source: null);
-    }
-
-    private string NameLanguageLabel(CatalogueLanguage language) => language switch
-    {
-        CatalogueLanguage.TraditionalChinese => T("Traditional Chinese name"),
-        CatalogueLanguage.English => T("English name"),
-        _ => language.ToString()
-    };
-
     private string CategoryLabel(CombatSkillDefinition definition) =>
         definition.Category.IsAvailable
             ? CategoryLabel(definition.Category.Value)
             : T("Unknown category");
 
     private string CategoryLabel(CombatSkillDiscipline category) =>
-        Language == TaiwuLanguage.Chinese
-            ? category switch
-            {
-                CombatSkillDiscipline.Neigong => "內功",
-                CombatSkillDiscipline.Agility => "身法",
-                CombatSkillDiscipline.SpecialTechnique => "絕技",
-                CombatSkillDiscipline.FistAndPalm => "拳掌",
-                CombatSkillDiscipline.Finger => "指法",
-                CombatSkillDiscipline.Leg => "腿法",
-                CombatSkillDiscipline.HiddenWeapon => "暗器",
-                CombatSkillDiscipline.Sword => "劍法",
-                CombatSkillDiscipline.Blade => "刀法",
-                CombatSkillDiscipline.LongWeapon => "長兵",
-                CombatSkillDiscipline.ExoticWeapon => "奇門",
-                CombatSkillDiscipline.FlexibleWeapon => "軟兵",
-                CombatSkillDiscipline.Archery => "御射",
-                CombatSkillDiscipline.Music => "樂器",
-                _ => category.ToString()
-            }
-            : category.ToString();
+        CombatSkillUiText.Category(Language, category);
+
+    private IEnumerable<RawCombatSkillDescription> SelectedDescriptions(
+        CombatSkillDefinition definition) => definition.RawDescriptions
+            .Where(description => description.Language == PreferredLanguage)
+            .OrderBy(description => description.Kind);
 
     private string FormatSlots(SkillSlotContribution value) =>
         $"{T("Attack")} {value.Attack} · {T("Agility")} {value.Agility} · "
@@ -594,9 +514,4 @@
         return ValueTask.CompletedTask;
     }
 
-    private sealed record NameFactView(
-        string Value,
-        string Status,
-        string? Reason,
-        CatalogueSourceReference? Source);
 }

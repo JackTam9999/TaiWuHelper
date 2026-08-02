@@ -914,6 +914,8 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("using GameData", atlasPage);
         Assert.Contains("aria-live", atlasPage);
         Assert.Contains("Candidate limit reached", atlasPage);
+        Assert.Contains("id=\"atlas-faction\"", atlasPage);
+        Assert.Contains("GroupBy(FactionOf)", atlasPage);
 
         var atlasCard = File.ReadAllText(
             Path.Combine(
@@ -924,6 +926,8 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("<summary>", atlasCard);
         Assert.Contains("role=\"list\"", atlasCard);
         Assert.Contains("@T(\"Learned\")", atlasCard);
+        Assert.Contains("skill-card-grade", atlasCard);
+        Assert.Contains("skill-card-status", atlasCard);
         Assert.DoesNotContain(
             "<svg",
             atlasCard,
@@ -946,6 +950,8 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("Static definition", detailPage);
         Assert.Contains("Current Taiwu state", detailPage);
         Assert.Contains("Display-only raw text", detailPage);
+        Assert.Contains("SelectedDescriptions(definition)", detailPage);
+        Assert.DoesNotContain("Chinese and English names", detailPage);
         Assert.Contains("SupplyParameterFromQuery(Name = \"context\")", detailPage);
         Assert.Contains("Opened from a combat recommendation", detailPage);
         Assert.DoesNotContain("ISaveGameReader", detailPage);

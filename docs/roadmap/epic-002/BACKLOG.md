@@ -772,7 +772,7 @@ and the current character atlas.
 **Dependencies:** E2-011, E2-012
 
 Add a local page that presents installed combat skills and current character
-progress in a category-oriented, searchable layout inspired by the information
+progress in a faction-oriented, searchable layout inspired by the information
 hierarchy of the game without copying proprietary artwork.
 
 #### Acceptance criteria
@@ -781,9 +781,11 @@ hierarchy of the game without copying proprietary artwork.
 - [x] Search accepts Traditional Chinese or English names.
 - [x] Filters cover category, grade, faction, equipment type, element, and
       independent progress facts including breakthrough and mastery.
-- [x] Skills can be grouped by the familiar combat-skill categories.
-- [x] Each skill card shows localized name, grade, category, and independently
-      applicable progress badges.
+- [x] Skills can be filtered and grouped by familiar named factions, with
+      category available as an additional filter.
+- [x] Each collapsed skill card shows the active-language name, faction, grade,
+      category, and a primary current status before exposing the full set of
+      independent progress badges.
 - [x] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
       appear only when supported by the corresponding typed fact.
 - [x] Catalogue freshness, build version, save read time, and warnings are
@@ -804,6 +806,9 @@ hierarchy of the game without copying proprietary artwork.
 - `ArchitectureBoundaryTests` protects the read-only page boundary, automatic
   current-Taiwu selection, semantic list/details markup, responsive grid, and
   reduced-motion treatment.
+- Product-owner review promoted a named faction selector into the primary
+  filter row, grouped results by faction, relabeled `品階` as `品級`, and moved
+  grade plus the primary current status into each collapsed card.
 - Live validation used the current save and the explicitly rebuilt helper-owned
   GameData `1.0.0` catalogue: 946 definitions matched the character overlay.
   Traditional Chinese search for `黑血蠱降` returned the English-localized
@@ -837,7 +842,9 @@ assistive technology.
 
 #### Acceptance criteria
 
-- [x] The view shows Chinese and English names with explicit fallback.
+- [x] The view follows the active language tab and never presents Chinese and
+      English names or descriptions together; fallback remains explicit when
+      the selected language is unavailable.
 - [x] Static category, grade, faction, element, equipment type, costs,
       requirements, and effect references are separated from character state.
 - [x] Base cost and current effective cost have distinct labels and provenance.
@@ -858,14 +865,14 @@ assistive technology.
 #### Evidence
 
 - `SkillDetailRenderingTests` covers static/current-state separation, valid-only
-  proficiency, distinct costs, bilingual names and explicit fallback, exact
+  proficiency, distinct costs, active-language isolation and explicit fallback, exact
   missing and unavailable detail states, raw-text trust labels, source
   disclosures, unsupported Chinese state, and automatic current-Taiwu reads.
 - `ArchitectureBoundaryTests` protects the direct route, streamed loading state,
   read-only Application boundary, ordered-list study semantics, non-color
   statuses, and the no-artwork requirement. Application and API tests confirm
   that omitting `characterId` selects the current Taiwu.
-- Keyboard order follows breadcrumb, page identity, bilingual names, static
+- Keyboard order follows breadcrumb, page identity, the active-language name, static
   facts, character facts, ordered Common/Direct/Reverse lists, then raw text.
   Native links and `details`/`summary` disclosures remain keyboard operable;
   every colored state also has a symbol and written label.
@@ -875,6 +882,8 @@ assistive technology.
   details, explicit partial-data warnings, and separate base/current costs.
   The initial page streamed immediately while the save read completed; language
   changes showed a translated loading state instead of mixing old/new labels.
+- Product-owner review removed the simultaneous bilingual-name panel and
+  filters raw descriptions to the active language tab.
 - Browser verification measured the default `1280x720` desktop and `390x844`
   mobile viewports with no horizontal overflow. Local-only screenshots are
   `E2-014-detail-desktop.png` (SHA-256
@@ -939,7 +948,7 @@ recommendation workflow depend on catalogue availability.
 
 ### E2-016 — Add end-to-end automated catalogue and atlas verification
 
-**Status:** Done
+**Status:** Complete
 
 **Priority:** P1
 
@@ -995,7 +1004,7 @@ API, UI, and non-interference behavior as one vertical slice.
 
 ### E2-017 — Validate the atlas against the game and close Epic 2
 
-**Status:** Planned
+**Status:** In progress
 
 **Priority:** P1
 
@@ -1009,21 +1018,21 @@ final completion decision.
 
 #### Acceptance criteria
 
-- [ ] Catalogue counts and representative definitions match the installed
+- [x] Catalogue counts and representative definitions match the installed
       game's visible or configured data for the recorded version.
-- [ ] Golden character skills show the correct obtained/learned, proficiency,
+- [x] Golden character skills show the correct obtained/learned, proficiency,
       breakthrough, direction, mastery, activation, and equipment facts.
-- [ ] Every visible golden study detail agrees with the verified decoded state.
-- [ ] Exact missing details and aggregate completion agree with the game UI or
+- [x] Every visible golden study detail agrees with the verified decoded state.
+- [x] Exact missing details and aggregate completion agree with the game UI or
       any difference is explained by documented source freshness.
-- [ ] Chinese and English searches resolve the agreed representative skills.
-- [ ] Catalogue version and save freshness warnings behave correctly after a
+- [x] Chinese and English searches resolve the agreed representative skills.
+- [x] Catalogue version and save freshness warnings behave correctly after a
       controlled source or save change.
-- [ ] Rebuild and recovery affect only helper-owned catalogue files.
-- [ ] Epic 1 recommendations still work when the catalogue is current, missing,
+- [x] Rebuild and recovery affect only helper-owned catalogue files.
+- [x] Epic 1 recommendations still work when the catalogue is current, missing,
       stale, and rebuilding.
-- [ ] All Epic 2 milestone acceptance criteria are checked against evidence.
-- [ ] Remaining unsupported semantics become explicit future backlog items and
+- [x] All Epic 2 milestone acceptance criteria are checked against evidence.
+- [x] Remaining unsupported semantics become explicit future backlog items and
       are not silently accepted as complete.
 - [ ] The product owner records the Epic 2 completion decision.
 
@@ -1033,6 +1042,21 @@ final completion decision.
 - Final automated test summary.
 - Updated status and completion decision in
   [EPIC-002](./EPIC.md).
+
+#### Verification evidence
+
+- [E2-017 manual verification](../../reviews/E2-017-manual-verification.md)
+  matches both original in-game captures by SHA-256 and compares every visible
+  list/detail observation with the versioned decoder and helper UI.
+- The current-save vertical check passed with 946 joined definitions and
+  unchanged source fingerprints. After product-owner UI revisions, the default
+  solution suite passed 617 tests: 612 passed, 0 failed, and 5 documented
+  opt-in checks skipped.
+- Source/save freshness, transactional rebuild/recovery, recommendation
+  independence, and all Epic 2 milestone criteria are mapped to automated or
+  recorded evidence in the review.
+- The completion decision remains pending product-owner approval. Unsupported
+  attainment, percentage, and runtime-power semantics are captured by E2-F06.
 
 ## Deferred backlog
 
@@ -1063,3 +1087,11 @@ and prerequisites are represented by typed, versioned evidence.
 
 Promote selected raw direct or reverse descriptions into verified typed rules
 one mechanic at a time, with recommendation integration reviewed separately.
+
+### E2-F06 — Verify attainment, displayed percentage, and runtime power
+
+Identify the version-specific source for the visible `已大成` attainment label,
+the study-screen centre percentage, and calculated runtime power/maximum power.
+Keep these independent from completed breakthrough, page reading, page
+activation, and martial-art simplification. Do not expose save-derived values
+until a live-safe or persisted source is verified with controlled evidence.

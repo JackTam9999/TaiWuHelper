@@ -39,7 +39,9 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Your martial arts, mapped.", text);
         Assert.Contains("Catalogue Current", text);
         Assert.Contains("Find a combat skill", text);
-        Assert.Contains("Traditional Chinese or English name", html);
+        Assert.Contains("Search in this language", html);
+        Assert.Contains("Faction All factions", text);
+        Assert.Contains("<option value=\"1\">Shaolin Sect</option>", html);
         Assert.Contains("Category All categories", text);
         Assert.Contains("Grade All grades", text);
         Assert.Contains("More catalogue and progress filters", text);
@@ -48,12 +50,16 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Breakthrough completed", text);
         Assert.Contains("Attainment mastery", text);
         Assert.Contains("Equipped", text);
-        Assert.Contains("Finger 1 skills", text);
+        Assert.Contains("Shaolin Sect 1 skills", text);
+        Assert.Contains("Shaolin Sect", text);
+        Assert.Contains("Grade 5", text);
         Assert.Contains("Black Blood Gu", text);
+        Assert.DoesNotContain("黑血蠱降", text);
         Assert.Contains("Learned", text);
         Assert.Contains("Broken through", text);
         Assert.Contains("Direct practice", text);
         Assert.Contains("Mastered", text);
+        Assert.Contains("Mastered · Direct practice", text);
         Assert.Contains("<details", html);
         Assert.Contains("<summary", html);
         Assert.Contains("aria-busy=\"false\"", html);
@@ -130,6 +136,8 @@ public sealed partial class SkillCatalogueRenderingTests
         var text = VisibleText(html);
 
         Assert.Contains("雲術", text);
+        Assert.Contains("少林派", text);
+        Assert.Contains("品級 5", text);
         Assert.Contains("已取得", text);
         Assert.Contains("可突破", text);
         Assert.DoesNotContain("已突破", text);
@@ -139,6 +147,30 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("href=\"/skills/686\"", html);
         Assert.Contains("開啟完整功法詳情", text);
         Assert.Contains("role", html);
+    }
+
+    [Fact]
+    public async Task Skill_card_keeps_an_unavailable_status_distinct_from_not_learned()
+    {
+        var definition = Definition(456, "Black Blood Gu");
+        var entry = new CharacterCombatSkillAtlasEntry(
+            definition.SkillId,
+            progress: null,
+            definition,
+            new CombatSkillDisplayName(
+                CatalogueLanguage.TraditionalChinese,
+                definition.Names.Resolve(
+                    CatalogueLanguage.TraditionalChinese),
+                UsedFallback: false),
+            SkillProgressField<bool>.Unavailable("test status unavailable"),
+            SkillProgressField<int>.Unavailable("test cost unavailable"));
+
+        var text = VisibleText(await RenderCardAsync(
+            entry,
+            TaiwuLanguage.Chinese));
+
+        Assert.Contains("狀態不可用", text);
+        Assert.DoesNotContain("未取得", text);
     }
 
     private static async Task<string> RenderPageAsync(

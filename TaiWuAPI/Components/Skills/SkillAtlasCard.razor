@@ -9,6 +9,10 @@
             <span class="skill-card-title">
                 <strong>@DisplayName</strong>
                 <small>@StaticSummary</small>
+                <span class="skill-card-summary-tags">
+                    <span class="skill-card-grade">@GradeText</span>
+                    <span class="skill-card-status @PrimaryStatusClass">@PrimaryStatusText</span>
+                </span>
             </span>
             <span class="skill-card-cost" aria-label="@T("Base grid cost")">
                 @CostText
@@ -53,7 +57,7 @@
                 }
                 @if (!HasPositiveProgressBadge)
                 {
-                    <span class="progress-badge neutral" role="listitem">@T("Not learned")</span>
+                    <span class="progress-badge neutral" role="listitem">@NonPositiveStatusText</span>
                 }
             </div>
 
@@ -115,8 +119,15 @@
 
     private string StaticSummary => string.Join(
         " · ",
-        new[] { CategoryText, GradeText }
+        new[] { FactionText, CategoryText }
             .Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private string FactionText =>
+        Entry.Definition?.Faction.IsAvailable == true
+            ? CombatSkillUiText.Faction(
+                Language,
+                Entry.Definition.Faction.Value)
+            : T("Unknown faction");
 
     private string CategoryText =>
         Entry.Definition?.Category.IsAvailable == true
@@ -126,6 +137,34 @@
     private string GradeText => Entry.Definition?.Grade.IsAvailable == true
         ? $"{T("Grade")} {Entry.Definition.Grade.Value.Value}"
         : T("Grade unavailable");
+
+    private string PrimaryStatusText => ActiveDirection is { } direction
+        ? $"{PrimaryProgressStatusText} · {DirectionLabel(direction)}"
+        : PrimaryProgressStatusText;
+
+    private string PrimaryProgressStatusText => IsTrue(Progress?.AttainmentMastered)
+        ? T("Mastered")
+        : Breakthrough?.IsBrokenOut == true
+            ? T("Broken through")
+            : Breakthrough?.CanBreakthroughNow == true
+                ? T("Ready to break through")
+                : IsTrue(Entry.Learned)
+                    ? T("Learned")
+                    : NonPositiveStatusText;
+
+    private string NonPositiveStatusText => Entry.Learned.IsAvailable
+        ? T("Not learned")
+        : T("Status unavailable");
+
+    private string PrimaryStatusClass => IsTrue(Progress?.AttainmentMastered)
+        ? "mastered"
+        : Breakthrough?.IsBrokenOut == true
+            ? "broken"
+            : Breakthrough?.CanBreakthroughNow == true
+                ? "ready"
+                : IsTrue(Entry.Learned)
+                    ? "learned"
+                    : "neutral";
 
     private string CategoryGlyph =>
         Entry.Definition?.Category.IsAvailable == true
@@ -170,7 +209,9 @@
             : T("Unavailable");
 
     private string StudyText => Progress is null
-        ? T("Not learned")
+        ? Entry.Learned.IsAvailable && !Entry.Learned.Value
+            ? T("Not learned")
+            : T("Unavailable")
         : Progress.StudySummary.TotalCount == 0
             ? T("Unavailable")
             : $"{Progress.StudySummary.ReadCount} / {Progress.StudySummary.TotalCount} {T("studied")}";
@@ -193,26 +234,7 @@
             : T("Reverse practice");
 
     private string CategoryLabel(CombatSkillDiscipline category) =>
-        Language == TaiwuLanguage.Chinese
-            ? category switch
-            {
-                CombatSkillDiscipline.Neigong => "內功",
-                CombatSkillDiscipline.Agility => "身法",
-                CombatSkillDiscipline.SpecialTechnique => "絕技",
-                CombatSkillDiscipline.FistAndPalm => "拳掌",
-                CombatSkillDiscipline.Finger => "指法",
-                CombatSkillDiscipline.Leg => "腿法",
-                CombatSkillDiscipline.HiddenWeapon => "暗器",
-                CombatSkillDiscipline.Sword => "劍法",
-                CombatSkillDiscipline.Blade => "刀法",
-                CombatSkillDiscipline.LongWeapon => "長兵",
-                CombatSkillDiscipline.ExoticWeapon => "奇門",
-                CombatSkillDiscipline.FlexibleWeapon => "軟兵",
-                CombatSkillDiscipline.Archery => "御射",
-                CombatSkillDiscipline.Music => "樂器",
-                _ => category.ToString()
-            }
-            : category.ToString();
+        CombatSkillUiText.Category(Language, category);
 
     private string T(string english) => UiText.Get(Language, english);
 }
