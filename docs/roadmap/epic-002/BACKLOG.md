@@ -129,7 +129,7 @@ outside the game installation and configured save directories.
 
 ### E2-001 — Define the golden catalogue and character-progress scenario
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -154,22 +154,27 @@ The set should include, where the save permits:
 
 #### Acceptance criteria
 
-- [ ] The evidence document records game, language-resource, and save identities
+- [x] The evidence document records game, language-resource, and save identities
       without committing proprietary source content.
-- [ ] The save is identified by hash and helper-safe metadata rather than being
+- [x] The save is identified by hash and helper-safe metadata rather than being
       copied into the repository.
-- [ ] Stable skill identifiers and bilingual names identify each golden skill.
-- [ ] Manually observed labels and progress are recorded with observation time
+- [x] Stable skill identifiers and bilingual names identify each golden skill.
+- [x] Manually observed labels and progress are recorded with observation time
       and source.
-- [ ] The selected set covers all independent progress facts required by the
+- [x] The selected set covers all independent progress facts required by the
       epic or documents why a state is unavailable.
-- [ ] Source fingerprints before and after evidence collection match.
-- [ ] The scenario can be repeated after a catalogue rebuild.
+- [x] Source fingerprints before and after evidence collection match.
+- [x] The scenario can be repeated after a catalogue rebuild.
 
-#### Evidence when complete
+#### Evidence
 
-- `docs/scenarios/E2-001-golden-skill-atlas.md`.
-- Minimal non-proprietary metadata under `docs/scenarios/evidence/` if needed.
+- [Golden skill-atlas scenario](../../scenarios/E2-001-golden-skill-atlas.md).
+- [Sanitized machine-readable metadata](../../scenarios/evidence/E2-001-golden-skill-atlas-metadata.json).
+- Six bilingual stable skill IDs cover mastered Direct and Reverse skills,
+  obtained and partial states, an achievable Direct breakthrough, equipped
+  state, and explicit unsupported ownership/detail semantics.
+- The configured save and both language packs retained identical lengths,
+  timestamps, and SHA-256 fingerprints before and after evidence collection.
 
 ### E2-002 — Verify combat-skill progression and study-detail semantics
 

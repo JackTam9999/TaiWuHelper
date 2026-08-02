@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E2-001",
+  "observationDate": "2026-08-02",
+  "gameData": {
+    "productVersion": "1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a",
+    "assemblyLength": 8891904,
+    "binaryHashCommitted": false
+  },
+  "languages": {
+    "traditionalChinese": {
+      "pack": "Language_CNH/CombatSkill_language.txt",
+      "length": 204654,
+      "sha256": "9932B589389DF643981A3CB6E6E8DFFD9B7B1FC814BBA30ACD34C6C18CF1CFF4",
+      "unchangedDuringCapture": true
+    },
+    "english": {
+      "pack": "Language_EN/CombatSkill_language.txt",
+      "length": 267598,
+      "sha256": "F89C3B8AD7DEFE0E6E587EA4F1E109E983817B3F609C34946379FC82314D5229",
+      "unchangedDuringCapture": true
+    }
+  },
+  "save": {
+    "fileName": "local.sav",
+    "length": 213937298,
+    "sha256": "C9EB00A368A6CE25B2D816DAE941AFAC67B6217ED561FF7563F613C3B297CECA",
+    "lastWriteTimeUtc": "2026-08-02T11:51:15.0516489Z",
+    "unchangedDuringCapture": true,
+    "pathCommitted": false,
+    "contentCommitted": false
+  },
+  "screenObservations": [
+    {
+      "alias": "E2-001-character-skill-list.png",
+      "fileTimestampUtc": "2026-08-02T11:52:19.8465663Z",
+      "sha256": "BC016080C3139737C43AAC227F1BFBA5BB504D198822D89FBBBBA3D7F3C43F32",
+      "committed": false
+    },
+    {
+      "alias": "E2-001-black-blood-study-detail.png",
+      "fileTimestampUtc": "2026-08-02T11:54:11.7478343Z",
+      "sha256": "5A8BFC6B3A863D5258C52BBB4BC36960A5C1540F7F4B7D7231B40E7C06572097",
+      "committed": false
+    }
+  ],
+  "goldenSkillIds": [
+    40,
+    41,
+    361,
+    456,
+    498,
+    686
+  ],
+  "unresolvedFacts": [
+    "combat-skill collection membership meaning",
+    "not-obtained state",
+    "mastery conflict between save reader and newer screen",
+    "study-detail bit and label semantics",
+    "relationship between displayed percentage and study wheel"
+  ],
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsGameBinaryContent": false,
+    "containsGameBinaryHash": false,
+    "containsCompleteLanguageResource": false,
+    "containsScreenshot": false,
+    "containsCharacterIdentifier": false
+  }
+}

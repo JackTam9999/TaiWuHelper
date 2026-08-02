@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using TaiWu.Application.GameData;
 using TaiWu.Application.SaveGames;
@@ -870,6 +871,33 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("capturedAtUtc", metadata);
         Assert.DoesNotContain("lastWriteTimeUtc", metadata);
         Assert.DoesNotContain("sha256", metadata);
+    }
+
+    [Fact]
+    public void Epic_2_golden_skill_atlas_metadata_is_sanitized()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var metadata = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "docs",
+                "scenarios",
+                "evidence",
+                "E2-001-golden-skill-atlas-metadata.json"));
+
+        using var document = JsonDocument.Parse(metadata);
+        var repository = document.RootElement.GetProperty("repository");
+
+        Assert.DoesNotContain(@"C:\", metadata, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AppData", metadata, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Program Files", metadata, StringComparison.OrdinalIgnoreCase);
+        Assert.False(repository.GetProperty("containsSaveContent").GetBoolean());
+        Assert.False(repository.GetProperty("containsSavePath").GetBoolean());
+        Assert.False(repository.GetProperty("containsGameBinaryContent").GetBoolean());
+        Assert.False(repository.GetProperty("containsGameBinaryHash").GetBoolean());
+        Assert.False(repository.GetProperty("containsCompleteLanguageResource").GetBoolean());
+        Assert.False(repository.GetProperty("containsScreenshot").GetBoolean());
+        Assert.False(repository.GetProperty("containsCharacterIdentifier").GetBoolean());
     }
 
     [Fact]
