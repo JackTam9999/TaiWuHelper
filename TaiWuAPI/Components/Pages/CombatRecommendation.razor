@@ -1,0 +1,752 @@
+@page "/"
+@implements IAsyncDisposable
+@using Microsoft.Extensions.Options
+@using TaiWu.Application.CombatRecommendations
+@using TaiWu.Application.Targets
+@using TaiWu.Domain.CombatRecommendations
+@using TaiWu.Domain.CombatSnapshots
+@using TaiWuAPI.Configuration
+@using TaiWuAPI.Presentation
+@inject IFindTargets FindTargets
+@inject IRecommendCombatLoadout RecommendCombatLoadout
+@inject IOptions<SaveGameOptions> SaveOptions
+@inject ILogger<CombatRecommendation> Logger
+
+<PageTitle>TaiWu Helper · @T("Combat recommendation")</PageTitle>
+
+<section class="hero">
+    <div>
+        <p class="eyebrow">@T("Read-only combat planning")</p>
+        <h1>@T("Prepare for the fight before it starts.")</h1>
+        <p class="hero-copy">
+            @T("Search the configured save, choose a target and compare three evidence-backed loadout styles. Every instruction is performed manually by you in the game.")
+        </p>
+    </div>
+    <div class="boundary-card" role="note">
+        <strong>@T("Information only")</strong>
+        <span>@T("TaiWu Helper cannot change the save, equip skills, or control the game.")</span>
+    </div>
+</section>
+
+<section class="control-panel"
+         aria-labelledby="recommendation-controls"
+         aria-busy="@IsBusy.ToString().ToLowerInvariant()">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">@T("Recommendation controls")</p>
+            <h2 id="recommendation-controls">@T("Choose the encounter")</h2>
+        </div>
+        @if (_isSearching || _isRecommending)
+        {
+            <span class="working-status" role="status">@T("Reading the configured save…")</span>
+        }
+    </div>
+
+    <div class="control-grid">
+        <div class="control-group target-control">
+            <label for="target-search">@T("Target name")</label>
+            <div class="inline-control">
+                <input id="target-search"
+                       @bind="_targetQuery"
+                       @bind:event="oninput"
+                       placeholder="@T("Enter the in-game character name")"
+                       autocomplete="off" />
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="SearchTargetsAsync"
+                        disabled="@(!_configurationValid || IsBusy || string.IsNullOrWhiteSpace(_targetQuery))">
+                    @T("Search")
+                </button>
+            </div>
+
+            @if (_targetMatches.Count > 0)
+            {
+                <div class="target-results" aria-label="@T("Target search results")">
+                    @foreach (var target in _targetMatches)
+                    {
+                        <button type="button"
+                                class="@TargetResultClass(target.CharacterId)"
+                                @onclick="() => SelectTarget(target)">
+                            <strong>@target.DisplayName</strong>
+                            <span>@target.Age @T("years")</span>
+                            <small>@LocationName(target)</small>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="control-group">
+            <label for="style-select">@T("Preferred style")</label>
+            <select id="style-select" @bind="_form.Policy">
+                @foreach (var policy in Enum.GetValues<RecommendationPolicy>())
+                {
+                    <option value="@policy">@PolicyLabel(policy)</option>
+                }
+            </select>
+            <small>@T("Safe prioritizes survival; Aggressive accepts more risk.")</small>
+        </div>
+
+        <div class="control-group">
+            <label for="weapon-select">@T("Preferred weapon (optional)")</label>
+            <select id="weapon-select" @bind="_form.PreferredWeapon">
+                <option value="">@T("No preference")</option>
+                <option value="刀">刀</option>
+            </select>
+            <small>
+                @T("A visible player preference only; verified rules still decide whether a loadout is feasible.")
+            </small>
+        </div>
+    </div>
+
+    <details class="observation-panel">
+        <summary>@T("Optional current-screen observation")</summary>
+        <p>
+            @T("Analysis input only. These values refine this recommendation and are never sent to or applied in the game.")
+        </p>
+        <label class="check-control">
+            <input type="checkbox"
+                   @bind="_form.IncludeObservation"
+                   disabled="@(_observationSkills.Count == 0)" />
+            @T("Use selected equipped-skill names")
+        </label>
+
+        @if (_observationSkills.Count == 0)
+        {
+            <p>@T("Get an initial recommendation to load available skill names.")</p>
+        }
+        else if (_form.IncludeObservation)
+        {
+            <div class="observation-grid">
+                @foreach (var group in _observationSkills
+                    .GroupBy(skill => skill.Category)
+                    .OrderBy(group => group.Key))
+                {
+                    <fieldset>
+                        <legend>@CategoryName(group.Key)</legend>
+                        @foreach (var skill in group.OrderBy(skill => skill.Name))
+                        {
+                            <label class="check-control">
+                                <input type="checkbox"
+                                       checked="@_form.EquippedSkillIds.Contains(skill.SkillId)"
+                                       @onchange="() => ToggleObservationSkill(skill.SkillId)" />
+                                @skill.Name
+                            </label>
+                        }
+                    </fieldset>
+                }
+            </div>
+            <div class="generic-grid">
+                <label>
+                    萬用 @T("total")
+                    <input type="number" min="0" @bind="_form.GenericTotal" />
+                </label>
+                <label>
+                    摧破
+                    <input type="number" min="0" @bind="_form.GenericAttack" />
+                </label>
+                <label>
+                    輕靈
+                    <input type="number" min="0" @bind="_form.GenericAgility" />
+                </label>
+                <label>
+                    護體
+                    <input type="number" min="0" @bind="_form.GenericDefense" />
+                </label>
+                <label>
+                    奇竅
+                    <input type="number" min="0" @bind="_form.GenericAssistance" />
+                </label>
+            </div>
+        }
+    </details>
+
+    <div class="request-row">
+        <div>
+            @if (_selectedTarget is not null)
+            {
+                <strong>@T("Selected"): @_selectedTarget.DisplayName</strong>
+                <span>@_selectedTarget.Age @T("years") · @LocationName(_selectedTarget)</span>
+            }
+            else
+            {
+                <span>@T("Select a target before requesting a recommendation.")</span>
+            }
+        </div>
+        <button type="button"
+                class="primary-button"
+                @onclick="GetRecommendationAsync"
+                disabled="@(!_configurationValid || _selectedTarget is null || IsBusy)">
+            @(_isRecommending ? T("Calculating…") : T("Get recommendation"))
+        </button>
+    </div>
+</section>
+
+<PageStateNotice State="_pageState"
+                 RetryRead="RetryLastReadAsync"
+                 RetryDisabled="IsBusy" />
+
+@if (_model is not null)
+{
+    <section class="snapshot-strip" aria-label="@T("Snapshot metadata")">
+        <div>
+            <span>@T("Snapshot read")</span>
+            <strong>@_model.CapturedAtUtc.ToLocalTime().ToString("g")</strong>
+        </div>
+        <div>
+            <span>@T("Source freshness")</span>
+            <strong>@FreshnessText(_model)</strong>
+        </div>
+        <div>
+            <span>GameData</span>
+            <strong>@(_model.GameDataVersion ?? T("Unavailable"))</strong>
+        </div>
+        <div>
+            <span>@T("Weapon preference")</span>
+            <strong>@(string.IsNullOrWhiteSpace(_form.PreferredWeapon) ? T("None") : _form.PreferredWeapon)</strong>
+        </div>
+        @if (_model.InnerPowerState is not null)
+        {
+            <div title="@_model.InnerPowerState.EffectDescription">
+                <span>@T("Current inner-power state")</span>
+                <strong>@_model.InnerPowerState.Name</strong>
+                <small>@T("Applied to actively cast skills; equipping Neigong alone is not treated as a cast.")</small>
+            </div>
+        }
+    </section>
+
+    @if (_model.Warnings.Count > 0)
+    {
+        <WarningBanner Warnings="_model.Warnings" />
+    }
+
+    <section class="result-shell">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">@T("Same snapshot · three policies")</p>
+                <h2>@T("Recommendation ready")</h2>
+            </div>
+            <span class="information-badge">@T("Information only")</span>
+        </div>
+
+        <div class="style-tabs" role="group" aria-label="@T("Recommendation styles")">
+            @foreach (var style in _model.Styles)
+            {
+                var selected = style.Style == _selection.VisibleStyle;
+                <button type="button"
+                        aria-pressed="@selected"
+                        class="@(selected ? "active" : null)"
+                        @onclick="() => ShowStyle(style.Style)">
+                    <span>@PolicyLabel(style.Style)</span>
+                    @if (selected)
+                    {
+                        <small>@T("Selected")</small>
+                    }
+                </button>
+            }
+        </div>
+
+        @{
+            var visible = _selection.VisibleRecommendation!;
+        }
+        <div class="result-summary">
+            @if (visible.HasRecommendation)
+            {
+                <div>
+                    <span>@T("Known-constraint score")</span>
+                    <strong>@visible.TotalScore?.ToString("0.##")</strong>
+                    <small>@T("This is not a win probability.")</small>
+                </div>
+                <div>
+                    <span>@T("Threats identified")</span>
+                    <strong>@_model.Threats.Count</strong>
+                </div>
+                <div>
+                    <span>@T("Manual changes")</span>
+                    <strong>@visible.ManualChanges.Count</strong>
+                </div>
+                <div>
+                    <span>@T("Conditional caveats")</span>
+                    <strong>@visible.Caveats.Count</strong>
+                </div>
+            }
+            else
+            {
+                <p>@T(visible.Diagnostic ?? "No feasible recommendation was produced.")</p>
+            }
+        </div>
+
+        <div class="briefing-grid">
+            <ThreatPanel Threats="_model.Threats"
+                         SelectedReference="_selection.SelectedThreatReference"
+                         SelectedReferenceChanged="SelectThreat" />
+
+            <section class="loadout-panel" aria-labelledby="recommended-loadout-heading">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">@T("Manual configuration")</p>
+                        <h3 id="recommended-loadout-heading">@T("Recommended loadout")</h3>
+                    </div>
+                    <span class="validation-label">@T("Known constraints validated")</span>
+                </div>
+
+                @if (visible.HasRecommendation)
+                {
+                    @foreach (var category in visible.Categories)
+                    {
+                        <LoadoutCategory Category="category"
+                                         ManualChanges="visible.ManualChanges"
+                                         SelectedThreatReference="_selection.SelectedThreatReference" />
+                    }
+                }
+                else
+                {
+                    <p class="empty-category">
+                        @T(visible.Diagnostic ?? "No feasible recommendation was produced.")
+                    </p>
+                }
+            </section>
+        </div>
+
+        @if (visible.HasRecommendation)
+        {
+            var checklist = ManualSetupChecklistBuilder.Build(visible);
+            var battlePlan = BattlePlanViewModelBuilder.Build(visible);
+            var supportingDetails =
+                RecommendationSupportingDetailsBuilder.Build(_model, visible);
+            <div class="manual-plan-grid">
+                <ManualChecklist Items="checklist" />
+                <BattlePlan Phases="battlePlan"
+                            SelectedThreatReference="_selection.SelectedThreatReference" />
+            </div>
+            <SupportingDetails Details="supportingDetails" />
+        }
+    </section>
+}
+
+@code {
+    private readonly RecommendationForm _form = new();
+    private readonly List<TargetLookupEntry> _targetMatches = [];
+    private readonly List<ObservationSkillOption> _observationSkills = [];
+    private readonly RecommendationSelectionState _selection = new();
+    private CancellationTokenSource? _searchCancellation;
+    private CancellationTokenSource? _recommendationCancellation;
+    private string _targetQuery = string.Empty;
+    private string _saveFilePath = string.Empty;
+    private TargetLookupEntry? _selectedTarget;
+    private CombatRecommendationViewModel? _model;
+    private RecommendationPageState _pageState =
+        RecommendationPageState.Initial();
+    private PageReadOperation _lastReadOperation;
+    private bool _configurationValid;
+    private bool _isSearching;
+    private bool _isRecommending;
+    private long _searchVersion;
+    private long _recommendationVersion;
+    private TaiwuLanguage? _lastLanguage;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private bool IsBusy => _isSearching || _isRecommending;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _saveFilePath = SaveOptions.Value.DefaultSaveFilePath;
+            _configurationValid = true;
+        }
+        catch (OptionsValidationException)
+        {
+            _configurationValid = false;
+            _pageState = RecommendationPageState.InvalidConfiguration();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_lastLanguage is null)
+        {
+            _lastLanguage = Language;
+            return;
+        }
+
+        if (_lastLanguage == Language)
+        {
+            return;
+        }
+
+        _lastLanguage = Language;
+        var selectedCharacterId = _selectedTarget?.CharacterId;
+        var hadRecommendation = _model is not null;
+        if (!_configurationValid
+            || !selectedCharacterId.HasValue)
+        {
+            _pageState = RecommendationPageState.Initial();
+            return;
+        }
+
+        await SearchTargetsAsync(selectedCharacterId.Value.ToString());
+
+        var translatedTarget = _targetMatches.FirstOrDefault(target =>
+            target.CharacterId == selectedCharacterId.Value);
+        if (translatedTarget is null)
+        {
+            return;
+        }
+
+        SelectTarget(translatedTarget);
+        if (hadRecommendation)
+        {
+            await GetRecommendationAsync();
+        }
+    }
+
+    private Task SearchTargetsAsync() => SearchTargetsAsync(_targetQuery);
+
+    private async Task SearchTargetsAsync(string query)
+    {
+        if (!_configurationValid || string.IsNullOrWhiteSpace(query))
+        {
+            return;
+        }
+
+        var version = ++_searchVersion;
+        var cancellation = ReplaceCancellation(ref _searchCancellation);
+        _lastReadOperation = PageReadOperation.TargetSearch;
+        _isSearching = true;
+        _selectedTarget = null;
+        _targetMatches.Clear();
+        _model = null;
+        ResetObservation();
+        _selection.Clear();
+        _pageState = RecommendationPageState.Loading(
+            "Searching the configured save");
+
+        try
+        {
+            var result = await FindTargets.ExecuteAsync(
+                new FindTargetsRequest(
+                    _saveFilePath,
+                    query,
+                    language: Language),
+                cancellation.Token);
+            if (version != _searchVersion)
+            {
+                return;
+            }
+
+            _targetMatches.AddRange(result.Matches);
+            _pageState = RecommendationPageState.ForTargetLookup(
+                result.Status,
+                result.TotalMatches);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException
+                  or FileNotFoundException
+                  or InvalidDataException)
+        {
+            _pageState = RecommendationPageState.Failure(
+                "The target search could not read valid data from the "
+                + "configured save.");
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unexpected target lookup failure.");
+            _pageState = RecommendationPageState.Failure(
+                "An unexpected target read failure occurred.");
+        }
+        finally
+        {
+            if (version == _searchVersion)
+            {
+                _isSearching = false;
+            }
+        }
+    }
+
+    private void SelectTarget(TargetLookupEntry target)
+    {
+        _selectedTarget = target;
+        _targetQuery = target.DisplayName;
+        _model = null;
+        ResetObservation();
+        _selection.Clear();
+        _lastReadOperation = PageReadOperation.None;
+        _pageState = RecommendationPageState.TargetReady(
+            target.DisplayName);
+    }
+
+    private async Task GetRecommendationAsync()
+    {
+        if (!_configurationValid || _selectedTarget is null)
+        {
+            return;
+        }
+
+        var version = ++_recommendationVersion;
+        var cancellation = ReplaceCancellation(
+            ref _recommendationCancellation);
+        _lastReadOperation = PageReadOperation.Recommendation;
+        _isRecommending = true;
+        _model = null;
+        _selection.Clear();
+        _pageState = RecommendationPageState.Loading(
+            "Building the combat recommendation");
+
+        try
+        {
+            var observation = CreateObservation();
+            var recommendation = await RecommendCombatLoadout.ExecuteAsync(
+                new RecommendCombatLoadoutRequest(
+                    _saveFilePath,
+                    _selectedTarget.CharacterId,
+                    _form.Policy,
+                    observation,
+                    Language),
+                cancellation.Token);
+            if (version != _recommendationVersion)
+            {
+                return;
+            }
+
+            _model = CombatRecommendationViewModelMapper.Map(recommendation);
+            PopulateObservationSkills(_model);
+            _selection.Load(_model, _form.Policy);
+            _pageState =
+                RecommendationPageState.ForRecommendation(_model);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException
+                  or FileNotFoundException
+                  or InvalidDataException
+                  or FormatException
+                  or OverflowException)
+        {
+            _pageState = RecommendationPageState.Failure(
+                "The recommendation could not be built from the available "
+                + "save data.");
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unexpected combat recommendation failure.");
+            _pageState = RecommendationPageState.Failure(
+                "An unexpected recommendation read or calculation failure "
+                + "occurred.");
+        }
+        finally
+        {
+            if (version == _recommendationVersion)
+            {
+                _isRecommending = false;
+            }
+        }
+    }
+
+    private Task RetryLastReadAsync() => _lastReadOperation switch
+    {
+        PageReadOperation.TargetSearch => SearchTargetsAsync(),
+        PageReadOperation.Recommendation => GetRecommendationAsync(),
+        _ => Task.CompletedTask
+    };
+
+    private PlayerLoadoutObservation? CreateObservation()
+    {
+        if (!_form.IncludeObservation)
+        {
+            return null;
+        }
+
+        return new PlayerLoadoutObservation(
+            DateTimeOffset.UtcNow,
+            "ui:manual-current-screen-observation",
+            new CombatLoadoutSnapshot(
+                ObservedSkillIds(SkillCategory.Neigong),
+                ObservedSkillIds(SkillCategory.Attack),
+                ObservedSkillIds(SkillCategory.Agility),
+                ObservedSkillIds(SkillCategory.Defense),
+                ObservedSkillIds(SkillCategory.Assistance)),
+            new GenericSlotAllocation(
+                _form.GenericTotal,
+                _form.GenericAttack,
+                _form.GenericAgility,
+                _form.GenericDefense,
+                _form.GenericAssistance));
+    }
+
+    private int[] ObservedSkillIds(SkillCategory category) =>
+        _observationSkills
+            .Where(skill => skill.Category == category)
+            .Where(skill => _form.EquippedSkillIds.Contains(skill.SkillId))
+            .Select(skill => skill.SkillId)
+            .ToArray();
+
+    private void ToggleObservationSkill(int skillId)
+    {
+        if (!_form.EquippedSkillIds.Add(skillId))
+        {
+            _form.EquippedSkillIds.Remove(skillId);
+        }
+    }
+
+    private void PopulateObservationSkills(CombatRecommendationViewModel model)
+    {
+        var available = model.Styles
+            .SelectMany(style => style.Categories)
+            .SelectMany(category => category.Skills)
+            .GroupBy(skill => skill.SkillId)
+            .Select(group => group.First())
+            .OrderBy(skill => skill.Category)
+            .ThenBy(skill => skill.Name, StringComparer.Ordinal)
+            .Select(skill => new ObservationSkillOption(
+                skill.SkillId,
+                skill.Name ?? T("Unnamed skill"),
+                skill.Category))
+            .ToArray();
+        _observationSkills.Clear();
+        _observationSkills.AddRange(available);
+        _form.EquippedSkillIds.RemoveWhere(skillId =>
+            available.All(skill => skill.SkillId != skillId));
+    }
+
+    private void ResetObservation()
+    {
+        _observationSkills.Clear();
+        _form.IncludeObservation = false;
+        _form.EquippedSkillIds.Clear();
+    }
+
+    private string TargetResultClass(int characterId) =>
+        _selectedTarget?.CharacterId == characterId
+            ? "target-result selected"
+            : "target-result";
+
+    private string LocationName(TargetLookupEntry target) =>
+        target.LocationDisplayName ?? T("Location unavailable");
+
+    private string CategoryName(SkillCategory category) => category switch
+    {
+        SkillCategory.Neigong => "內功",
+        SkillCategory.Attack => "摧破",
+        SkillCategory.Agility => "輕靈",
+        SkillCategory.Defense => "護體",
+        SkillCategory.Assistance => "奇竅",
+        _ => T("Unavailable")
+    };
+
+    private void ShowStyle(RecommendationPolicy style)
+    {
+        _selection.ShowStyle(style);
+    }
+
+    private void SelectThreat(string? threatReference)
+    {
+        _selection.SelectThreat(threatReference);
+    }
+
+    private string FreshnessText(CombatRecommendationViewModel model)
+    {
+        if (!model.SaveLastWriteTimeUtc.HasValue)
+        {
+            return T("Unavailable");
+        }
+
+        var age = model.CapturedAtUtc - model.SaveLastWriteTimeUtc.Value;
+        if (age < TimeSpan.Zero)
+        {
+            return T("Source timestamp is newer than the read");
+        }
+
+        if (age <= TimeSpan.FromMinutes(15))
+        {
+            var minutes = Math.Max(0, age.TotalMinutes);
+            return Language == TaiwuLanguage.Chinese
+                ? $"讀取時為 {minutes:0} 分鐘前"
+                : $"{minutes:0} min old at read";
+        }
+
+        if (age < TimeSpan.FromHours(2))
+        {
+            return Language == TaiwuLanguage.Chinese
+                ? $"讀取時為 {age.TotalMinutes:0} 分鐘前"
+                : $"{age.TotalMinutes:0} min old at read";
+        }
+
+        return Language == TaiwuLanguage.Chinese
+            ? $"讀取時為 {age.TotalHours:0.0} 小時前"
+            : $"{age.TotalHours:0.0} h old at read";
+    }
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private string PolicyLabel(RecommendationPolicy policy) => policy switch
+    {
+        RecommendationPolicy.Safe => T("Safe"),
+        RecommendationPolicy.Balanced => T("Balanced"),
+        RecommendationPolicy.Aggressive => T("Aggressive"),
+        _ => policy.ToString()
+    };
+
+    private static CancellationTokenSource ReplaceCancellation(
+        ref CancellationTokenSource? cancellation)
+    {
+        cancellation?.Cancel();
+        cancellation?.Dispose();
+        cancellation = new CancellationTokenSource();
+        return cancellation;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _searchCancellation?.Cancel();
+        _searchCancellation?.Dispose();
+        _recommendationCancellation?.Cancel();
+        _recommendationCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private sealed class RecommendationForm
+    {
+        public RecommendationPolicy Policy { get; set; } =
+            RecommendationPolicy.Balanced;
+
+        public string PreferredWeapon { get; set; } = string.Empty;
+
+        public bool IncludeObservation { get; set; }
+
+        public HashSet<int> EquippedSkillIds { get; } = [];
+
+        public int GenericTotal { get; set; }
+
+        public int GenericAttack { get; set; }
+
+        public int GenericAgility { get; set; }
+
+        public int GenericDefense { get; set; }
+
+        public int GenericAssistance { get; set; }
+    }
+
+    private sealed record ObservationSkillOption(
+        int SkillId,
+        string Name,
+        SkillCategory Category);
+
+    private enum PageReadOperation
+    {
+        None,
+        TargetSearch,
+        Recommendation
+    }
+}

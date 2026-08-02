@@ -1,0 +1,89 @@
+@using TaiWu.Domain.CombatThreats
+@using TaiWuAPI.Presentation
+
+<section class="threat-panel" aria-labelledby="target-threats-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">@T("Target analysis")</p>
+            <h3 id="target-threats-heading">@T("Target threats")</h3>
+        </div>
+        @if (SelectedReference is not null)
+        {
+            <button type="button"
+                    class="text-button"
+                    @onclick="() => SelectedReferenceChanged.InvokeAsync(null)">
+                @T("Clear focus")
+            </button>
+        }
+    </div>
+
+    @foreach (var group in Threats
+        .OrderByDescending(threat => threat.Severity)
+        .ThenBy(threat => threat.Code, StringComparer.Ordinal)
+        .GroupBy(threat => threat.Severity))
+    {
+        <div class="threat-group">
+            <h4>@SeverityLabel(group.Key)</h4>
+            @foreach (var threat in group)
+            {
+                var selected = threat.Reference == SelectedReference;
+                <button type="button"
+                        class="@(selected ? "threat-card selected" : "threat-card")"
+                        aria-pressed="@selected"
+                        @onclick="() => SelectedReferenceChanged.InvokeAsync(threat.Reference)">
+                    <span class="severity-marker">@SeverityLabel(group.Key)</span>
+                    <strong>@T(threat.Title)</strong>
+                    <span>@T(threat.Explanation)</span>
+                    <small>
+                        @TimingLabel(threat.ActivationTiming) ·
+                        @threat.EvidenceReferences.Count @T("evidence source(s)")
+                    </small>
+                </button>
+            }
+        </div>
+    }
+
+    <p class="panel-hint">
+        @T("Select a threat to highlight the skills and plan steps that address it.")
+    </p>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ThreatViewModel> Threats { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedReference { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SelectedReferenceChanged { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string SeverityLabel(
+        TargetThreatSeverity severity) => severity switch
+    {
+        TargetThreatSeverity.Critical => T("Critical"),
+        TargetThreatSeverity.High => T("High"),
+        TargetThreatSeverity.Moderate => T("Moderate"),
+        TargetThreatSeverity.Informational => T("Information only"),
+        _ => severity.ToString()
+    };
+
+    private string TimingLabel(
+        TargetThreatActivationTiming timing) => timing switch
+    {
+        TargetThreatActivationTiming.CombatStart => T("At combat start"),
+        TargetThreatActivationTiming.Always => T("Always active"),
+        TargetThreatActivationTiming.OnSkillUse => T("On skill use"),
+        TargetThreatActivationTiming.OnHit => T("On hit"),
+        TargetThreatActivationTiming.OnMarkApplied =>
+            T("When a mark is applied"),
+        TargetThreatActivationTiming.Threshold => T("At mark threshold"),
+        TargetThreatActivationTiming.Unknown => T("Timing unavailable"),
+        _ => timing.ToString()
+    };
+
+    private string T(string english) => UiText.Get(Language, english);
+}

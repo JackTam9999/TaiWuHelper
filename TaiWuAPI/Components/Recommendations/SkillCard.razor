@@ -1,0 +1,225 @@
+@using TaiWu.Domain.CombatRecommendations
+@using TaiWu.Domain.CombatCounters
+@using TaiWu.Domain.CombatSnapshots
+@using TaiWuAPI.Presentation
+
+<article class="@(Highlighted ? "skill-card threat-highlight" : "skill-card")">
+    <div class="skill-card-heading">
+        <div>
+            <h4>@DisplayName</h4>
+        </div>
+        <span class="change-badge">@ManualStatus()</span>
+    </div>
+
+    <div class="skill-facts">
+        <span>
+            <small>@T("Practice")</small>
+            <strong>@DirectionLabel()</strong>
+        </span>
+        <span>
+            <small>@T("Actual cost")</small>
+            <strong>@CostLabel(Skill.Cost.ActualCost, Skill.Cost.ActualCostUnavailableReason)</strong>
+        </span>
+        <span>
+            <small>@T("Effective cost")</small>
+            <strong>@CostLabel(Skill.Cost.EffectiveCost, Skill.Cost.EffectiveCostUnavailableReason)</strong>
+        </span>
+        <span>
+            <small>@T("Activation")</small>
+            <strong>@TimingLabel()</strong>
+        </span>
+    </div>
+
+    @if (Skill.Reasons.Count > 0)
+    {
+        <div class="skill-reasons">
+            @foreach (var reason in Skill.Reasons)
+            {
+                <p>
+                    <span aria-hidden="true">↳</span>
+                    @T(reason.Summary)
+                </p>
+            }
+        </div>
+    }
+
+    @if (Skill.Conditions.Count > 0)
+    {
+        <div class="condition-list" aria-label="@T("Skill requirements")">
+            @foreach (var condition in Skill.Conditions)
+            {
+                <span class="@($"condition {condition.Status.ToString().ToLowerInvariant()}")">
+                    <strong>@ConditionKindLabel(condition.Kind)</strong>
+                    <span class="condition-status">@ConditionStatusLabel(condition.Status)</span>
+                    <span>@T(condition.Evaluation)</span>
+                </span>
+            }
+        </div>
+    }
+
+    <details class="skill-evidence">
+        <summary>@T("Evidence and linked threats")</summary>
+        <div class="named-evidence-list">
+            @if (Skill.ThreatReferences.Count > 0)
+            {
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Target-threat evidence") ·
+                    @Skill.ThreatReferences.Count @T("evidence source(s)")
+                </span>
+            }
+            @if (Skill.Cost.EvidenceReferences.Count > 0)
+            {
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Slot-cost evidence") ·
+                    @Skill.Cost.EvidenceReferences.Count @T("evidence source(s)")
+                </span>
+            }
+            @if (Skill.Counter.EvidenceReference is not null)
+            {
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Counter-effect evidence")
+                </span>
+            }
+            @if (Skill.Conditions.Count > 0)
+            {
+                <span>
+                    <strong>@DisplayName</strong>
+                    @T("Requirement evidence") ·
+                    @Skill.Conditions.Count @T("evidence source(s)")
+                </span>
+            }
+        </div>
+    </details>
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public RecommendedSkillViewModel Skill { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ManualLoadoutChangeViewModel> ManualChanges { get; set; } = [];
+
+    [Parameter]
+    public bool Highlighted { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string DisplayName => Skill.Name ?? T("Unnamed skill");
+
+    private string ManualStatus()
+    {
+        var changes = ManualChanges
+            .Where(change => change.SkillId == Skill.SkillId)
+            .Select(change => change.Kind)
+            .ToHashSet();
+        if (changes.Contains(ManualLoadoutChangeKind.Add)
+            && changes.Contains(
+                ManualLoadoutChangeKind.CompleteBreakthrough))
+        {
+            return T("Break through · add");
+        }
+
+        if (changes.Contains(
+                ManualLoadoutChangeKind.CompleteBreakthrough))
+        {
+            return T("Complete breakthrough");
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.Add)
+            && changes.Contains(ManualLoadoutChangeKind.ChangeDirection))
+        {
+            return T("Add · change direction");
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.ChangeDirection))
+        {
+            return T("Change direction");
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.Add))
+        {
+            return T("Add manually");
+        }
+
+        if (changes.Contains(ManualLoadoutChangeKind.Retain))
+        {
+            return T("Keep");
+        }
+
+        if (Skill.RequiresBreakthrough)
+        {
+            return T("Complete breakthrough");
+        }
+
+        return Skill.RequiresManualDirectionChange
+            ? T("Change direction")
+            : T("Recommended");
+    }
+
+    private string DirectionLabel()
+    {
+        var direction = Skill.RequiredDirection ?? Skill.CurrentDirection;
+        return direction switch
+        {
+            PracticeDirection.Direct => Language == TaiwuLanguage.Chinese
+                ? "正練"
+                : "正練 · Direct",
+            PracticeDirection.Reverse => Language == TaiwuLanguage.Chinese
+                ? "逆練"
+                : "逆練 · Reverse",
+            PracticeDirection.Neutral => Language == TaiwuLanguage.Chinese
+                ? "中性"
+                : "中性 · Neutral",
+            _ => T("Unavailable")
+        };
+    }
+
+    private string CostLabel(int? value, string? unavailableReason) =>
+        value?.ToString() ?? (string.IsNullOrWhiteSpace(unavailableReason)
+            ? T("Unavailable")
+            : T("Unavailable · see warning"));
+
+    private string TimingLabel()
+    {
+        return Skill.Counter.ActivationTiming switch
+        {
+            CombatCounterActivationTiming.CombatStartPassive =>
+                T("Combat-start passive"),
+            CombatCounterActivationTiming.EquippedPassive =>
+                T("Equipped passive"),
+            CombatCounterActivationTiming.ActiveAttack => T("Active attack"),
+            CombatCounterActivationTiming.ActiveDefense => T("Active defense"),
+            CombatCounterActivationTiming.ActiveAgility => T("Active agility"),
+            null => T("No counter timing"),
+            _ => Skill.Counter.ActivationTiming.ToString()!
+        };
+    }
+
+    private string ConditionStatusLabel(
+        CombatRequirementStatus status) => status switch
+    {
+        CombatRequirementStatus.Satisfied => T("Satisfied"),
+        CombatRequirementStatus.Unsatisfied => T("Not satisfied"),
+        CombatRequirementStatus.Unknown => T("Unknown"),
+        _ => status.ToString()
+    };
+
+    private string ConditionKindLabel(
+        RecommendationConditionKind kind) => kind switch
+    {
+        RecommendationConditionKind.Weapon => T("Weapon"),
+        RecommendationConditionKind.Trick => T("Trick"),
+        RecommendationConditionKind.Range => T("Range"),
+        RecommendationConditionKind.Resource => T("Resource"),
+        RecommendationConditionKind.WeaponUnlock => T("Weapon unlock"),
+        RecommendationConditionKind.SkillActivation =>
+            T("Skill activation"),
+        _ => kind.ToString()
+    };
+
+    private string T(string english) => UiText.Get(Language, english);
+}

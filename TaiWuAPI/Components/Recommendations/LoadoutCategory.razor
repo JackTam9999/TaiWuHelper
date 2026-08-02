@@ -1,0 +1,56 @@
+@using TaiWuAPI.Presentation
+
+<section class="loadout-category" aria-labelledby="@HeadingId">
+    <div class="category-heading">
+        <div>
+            <h3 id="@HeadingId">@Category.DisplayName</h3>
+            <small>@CategoryLabel()</small>
+        </div>
+        <CapacityBar Category="Category" />
+    </div>
+
+    @if (Category.Skills.Count == 0)
+    {
+        <p class="empty-category">@T("No skill selected in this category.")</p>
+    }
+    else
+    {
+        <div class="skill-list">
+            @foreach (var skill in Category.Skills)
+            {
+                <SkillCard Skill="skill"
+                           ManualChanges="ManualChanges"
+                           Highlighted="@AddressesSelectedThreat(skill)" />
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public LoadoutCategoryViewModel Category { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ManualLoadoutChangeViewModel> ManualChanges { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedThreatReference { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private string CategoryLabel() => Language == TaiwuLanguage.Chinese
+        ? Category.DisplayName
+        : Category.Category.ToString();
+
+    private string HeadingId =>
+        $"loadout-category-{Category.Category.ToString().ToLowerInvariant()}";
+
+    private bool AddressesSelectedThreat(RecommendedSkillViewModel skill) =>
+        SelectedThreatReference is not null
+        && skill.ThreatReferences.Contains(
+            SelectedThreatReference,
+            StringComparer.Ordinal);
+}

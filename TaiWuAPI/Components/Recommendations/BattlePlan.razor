@@ -1,0 +1,65 @@
+@using TaiWuAPI.Presentation
+
+<section class="battle-plan recommendation-only"
+         aria-labelledby="battle-plan-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">@T("Fight reference")</p>
+            <h3 id="battle-plan-heading">@T("Battle plan")</h3>
+        </div>
+    </div>
+
+    <div class="battle-phases">
+        @foreach (var phase in Phases)
+        {
+            <section class="battle-phase">
+                <h4>@T(phase.Title)</h4>
+                @if (phase.Items.Count == 0)
+                {
+                    <p>@T("No separate evidence-backed instruction is available for this phase.")</p>
+                }
+                else
+                {
+                    <ol>
+                        @foreach (var item in phase.Items)
+                        {
+                            <li class="@(AddressesSelectedThreat(item) ? "threat-highlight" : null)">
+                                <strong>@T(item.Instruction)</strong>
+                                <details>
+                                    <summary>@T("Reason and evidence")</summary>
+                                    <strong>@item.SkillName</strong>
+                                    <span>
+                                        @EvidenceCount(item) @T("evidence source(s)")
+                                    </span>
+                                </details>
+                            </li>
+                        }
+                    </ol>
+                }
+            </section>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<BattlePlanPhaseViewModel> Phases { get; set; } = [];
+
+    [Parameter]
+    public string? SelectedThreatReference { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private bool AddressesSelectedThreat(BattlePlanItemViewModel item) =>
+        SelectedThreatReference is not null
+        && item.ThreatReferences.Contains(
+            SelectedThreatReference,
+            StringComparer.Ordinal);
+
+    private static int EvidenceCount(BattlePlanItemViewModel item) =>
+        item.EvidenceReferences.Count
+        + (item.ReasonReference is null ? 0 : 1);
+}

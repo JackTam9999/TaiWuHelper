@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "scenarioId": "M1-002",
+  "capture": {
+    "method": "local read-only inspection",
+    "saveUnchangedDuringCapture": true
+  },
+  "gameData": {
+    "productVersion": "1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a"
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsGameBinaryContent": false,
+    "containsMachineSpecificPaths": false,
+    "containsSaveOrBinaryFingerprints": false
+  }
+}

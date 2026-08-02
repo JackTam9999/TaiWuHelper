@@ -1,0 +1,203 @@
+@using TaiWuAPI.Presentation
+@using TaiWu.Domain.CombatRecommendations
+
+<section class="supporting-details recommendation-only"
+         aria-labelledby="supporting-details-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">@T("Supporting detail")</p>
+            <h3 id="supporting-details-heading">@T("Verify the recommendation")</h3>
+        </div>
+    </div>
+
+    <p class="unknown-policy">@T(Details.UnknownValuePolicy)</p>
+
+    <div class="supporting-panels">
+        <details>
+            <summary>
+                @T("Alternatives")
+                <span>@Details.Alternatives.Count</span>
+            </summary>
+            <div class="alternative-list">
+                @foreach (var alternative in Details.Alternatives)
+                {
+                    <article>
+                        <strong>@PolicyLabel(alternative.Style)</strong>
+                        @if (alternative.HasRecommendation)
+                        {
+                            <span>
+                                @T("Score") @alternative.TotalScore?.ToString("0.##") ·
+                                @alternative.ManualChangeCount @T("manual changes") ·
+                                @alternative.CaveatCount @T("caveats")
+                            </span>
+                        }
+                        else
+                        {
+                            <span>@T(alternative.Diagnostic ?? T("Unavailable"))</span>
+                        }
+                    </article>
+                }
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                @T("Assumptions and unavailable data")
+                <span>@(Details.Assumptions.Count + Details.UnavailableData.Count)</span>
+            </summary>
+            <div class="support-list">
+                @foreach (var caveat in Details.Assumptions)
+                {
+                    <article>
+                        <strong>@T("Assumption")</strong>
+                        <span>@T(caveat.Explanation)</span>
+                    </article>
+                }
+                @foreach (var caveat in Details.UnavailableData)
+                {
+                    <article>
+                        <strong>@T("Unavailable data")</strong>
+                        <span>@T(caveat.Explanation)</span>
+                    </article>
+                }
+                @if (Details.Assumptions.Count == 0
+                     && Details.UnavailableData.Count == 0)
+                {
+                    <p>@T("No additional assumption or unavailable-data caveat was produced.")</p>
+                }
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                @T("Conditional requirements")
+                <span>@Details.ConditionalRequirements.Count</span>
+            </summary>
+            <div class="support-list">
+                @foreach (var requirement in Details.ConditionalRequirements)
+                {
+                    <article>
+                        <strong>@requirement.SkillName · @ConditionKindLabel(requirement.Condition.Kind)</strong>
+                        <span>@T(requirement.Condition.Evaluation)</span>
+                        <span>@requirement.SkillName · @T("Requirement evidence")</span>
+                    </article>
+                }
+                @if (Details.ConditionalRequirements.Count == 0)
+                {
+                    <p>@T("No conditional requirement was selected for this style.")</p>
+                }
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                @T("Score contributions")
+                <span>@Details.Scores.Count</span>
+            </summary>
+            <div class="score-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">@T("Component")</th>
+                            <th scope="col">@T("Weight")</th>
+                            <th scope="col">@T("Score")</th>
+                            <th scope="col">@T("Points")</th>
+                            <th scope="col">@T("Explanation")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var score in Details.Scores)
+                        {
+                            <tr>
+                                <th scope="row">@ScoreComponentLabel(score.Component)</th>
+                                <td>@score.Weight</td>
+                                <td>@score.Score?.ToString("0.##")</td>
+                                <td>@score.WeightedPoints?.ToString("0.##")</td>
+                                <td>@T(score.Explanation)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </details>
+
+        <details>
+            <summary>
+                @T("Detailed evidence")
+                <span>@Details.EvidenceReferences.Count</span>
+            </summary>
+            <div class="evidence-list">
+                @foreach (var evidence in Details.EvidenceSummaries)
+                {
+                    <article>
+                        <strong>@T(evidence.Name)</strong>
+                        <span>
+                            @T(evidence.Kind) · @evidence.SourceCount
+                            @T("evidence source(s)")
+                        </span>
+                    </article>
+                }
+                @if (Details.EvidenceReferences.Count == 0)
+                {
+                    <p>@T("No evidence reference was available.")</p>
+                }
+            </div>
+        </details>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public RecommendationSupportingDetailsViewModel Details { get; set; } =
+        default!;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private string PolicyLabel(RecommendationPolicy policy) =>
+        Language == TaiwuLanguage.Chinese
+            ? policy switch
+            {
+                RecommendationPolicy.Safe => "穩健",
+                RecommendationPolicy.Balanced => "均衡",
+                RecommendationPolicy.Aggressive => "進取",
+                _ => policy.ToString()
+            }
+            : policy.ToString();
+
+    private string ConditionKindLabel(
+        RecommendationConditionKind kind) => kind switch
+    {
+        RecommendationConditionKind.Weapon => T("Weapon"),
+        RecommendationConditionKind.Trick => T("Trick"),
+        RecommendationConditionKind.Range => T("Range"),
+        RecommendationConditionKind.Resource => T("Resource"),
+        RecommendationConditionKind.WeaponUnlock => T("Weapon unlock"),
+        RecommendationConditionKind.SkillActivation =>
+            T("Skill activation"),
+        _ => kind.ToString()
+    };
+
+    private string ScoreComponentLabel(
+        RecommendationScoreComponentKind component) => component switch
+    {
+        RecommendationScoreComponentKind.ThreatCoverage =>
+            T("Threat coverage"),
+        RecommendationScoreComponentKind.Survival => T("Survival"),
+        RecommendationScoreComponentKind.ExecutionReliability =>
+            T("Execution reliability"),
+        RecommendationScoreComponentKind.CurrentLoadoutCompatibility =>
+            T("Current-loadout compatibility"),
+        RecommendationScoreComponentKind.DamagePotential =>
+            T("Damage potential"),
+        RecommendationScoreComponentKind.OpportunityCost =>
+            T("Opportunity cost"),
+        RecommendationScoreComponentKind.ConditionalRisk =>
+            T("Conditional risk"),
+        RecommendationScoreComponentKind.InnerPowerCompatibility =>
+            T("Inner-power compatibility"),
+        _ => component.ToString()
+    };
+}

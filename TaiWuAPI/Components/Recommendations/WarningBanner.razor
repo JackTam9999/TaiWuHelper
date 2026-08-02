@@ -1,0 +1,91 @@
+@using TaiWuAPI.Presentation
+
+<section class="warning-banner"
+         aria-labelledby="warning-heading"
+         aria-live="polite">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">@T("Review before setup")</p>
+            <h2 id="warning-heading">@T("Warnings and unavailable information")</h2>
+        </div>
+        @if (Warnings.Any(warning => warning.IsCritical))
+        {
+            <span class="critical-label">@T("Critical review required")</span>
+        }
+    </div>
+
+    <div class="warning-list">
+        @foreach (var warning in Warnings
+            .OrderByDescending(value => value.IsCritical)
+            .ThenBy(value => value.Kind)
+            .ThenBy(value => value.Reference, StringComparer.Ordinal))
+        {
+            <article class="@(warning.IsCritical ? "warning-item critical" : "warning-item")">
+                <div>
+                    <span class="warning-kind">@WarningKindLabel(warning.Kind)</span>
+                    @if (warning.IsCritical)
+                    {
+                        <strong>@T("Critical")</strong>
+                    }
+                </div>
+                <h3>@WarningTitle(warning)</h3>
+                @if (warning.Occurrences > 1)
+                {
+                    <p class="warning-occurrences">
+                        @T("Aggregated from") @warning.Occurrences @T("evaluated combinations.")
+                    </p>
+                }
+                <p>@T(warning.Message)</p>
+                <p class="warning-effect">
+                    <strong>@T("Effect on recommendation:")</strong>
+                    @T(warning.EffectOnRecommendation)
+                </p>
+                @if (warning.EvidenceReferences.Count > 0)
+                {
+                    <div class="warning-evidence" aria-label="@T("Warning evidence")">
+                        <span>
+                            @WarningTitle(warning) ·
+                            @warning.EvidenceReferences.Count
+                            @T("evidence source(s)")
+                        </span>
+                    </div>
+                }
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<RecommendationWarningViewModel> Warnings { get; set; } = [];
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string WarningKindLabel(
+        PresentationWarningKind kind) => kind switch
+    {
+        PresentationWarningKind.StaleData => T("Stale data"),
+        PresentationWarningKind.ObservationDifference =>
+            T("Observation difference"),
+        PresentationWarningKind.UnavailableValue => T("Unavailable value"),
+        PresentationWarningKind.UnverifiedMechanic =>
+            T("Unverified mechanic"),
+        PresentationWarningKind.CandidateSearch => T("Candidate search"),
+        PresentationWarningKind.General => T("General"),
+        _ => kind.ToString()
+    };
+
+    private string WarningTitle(RecommendationWarningViewModel warning) =>
+        warning.Code switch
+        {
+            "TARGET_LOADOUT_UNAVAILABLE" => T("Target loadout unavailable"),
+            "TARGET_EQUIPPED_SKILLS_UNAVAILABLE" =>
+                T("Target equipped skills unavailable"),
+            "UNRECOGNIZED_TARGET_MECHANIC" =>
+                T("Unrecognized target mechanic"),
+            _ => WarningKindLabel(warning.Kind)
+        };
+
+    private string T(string english) => UiText.Get(Language, english);
+}

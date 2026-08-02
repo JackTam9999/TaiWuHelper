@@ -1,6 +1,21 @@
 @TaiWu_HostAddress = http://localhost:5056
 
-GET {{TaiWu_HostAddress}}/weatherforecast/
+GET {{TaiWu_HostAddress}}/api/save-games/read
+Accept: application/json
+
+###
+
+POST {{TaiWu_HostAddress}}/api/combat-recommendations
+Content-Type: application/json
+
+{
+  "targetCharacterId": 16317,
+  "objective": "Safe"
+}
+
+###
+
+GET {{TaiWu_HostAddress}}/api/targets?query=何春石
 Accept: application/json
 
 ###

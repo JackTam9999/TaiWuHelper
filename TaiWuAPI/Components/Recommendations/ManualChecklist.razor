@@ -1,0 +1,115 @@
+@using Microsoft.JSInterop
+@using TaiWuAPI.Presentation
+@inject IJSRuntime JavaScript
+
+<section class="manual-checklist recommendation-only"
+         aria-labelledby="manual-checklist-heading">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">@T("Manual setup")</p>
+            <h3 id="manual-checklist-heading">@T("Setup checklist")</h3>
+        </div>
+        <div class="recommendation-actions no-print">
+            <button type="button" class="text-button" @onclick="CopyAsync">
+                @T("Copy checklist")
+            </button>
+            <button type="button" class="text-button" @onclick="PrintAsync">
+                @T("Print recommendation")
+            </button>
+        </div>
+    </div>
+
+    <p class="manual-boundary">
+        @T("Instructions only: TaiWu Helper cannot perform these steps.")
+    </p>
+
+    @if (Items.Count == 0)
+    {
+        <p class="empty-category">@T("No manual setup differences were produced.")</p>
+    }
+    else
+    {
+        <ol class="checklist-items">
+            @foreach (var item in Items)
+            {
+                <li>
+                    <label>
+                        <input type="checkbox"
+                               checked="@_state.IsCompleted(item.Reference)"
+                               @onchange="() => Toggle(item.Reference)" />
+                        <span>
+                            <strong>@ItemLabel(item.Kind)</strong>
+                            @T(item.Instruction)
+                        </span>
+                    </label>
+                    <details>
+                        <summary>@T("Why this step")</summary>
+                        <p>@T(item.Reason)</p>
+                    </details>
+                </li>
+            }
+        </ol>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_copyStatus))
+    {
+        <p class="copy-status" role="status">@_copyStatus</p>
+    }
+</section>
+
+@code {
+    private readonly ManualChecklistState _state = new();
+    private string? _copyStatus;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ManualChecklistItemViewModel> Items { get; set; } = [];
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    protected override void OnParametersSet()
+    {
+        _state.Synchronize(Items);
+    }
+
+    private void Toggle(string reference)
+    {
+        _state.Toggle(reference);
+    }
+
+    private async Task CopyAsync()
+    {
+        var text = string.Join(
+            Environment.NewLine,
+            new[]
+            {
+                T("TaiWu Helper recommendation — information only"),
+                T("TaiWu Helper cannot perform these steps."),
+                string.Empty
+            }.Concat(
+                Items.Select((item, index) =>
+                    $"{index + 1}. {T(item.Instruction)}")));
+        await JavaScript.InvokeVoidAsync("taiwuHelper.copyText", text);
+        _copyStatus = T("Recommendation checklist copied.");
+    }
+
+    private async Task PrintAsync()
+    {
+        await JavaScript.InvokeVoidAsync("taiwuHelper.printRecommendation");
+    }
+
+    private string ItemLabel(
+        ManualChecklistItemKind kind) => kind switch
+    {
+        ManualChecklistItemKind.RemoveSkill => T("Remove"),
+        ManualChecklistItemKind.AddSkill => T("Add"),
+        ManualChecklistItemKind.ChangeDirection => T("Direction"),
+        ManualChecklistItemKind.CompleteBreakthrough => T("Breakthrough"),
+        ManualChecklistItemKind.AllocateGenericSlots => "萬用",
+        ManualChecklistItemKind.ConfirmWeapon => T("Weapon"),
+        ManualChecklistItemKind.ConfirmResource => T("Resource"),
+        _ => kind.ToString()
+    };
+
+    private string T(string english) => UiText.Get(Language, english);
+}

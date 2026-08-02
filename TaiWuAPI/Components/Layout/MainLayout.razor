@@ -1,0 +1,58 @@
+@inherits LayoutComponentBase
+@inject TaiwuLanguageState LanguageState
+
+<CascadingValue Value="LanguageState.Current">
+<div class="app-shell" lang="@LanguageCode">
+    <a class="skip-link" href="#main-content">@T("Skip to main content")</a>
+    <header class="app-header">
+        <a class="brand" href="/" aria-label="@T("TaiWu Helper home")">
+            <span class="brand-mark" aria-hidden="true">太</span>
+            <span>
+                <strong>TaiWu Helper</strong>
+                <small>@T("Pre-fight briefing")</small>
+            </span>
+        </a>
+        <div class="header-actions">
+            <div class="language-switcher"
+                 role="group"
+                 aria-label="@T("Language")">
+                <button type="button"
+                        aria-label="@T("English")"
+                        aria-pressed="@(LanguageState.Current == TaiwuLanguage.English)"
+                        class="@LanguageButtonClass(TaiwuLanguage.English)"
+                        @onclick="() => SetLanguage(TaiwuLanguage.English)">
+                    EN
+                </button>
+                <button type="button"
+                        aria-label="@T("Chinese")"
+                        aria-pressed="@(LanguageState.Current == TaiwuLanguage.Chinese)"
+                        class="@LanguageButtonClass(TaiwuLanguage.Chinese)"
+                        @onclick="() => SetLanguage(TaiwuLanguage.Chinese)">
+                    中
+                </button>
+            </div>
+            <span class="information-badge">@T("Information only")</span>
+        </div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+        @Body
+    </main>
+</div>
+</CascadingValue>
+
+@code {
+    private string LanguageCode =>
+        LanguageState.Current == TaiwuLanguage.Chinese ? "zh-Hant" : "en";
+
+    private string T(string english) =>
+        UiText.Get(LanguageState.Current, english);
+
+    private void SetLanguage(TaiwuLanguage language)
+    {
+        LanguageState.Set(language);
+    }
+
+    private string? LanguageButtonClass(TaiwuLanguage language) =>
+        LanguageState.Current == language ? "active" : null;
+}
