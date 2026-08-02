@@ -108,9 +108,15 @@ public static class UiText
             ["Some fields are unavailable or use a fallback. Open the detail view for provenance."] =
                 "部分欄位不可用或使用了備援資料；可在詳細檢視中查看來源。",
             ["Open full skill detail"] = "開啟完整功法詳情",
+            ["View catalogue detail"] = "查看功法圖鑑詳情",
             ["Breadcrumb"] = "麵包屑導覽",
             ["Back to skill atlas"] = "返回功法圖鑑",
             ["Skill detail"] = "功法詳情",
+            ["Recommendation context"] = "推薦情境",
+            ["Opened from a combat recommendation"] = "從戰鬥推薦開啟",
+            ["Catalogue availability and raw descriptions do not change recommendation feasibility, rules, threats, counters, or scores."] =
+                "功法目錄是否可用及其原始描述，都不會改變推薦的可行性、規則、威脅、克制或評分。",
+            ["Back to recommendations"] = "返回戰鬥推薦",
             ["Loading"] = "載入中",
             ["Reading skill detail and current Taiwu progress…"] =
                 "正在讀取功法詳情與目前太吾進度……",

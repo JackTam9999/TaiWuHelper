@@ -1769,7 +1769,8 @@ select {
     font-size: 0.76rem;
 }
 
-.skill-detail-link {
+.skill-detail-link,
+.skill-catalogue-link {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1783,10 +1784,19 @@ select {
 }
 
 .skill-detail-link:hover,
-.skill-detail-link:focus-visible {
+.skill-detail-link:focus-visible,
+.skill-catalogue-link:hover,
+.skill-catalogue-link:focus-visible {
     color: #f2dfa8;
     text-decoration: underline;
     text-underline-offset: 4px;
+}
+
+.skill-catalogue-link {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(215, 182, 107, 0.28);
+    background: rgba(215, 182, 107, 0.06);
 }
 
 .detail-breadcrumb {
@@ -1814,6 +1824,40 @@ select {
     display: grid;
     gap: 22px;
     padding: 24px 0 64px;
+}
+
+.recommendation-context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 16px 18px;
+    border-left: 3px solid var(--gold);
+    background: rgba(215, 182, 107, 0.08);
+}
+
+.recommendation-context > div {
+    display: grid;
+    gap: 4px;
+}
+
+.recommendation-context strong {
+    color: #e8d59e;
+    font-size: 0.84rem;
+}
+
+.recommendation-context p {
+    margin: 0;
+    color: #c9d4cf;
+    font-size: 0.74rem;
+    line-height: 1.5;
+}
+
+.recommendation-context > a {
+    flex: none;
+    color: var(--gold);
+    font-size: 0.72rem;
+    font-weight: 800;
 }
 
 .skill-detail-hero {
@@ -2347,8 +2391,13 @@ select {
 
     .section-heading,
     .request-row,
-    .page-state {
+    .page-state,
+    .recommendation-context {
         flex-direction: column;
+    }
+
+    .recommendation-context {
+        align-items: flex-start;
     }
 
     .page-state {

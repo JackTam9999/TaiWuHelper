@@ -51,6 +51,7 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Unavailable", text);
         Assert.Contains("Display-only raw text", text);
         Assert.Contains("Source and availability", text);
+        Assert.DoesNotContain("Opened from a combat recommendation", text);
         Assert.Contains("data-study-status=\"studied\"", html);
         Assert.Contains("data-study-status=\"not-studied\"", html);
         Assert.Contains("data-study-status=\"unavailable\"", html);
@@ -63,6 +64,107 @@ public sealed partial class SkillCatalogueRenderingTests
                 && request.CharacterId == null
                 && request.PreferredLanguage == CatalogueLanguage.English),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Recommendation_context_remains_visible_when_catalogue_is_missing()
+    {
+        var definition = DetailedDefinition(includeEnglishName: true);
+        var source = Source([definition]);
+        var repository = Substitute.For<ICombatSkillCatalogueRepository>();
+        repository.ReadStateAsync(Arg.Any<CancellationToken>())
+            .Returns(new CombatSkillCatalogueRepositorySnapshot(
+                CatalogueRepositoryState.Missing,
+                sourceIdentity: null,
+                definitionCount: 0,
+                builtAtUtc: null));
+        var reader = Substitute.For<ICharacterCombatSkillProgressReader>();
+
+        var html = await RenderDetailPageAsync(
+            source,
+            repository,
+            reader,
+            TaiwuLanguage.English,
+            context: "recommendation");
+        var text = VisibleText(html);
+
+        Assert.Contains("Opened from a combat recommendation", text);
+        Assert.Contains("Back to recommendations", text);
+        Assert.Contains(
+            "Catalogue availability and raw descriptions do not change recommendation feasibility",
+            text);
+        Assert.Contains(
+            "Skill detail is unavailable until the local catalogue is current",
+            text);
+        Assert.Empty(reader.ReceivedCalls());
+    }
+
+    [Fact]
+    public async Task Recommendation_context_remains_visible_when_catalogue_is_stale()
+    {
+        var definition = DetailedDefinition(includeEnglishName: true);
+        var source = Source([definition]);
+        var repository = Substitute.For<ICombatSkillCatalogueRepository>();
+        var staleIdentity = new CombatSkillCatalogueSourceIdentity(
+            "1.0.0-test",
+            1,
+            new string('F', 64),
+            new string('A', 64),
+            new string('B', 64));
+        repository.ReadStateAsync(Arg.Any<CancellationToken>())
+            .Returns(new CombatSkillCatalogueRepositorySnapshot(
+                CatalogueRepositoryState.Ready,
+                staleIdentity,
+                definitionCount: 1,
+                DateTimeOffset.Parse("2026-08-02T12:00:00Z")));
+        var reader = Substitute.For<ICharacterCombatSkillProgressReader>();
+
+        var text = VisibleText(await RenderDetailPageAsync(
+            source,
+            repository,
+            reader,
+            TaiwuLanguage.English,
+            context: "recommendation"));
+
+        Assert.Contains("Opened from a combat recommendation", text);
+        Assert.Contains(
+            "Skill detail is unavailable until the local catalogue is current",
+            text);
+        Assert.Contains("Stale", text);
+        Assert.Empty(reader.ReceivedCalls());
+    }
+
+    [Fact]
+    public async Task Recommendation_context_handles_a_missing_static_definition()
+    {
+        var definition = DetailedDefinition(includeEnglishName: true);
+        var source = Source([definition]);
+        var repository = Substitute.For<ICombatSkillCatalogueRepository>();
+        repository.ReadStateAsync(Arg.Any<CancellationToken>())
+            .Returns(new CombatSkillCatalogueRepositorySnapshot(
+                CatalogueRepositoryState.Ready,
+                CurrentIdentity,
+                definitionCount: 1,
+                DateTimeOffset.Parse("2026-08-02T12:00:00Z")));
+        repository.GetAsync(456, Arg.Any<CancellationToken>())
+            .Returns((CombatSkillDefinition?)null);
+        var reader = Substitute.For<ICharacterCombatSkillProgressReader>();
+        reader.ReadAsync(
+                Arg.Any<CharacterCombatSkillProgressReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(CharacterCombatSkillProgressReadResult.SaveMissing(
+                "test save missing"));
+
+        var text = VisibleText(await RenderDetailPageAsync(
+            source,
+            repository,
+            reader,
+            TaiwuLanguage.English,
+            context: "recommendation"));
+
+        Assert.Contains("Opened from a combat recommendation", text);
+        Assert.Contains("No static combat-skill definition matches this ID", text);
+        Assert.Contains("Back to recommendations", text);
     }
 
     [Fact]
@@ -112,7 +214,8 @@ public sealed partial class SkillCatalogueRenderingTests
         ICombatSkillDefinitionSource source,
         ICombatSkillCatalogueRepository repository,
         ICharacterCombatSkillProgressReader progressReader,
-        TaiwuLanguage language)
+        TaiwuLanguage language,
+        string? context = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -140,6 +243,10 @@ public sealed partial class SkillCatalogueRenderingTests
                                     1,
                                     nameof(SkillDetail.SkillId),
                                     456);
+                                builder.AddAttribute(
+                                    2,
+                                    nameof(SkillDetail.Context),
+                                    context);
                                 builder.CloseComponent();
                             })
                     }));

@@ -14,13 +14,25 @@
     : T("Skill detail"))</PageTitle>
 
 <nav class="detail-breadcrumb" aria-label="@T("Breadcrumb")">
-    <a href="/skills">← @T("Back to skill atlas")</a>
+    <a href="@BackHref">← @BackLabel</a>
     <span aria-hidden="true">/</span>
     <span>@T("Skill detail")</span>
 </nav>
 
 <div class="skill-detail-page"
      aria-busy="@_loading.ToString().ToLowerInvariant()">
+    @if (OpenedFromRecommendation)
+    {
+        <aside class="recommendation-context" role="note">
+            <div>
+                <span class="state-label">@T("Recommendation context")</span>
+                <strong>@T("Opened from a combat recommendation")</strong>
+                <p>@T("Catalogue availability and raw descriptions do not change recommendation feasibility, rules, threats, counters, or scores.")</p>
+            </div>
+            <a href="/">@T("Back to recommendations")</a>
+        </aside>
+    }
+
     @if (_loading && _result is null)
     {
         <section class="message-card page-state" role="status" aria-live="polite">
@@ -290,6 +302,10 @@
     [Parameter]
     public int SkillId { get; set; }
 
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "context")]
+    public string? Context { get; set; }
+
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
 
@@ -346,6 +362,17 @@
         Language == TaiwuLanguage.Chinese
             ? CatalogueLanguage.TraditionalChinese
             : CatalogueLanguage.English;
+
+    private bool OpenedFromRecommendation => string.Equals(
+        Context,
+        "recommendation",
+        StringComparison.OrdinalIgnoreCase);
+
+    private string BackHref => OpenedFromRecommendation ? "/" : "/skills";
+
+    private string BackLabel => OpenedFromRecommendation
+        ? T("Back to recommendations")
+        : T("Back to skill atlas");
 
     private string PrimaryName => _result?.DisplayName?.Value.IsAvailable == true
         ? _result.DisplayName.Value.Value.Text

@@ -115,6 +115,10 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("Add · change direction", text);
         Assert.Contains("Evidence and linked threats", text);
         Assert.Contains("Counter-effect evidence", text);
+        Assert.Contains("View catalogue detail", text);
+        Assert.Contains(
+            "href=\"/skills/604?context=recommendation\"",
+            html);
         Assert.DoesNotContain("evidence:", text);
         Assert.DoesNotContain("#604", text);
         Assert.Contains("threat-highlight", html);

@@ -892,7 +892,7 @@ assistive technology.
 
 ### E2-015 — Link recommendations to catalogue details
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -905,23 +905,35 @@ recommendation workflow depend on catalogue availability.
 
 #### Acceptance criteria
 
-- [ ] Recommendation skill cards link by stable skill ID.
-- [ ] The detail view identifies the recommendation context when supplied but
+- [x] Recommendation skill cards link by stable skill ID.
+- [x] The detail view identifies the recommendation context when supplied but
       remains usable as a standalone route.
-- [ ] Missing, stale, or rebuilding catalogue state does not prevent Epic 1
+- [x] Missing, stale, or rebuilding catalogue state does not prevent Epic 1
       recommendations from being created or displayed.
-- [ ] Raw catalogue descriptions do not create or modify recommendation rules,
+- [x] Raw catalogue descriptions do not create or modify recommendation rules,
       feasibility, threats, counters, or scores.
-- [ ] Existing recommendation API and UI contracts remain backward compatible
+- [x] Existing recommendation API and UI contracts remain backward compatible
       unless a separately documented additive change is required.
-- [ ] Tests cover successful navigation, missing definitions, stale catalogue,
+- [x] Tests cover successful navigation, missing definitions, stale catalogue,
       and recommendation independence.
 
-#### Evidence when complete
+#### Evidence
 
-- Presentation integration tests.
-- Architecture test proving the recommendation Domain does not depend on
-  SQLite or raw catalogue text.
+- Recommendation component rendering verifies every recommended skill exposes
+  `/skills/{skillId}?context=recommendation` without requiring catalogue
+  services, while preserving the existing view-model and API contracts.
+- Detail rendering verifies the recommendation-context note and return link,
+  standalone behavior, missing catalogue, stale catalogue, and missing static
+  definition states. Catalogue failures never suppress the already-produced
+  recommendation card.
+- `ArchitectureBoundaryTests` proves the recommendation card and Domain/
+  Application recommendation logic do not reference catalogue repositories or
+  `RawCombatSkillDescription`; the detail page alone consumes the optional
+  presentation context.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal` with installed
+  catalogue verification enabled: 615 total, 612 passed, 0 failed, and 3
+  opt-in historical save assertions skipped because no pinned save path was
+  supplied.
 
 ## Slice 8: Verification and completion
 

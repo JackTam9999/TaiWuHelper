@@ -946,6 +946,8 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("Static definition", detailPage);
         Assert.Contains("Current Taiwu state", detailPage);
         Assert.Contains("Display-only raw text", detailPage);
+        Assert.Contains("SupplyParameterFromQuery(Name = \"context\")", detailPage);
+        Assert.Contains("Opened from a combat recommendation", detailPage);
         Assert.DoesNotContain("ISaveGameReader", detailPage);
         Assert.DoesNotContain("DefaultSaveFilePath", detailPage);
         Assert.DoesNotContain("using GameData", detailPage);
@@ -962,6 +964,37 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("Source and availability", studyMap);
         Assert.DoesNotContain("<svg", studyMap, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("<img", studyMap, StringComparison.OrdinalIgnoreCase);
+
+        var recommendationSkillCard = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "SkillCard.razor"));
+        Assert.Contains(
+            "/skills/@Skill.SkillId?context=recommendation",
+            recommendationSkillCard);
+        Assert.DoesNotContain(
+            "ICombatSkillCatalogue",
+            recommendationSkillCard,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "RawCombatSkillDescription",
+            recommendationSkillCard,
+            StringComparison.Ordinal);
+
+        var recommendationLogic = string.Join(
+            Environment.NewLine,
+            Directory.EnumerateFiles(
+                    Path.Combine(repositoryRoot, "src", "TaiWu.Domain", "CombatRecommendations"),
+                    "*.cs",
+                    SearchOption.AllDirectories)
+                .Concat(Directory.EnumerateFiles(
+                    Path.Combine(repositoryRoot, "src", "TaiWu.Application", "CombatRecommendations"),
+                    "*.cs",
+                    SearchOption.AllDirectories))
+                .Select(File.ReadAllText));
+        Assert.DoesNotContain("RawCombatSkillDescription", recommendationLogic);
+        Assert.DoesNotContain("ICombatSkillCatalogue", recommendationLogic);
 
         var style = File.ReadAllText(
             Path.Combine(apiRoot, "wwwroot", "app.css"));
