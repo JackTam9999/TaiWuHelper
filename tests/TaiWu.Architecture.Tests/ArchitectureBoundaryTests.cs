@@ -7,6 +7,7 @@ using TaiWu.Application.SaveGames;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.SaveGames;
 using TaiWu.Infrastructure;
+using TaiWu.Infrastructure.Catalogue;
 using TaiWuAPI.Controllers;
 using TaiWuAPI.Presentation;
 using Xunit;
@@ -30,6 +31,7 @@ public sealed partial class ArchitectureBoundaryTests
         ("file write", FileWritePattern()),
         ("write-capable stream", WriteStreamPattern()),
         ("destructive file operation", DestructiveFilePattern()),
+        ("database persistence", SqlitePersistencePattern()),
         ("archive save", ArchiveSavePattern())
     ];
 
@@ -312,10 +314,11 @@ public sealed partial class ArchitectureBoundaryTests
             "architecture",
             "UI-PRESENTATION-GUIDELINES.md"));
         var combatLayout = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "docs",
-            "roadmap",
-            "UI-001-combat-recommendation-layout.md"));
+                repositoryRoot,
+                "docs",
+                "roadmap",
+                "epic-001",
+                "UI-001-combat-recommendation-layout.md"));
         var componentSources = Directory
             .EnumerateFiles(componentRoot, "*.razor", SearchOption.AllDirectories)
             .Select(path => new
@@ -574,6 +577,83 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.True(
             violations.Count == 0,
             "Forbidden save-write or game-control APIs were found:"
+            + Environment.NewLine
+            + string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void Catalogue_storage_boundary_is_infrastructure_owned()
+    {
+        var providerType = typeof(CatalogueStoragePathProvider);
+
+        Assert.Equal(typeof(DependencyInjection).Assembly, providerType.Assembly);
+        Assert.False(providerType.IsPublic);
+        Assert.Equal(
+            "TaiWu.Infrastructure.Catalogue",
+            providerType.Namespace);
+
+        var repositoryRoot = FindRepositoryRoot();
+        var contractRoots = new[]
+        {
+            Path.Combine(repositoryRoot, "src", "TaiWu.Domain"),
+            Path.Combine(repositoryRoot, "src", "TaiWu.Application"),
+            Path.Combine(repositoryRoot, "TaiWuAPI")
+        };
+        var contractSource = string.Join(
+            Environment.NewLine,
+            contractRoots.SelectMany(root =>
+                Directory
+                    .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                    .Where(path => !IsBuildOutput(path))
+                    .Select(File.ReadAllText)));
+
+        Assert.DoesNotMatch(CataloguePathContractPattern(), contractSource);
+    }
+
+    [Fact]
+    public void Production_persistence_is_confined_to_named_catalogue_store()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var allowedStore = Path.Combine(
+            "src",
+            "TaiWu.Infrastructure",
+            "Catalogue",
+            "SqliteCombatSkillCatalogueStore.cs");
+        var persistenceRules = SaveAdapterForbiddenApis
+            .Where(rule => rule.Description != "archive save")
+            .ToArray();
+        var violations = new List<string>();
+
+        foreach (var root in new[]
+                 {
+                     Path.Combine(repositoryRoot, "src"),
+                     Path.Combine(repositoryRoot, "TaiWuAPI")
+                 })
+        {
+            foreach (var file in Directory
+                         .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                         .Where(path => !IsBuildOutput(path)))
+            {
+                var relativePath = Path.GetRelativePath(repositoryRoot, file);
+                var source = File.ReadAllText(file);
+                foreach (var (description, pattern) in persistenceRules)
+                {
+                    if (pattern.IsMatch(source)
+                        && !string.Equals(
+                            relativePath,
+                            allowedStore,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        violations.Add($"{relativePath}: {description}");
+                    }
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            "Persistence APIs are allowed only in the named helper-owned "
+            + "catalogue store:"
             + Environment.NewLine
             + string.Join(Environment.NewLine, violations));
     }
@@ -1100,7 +1180,7 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [GeneratedRegex(
-        @"\bFile\s*\.\s*(?:WriteAllBytes|WriteAllBytesAsync|WriteAllLines|WriteAllLinesAsync|WriteAllText|WriteAllTextAsync|AppendAllLines|AppendAllLinesAsync|AppendAllText|AppendAllTextAsync|OpenWrite)\b",
+        @"\bFile\s*\.\s*(?:WriteAllBytes|WriteAllBytesAsync|WriteAllLines|WriteAllLinesAsync|WriteAllText|WriteAllTextAsync|AppendAllLines|AppendAllLinesAsync|AppendAllText|AppendAllTextAsync|OpenWrite)\b|\bDirectory\s*\.\s*CreateDirectory\b",
         RegexOptions.IgnoreCase)]
     private static partial Regex FileWritePattern();
 
@@ -1113,6 +1193,11 @@ public sealed partial class ArchitectureBoundaryTests
         @"\bFile\s*\.\s*(?:Delete|Move|Replace|Copy)\b|\bDirectory\s*\.\s*(?:Delete|Move)\b",
         RegexOptions.IgnoreCase)]
     private static partial Regex DestructiveFilePattern();
+
+    [GeneratedRegex(
+        @"\b(?:SqliteConnection|SQLiteConnection|SqliteConnectionStringBuilder)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex SqlitePersistencePattern();
 
     [GeneratedRegex(
         @"\b(?:archive|localArchive)\s*\.\s*(?:Save|Write|Modify|Repair|Convert)\s*\(",
@@ -1153,6 +1238,11 @@ public sealed partial class ArchitectureBoundaryTests
         @"^(?:(?:Apply|Equip).*(?:Loadout|Skill)|(?:Write|Save|Modify|Update|Delete|Repair|Replace|Patch).*(?:Save|Game|Character|Skill|Loadout)|Inject|Hook|Automate|Control|SendInput|Trainer|Cheat)",
         RegexOptions.IgnoreCase)]
     private static partial Regex GameMutationActionPattern();
+
+    [GeneratedRegex(
+        @"\b(?:(?:Catalogue|Catalog)\w*(?:Path|Directory)|(?:Path|Directory)\w*(?:Catalogue|Catalog))\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex CataloguePathContractPattern();
 
     [GeneratedRegex(
         @"@on(?:click|change)\s*=\s*""([^""]+)""",

@@ -76,7 +76,7 @@ reclassified.
 
 ### E2-000 — Constrain helper-owned catalogue persistence
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -95,27 +95,35 @@ outside the game installation and configured save directories.
 
 #### Acceptance criteria
 
-- [ ] The architecture documentation distinguishes read-only game sources from
+- [x] The architecture documentation distinguishes read-only game sources from
       writable helper-owned catalogue storage.
-- [ ] A single Infrastructure-owned path provider returns the catalogue path.
-- [ ] Domain and Application contracts contain no filesystem path supplied by
+- [x] A single Infrastructure-owned path provider returns the catalogue path.
+- [x] Domain and Application contracts contain no filesystem path supplied by
       a player or HTTP request.
-- [ ] Catalogue write, replace, recovery, and delete operations reject targets
+- [x] Catalogue write, replace, recovery, and delete operations reject targets
       outside the validated helper-owned directory.
-- [ ] The configured game installation and save directories are always rejected
+- [x] The configured game installation and save directories are always rejected
       as catalogue destinations, including equivalent normalized paths.
-- [ ] Presentation contains no direct database or filesystem write API.
-- [ ] Existing save-reader and process-control prohibitions remain unchanged.
-- [ ] Architecture tests permit only the named catalogue persistence adapter to
+- [x] Presentation contains no direct database or filesystem write API.
+- [x] Existing save-reader and process-control prohibitions remain unchanged.
+- [x] Architecture tests permit only the named catalogue persistence adapter to
       write helper-owned data; they do not add a global file-write exception.
-- [ ] Tests cover traversal, relative paths, symlinks or reparse points where
+- [x] Tests cover traversal, relative paths, symlinks or reparse points where
       applicable, case differences, and overlapping-directory configuration.
 
-#### Evidence when complete
+#### Evidence
 
-- Updated ADR or catalogue-specific architecture decision.
-- Path-boundary unit and architecture tests.
-- Before-and-after fingerprints for representative game and save sources.
+- [ADR-0002: Constrain helper-owned catalogue storage](../../architecture/ADR-0002-helper-owned-catalogue-storage.md).
+- `CatalogueStoragePathProvider` permits only the fixed database and rebuild
+  filenames directly inside its validated helper-owned catalogue directory.
+- `CatalogueStoragePathProviderTests`: 18 path-boundary tests cover traversal,
+  fixed filenames, protected-directory overlap, case behavior, reparse points,
+  and unchanged protected directories.
+- `ArchitectureBoundaryTests` reserves persistence APIs for the one named
+  future SQLite adapter and rejects catalogue paths in Domain, Application,
+  and HTTP contracts.
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 432 total,
+  431 passed, 0 failed, and 1 opt-in local-save integration test skipped.
 
 ## Slice 1: Evidence and golden progress
 
