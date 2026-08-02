@@ -928,6 +928,8 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("@T(\"Learned\")", atlasCard);
         Assert.Contains("skill-card-grade", atlasCard);
         Assert.Contains("skill-card-status", atlasCard);
+        Assert.Contains("practice-marker", atlasCard);
+        Assert.Contains(".Where(Breakthrough.Includes)", atlasCard);
         Assert.DoesNotContain(
             "<svg",
             atlasCard,

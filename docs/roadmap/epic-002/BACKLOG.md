@@ -788,6 +788,9 @@ hierarchy of the game without copying proprietary artwork.
       independent progress badges.
 - [x] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
       appear only when supported by the corresponding typed fact.
+- [x] A completed breakthrough places one circled `正` or `逆` marker before
+      the skill name. A ready breakthrough places `突破` plus only its verified
+      available direction markers before the name, ordered `正` then `逆`.
 - [x] Catalogue freshness, build version, save read time, and warnings are
       visible without opening developer tools.
 - [x] Loading, rebuilding, empty, partial, stale, unsupported, and failure
@@ -809,6 +812,9 @@ hierarchy of the game without copying proprietary artwork.
 - Product-owner review promoted a named faction selector into the primary
   filter row, grouped results by faction, relabeled `品階` as `品級`, and moved
   grade plus the primary current status into each collapsed card.
+- Product-owner review replaced repeated long-form direction text beside the
+  primary status with compact, accessible circled `正`/`逆` markers before the
+  skill name; ready skills show `突破` and their verified available directions.
 - Live validation used the current save and the explicitly rebuilt helper-owned
   GameData `1.0.0` catalogue: 946 definitions matched the character overlay.
   Traditional Chinese search for `黑血蠱降` returned the English-localized
@@ -1050,7 +1056,7 @@ final completion decision.
   list/detail observation with the versioned decoder and helper UI.
 - The current-save vertical check passed with 946 joined definitions and
   unchanged source fingerprints. After product-owner UI revisions, the default
-  solution suite passed 617 tests: 612 passed, 0 failed, and 5 documented
+  solution suite passed 618 tests: 613 passed, 0 failed, and 5 documented
   opt-in checks skipped.
 - Source/save freshness, transactional rebuild/recovery, recommendation
   independence, and all Epic 2 milestone criteria are mapped to automated or

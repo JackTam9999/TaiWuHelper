@@ -1664,6 +1664,52 @@ select {
     gap: 4px;
 }
 
+.skill-card-name-line {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 5px;
+}
+
+.skill-card-name-line strong {
+    flex: 1 1 90px;
+    min-width: 0;
+}
+
+.practice-marker {
+    display: inline-grid;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 0.69rem;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: inset 0 0 0 2px rgba(7, 21, 22, 0.72);
+}
+
+.practice-marker.direct {
+    color: #9ed7e8;
+    background: rgba(48, 119, 142, 0.22);
+}
+
+.practice-marker.reverse {
+    color: #e99a83;
+    background: rgba(151, 58, 39, 0.22);
+}
+
+.breakthrough-prefix {
+    flex: 0 0 auto;
+    color: #ecd495;
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+}
+
 .skill-card-title strong,
 .skill-card-title small {
     overflow: hidden;

@@ -7,7 +7,31 @@
         <summary>
             <span class="skill-glyph" aria-hidden="true">@CategoryGlyph</span>
             <span class="skill-card-title">
-                <strong>@DisplayName</strong>
+                <span class="skill-card-name-line">
+                    @if (ActiveMarkerDirection is { } activeDirection)
+                    {
+                        <span class="practice-marker @DirectionClass(activeDirection)"
+                              data-practice-state="active"
+                              role="img"
+                              aria-label="@DirectionLabel(activeDirection)">
+                            <span aria-hidden="true">@DirectionGlyph(activeDirection)</span>
+                        </span>
+                    }
+                    else if (ReadyDirections.Count > 0)
+                    {
+                        <span class="breakthrough-prefix">@T("Breakthrough")</span>
+                        @foreach (var readyDirection in ReadyDirections)
+                        {
+                            <span class="practice-marker @DirectionClass(readyDirection)"
+                                  data-practice-state="available"
+                                  role="img"
+                                  aria-label="@DirectionLabel(readyDirection)">
+                                <span aria-hidden="true">@DirectionGlyph(readyDirection)</span>
+                            </span>
+                        }
+                    }
+                    <strong>@DisplayName</strong>
+                </span>
                 <small>@StaticSummary</small>
                 <span class="skill-card-summary-tags">
                     <span class="skill-card-grade">@GradeText</span>
@@ -35,7 +59,7 @@
                 {
                     <span class="progress-badge broken" role="listitem">@T("Broken through")</span>
                 }
-                @if (ActiveDirection is { } direction)
+                @if (ActiveMarkerDirection is { } direction)
                 {
                     <span class="progress-badge direction" role="listitem">@DirectionLabel(direction)</span>
                 }
@@ -113,6 +137,24 @@
             ? Progress.ActiveDirection.Value
             : null;
 
+    private PracticeDirection? ActiveMarkerDirection =>
+        Breakthrough?.IsBrokenOut == true
+        && ActiveDirection is PracticeDirection.Direct
+            or PracticeDirection.Reverse
+            ? ActiveDirection
+            : null;
+
+    private IReadOnlyList<PracticeDirection> ReadyDirections =>
+        Breakthrough?.CanBreakthroughNow == true
+            ? new[]
+                {
+                    PracticeDirection.Direct,
+                    PracticeDirection.Reverse
+                }
+                .Where(Breakthrough.Includes)
+                .ToArray()
+            : [];
+
     private string DisplayName => Entry.DisplayName.Value.IsAvailable
         ? Entry.DisplayName.Value.Value.Text
         : T("Unnamed skill");
@@ -138,9 +180,7 @@
         ? $"{T("Grade")} {Entry.Definition.Grade.Value.Value}"
         : T("Grade unavailable");
 
-    private string PrimaryStatusText => ActiveDirection is { } direction
-        ? $"{PrimaryProgressStatusText} · {DirectionLabel(direction)}"
-        : PrimaryProgressStatusText;
+    private string PrimaryStatusText => PrimaryProgressStatusText;
 
     private string PrimaryProgressStatusText => IsTrue(Progress?.AttainmentMastered)
         ? T("Mastered")
@@ -219,7 +259,7 @@
     private bool HasPositiveProgressBadge => IsTrue(Entry.Learned)
         || Breakthrough?.CanBreakthroughNow == true
         || Breakthrough?.IsBrokenOut == true
-        || ActiveDirection is not null
+        || ActiveMarkerDirection is not null
         || IsTrue(Progress?.AttainmentMastered)
         || IsTrue(Progress?.Simplified)
         || IsTrue(Progress?.Activated)
@@ -229,9 +269,18 @@
         field?.IsAvailable == true && field.Value;
 
     private string DirectionLabel(PracticeDirection direction) =>
-        direction == PracticeDirection.Direct
-            ? T("Direct practice")
-            : T("Reverse practice");
+        direction switch
+        {
+            PracticeDirection.Direct => T("Direct practice"),
+            PracticeDirection.Reverse => T("Reverse practice"),
+            _ => T("Unavailable")
+        };
+
+    private static string DirectionGlyph(PracticeDirection direction) =>
+        direction == PracticeDirection.Direct ? "正" : "逆";
+
+    private static string DirectionClass(PracticeDirection direction) =>
+        direction == PracticeDirection.Direct ? "direct" : "reverse";
 
     private string CategoryLabel(CombatSkillDiscipline category) =>
         CombatSkillUiText.Category(Language, category);

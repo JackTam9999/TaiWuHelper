@@ -54,6 +54,10 @@ wheel sectors exactly equal activation mask `0x7C00`.
 - The primary filters include a named 門派 selector populated from the current
   catalogue. Results are grouped by 門派, while every collapsed card exposes
   門派、品級、類別及主要狀態 before expansion.
+- Completed breakthroughs place one circled `正` or `逆` marker before the
+  active-language skill name. Ready breakthroughs place `突破` followed by
+  only the verified available `正`/`逆` choices before the name; those choices
+  are never presented as already active.
 - Live E2-013 validation exercised the current 946-definition atlas in both
   languages at desktop and mobile sizes without horizontal overflow.
 - Live E2-014 validation showed static and current facts separately, all 15
@@ -82,9 +86,9 @@ remain outside the write boundary.
 
 All 24 milestone criteria in EPIC-002 have implementation and evidence across
 E2-000 through E2-016. After product-owner UI revisions, the final automated
-run passed **617 total: 612 passed, 0 failed, 5 documented opt-in skips**.
+run passed **618 total: 613 passed, 0 failed, 5 documented opt-in skips**.
 Installed-catalogue verification passed
-**613** with 4 save-dependent skips, and the current-save vertical check passed
+**614** with 4 save-dependent skips, and the current-save vertical check passed
 **1 of 1**.
 
 Three standalone semantics remain unavailable because the inspected save does

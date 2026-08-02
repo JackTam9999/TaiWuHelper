@@ -59,7 +59,11 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Broken through", text);
         Assert.Contains("Direct practice", text);
         Assert.Contains("Mastered", text);
-        Assert.Contains("Mastered · Direct practice", text);
+        Assert.DoesNotContain("Mastered · Direct practice", text);
+        Assert.Contains(
+            "class=\"practice-marker direct\" data-practice-state=\"active\"",
+            html);
+        Assert.Contains("正 Black Blood Gu", text);
         Assert.Contains("<details", html);
         Assert.Contains("<summary", html);
         Assert.Contains("aria-busy=\"false\"", html);
@@ -140,6 +144,13 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("品級 5", text);
         Assert.Contains("已取得", text);
         Assert.Contains("可突破", text);
+        Assert.Contains("突破 逆 雲術", text);
+        Assert.Contains(
+            "class=\"practice-marker reverse\" data-practice-state=\"available\"",
+            html);
+        Assert.DoesNotContain(
+            "class=\"practice-marker direct\" data-practice-state=\"available\"",
+            html);
         Assert.DoesNotContain("已突破", text);
         Assert.DoesNotContain("已大成", text);
         Assert.DoesNotContain("已裝備", text);
@@ -147,6 +158,37 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("href=\"/skills/686\"", html);
         Assert.Contains("開啟完整功法詳情", text);
         Assert.Contains("role", html);
+    }
+
+    [Fact]
+    public async Task Breakthrough_marker_orders_both_available_directions_before_name()
+    {
+        var definition = Definition(686, "Cloud Formula");
+        var progress = Progress(
+            42,
+            686,
+            new BreakthroughDirectionAvailability(
+                false,
+                true,
+                [PracticeDirection.Reverse, PracticeDirection.Direct]),
+            activeDirection: null,
+            mastered: false,
+            simplified: false,
+            activated: false,
+            equipped: false);
+
+        var html = await RenderCardAsync(
+            Entry(definition, progress),
+            TaiwuLanguage.Chinese);
+        var text = VisibleText(html);
+
+        Assert.Contains("突破 正 逆 雲術", text);
+        Assert.Contains(
+            "class=\"practice-marker direct\" data-practice-state=\"available\"",
+            html);
+        Assert.Contains(
+            "class=\"practice-marker reverse\" data-practice-state=\"available\"",
+            html);
     }
 
     [Fact]
