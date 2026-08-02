@@ -1,0 +1,832 @@
+# Epic 2 backlog: Version-aware skill catalogue and character skill atlas
+
+This backlog implements
+[EPIC-002](./EPIC.md) while preserving the
+permanent safety boundary in
+[ADR-0001](../../architecture/ADR-0001-absolute-game-non-interference.md).
+
+Epic 2 work items use `E2-nnn` identifiers so they do not collide with the
+provisional `M2-nnn` future candidates recorded before Epic 2 was selected.
+
+## Conventions
+
+### Priority
+
+- **P0:** Required for the first usable catalogue and atlas vertical slice.
+- **P1:** Required for Epic 2 completion.
+- **P2:** Valuable follow-up that may move to a later epic.
+
+### Estimate
+
+- **S:** Small, normally one focused change.
+- **M:** Medium, several related classes and tests.
+- **L:** Large, should be split during implementation if it cannot remain one
+  reviewable vertical change.
+
+### Status
+
+- **Planned:** Scope is defined but implementation has not started.
+- **In progress:** Implementation or verification is underway.
+- **Blocked:** A documented external fact or decision is required.
+- **Complete:** Acceptance criteria and required evidence are present.
+
+### Definition of done
+
+Every completed backlog item must:
+
+- Preserve Clean Architecture dependency direction.
+- Include xUnit v3 tests at the appropriate layer.
+- Leave every save, game file, game database, configuration value, running
+  game process, runtime memory location, and in-game state unchanged.
+- Introduce no endpoint, port, adapter, hook, injection, patch, automation, or
+  future extension point capable of modifying or controlling the game.
+- Keep generated catalogue data in the exact validated helper-owned storage
+  location and outside all game-owned directories.
+- Never accept an arbitrary source or destination path through the public API.
+- Do not commit or distribute a generated catalogue, proprietary game binary,
+  complete extracted resource, icon, or artwork.
+- Keep static skill definitions separate from save-derived character progress.
+- Give unavailable, unsupported, stale, malformed, or unverified data an
+  explicit typed state and player-facing explanation.
+- Keep raw localized effect text out of recommendation rules unless a separate
+  typed, verified mechanic already exists.
+- Update API, architecture, evidence, and roadmap documentation when contracts
+  or verified semantics change.
+- Record the relevant test command and result in the completed item's evidence.
+
+The game non-interference requirements are absolute product invariants. A work
+item that conflicts with them must be rejected rather than postponed or
+reclassified.
+
+## Delivery order
+
+| Order | Slice | Outcome |
+|---:|---|---|
+| 0 | Persistence safety boundary | Helper-owned SQLite cannot become a game-data write path |
+| 1 | Evidence and golden progress | Saved fields are mapped to verified player-facing meanings |
+| 2 | Domain and Application contracts | Static definitions and dynamic progress are independent typed models |
+| 3 | Import and catalogue lifecycle | Installed definitions are imported, versioned, stored, and rebuilt |
+| 4 | Character skill progress | The current save produces a detailed immutable skill atlas overlay |
+| 5 | Joined queries and API | Search and skill details combine the right sources with provenance |
+| 6 | Catalogue and atlas UI | Players can browse, filter, and inspect progress accessibly |
+| 7 | Recommendation integration | Existing recommendation cards deep-link without depending on the cache |
+| 8 | Verification and completion | Automated and in-game evidence satisfy the epic contract |
+
+## Slice 0: Persistence safety boundary
+
+### E2-000 — Constrain helper-owned catalogue persistence
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** M1-000
+
+Extend the permanent non-interference architecture to permit narrowly scoped
+SQLite writes for derived catalogue data without weakening any game-owned file
+or runtime protection.
+
+The storage path is chosen by trusted local configuration or a path provider,
+not by a request. Create, replace, recovery, and deletion operations must prove
+that their exact target is inside the helper-owned catalogue directory and
+outside the game installation and configured save directories.
+
+#### Acceptance criteria
+
+- [ ] The architecture documentation distinguishes read-only game sources from
+      writable helper-owned catalogue storage.
+- [ ] A single Infrastructure-owned path provider returns the catalogue path.
+- [ ] Domain and Application contracts contain no filesystem path supplied by
+      a player or HTTP request.
+- [ ] Catalogue write, replace, recovery, and delete operations reject targets
+      outside the validated helper-owned directory.
+- [ ] The configured game installation and save directories are always rejected
+      as catalogue destinations, including equivalent normalized paths.
+- [ ] Presentation contains no direct database or filesystem write API.
+- [ ] Existing save-reader and process-control prohibitions remain unchanged.
+- [ ] Architecture tests permit only the named catalogue persistence adapter to
+      write helper-owned data; they do not add a global file-write exception.
+- [ ] Tests cover traversal, relative paths, symlinks or reparse points where
+      applicable, case differences, and overlapping-directory configuration.
+
+#### Evidence when complete
+
+- Updated ADR or catalogue-specific architecture decision.
+- Path-boundary unit and architecture tests.
+- Before-and-after fingerprints for representative game and save sources.
+
+## Slice 1: Evidence and golden progress
+
+### E2-001 — Define the golden catalogue and character-progress scenario
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** S
+
+**Dependencies:** E2-000
+
+Select a stable local game version, configured save, and small set of combat
+skills that collectively exercise the progress states shown by the intended
+atlas.
+
+The set should include, where the save permits:
+
+- A configured skill the character has not obtained.
+- An obtained but incomplete skill.
+- A skill that is eligible for breakthrough.
+- Direct and reverse broken-through skills.
+- A mastered skill.
+- An equipped or activated skill.
+- A skill with partially completed study details.
+- At least one missing or unsupported field to verify honest UI behavior.
+
+#### Acceptance criteria
+
+- [ ] The evidence document records game, language-resource, and save identities
+      without committing proprietary source content.
+- [ ] The save is identified by hash and helper-safe metadata rather than being
+      copied into the repository.
+- [ ] Stable skill identifiers and bilingual names identify each golden skill.
+- [ ] Manually observed labels and progress are recorded with observation time
+      and source.
+- [ ] The selected set covers all independent progress facts required by the
+      epic or documents why a state is unavailable.
+- [ ] Source fingerprints before and after evidence collection match.
+- [ ] The scenario can be repeated after a catalogue rebuild.
+
+#### Evidence when complete
+
+- `docs/scenarios/E2-001-golden-skill-atlas.md`.
+- Minimal non-proprietary metadata under `docs/scenarios/evidence/` if needed.
+
+### E2-002 — Verify combat-skill progression and study-detail semantics
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E2-001
+
+Map the relevant GameData and save fields to precise player-facing meanings
+before those meanings are encoded in Domain models or UI labels.
+
+This work must verify collection membership, proficiency values, the complete
+study-detail representation, breakthrough readiness, completed breakthrough,
+practice direction, activation, equipment, and mastery. It must extend the
+existing reading-state work, which currently counts selected Direct and
+Reverse bits for breakthrough eligibility but does not preserve each detail.
+
+#### Acceptance criteria
+
+- [ ] Collection membership is given a verified label such as obtained or
+      learned; ambiguous terminology is not used as fact.
+- [ ] The valid range and meaning of proficiency power and maximum power are
+      documented.
+- [ ] The relationship between saved proficiency and the in-game percentage is
+      verified or marked unavailable.
+- [ ] Every study-detail bit or field for the detected version has a stable ID,
+      group, ordering, localized label source, and studied-state rule.
+- [ ] Common, Direct, Reverse, mutually exclusive, and optional details are
+      identified only when verified.
+- [ ] The rule connecting studied details to available breakthrough directions
+      is documented and tested against the golden scenario.
+- [ ] Breakthrough-ready, broken-through, activation, direction, and mastery
+      are proven to be separate or explicitly related facts.
+- [ ] Unknown activation, reading-state, or version values produce unavailable
+      results rather than inferred labels.
+- [ ] The evidence records the inspected game version and the APIs or fields
+      used without copying proprietary implementations.
+- [ ] Existing Epic 1 breakthrough behavior remains valid or receives a
+      separately reviewed correction with regression tests.
+
+#### Evidence when complete
+
+- `docs/architecture/COMBAT-SKILL-PROGRESS-SEMANTICS.md`.
+- Mapping tests using minimal synthetic values.
+- Golden-save integration assertions guarded by the existing opt-in mechanism.
+
+## Slice 2: Domain and Application contracts
+
+### E2-003 — Define static combat-skill catalogue models
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E2-002
+
+Create immutable Domain models for installed combat-skill definitions and
+their provenance without depending on GameData, SQLite, HTTP, or Presentation.
+
+#### Acceptance criteria
+
+- [ ] A definition uses the stable combat-skill identifier as its identity.
+- [ ] Traditional Chinese and English names are independent optional values
+      with source provenance and deterministic fallback.
+- [ ] Category, grade, faction, element, equipment type, base grid cost,
+      specific-grid contribution, and generic-grid contribution are typed.
+- [ ] Requirements, timing, effect IDs, and raw display descriptions distinguish
+      verified typed mechanics from unverified text.
+- [ ] Unsupported and unavailable fields preserve a reason.
+- [ ] Definitions cannot contain duplicate localized names for the same
+      language, invalid grades, invalid costs, or unknown enum values without an
+      explicit unsupported representation.
+- [ ] Source-record identifiers used for diagnostics do not leak
+      Infrastructure types.
+- [ ] Domain tests cover validation, equality, immutability, language fallback,
+      and unavailable values.
+
+#### Evidence when complete
+
+- Domain model tests and an architecture reference document.
+
+### E2-004 — Define character skill-progress and study-detail models
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E2-002
+
+Create immutable Domain models for character-specific skill progress and its
+study details. Avoid a single status enum: each verified fact remains
+independent and carries provenance or an unavailability reason.
+
+#### Acceptance criteria
+
+- [ ] Progress is keyed by character ID, save-snapshot identity, and skill ID.
+- [ ] Obtained or learned state uses the exact terminology verified by E2-002.
+- [ ] Current proficiency, maximum proficiency, and percentage validate their
+      ranges and handle unavailable values.
+- [ ] Study details have stable ID, display order, group, label, and a state of
+      studied, not studied, or unavailable.
+- [ ] Aggregate study completeness is derived from detail state and does not
+      count unavailable details as incomplete.
+- [ ] Breakthrough readiness, available breakthrough directions, completed
+      breakthrough, active direction, mastery, activation, and equipment are
+      separate properties.
+- [ ] Impossible combinations proven by E2-002 are rejected, while unproven
+      combinations remain representable as unavailable or conflicting.
+- [ ] Existing `CombatSkillSnapshot` responsibilities are either reused through
+      composition or migrated without duplicating contradictory concepts.
+- [ ] Domain tests cover partial progress, unknown details, direct/reverse
+      combinations, mastery, and equipped state.
+
+#### Evidence when complete
+
+- Domain model and invariant tests.
+- A documented mapping between Epic 1 snapshot concepts and Epic 2 progress.
+
+### E2-005 — Add catalogue and atlas Application ports and use cases
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E2-003, E2-004
+
+Define query-oriented Application contracts before implementing GameData,
+SQLite, or UI adapters.
+
+#### Acceptance criteria
+
+- [ ] A definition-source port reads installed static definitions without
+      exposing GameData objects.
+- [ ] A catalogue repository port queries and replaces helper-owned derived
+      definitions without accepting arbitrary paths.
+- [ ] A progress-reader port returns immutable save-derived progress.
+- [ ] Use cases exist for ensuring catalogue freshness, searching definitions,
+      reading details, reading the character atlas, and reading catalogue
+      status.
+- [ ] Search filters are typed and bounded; paging or result limits are
+      deterministic.
+- [ ] Language selection and fallback are Application policies, not SQL or UI
+      string parsing.
+- [ ] Cancellation and failure results distinguish missing sources, stale
+      catalogue, rebuild failure, unsupported version, and save-read failure.
+- [ ] Application has no dependency on Infrastructure, SQLite, GameData, or
+      ASP.NET Core.
+- [ ] Use-case tests cover orchestration and every failure/status path.
+
+#### Evidence when complete
+
+- Application unit tests using substitutes for each query port.
+- Architecture dependency tests.
+
+## Slice 3: Import and catalogue lifecycle
+
+### E2-006 — Implement the read-only bilingual GameData importer
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E2-003, E2-005
+
+Import static combat-skill definitions from the player's installed GameData
+and Traditional Chinese and English language resources through a strictly
+read-only adapter.
+
+#### Acceptance criteria
+
+- [ ] The importer enumerates every configured combat-skill record in stable
+      identifier order.
+- [ ] Every record is imported or produces a deterministic diagnostic with its
+      stable source identifier and reason.
+- [ ] Traditional Chinese and English names are read independently and retain
+      their source identity.
+- [ ] The importer maps all fields approved by E2-003 and leaves unsupported
+      fields explicitly unavailable.
+- [ ] Raw effect or requirement text is labeled display-only unless a typed
+      verified rule already exists.
+- [ ] No runtime-only calculation is invoked merely to populate static data.
+- [ ] Source files are opened read-only wherever access mode is controlled by
+      the helper.
+- [ ] Source hashes before and after import match.
+- [ ] Import results contain no mutation-capable GameData object.
+- [ ] Unit and opt-in local integration tests cover mapping, localization
+      fallback, malformed records, determinism, and source preservation.
+
+#### Evidence when complete
+
+- Import mapping tests.
+- Local GameData integration-test result and source fingerprints.
+- Documented field inventory with imported and unsupported counts.
+
+### E2-007 — Implement the helper-owned SQLite catalogue store
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E2-000, E2-003, E2-005
+
+Implement a SQLite repository for static definitions, localized text, source
+manifest data, and import diagnostics at the validated helper-owned path.
+
+#### Acceptance criteria
+
+- [ ] The schema stores definitions, localized values, typed attributes, raw
+      display references, source manifest, and diagnostics without storing
+      complete source files.
+- [ ] Schema constraints enforce unique stable IDs and unique language values
+      per skill and language.
+- [ ] Search indexes support normalized Chinese and English name queries and
+      required filters.
+- [ ] Insert and replacement order is deterministic.
+- [ ] A reader never observes a partially built catalogue.
+- [ ] Transactions roll back completely on import or persistence failure.
+- [ ] Database creation and replacement use only the path from E2-000.
+- [ ] The generated database and transient files are excluded from Git and
+      publish artifacts.
+- [ ] Repository queries map to Domain models without leaking SQLite types.
+- [ ] Tests cover round trips, ordering, constraints, rollback, concurrent
+      readers, malformed data, and path enforcement.
+
+#### Evidence when complete
+
+- SQLite schema documentation.
+- Repository and path-boundary tests.
+
+### E2-008 — Add source manifest, invalidation, and deterministic rebuild
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E2-006, E2-007
+
+Decide whether the local catalogue is current and rebuild it safely when the
+schema, importer, GameData, or language resources change.
+
+#### Acceptance criteria
+
+- [ ] The manifest records schema version, importer version, relevant GameData
+      identity, each imported language-resource identity, build time, and
+      import counts.
+- [ ] Source identity uses stable version metadata and hashes where needed to
+      avoid false-current results.
+- [ ] Identical sources do not trigger unnecessary rebuilds.
+- [ ] A relevant source or schema change never reports the old catalogue as
+      current.
+- [ ] Rebuild produces an equivalent catalogue and stable query order for
+      identical input.
+- [ ] Build occurs transactionally or in a separate validated helper-owned
+      file before the complete result becomes visible.
+- [ ] Missing, empty, interrupted, and corrupt helper databases recover with a
+      clear status and no source-file changes.
+- [ ] A rebuild failure preserves a previously valid catalogue only when it is
+      clearly reported as stale; it never presents it as current.
+- [ ] Concurrent ensure requests result in one controlled rebuild.
+- [ ] Tests cover every invalidation input and recovery path.
+
+#### Evidence when complete
+
+- Catalogue lifecycle tests with synthetic source manifests.
+- Local repeat-import comparison showing stable counts and content identity.
+
+## Slice 4: Character skill progress
+
+### E2-009 — Read the character skill-progress overlay
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E2-004, E2-005, E2-002
+
+Extend the typed save snapshot workflow to capture every verified independent
+progress fact required by the atlas. Reuse the existing read-only archive
+session and do not parse legacy diagnostic lines.
+
+#### Acceptance criteria
+
+- [ ] Progress is read for every character combat-skill entry in stable order.
+- [ ] The reader captures the exact obtained/learned fact verified by E2-002.
+- [ ] Proficiency current and maximum values are typed and range-checked.
+- [ ] Breakthrough readiness, available directions, completed breakthrough,
+      active direction, mastery, activation, and equipment are captured
+      independently.
+- [ ] Unknown or invalid source values produce warnings and unavailable fields
+      rather than guessed defaults.
+- [ ] Snapshot metadata includes save hash, read time, game version, and
+      warnings.
+- [ ] Character progress is immutable and is not written into the static
+      catalogue database.
+- [ ] Existing recommendation snapshot behavior remains compatible or is
+      migrated with full regression coverage.
+- [ ] Source fingerprints before and after the read match.
+- [ ] Unit and opt-in integration tests cover the golden progress states.
+
+#### Evidence when complete
+
+- Snapshot mapping and integration tests.
+- Updated snapshot architecture documentation.
+
+### E2-010 — Decode individual study details and completeness
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E2-002, E2-004, E2-009
+
+Convert the verified version-specific reading state into the complete ordered
+set of typed study details and aggregate completeness used by the atlas.
+
+#### Acceptance criteria
+
+- [ ] The decoder is selected only for game versions covered by verified
+      evidence.
+- [ ] Every verified detail has stable ID, order, group, localized label source,
+      and studied state.
+- [ ] Unrecognized bits or values are preserved in diagnostics and make the
+      affected completeness result partial or unavailable.
+- [ ] Studied count excludes unavailable details from both numerator and any
+      claimed complete denominator.
+- [ ] Missing-detail output lists exact verified details, not only a percentage.
+- [ ] Breakthrough-direction availability uses the same decoded source rather
+      than an independent contradictory bit-count implementation.
+- [ ] Unsupported game versions produce a clear warning and no fabricated
+      detail map.
+- [ ] Tests cover none, partial, complete, Direct, Reverse, mixed, unknown-bit,
+      malformed, and unsupported-version cases.
+
+#### Evidence when complete
+
+- Decoder truth table tied to E2-002 evidence.
+- Domain and mapping tests for every verified detail.
+
+## Slice 5: Joined queries and API
+
+### E2-011 — Build catalogue search and character-atlas queries
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E2-005, E2-008, E2-009, E2-010
+
+Join static definitions with the latest character progress by stable skill ID
+and expose deterministic Application results for search, list, and detail
+views.
+
+#### Acceptance criteria
+
+- [ ] The join never copies save-derived progress into authoritative static
+      catalogue state.
+- [ ] Catalogue entries without progress use the exact verified negative or
+      unknown possession label from E2-002.
+- [ ] Progress entries without a static definition remain visible with a
+      diagnostic instead of disappearing.
+- [ ] Search matches Traditional Chinese and English names using deterministic
+      normalization and fallback.
+- [ ] Filters cover category, grade, faction, equipment type, element, and each
+      independent progress fact required by the epic.
+- [ ] Base grid cost and current character-effective cost remain distinct.
+- [ ] List and detail results carry catalogue freshness, save freshness,
+      provenance, completeness, and warnings.
+- [ ] Paging or virtualization keys are stable across identical queries.
+- [ ] Catalogue rebuild, missing save, stale catalogue, partial localization,
+      and unsupported study mapping have explicit result states.
+- [ ] Application tests cover joins, filters, language matching, ordering, and
+      all partial-data paths.
+
+#### Evidence when complete
+
+- Application use-case test suite.
+- Query contract documentation.
+
+### E2-012 — Add information-only catalogue and atlas API endpoints
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E2-011
+
+Expose local HTTP query endpoints for catalogue status, search, skill details,
+and the current character atlas.
+
+#### Acceptance criteria
+
+- [ ] `GET /api/combat-skills` supports bounded search, filter, sort, and paging
+      parameters.
+- [ ] `GET /api/combat-skills/{skillId}` returns joined definition and current
+      character progress when available.
+- [ ] `GET /api/character-skill-atlas` returns the current atlas and snapshot
+      metadata.
+- [ ] Catalogue status is returned directly or embedded consistently in query
+      responses.
+- [ ] Validation failures use stable problem responses and do not expose local
+      filesystem paths.
+- [ ] API responses distinguish missing, stale, rebuilding, partial,
+      unsupported, and failed states.
+- [ ] No endpoint accepts a game/save path or changes any game-owned state.
+- [ ] Any explicit catalogue rebuild operation can affect only the trusted
+      helper-owned cache and is clearly named as cache maintenance.
+- [ ] Controller tests cover success, validation, partial data, rebuild status,
+      unsupported versions, and failure mapping.
+- [ ] API documentation includes source precedence and raw-text limitations.
+
+#### Evidence when complete
+
+- Controller tests and `docs/api/COMBAT-SKILLS.md`.
+
+## Slice 6: Catalogue and atlas UI
+
+### E2-013 — Build the searchable catalogue and character-atlas page
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E2-011, E2-012
+
+Add a local page that presents installed combat skills and current character
+progress in a category-oriented, searchable layout inspired by the information
+hierarchy of the game without copying proprietary artwork.
+
+#### Acceptance criteria
+
+- [ ] The page can be reached directly and through local navigation.
+- [ ] Search accepts Traditional Chinese or English names.
+- [ ] Filters cover category, grade, faction, equipment type, element, and
+      independent progress facts including breakthrough and mastery.
+- [ ] Skills can be grouped by the familiar combat-skill categories.
+- [ ] Each skill card shows localized name, grade, category, and independently
+      applicable progress badges.
+- [ ] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
+      appear only when supported by the corresponding typed fact.
+- [ ] Catalogue freshness, build version, save read time, and warnings are
+      visible without opening developer tools.
+- [ ] Loading, rebuilding, empty, partial, stale, unsupported, and failure
+      states are usable and translated.
+- [ ] Large catalogues use bounded paging or virtualization and remain
+      responsive.
+- [ ] Keyboard users can search, filter, move through results, and open a skill.
+- [ ] Status is never communicated by color alone.
+- [ ] No game icon or artwork is required or redistributed.
+
+#### Evidence when complete
+
+- Presentation-state and component-rendering tests.
+- Responsive screenshots using helper-owned presentation assets.
+
+### E2-014 — Build the skill detail and accessible study-detail view
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** L
+
+**Dependencies:** E2-010, E2-011, E2-013
+
+Present one skill's static definition, current character state, provenance, and
+complete study-detail progress. The visual design may echo a wheel or map, but
+the semantic representation must remain understandable as text and to
+assistive technology.
+
+#### Acceptance criteria
+
+- [ ] The view shows Chinese and English names with explicit fallback.
+- [ ] Static category, grade, faction, element, equipment type, costs,
+      requirements, and effect references are separated from character state.
+- [ ] Base cost and current effective cost have distinct labels and provenance.
+- [ ] Proficiency current, maximum, and percentage appear only when valid.
+- [ ] Every study detail is identified as studied, not studied, or unavailable.
+- [ ] Exact missing verified details are listed in text.
+- [ ] Any wheel/map visualization has equivalent ordered semantic markup and
+      does not rely on color alone.
+- [ ] Common, Direct, and Reverse groups appear only when verified.
+- [ ] Breakthrough readiness, completed breakthrough, direction, mastery,
+      activation, and equipment are displayed independently.
+- [ ] Raw effect descriptions carry a display-only or verified-mechanic label.
+- [ ] Field-level source and unavailability explanations are accessible on
+      demand.
+- [ ] The view supports initial, loading, partial, unsupported, and failure
+      states in both languages.
+
+#### Evidence when complete
+
+- Detail-view model and render tests.
+- Accessibility review covering keyboard order, labels, contrast, and
+  non-color status.
+
+## Slice 7: Recommendation integration
+
+### E2-015 — Link recommendations to catalogue details
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** S
+
+**Dependencies:** E2-014
+
+Let a player open a recommended skill's catalogue detail without making the
+recommendation workflow depend on catalogue availability.
+
+#### Acceptance criteria
+
+- [ ] Recommendation skill cards link by stable skill ID.
+- [ ] The detail view identifies the recommendation context when supplied but
+      remains usable as a standalone route.
+- [ ] Missing, stale, or rebuilding catalogue state does not prevent Epic 1
+      recommendations from being created or displayed.
+- [ ] Raw catalogue descriptions do not create or modify recommendation rules,
+      feasibility, threats, counters, or scores.
+- [ ] Existing recommendation API and UI contracts remain backward compatible
+      unless a separately documented additive change is required.
+- [ ] Tests cover successful navigation, missing definitions, stale catalogue,
+      and recommendation independence.
+
+#### Evidence when complete
+
+- Presentation integration tests.
+- Architecture test proving the recommendation Domain does not depend on
+  SQLite or raw catalogue text.
+
+## Slice 8: Verification and completion
+
+### E2-016 — Add end-to-end automated catalogue and atlas verification
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** L
+
+**Dependencies:** E2-008, E2-010, E2-012, E2-014, E2-015
+
+Create the automated evidence needed to trust import, persistence, progress,
+API, UI, and non-interference behavior as one vertical slice.
+
+#### Acceptance criteria
+
+- [ ] Domain tests cover definition, provenance, progress, study-detail, and
+      completeness invariants.
+- [ ] Application tests cover catalogue lifecycle, joins, filters, language
+      fallback, status propagation, and failures.
+- [ ] Infrastructure tests cover import mapping, source preservation, SQLite
+      transactions, path guards, invalidation, corruption recovery, and
+      deterministic rebuild.
+- [ ] API tests cover every endpoint and status mapping.
+- [ ] Presentation tests cover filters, progress badges, detail states,
+      accessibility semantics, and recommendation deep links.
+- [ ] Architecture tests prevent SQLite, GameData, or filesystem dependencies
+      from crossing inward.
+- [ ] Architecture tests keep game-owned writes and process-control APIs
+      forbidden.
+- [ ] Opt-in local integration tests compare two identical imports and verify
+      stable content and ordering.
+- [ ] Opt-in local integration tests fingerprint all inspected game and save
+      sources before and after import and atlas reads.
+- [ ] The full default suite passes without requiring a proprietary save in CI.
+
+#### Evidence when complete
+
+- Updated testing documentation with test counts and commands.
+- Local integration result recording versions, counts, hashes, and skipped
+  conditions without proprietary content.
+
+### E2-017 — Validate the atlas against the game and close Epic 2
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** M
+
+**Dependencies:** E2-001, E2-002, E2-016
+
+Compare the completed local catalogue and character atlas with the golden
+in-game skill list and study-detail screens, record discrepancies, and make the
+final completion decision.
+
+#### Acceptance criteria
+
+- [ ] Catalogue counts and representative definitions match the installed
+      game's visible or configured data for the recorded version.
+- [ ] Golden character skills show the correct obtained/learned, proficiency,
+      breakthrough, direction, mastery, activation, and equipment facts.
+- [ ] Every visible golden study detail agrees with the verified decoded state.
+- [ ] Exact missing details and aggregate completion agree with the game UI or
+      any difference is explained by documented source freshness.
+- [ ] Chinese and English searches resolve the agreed representative skills.
+- [ ] Catalogue version and save freshness warnings behave correctly after a
+      controlled source or save change.
+- [ ] Rebuild and recovery affect only helper-owned catalogue files.
+- [ ] Epic 1 recommendations still work when the catalogue is current, missing,
+      stale, and rebuilding.
+- [ ] All Epic 2 milestone acceptance criteria are checked against evidence.
+- [ ] Remaining unsupported semantics become explicit future backlog items and
+      are not silently accepted as complete.
+- [ ] The product owner records the Epic 2 completion decision.
+
+#### Evidence when complete
+
+- `docs/reviews/E2-017-manual-verification.md`.
+- Final automated test summary.
+- Updated status and completion decision in
+  [EPIC-002](./EPIC.md).
+
+## Deferred backlog
+
+The following ideas are related but are not required for Epic 2 completion:
+
+### E2-F01 — Add life-skill catalogue support
+
+Extend the static catalogue and character overlay to non-combat life skills
+only after their data shape and progress semantics receive separate evidence.
+
+### E2-F02 — Compare multiple skill definitions side by side
+
+Add a comparison surface for costs, requirements, directions, progress, and
+verified effects without turning raw text differences into mechanical claims.
+
+### E2-F03 — Persist historical character skill progress
+
+Store helper-owned, hash-keyed progress history only after retention, deletion,
+freshness, and privacy behavior is separately approved. Current save data must
+remain authoritative.
+
+### E2-F04 — Add verified acquisition guidance
+
+Explain how an unlearned skill can be obtained only after acquisition sources
+and prerequisites are represented by typed, versioned evidence.
+
+### E2-F05 — Normalize additional effect mechanics
+
+Promote selected raw direct or reverse descriptions into verified typed rules
+one mechanic at a time, with recommendation integration reviewed separately.

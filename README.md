@@ -95,6 +95,6 @@ dotnet test
 
 ## Roadmap
 
-- [Milestone 1 epic: Target-specific combat-skill recommendations](docs/roadmap/EPIC-001-combat-skill-recommendation.md)
-- [Milestone 1 engineering backlog](docs/roadmap/BACKLOG-milestone-1.md)
-- [Combat-recommendation UI layout](docs/roadmap/UI-001-combat-recommendation-layout.md)
+- [Product roadmap index](docs/roadmap/README.md)
+- [EPIC-001: Target-specific combat-skill recommendations](docs/roadmap/epic-001/EPIC.md)
+- [EPIC-002: Version-aware skill catalogue and character skill atlas](docs/roadmap/epic-002/EPIC.md)

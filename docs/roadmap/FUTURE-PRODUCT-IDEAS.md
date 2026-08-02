@@ -11,7 +11,7 @@
 
 Record potentially valuable product ideas discovered while reviewing other
 Taiwu community tools. These ideas are deliberately outside
-[EPIC-001](./EPIC-001-combat-skill-recommendation.md) and its Milestone 1
+[EPIC-001](./epic-001/EPIC.md) and its Milestone 1
 backlog. An idea must receive its own epic, acceptance criteria, and delivery
 decision before implementation begins.
 
@@ -85,6 +85,9 @@ This is an explanatory planning surface only. It cannot apply a loadout or
 control the game.
 
 ### PI-004 — Bilingual martial-art catalogue
+
+**Status:** Promoted to
+[EPIC-002](./epic-002/EPIC.md) on 2026-08-02.
 
 Provide a searchable Chinese and English catalogue derived from permitted
 local game configuration and language resources. Store the derived catalogue
@@ -164,12 +167,14 @@ application content.
 
 ## Suggested promotion order
 
-If these ideas are approved after Milestone 1, consider promoting them into
-new epics in this order:
+This was the original suggested promotion order after Milestone 1. The product
+owner selected the catalogue and character skill atlas for Epic 2 on
+2026-08-02; the remaining ordering is retained as discovery context:
 
 1. Verified target observations and evidence provenance.
 2. Side-by-side loadout comparison.
-3. Bilingual martial-art catalogue.
+3. Bilingual martial-art catalogue — promoted to
+   [EPIC-002](./epic-002/EPIC.md).
 4. Shareable recommendation card.
 5. Version-aware observation and result persistence.
 

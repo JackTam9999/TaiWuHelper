@@ -4,8 +4,8 @@
 |---|---|
 | Status | Accepted |
 | Date | 2026-07-29 |
-| Epic | [EPIC-001](../roadmap/EPIC-001-combat-skill-recommendation.md) |
-| Backlog item | [M1-000](../roadmap/BACKLOG-milestone-1.md#m1-000--enforce-absolute-game-non-interference) |
+| Epic | [EPIC-001](../roadmap/epic-001/EPIC.md) |
+| Backlog item | [M1-000](../roadmap/epic-001/BACKLOG.md#m1-000--enforce-absolute-game-non-interference) |
 
 ## Context
 

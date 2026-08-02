@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Status | Complete |
-| Epic | [EPIC-001](../roadmap/EPIC-001-combat-skill-recommendation.md) |
-| Backlog item | [M1-001](../roadmap/BACKLOG-milestone-1.md#m1-001--select-the-golden-target-and-objective) |
+| Epic | [EPIC-001](../roadmap/epic-001/EPIC.md) |
+| Backlog item | [M1-001](../roadmap/epic-001/BACKLOG.md#m1-001--select-the-golden-target-and-objective) |
 | Inspection date | 2026-07-29 |
 
 ## Purpose
