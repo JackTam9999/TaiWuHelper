@@ -17,9 +17,10 @@ and HTTP types out of the use-case layer.
 | `ICharacterCombatSkillProgressReader` | Read immutable progress for one character from the configured save | Character ID only; no request-supplied save path |
 
 The source identity contains the detected GameData version plus independent
-SHA-256 fingerprints for the Traditional Chinese and English sources. The
-repository stores that value with its build time and definition count. It does
-not decide whether a catalogue is current.
+SHA-256 fingerprints for the imported GameData configuration assembly and the
+Traditional Chinese and English sources. The repository stores that value
+with its build time and definition count. It does not decide whether a
+catalogue is current.
 
 ## Freshness policy
 

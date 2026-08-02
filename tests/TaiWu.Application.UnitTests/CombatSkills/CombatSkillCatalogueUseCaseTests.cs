@@ -512,14 +512,57 @@ public sealed class CombatSkillCatalogueUseCaseTests
             property => Assert.False(property.CanWrite));
     }
 
+    [Fact]
+    public void Definition_source_identity_and_diagnostics_are_complete_and_ordered()
+    {
+        Assert.Equal(
+            new string('0', 64),
+            CurrentIdentity.GameDataFingerprint);
+        Assert.Throws<ArgumentException>(
+            () => new CombatSkillCatalogueSourceIdentity(
+                "version",
+                "not-a-hash",
+                new string('A', 64),
+                new string('B', 64)));
+
+        var result = CombatSkillDefinitionSourceResult.Available(
+            CurrentIdentity,
+            Definitions(),
+            [
+                new CombatSkillImportDiagnostic(
+                    CombatSkillImportDiagnosticSeverity.Warning,
+                    "SECOND",
+                    "combat-skill:2",
+                    "second"),
+                new CombatSkillImportDiagnostic(
+                    CombatSkillImportDiagnosticSeverity.Error,
+                    "FIRST",
+                    "combat-skill:1",
+                    "first")
+            ]);
+
+        Assert.Collection(
+            result.Diagnostics,
+            first => Assert.Equal("combat-skill:1", first.SourceRecordIdentity),
+            second => Assert.Equal("combat-skill:2", second.SourceRecordIdentity));
+    }
+
     private static CancellationToken CancellationToken =>
         TestContext.Current.CancellationToken;
 
     private static CombatSkillCatalogueSourceIdentity CurrentIdentity { get; } =
-        new("1.0.0-current", new string('A', 64), new string('B', 64));
+        new(
+            "1.0.0-current",
+            new string('0', 64),
+            new string('A', 64),
+            new string('B', 64));
 
     private static CombatSkillCatalogueSourceIdentity OlderIdentity { get; } =
-        new("1.0.0-older", new string('C', 64), new string('D', 64));
+        new(
+            "1.0.0-older",
+            new string('1', 64),
+            new string('C', 64),
+            new string('D', 64));
 
     private static CombatSkillDefinition[] Definitions() =>
     [

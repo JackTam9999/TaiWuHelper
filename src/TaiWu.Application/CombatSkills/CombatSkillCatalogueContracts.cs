@@ -7,6 +7,7 @@ public sealed record CombatSkillCatalogueSourceIdentity
 {
     public CombatSkillCatalogueSourceIdentity(
         string gameDataVersion,
+        string gameDataFingerprint,
         string traditionalChineseFingerprint,
         string englishFingerprint)
     {
@@ -18,6 +19,9 @@ public sealed record CombatSkillCatalogueSourceIdentity
         }
 
         GameDataVersion = gameDataVersion.Trim();
+        GameDataFingerprint = ValidateFingerprint(
+            gameDataFingerprint,
+            nameof(gameDataFingerprint));
         TraditionalChineseFingerprint = ValidateFingerprint(
             traditionalChineseFingerprint,
             nameof(traditionalChineseFingerprint));
@@ -27,6 +31,8 @@ public sealed record CombatSkillCatalogueSourceIdentity
     }
 
     public string GameDataVersion { get; }
+
+    public string GameDataFingerprint { get; }
 
     public string TraditionalChineseFingerprint { get; }
 
@@ -49,6 +55,71 @@ public sealed record CombatSkillCatalogueSourceIdentity
     }
 }
 
+public enum CombatSkillImportDiagnosticSeverity
+{
+    Warning = 0,
+    Error = 1
+}
+
+public sealed record CombatSkillImportDiagnostic
+{
+    public CombatSkillImportDiagnostic(
+        CombatSkillImportDiagnosticSeverity severity,
+        string code,
+        string sourceRecordIdentity,
+        string reason)
+    {
+        if (!Enum.IsDefined(severity))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(severity),
+                severity,
+                "Unknown import diagnostic severity.");
+        }
+
+        Severity = severity;
+        Code = ValidateOpaque(code, nameof(code));
+        SourceRecordIdentity = ValidateOpaque(
+            sourceRecordIdentity,
+            nameof(sourceRecordIdentity));
+        Reason = string.IsNullOrWhiteSpace(reason)
+            ? throw new ArgumentException(
+                "An import diagnostic requires a reason.",
+                nameof(reason))
+            : reason.Trim();
+    }
+
+    public CombatSkillImportDiagnosticSeverity Severity { get; }
+
+    public string Code { get; }
+
+    public string SourceRecordIdentity { get; }
+
+    public string Reason { get; }
+
+    private static string ValidateOpaque(string value, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException(
+                "An opaque diagnostic identity is required.",
+                parameterName);
+        }
+
+        var normalized = value.Trim();
+        if (normalized.Contains('\\')
+            || normalized.Contains('/')
+            || normalized.Contains("..", StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "Diagnostic identities cannot contain filesystem paths.",
+                parameterName);
+        }
+
+        return normalized;
+    }
+}
+
 public enum DefinitionSourceReadStatus
 {
     Available = 0,
@@ -63,11 +134,13 @@ public sealed record CombatSkillDefinitionSourceResult
         DefinitionSourceReadStatus status,
         CombatSkillCatalogueSourceIdentity? sourceIdentity,
         ImmutableArray<CombatSkillDefinition> definitions,
+        ImmutableArray<CombatSkillImportDiagnostic> diagnostics,
         string? reason)
     {
         Status = status;
         SourceIdentity = sourceIdentity;
         Definitions = definitions;
+        Diagnostics = diagnostics;
         Reason = reason;
     }
 
@@ -77,11 +150,14 @@ public sealed record CombatSkillDefinitionSourceResult
 
     public ImmutableArray<CombatSkillDefinition> Definitions { get; }
 
+    public ImmutableArray<CombatSkillImportDiagnostic> Diagnostics { get; }
+
     public string? Reason { get; }
 
     public static CombatSkillDefinitionSourceResult Available(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
-        IEnumerable<CombatSkillDefinition> definitions)
+        IEnumerable<CombatSkillDefinition> definitions,
+        IEnumerable<CombatSkillImportDiagnostic>? diagnostics = null)
     {
         ArgumentNullException.ThrowIfNull(sourceIdentity);
         ArgumentNullException.ThrowIfNull(definitions);
@@ -101,11 +177,23 @@ public sealed record CombatSkillDefinitionSourceResult
         }
 
         values = values.OrderBy(value => value.SkillId).ToImmutableArray();
+        var diagnosticValues = (diagnostics ?? []).ToImmutableArray();
+        if (diagnosticValues.Any(value => value is null))
+        {
+            throw new ArgumentException(
+                "Diagnostics cannot contain null.",
+                nameof(diagnostics));
+        }
+        diagnosticValues = diagnosticValues
+            .OrderBy(value => value.SourceRecordIdentity, StringComparer.Ordinal)
+            .ThenBy(value => value.Code, StringComparer.Ordinal)
+            .ToImmutableArray();
 
         return new CombatSkillDefinitionSourceResult(
             DefinitionSourceReadStatus.Available,
             sourceIdentity,
             values,
+            diagnosticValues,
             reason: null);
     }
 
@@ -135,6 +223,7 @@ public sealed record CombatSkillDefinitionSourceResult
             status,
             sourceIdentity: null,
             definitions: [],
+            diagnostics: [],
             reason.Trim());
     }
 }

@@ -1,0 +1,103 @@
+# Read-only bilingual combat-skill catalogue import
+
+## Scope and source boundary
+
+E2-006 implements `ICombatSkillDefinitionSource` with the internal
+`TaiwuCombatSkillDefinitionSource` adapter. It imports static configuration
+only; it does not open a save, load an archive, call a combat calculation, or
+return a GameData object.
+
+The Infrastructure-owned installation locator uses the trusted
+`TAIWU_GAME_DIRECTORY` environment setting when present, otherwise the loaded
+game assembly location or the standard Windows Steam installation. No
+Application request or HTTP model contains a source path. The only accepted
+source filenames are:
+
+- `Backend/GameData.Shared.dll`, which contains the imported combat-skill
+  configuration;
+- `Language_CNH/CombatSkill_language.txt`;
+- `Language_EN/CombatSkill_language.txt`.
+
+The adapter fingerprints all three files with explicitly read-only streams
+before import and again afterward. A changed source invalidates the entire
+result. It also requires the installed configuration assembly's version and
+hash to match the loaded read-only adapter assembly, so a game update cannot
+silently be interpreted with stale compiled contracts.
+
+`Config.CombatSkill.Init()` initializes the static configuration table when it
+has not already been initialized. The importer then uses only configured
+fields. It does not invoke character, combat, direction, effectiveness,
+damage, requirement-evaluation, or other runtime-only calculations.
+
+## Deterministic import
+
+Configuration keys are enumerated in stable numeric order. The configuration
+reader immediately copies every record into an internal primitive/immutable
+source value; GameData objects do not cross the adapter boundary. A record
+read or mapping failure produces a stable diagnostic keyed by
+`combat-skill:{id}` and does not hide successfully imported records.
+
+Traditional Chinese and English files are parsed independently with
+case-sensitive keys and first-value-wins duplicate handling. Missing text in
+one language does not copy or invent text from the other language. Application
+performs display fallback later. Names and descriptions retain separate
+language-resource provenance.
+
+Descriptions are imported as `RawCombatSkillDescription` values with
+`IsVerifiedMechanic == false`. They are for display only and cannot feed a
+recommendation rule without a separate verified typed mechanic.
+
+## Field mapping
+
+| Installed field | Domain field | Invalid or absent handling |
+|---|---|---|
+| Configuration key | `SkillId` | Record diagnostic if it cannot be read or represented |
+| `Name` localization key | Independent Traditional Chinese / English names | Language remains absent |
+| `Type` | `CombatSkillDiscipline` | `Unsupported` raw value |
+| `Grade` | `CombatSkillGrade` | `Unsupported` outside 0–8 |
+| `SectId` | `CombatSkillFactionId` | `Unsupported` if negative |
+| `FiveElements` | `CombatSkillElement` | `Unsupported` raw value |
+| `EquipType` | `CombatSkillEquipmentType` | `Unsupported` raw value |
+| `GridCost` | `CombatSkillGridCost` | `Unavailable` if non-positive |
+| `SpecificGrids`, `GenericGrid` | `SkillSlotContribution` | `Unsupported` unless four specific and all values non-negative |
+| `UsingRequirement` | Stable property/slot requirement ID and required value | Negative value is `Unsupported` |
+| `PrepareTotalProgress` | Preparation progress | Negative value is `Unsupported` |
+| `BreathStanceTotalCost` | Breath/stance cost | Negative value is `Unsupported` |
+| `CastSpeed` | Cast speed | Negative value is `Unsupported` |
+| `DirectEffectID`, `ReverseEffectID` | Typed effect references | Non-positive value is `Unavailable` |
+| No verified neutral-effect field | Neutral effect reference | Explicitly `Unavailable` |
+| `Desc` localization key | Display-only localized effect description | Language remains absent |
+
+Requirement IDs include their configured property ID and source slot. This
+preserves repeated properties deterministically without claiming a runtime
+requirement interpretation that has not been verified.
+
+## Golden local inventory
+
+The opt-in test was run against GameData product version
+`1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a` on 2026-08-02. Source hashes
+matched before and after; the GameData configuration hash is intentionally not
+committed. The imported inventory was:
+
+| Inventory | Result |
+|---|---:|
+| Configuration records / imported definitions | 946 / 946 |
+| Traditional Chinese names | 946 |
+| English names | 946 |
+| Category, grade, faction, element, equipment, and grid cost available | 946 each |
+| Slot contributions | 940 available, 6 unsupported |
+| Preparation, breath/stance, and cast-speed fields available | 946 each |
+| Direct effects | 945 available, 1 unavailable |
+| Reverse effects | 946 available |
+| Neutral effects | 946 unavailable by verified schema policy |
+| Typed requirement entries | 3,724 available, 0 unsupported |
+| Localized display-only descriptions | 1,512 |
+| Import diagnostics | 2 warnings, 0 errors |
+
+Both warnings are deterministic `LANGUAGE_VALUE_MISSING` diagnostics for
+trailing keys without a following value line. They do not affect any of the
+946 names in either language.
+
+The importer returned the same source identity and stable skill-ID order on
+two consecutive reads. Golden skill `456` resolved independently to
+`黑血蠱降` and `Corruptive Gu Infection`.

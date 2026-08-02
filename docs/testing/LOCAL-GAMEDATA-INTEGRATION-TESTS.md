@@ -4,6 +4,20 @@ M1-024 and E2-002 verify the Infrastructure adapter against a locally installed
 Taiwu runtime and fingerprinted golden saves. The suite is opt-in and strictly
 read-only.
 
+E2-006 also verifies the bilingual static catalogue importer without requiring
+a save. Enable that assertion in the current shell:
+
+```powershell
+$env:TAIWU_INTEGRATION_SKILL_CATALOGUE = '1'
+dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.IntegrationTests.csproj --no-restore
+```
+
+For a non-default installation, set the trusted runtime locator as well:
+
+```powershell
+$env:TAIWU_GAME_DIRECTORY = '<game-directory>'
+```
+
 Set the save path only in the current shell:
 
 ```powershell
@@ -36,6 +50,12 @@ as well as the environment variable. If the configured save has advanced, the
 assertion skips instead of applying stale reading and activation values. Pure
 synthetic mapping tests continue to validate all fifteen detail bits and the
 breakthrough rules without proprietary fixtures.
+
+E2-006 fingerprints the installed configuration assembly plus the Traditional
+Chinese and English combat-skill language files, imports twice, verifies stable
+ordering and bilingual golden skill `456`, and compares all three source files
+again in a `finally` block. The GameData binary hash is used at runtime but is
+not committed or printed by the test.
 
 Build output can contain local runtime copies required by GameData. Those files
 remain ignored, are never publish items, and must never be committed.

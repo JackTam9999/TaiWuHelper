@@ -383,7 +383,7 @@ SQLite, or UI adapters.
 
 ### E2-006 — Implement the read-only bilingual GameData importer
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -397,29 +397,41 @@ read-only adapter.
 
 #### Acceptance criteria
 
-- [ ] The importer enumerates every configured combat-skill record in stable
+- [x] The importer enumerates every configured combat-skill record in stable
       identifier order.
-- [ ] Every record is imported or produces a deterministic diagnostic with its
+- [x] Every record is imported or produces a deterministic diagnostic with its
       stable source identifier and reason.
-- [ ] Traditional Chinese and English names are read independently and retain
+- [x] Traditional Chinese and English names are read independently and retain
       their source identity.
-- [ ] The importer maps all fields approved by E2-003 and leaves unsupported
+- [x] The importer maps all fields approved by E2-003 and leaves unsupported
       fields explicitly unavailable.
-- [ ] Raw effect or requirement text is labeled display-only unless a typed
+- [x] Raw effect or requirement text is labeled display-only unless a typed
       verified rule already exists.
-- [ ] No runtime-only calculation is invoked merely to populate static data.
-- [ ] Source files are opened read-only wherever access mode is controlled by
+- [x] No runtime-only calculation is invoked merely to populate static data.
+- [x] Source files are opened read-only wherever access mode is controlled by
       the helper.
-- [ ] Source hashes before and after import match.
-- [ ] Import results contain no mutation-capable GameData object.
-- [ ] Unit and opt-in local integration tests cover mapping, localization
+- [x] Source hashes before and after import match.
+- [x] Import results contain no mutation-capable GameData object.
+- [x] Unit and opt-in local integration tests cover mapping, localization
       fallback, malformed records, determinism, and source preservation.
 
-#### Evidence when complete
+#### Evidence
 
-- Import mapping tests.
-- Local GameData integration-test result and source fingerprints.
-- Documented field inventory with imported and unsupported counts.
+- [Read-only bilingual catalogue import](../../architecture/COMBAT-SKILL-CATALOGUE-IMPORT.md),
+  including the verified field mapping and golden installed inventory.
+- `CombatSkillDefinitionMapperTests`,
+  `TaiwuCombatSkillDefinitionSourceTests`, and `TaiwuLanguageCatalogTests`
+  cover full mapping, independent languages and fallback, malformed typed
+  values and record diagnostics, immutable collection copies, missing sources,
+  cancellation, duplicate and dangling language keys, source provenance, and
+  fixed source-path derivation.
+- `Bilingual_catalogue_import_is_repeatable_and_read_only` imported all 946
+  configured records twice in stable order, verified both names for golden
+  skill `456`, reported 0 error diagnostics, and proved the three source
+  fingerprints unchanged. The binary fingerprint is not committed.
+- With the E2-006 catalogue assertion enabled,
+  `dotnet test TaiWu.slnx --no-restore --verbosity minimal`: 529 total,
+  527 passed, 0 failed, and 2 save-dependent integration assertions skipped.
 
 ### E2-007 — Implement the helper-owned SQLite catalogue store
 

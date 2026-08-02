@@ -1,9 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Cryptography;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.Localization;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
+using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.SaveGames;
 using Xunit;
 
@@ -12,6 +14,9 @@ namespace TaiWu.Infrastructure.IntegrationTests;
 public sealed class LocalGameDataIntegrationTests
 {
     private const string SavePathVariable = "TAIWU_INTEGRATION_SAVE_PATH";
+    private const string CatalogueVariable =
+        "TAIWU_INTEGRATION_SKILL_CATALOGUE";
+    private const string GameDirectoryVariable = "TAIWU_GAME_DIRECTORY";
     private const string Epic2GoldenSaveSha256 =
         "C9EB00A368A6CE25B2D816DAE941AFAC67B6217ED561FF7563F613C3B297CECA";
     private const int GoldenPlayerId = 21396;
@@ -32,6 +37,79 @@ public sealed class LocalGameDataIntegrationTests
                         || resource.Contains(
                             "GameData",
                             StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Bilingual_catalogue_import_is_repeatable_and_read_only()
+    {
+        var gameDirectory = RequireGameDirectoryForCatalogue();
+        var guardedPaths = CatalogueSourcePaths(gameDirectory);
+        var before = await CaptureAsync(guardedPaths);
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var source =
+                provider.GetRequiredService<ICombatSkillDefinitionSource>();
+
+            var first = await source.ReadAsync(
+                TestContext.Current.CancellationToken);
+            var second = await source.ReadAsync(
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(DefinitionSourceReadStatus.Available, first.Status);
+            Assert.Equal(DefinitionSourceReadStatus.Available, second.Status);
+            Assert.NotNull(first.SourceIdentity);
+            Assert.Equal(first.SourceIdentity, second.SourceIdentity);
+            Assert.True(first.Definitions.Length > 0);
+            Assert.Equal(
+                first.Definitions.Select(definition => definition.SkillId),
+                second.Definitions.Select(definition => definition.SkillId));
+            Assert.Equal(
+                first.Definitions
+                    .Select(definition => definition.SkillId)
+                    .Order(),
+                first.Definitions.Select(definition => definition.SkillId));
+            Assert.Equal(
+                first.Definitions.Length,
+                first.Definitions.Select(definition => definition.SkillId)
+                    .Distinct()
+                    .Count());
+
+            var golden = Assert.Single(
+                first.Definitions,
+                definition => definition.SkillId == 456);
+            Assert.Equal(
+                "黑血蠱降",
+                golden.Names.Get(CatalogueLanguage.TraditionalChinese)
+                    .Value.Text);
+            Assert.Equal(
+                "Corruptive Gu Infection",
+                golden.Names.Get(CatalogueLanguage.English).Value.Text);
+            Assert.Equal(
+                before[guardedPaths[0]].Sha256,
+                first.SourceIdentity!.GameDataFingerprint,
+                ignoreCase: true);
+            Assert.Equal(
+                before[guardedPaths[1]].Sha256,
+                first.SourceIdentity.TraditionalChineseFingerprint,
+                ignoreCase: true);
+            Assert.Equal(
+                before[guardedPaths[2]].Sha256,
+                first.SourceIdentity.EnglishFingerprint,
+                ignoreCase: true);
+            Assert.DoesNotContain(
+                first.Diagnostics,
+                diagnostic => diagnostic.Severity
+                    == CombatSkillImportDiagnosticSeverity.Error);
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            AssertUnchanged(before, after);
+        }
     }
 
     [Fact]
@@ -99,6 +177,60 @@ public sealed class LocalGameDataIntegrationTests
             $"M1-024 skipped: {SavePathVariable} does not identify "
             + "an existing file.");
         return fullPath;
+    }
+
+    private static string RequireGameDirectoryForCatalogue()
+    {
+        Assert.SkipUnless(
+            string.Equals(
+                Environment.GetEnvironmentVariable(CatalogueVariable),
+                "1",
+                StringComparison.Ordinal),
+            $"E2-006 skipped: set {CatalogueVariable}=1 to verify the local "
+            + "installed catalogue sources.");
+
+        var configured = Environment.GetEnvironmentVariable(
+            GameDirectoryVariable);
+        var candidate = !string.IsNullOrWhiteSpace(configured)
+            ? configured
+            : Path.Combine(
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.ProgramFilesX86),
+                "Steam",
+                "steamapps",
+                "common",
+                "The Scroll Of Taiwu");
+        Assert.SkipUnless(
+            Path.IsPathFullyQualified(candidate)
+            && Directory.Exists(candidate),
+            $"E2-006 skipped: {GameDirectoryVariable} does not identify an "
+            + "installed game directory.");
+        return Path.GetFullPath(candidate);
+    }
+
+    private static string[] CatalogueSourcePaths(string gameDirectory)
+    {
+        var streamingAssets = Path.Combine(
+            gameDirectory,
+            "The Scroll of Taiwu_Data",
+            "StreamingAssets");
+        var paths = new[]
+        {
+            Path.Combine(gameDirectory, "Backend", "GameData.Shared.dll"),
+            Path.Combine(
+                streamingAssets,
+                "Language_CNH",
+                "CombatSkill_language.txt"),
+            Path.Combine(
+                streamingAssets,
+                "Language_EN",
+                "CombatSkill_language.txt")
+        };
+        Assert.SkipWhen(
+            paths.Any(path => !File.Exists(path)),
+            "E2-006 skipped: one or more installed catalogue sources are "
+            + "missing.");
+        return paths;
     }
 
     private static string[] DiscoverGameOwnedReadDependencies(string savePath)
