@@ -1,0 +1,207 @@
+@using TaiWu.Domain.CombatSkills
+
+<section class="study-detail-panel" aria-labelledby="study-detail-heading">
+    <div class="section-heading compact-heading">
+        <div>
+            <p class="eyebrow">@T("Ordered study details")</p>
+            <h2 id="study-detail-heading">@T("Study-detail map")</h2>
+        </div>
+        @if (Progress is not null && Progress.StudySummary.TotalCount > 0)
+        {
+            <span class="study-count" aria-label="@T("Study summary")">
+                @Progress.StudySummary.ReadCount / @Progress.StudySummary.AvailableCount
+                @T("verified details studied")
+            </span>
+        }
+    </div>
+
+    @if (Progress is null)
+    {
+        <div class="study-state" role="status">
+            <strong>@T("Study progress has not been read")</strong>
+            <p>@T("The static skill remains available, but no character study overlay could be read.")</p>
+        </div>
+    }
+    else if (Progress.StudyDetails.Length == 0)
+    {
+        <div class="study-state" role="status">
+            <strong>@T("Study-detail mapping is unavailable")</strong>
+            <p>@T("This save version does not expose a verified ordered detail set for this skill.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="study-legend" aria-label="@T("Study status legend")">
+            <span><b aria-hidden="true">✓</b> @T("Studied")</span>
+            <span><b aria-hidden="true">○</b> @T("Not studied")</span>
+            <span><b aria-hidden="true">?</b> @T("Unavailable")</span>
+        </div>
+
+        @if (Progress.MissingStudyDetails.Length > 0)
+        {
+            <section class="missing-study-details" aria-labelledby="missing-study-heading">
+                <h3 id="missing-study-heading">@T("Exact verified details not studied")</h3>
+                <ul>
+                    @foreach (var detail in Progress.MissingStudyDetails)
+                    {
+                        <li>@DetailLabel(detail)</li>
+                    }
+                </ul>
+            </section>
+        }
+        else if (Progress.StudySummary.IsComplete.IsAvailable
+            && Progress.StudySummary.IsComplete.Value)
+        {
+            <p class="study-complete-note">
+                <span aria-hidden="true">✓</span>
+                @T("Every available verified detail has been studied.")
+            </p>
+        }
+
+        <div class="study-map" role="list" aria-label="@T("Ordered study-detail groups")">
+            @foreach (var group in Groups)
+            {
+                var details = Progress.StudyDetails
+                    .Where(detail => detail.Group == group)
+                    .OrderBy(detail => detail.DisplayOrder)
+                    .ToArray();
+                if (details.Length == 0)
+                {
+                    continue;
+                }
+
+                <section class="study-group @GroupClass(group)"
+                         aria-labelledby="@GroupHeadingId(group)"
+                         role="listitem">
+                    <div class="study-group-heading">
+                        <span class="study-group-glyph" aria-hidden="true">@GroupGlyph(group)</span>
+                        <div>
+                            <h3 id="@GroupHeadingId(group)">@GroupLabel(group)</h3>
+                            <span>@details.Length @T("details")</span>
+                        </div>
+                    </div>
+                    <ol>
+                        @foreach (var detail in details)
+                        {
+                            <li class="study-node @DetailStatusClass(detail)"
+                                data-study-detail="@detail.DetailId"
+                                data-study-status="@DetailStatusKey(detail)">
+                                <span class="study-node-marker" aria-hidden="true">
+                                    @DetailMarker(detail)
+                                </span>
+                                <div class="study-node-copy">
+                                    <strong>@DetailLabel(detail)</strong>
+                                    <span>@DetailStatusLabel(detail)</span>
+                                    @if (detail.IsActive.IsAvailable && detail.IsActive.Value)
+                                    {
+                                        <em>@T("Active detail")</em>
+                                    }
+                                </div>
+                                <details class="field-provenance study-node-source">
+                                    <summary>@T("Source and availability")</summary>
+                                    <dl>
+                                        <div>
+                                            <dt>@T("Order")</dt>
+                                            <dd>@detail.DisplayOrder</dd>
+                                        </div>
+                                        <div>
+                                            <dt>@T("Read state")</dt>
+                                            <dd>@DetailStatusLabel(detail)</dd>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(detail.ReadState.Reason))
+                                        {
+                                            <div>
+                                                <dt>@T("Explanation")</dt>
+                                                <dd>@detail.ReadState.Reason</dd>
+                                            </div>
+                                        }
+                                        @if (detail.ReadState.Source is { } readSource)
+                                        {
+                                            <div>
+                                                <dt>@T("Progress source")</dt>
+                                                <dd>@T(readSource.Kind.ToString())</dd>
+                                            </div>
+                                        }
+                                        @if (detail.Label.Source is { } labelSource)
+                                        {
+                                            <div>
+                                                <dt>@T("Label source")</dt>
+                                                <dd>@T(labelSource.Kind.ToString())</dd>
+                                            </div>
+                                        }
+                                    </dl>
+                                </details>
+                            </li>
+                        }
+                    </ol>
+                </section>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private static readonly CombatSkillStudyDetailGroup[] Groups =
+    [
+        CombatSkillStudyDetailGroup.Outline,
+        CombatSkillStudyDetailGroup.Direct,
+        CombatSkillStudyDetailGroup.Reverse
+    ];
+
+    [Parameter]
+    public CharacterCombatSkillProgress? Progress { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string DetailLabel(CombatSkillStudyDetailProgress detail) =>
+        detail.Label.IsAvailable
+            ? detail.Label.Value
+            : $"{T("Unnamed detail")} ({detail.DetailId})";
+
+    private string DetailStatusKey(CombatSkillStudyDetailProgress detail) =>
+        detail.ReadState.IsAvailable
+            ? detail.ReadState.Value == CombatSkillStudyState.Read
+                ? "studied"
+                : "not-studied"
+            : "unavailable";
+
+    private string DetailStatusClass(CombatSkillStudyDetailProgress detail) =>
+        $"status-{DetailStatusKey(detail)}";
+
+    private string DetailStatusLabel(CombatSkillStudyDetailProgress detail) =>
+        detail.ReadState.IsAvailable
+            ? detail.ReadState.Value == CombatSkillStudyState.Read
+                ? T("Studied")
+                : T("Not studied")
+            : T("Unavailable");
+
+    private string DetailMarker(CombatSkillStudyDetailProgress detail) =>
+        detail.ReadState.IsAvailable
+            ? detail.ReadState.Value == CombatSkillStudyState.Read ? "✓" : "○"
+            : "?";
+
+    private string GroupHeadingId(CombatSkillStudyDetailGroup group) =>
+        $"study-group-{group.ToString().ToLowerInvariant()}";
+
+    private static string GroupClass(CombatSkillStudyDetailGroup group) =>
+        $"group-{group.ToString().ToLowerInvariant()}";
+
+    private string GroupLabel(CombatSkillStudyDetailGroup group) => group switch
+    {
+        CombatSkillStudyDetailGroup.Outline => T("Common"),
+        CombatSkillStudyDetailGroup.Direct => T("Direct"),
+        CombatSkillStudyDetailGroup.Reverse => T("Reverse"),
+        _ => group.ToString()
+    };
+
+    private static string GroupGlyph(CombatSkillStudyDetailGroup group) => group switch
+    {
+        CombatSkillStudyDetailGroup.Outline => "承",
+        CombatSkillStudyDetailGroup.Direct => "正",
+        CombatSkillStudyDetailGroup.Reverse => "逆",
+        _ => "功"
+    };
+
+    private string T(string english) => UiText.Get(Language, english);
+}

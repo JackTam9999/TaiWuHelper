@@ -822,7 +822,7 @@ hierarchy of the game without copying proprietary artwork.
 
 ### E2-014 — Build the skill detail and accessible study-detail view
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -837,29 +837,56 @@ assistive technology.
 
 #### Acceptance criteria
 
-- [ ] The view shows Chinese and English names with explicit fallback.
-- [ ] Static category, grade, faction, element, equipment type, costs,
+- [x] The view shows Chinese and English names with explicit fallback.
+- [x] Static category, grade, faction, element, equipment type, costs,
       requirements, and effect references are separated from character state.
-- [ ] Base cost and current effective cost have distinct labels and provenance.
-- [ ] Proficiency current, maximum, and percentage appear only when valid.
-- [ ] Every study detail is identified as studied, not studied, or unavailable.
-- [ ] Exact missing verified details are listed in text.
-- [ ] Any wheel/map visualization has equivalent ordered semantic markup and
+- [x] Base cost and current effective cost have distinct labels and provenance.
+- [x] Proficiency current, maximum, and percentage appear only when valid.
+- [x] Every study detail is identified as studied, not studied, or unavailable.
+- [x] Exact missing verified details are listed in text.
+- [x] Any wheel/map visualization has equivalent ordered semantic markup and
       does not rely on color alone.
-- [ ] Common, Direct, and Reverse groups appear only when verified.
-- [ ] Breakthrough readiness, completed breakthrough, direction, mastery,
+- [x] Common, Direct, and Reverse groups appear only when verified.
+- [x] Breakthrough readiness, completed breakthrough, direction, mastery,
       activation, and equipment are displayed independently.
-- [ ] Raw effect descriptions carry a display-only or verified-mechanic label.
-- [ ] Field-level source and unavailability explanations are accessible on
+- [x] Raw effect descriptions carry a display-only or verified-mechanic label.
+- [x] Field-level source and unavailability explanations are accessible on
       demand.
-- [ ] The view supports initial, loading, partial, unsupported, and failure
+- [x] The view supports initial, loading, partial, unsupported, and failure
       states in both languages.
 
-#### Evidence when complete
+#### Evidence
 
-- Detail-view model and render tests.
-- Accessibility review covering keyboard order, labels, contrast, and
-  non-color status.
+- `SkillDetailRenderingTests` covers static/current-state separation, valid-only
+  proficiency, distinct costs, bilingual names and explicit fallback, exact
+  missing and unavailable detail states, raw-text trust labels, source
+  disclosures, unsupported Chinese state, and automatic current-Taiwu reads.
+- `ArchitectureBoundaryTests` protects the direct route, streamed loading state,
+  read-only Application boundary, ordered-list study semantics, non-color
+  statuses, and the no-artwork requirement. Application and API tests confirm
+  that omitting `characterId` selects the current Taiwu.
+- Keyboard order follows breadcrumb, page identity, bilingual names, static
+  facts, character facts, ordered Common/Direct/Reverse lists, then raw text.
+  Native links and `details`/`summary` disclosures remain keyboard operable;
+  every colored state also has a symbol and written label.
+- Live validation used the current save and skill `456` (`黑血蠱降` /
+  `Corruptive Gu Infection`). The current overlay reported all 15 available
+  verified details studied, the three verified groups, the active Reverse
+  details, explicit partial-data warnings, and separate base/current costs.
+  The initial page streamed immediately while the save read completed; language
+  changes showed a translated loading state instead of mixing old/new labels.
+- Browser verification measured the default `1280x720` desktop and `390x844`
+  mobile viewports with no horizontal overflow. Local-only screenshots are
+  `E2-014-detail-desktop.png` (SHA-256
+  `A7DA796B352CC58B0CA43F9B708C823EED618968A6AE7D9E59000F479BA024C3`),
+  `E2-014-study-map-desktop.png` (SHA-256
+  `B212B0305E19B35EA379D343083E6BC227181D9A312BF582F30D40EE32D0FB43`),
+  and `E2-014-detail-mobile-zh.png` (SHA-256
+  `11291780A2B999EAE5AF783289309CED8CDCFFAFD9D238E5E50307E735C0E33B`).
+- `dotnet test TaiWu.slnx --no-restore --verbosity minimal` with installed
+  catalogue verification enabled: 612 total, 609 passed, 0 failed, and 3
+  opt-in historical save assertions skipped because no pinned save path was
+  supplied.
 
 ## Slice 7: Recommendation integration
 

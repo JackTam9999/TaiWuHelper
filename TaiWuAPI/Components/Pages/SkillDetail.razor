@@ -1,0 +1,575 @@
+@page "/skills/{SkillId:int}"
+@attribute [StreamRendering]
+@implements IAsyncDisposable
+@using TaiWu.Application.CombatSkills
+@using TaiWu.Domain.CombatSkills
+@using TaiWu.Domain.CombatSnapshots
+@inject ICombatSkillDefinitionSource DefinitionSource
+@inject ICombatSkillCatalogueRepository CatalogueRepository
+@inject ICharacterCombatSkillProgressReader ProgressReader
+@inject ILogger<SkillDetail> Logger
+
+<PageTitle>TaiWu Helper · @(_result?.DisplayName?.Value.IsAvailable == true
+    ? _result.DisplayName.Value.Value.Text
+    : T("Skill detail"))</PageTitle>
+
+<nav class="detail-breadcrumb" aria-label="@T("Breadcrumb")">
+    <a href="/skills">← @T("Back to skill atlas")</a>
+    <span aria-hidden="true">/</span>
+    <span>@T("Skill detail")</span>
+</nav>
+
+<div class="skill-detail-page"
+     aria-busy="@_loading.ToString().ToLowerInvariant()">
+    @if (_loading && _result is null)
+    {
+        <section class="message-card page-state" role="status" aria-live="polite">
+            <div>
+                <span class="state-label">@T("Loading")</span>
+                <strong>@T("Reading skill detail and current Taiwu progress…")</strong>
+            </div>
+        </section>
+    }
+    else if (_failure is not null)
+    {
+        <section class="message-card page-state problem-state"
+                 role="alert"
+                 aria-live="assertive">
+            <div>
+                <span class="state-label">@T("Failure")</span>
+                <strong>@T("The skill detail could not be read")</strong>
+                <p>@T(_failure)</p>
+            </div>
+            <button type="button" class="secondary-button" @onclick="LoadAsync">
+                @T("Retry read")
+            </button>
+        </section>
+    }
+    else if (_result is not null
+        && _result.Catalogue.Status != CombatSkillCatalogueStatus.Current)
+    {
+        <section class="message-card page-state problem-state" role="status">
+            <div>
+                <span class="state-label">@T(_result.Catalogue.Status.ToString())</span>
+                <strong>@T("Skill detail is unavailable until the local catalogue is current")</strong>
+                <p>@T("Return to the atlas to build or refresh the helper-owned catalogue.")</p>
+            </div>
+            <a class="secondary-button" href="/skills">@T("Open skill atlas")</a>
+        </section>
+    }
+    else if (_result is not null && !_result.Found)
+    {
+        <section class="message-card page-state problem-state" role="status">
+            <div>
+                <span class="state-label">@T("Not found")</span>
+                <strong>@T("No static combat-skill definition matches this ID")</strong>
+                <p>@T("The skill may have been removed or the local catalogue may need rebuilding.")</p>
+            </div>
+            <a class="secondary-button" href="/skills">@T("Open skill atlas")</a>
+        </section>
+    }
+    else if (_result?.Definition is { } definition)
+    {
+        var state = _result.CharacterState;
+        var progress = state?.Progress;
+
+        <header class="skill-detail-hero">
+            <div class="detail-identity">
+                <p class="eyebrow">@CategoryLabel(definition)</p>
+                <h1>@PrimaryName</h1>
+                <p>@T("Static definition and current-Taiwu progress are shown separately. No value is written back to the game.")</p>
+            </div>
+        </header>
+
+        <section class="bilingual-name-panel" aria-labelledby="localized-names-heading">
+            <div class="section-heading compact-heading">
+                <div>
+                    <p class="eyebrow">@T("Explicit language availability")</p>
+                    <h2 id="localized-names-heading">@T("Chinese and English names")</h2>
+                </div>
+            </div>
+            <dl class="skill-detail-facts bilingual-name-facts">
+                @foreach (var language in NameLanguages)
+                {
+                    var view = NameView(definition, language);
+                    <SkillDetailFact Label="@NameLanguageLabel(language)"
+                                     Value="@view.Value"
+                                     Status="@view.Status"
+                                     Reason="@view.Reason"
+                                     SourceKind="@T(view.Source?.Kind.ToString() ?? "Unavailable")" />
+                }
+            </dl>
+        </section>
+
+        @if (IsPartial)
+        {
+            <section class="atlas-warning-list detail-warning" role="status">
+                <strong>@T("Partial or fallback data")</strong>
+                <ul>
+                    @foreach (var warning in DetailWarnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            </section>
+        }
+
+        <div class="skill-detail-columns">
+            <section class="skill-detail-section static-definition-panel"
+                     aria-labelledby="static-definition-heading">
+                <div class="section-heading compact-heading">
+                    <div>
+                        <p class="eyebrow">@T("Installed read-only sources")</p>
+                        <h2 id="static-definition-heading">@T("Static definition")</h2>
+                    </div>
+                </div>
+
+                <dl class="skill-detail-facts">
+                    @StaticFact(T("Category"), definition.Category, value => CategoryLabel(value))
+                    @StaticFact(T("Grade"), definition.Grade, value => value.Value.ToString())
+                    @StaticFact(T("Faction"), definition.Faction, value => value.Value.ToString())
+                    @StaticFact(T("Element"), definition.Element, value => T(value.ToString()))
+                    @StaticFact(T("Equipment type"), definition.EquipmentType, value => T(value.ToString()))
+                    @StaticFact(T("Base grid cost"), definition.BaseGridCost, value => value.Value.ToString())
+                    @StaticFact(T("Slot contribution"), definition.SlotContribution, FormatSlots)
+                    @StaticFact(T("Preparation progress"), definition.Timing.PreparationProgress, value => value.ToString())
+                    @StaticFact(T("Breath stance cost"), definition.Timing.BreathStanceCost, value => value.ToString())
+                    @StaticFact(T("Cast speed"), definition.Timing.CastSpeed, value => value.ToString())
+                </dl>
+
+                <section class="detail-subsection" aria-labelledby="requirements-heading">
+                    <h3 id="requirements-heading">@T("Requirements")</h3>
+                    @if (definition.Requirements.Length == 0)
+                    {
+                        <p class="detail-empty-note">@T("No typed requirements are available.")</p>
+                    }
+                    else
+                    {
+                        <dl class="skill-detail-facts compact-facts">
+                            @foreach (var requirement in definition.Requirements)
+                            {
+                                <SkillDetailFact Label="@RequirementLabel(requirement.RequirementId)"
+                                                 Value="@StaticValue(requirement.RequiredValue, value => value.ToString())"
+                                                 Status="@StaticStatus(requirement.RequiredValue)"
+                                                 Reason="@requirement.RequiredValue.Reason"
+                                                 SourceKind="@T(requirement.Source.Kind.ToString())" />
+                            }
+                        </dl>
+                    }
+                </section>
+
+                <section class="detail-subsection" aria-labelledby="effects-heading">
+                    <h3 id="effects-heading">@T("Effect references")</h3>
+                    <dl class="skill-detail-facts compact-facts">
+                        @StaticFact(T("Direct effect"), definition.Effects.Direct, value => value.Value.ToString())
+                        @StaticFact(T("Reverse effect"), definition.Effects.Reverse, value => value.Value.ToString())
+                        @StaticFact(T("Neutral effect"), definition.Effects.Neutral, value => value.Value.ToString())
+                    </dl>
+                </section>
+            </section>
+
+            <section class="skill-detail-section character-state-panel"
+                     aria-labelledby="character-state-heading">
+                <div class="section-heading compact-heading">
+                    <div>
+                        <p class="eyebrow">@T("Current save · read only")</p>
+                        <h2 id="character-state-heading">@T("Current Taiwu state")</h2>
+                    </div>
+                    @if (_result.ProgressMetadata is { } metadata)
+                    {
+                        <span class="detail-read-time">
+                            @T("Read") @metadata.SaveSnapshot.ReadAtUtc.ToLocalTime().ToString("g")
+                        </span>
+                    }
+                </div>
+
+                @if (_result.ProgressStatus != CharacterProgressReadStatus.Available)
+                {
+                    <div class="study-state" role="status">
+                        <strong>@ProgressStateTitle(_result.ProgressStatus)</strong>
+                        <p>@ProgressStateMessage(_result.ProgressStatus)</p>
+                    </div>
+                }
+                else if (state is null || progress is null)
+                {
+                    <div class="study-state" role="status">
+                        <strong>@T("No character entry for this skill")</strong>
+                        <p>@T("The definition is installed, but the current save has no matching progress record.")</p>
+                    </div>
+                }
+                else
+                {
+                    <dl class="skill-detail-facts">
+                        @ProgressFact(T("Learned"), state.Learned, YesNo)
+                        @ProgressFact(T("Current effective cost"), state.CurrentEffectiveGridCost, value => value.ToString())
+                        @if (progress.Proficiency.Current.IsAvailable)
+                        {
+                            @ProgressFact(T("Current proficiency"), progress.Proficiency.Current, value => value.ToString())
+                        }
+                        @if (progress.Proficiency.Maximum.IsAvailable)
+                        {
+                            @ProgressFact(T("Maximum proficiency"), progress.Proficiency.Maximum, value => value.ToString())
+                        }
+                        @if (progress.Proficiency.Percentage.IsAvailable)
+                        {
+                            @ProgressFact(T("Proficiency percentage"), progress.Proficiency.Percentage, value => $"{value:0.##}%")
+                        }
+                        @ProgressFact(T("Breakthrough ready"), progress.Breakthrough, value => YesNo(value.CanBreakthroughNow))
+                        @ProgressFact(T("Breakthrough completed"), progress.Breakthrough, value => YesNo(value.IsBrokenOut))
+                        @ProgressFact(T("Active direction"), progress.ActiveDirection, DirectionLabel)
+                        @ProgressFact(T("Attainment mastery"), progress.AttainmentMastered, YesNo)
+                        @ProgressFact(T("Simplified"), progress.Simplified, YesNo)
+                        @ProgressFact(T("Activated"), progress.Activated, YesNo)
+                        @ProgressFact(T("Equipped"), progress.Equipped, YesNo)
+                    </dl>
+                }
+            </section>
+        </div>
+
+        <SkillStudyMap Progress="@progress" />
+
+        <section class="skill-detail-section raw-description-panel"
+                 aria-labelledby="raw-description-heading">
+            <div class="section-heading compact-heading">
+                <div>
+                    <p class="eyebrow">@T("Display context, not recommendation logic")</p>
+                    <h2 id="raw-description-heading">@T("Raw descriptions")</h2>
+                </div>
+            </div>
+            @if (definition.RawDescriptions.Length == 0)
+            {
+                <p class="detail-empty-note">@T("No localized raw descriptions are available.")</p>
+            }
+            else
+            {
+                <div class="raw-description-list">
+                    @foreach (var description in definition.RawDescriptions
+                        .OrderBy(value => value.Language)
+                        .ThenBy(value => value.Kind))
+                    {
+                        <article>
+                            <div>
+                                <span>@T(description.Language.ToString()) · @T(description.Kind.ToString())</span>
+                                <strong class="mechanic-trust-label">
+                                    @(description.IsVerifiedMechanic
+                                        ? T("Verified mechanic")
+                                        : T("Display-only raw text"))
+                                </strong>
+                            </div>
+                            <p>@description.Text</p>
+                            <details class="field-provenance">
+                                <summary>@T("Source and availability")</summary>
+                                <dl>
+                                    <div>
+                                        <dt>@T("Source kind")</dt>
+                                        <dd>@T(description.Source.Kind.ToString())</dd>
+                                    </div>
+                                </dl>
+                            </details>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private static readonly CatalogueLanguage[] NameLanguages =
+    [
+        CatalogueLanguage.TraditionalChinese,
+        CatalogueLanguage.English
+    ];
+
+    private CombatSkillDetailsResult? _result;
+    private CancellationTokenSource? _readCancellation;
+    private (int SkillId, TaiwuLanguage Language)? _lastRequest;
+    private string? _failure;
+    private bool _loading;
+
+    [Parameter]
+    public int SkillId { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var request = (SkillId, Language);
+        if (_lastRequest == request)
+        {
+            return;
+        }
+
+        _lastRequest = request;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var cancellation = ReplaceCancellation();
+        _loading = true;
+        _failure = null;
+        _result = null;
+        try
+        {
+            _result = await new ReadCombatSkillDetails(
+                    DefinitionSource,
+                    CatalogueRepository,
+                    ProgressReader)
+                .ExecuteAsync(
+                    new CombatSkillDetailsRequest(
+                        SkillId,
+                        PreferredLanguage,
+                        characterId: null),
+                    cancellation.Token);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogWarning(exception, "The local skill detail read failed.");
+            _result = null;
+            _failure = "The configured local sources could not be read safely.";
+        }
+        finally
+        {
+            if (!cancellation.IsCancellationRequested)
+            {
+                _loading = false;
+            }
+        }
+    }
+
+    private CatalogueLanguage PreferredLanguage =>
+        Language == TaiwuLanguage.Chinese
+            ? CatalogueLanguage.TraditionalChinese
+            : CatalogueLanguage.English;
+
+    private string PrimaryName => _result?.DisplayName?.Value.IsAvailable == true
+        ? _result.DisplayName.Value.Value.Text
+        : T("Unnamed skill");
+
+    private bool IsPartial => _result is not null
+        && (_result.Issues != CombatSkillQueryIssue.None
+            || _result.ProgressMetadata?.Warnings.Length > 0);
+
+    private IEnumerable<string> DetailWarnings
+    {
+        get
+        {
+            if (_result is null)
+            {
+                yield break;
+            }
+
+            if (_result.Issues.HasFlag(CombatSkillQueryIssue.PartialLocalization))
+            {
+                yield return T("One or more localized fields use a fallback or are unavailable.");
+            }
+
+            if (_result.Issues.HasFlag(CombatSkillQueryIssue.UnsupportedStudyMapping))
+            {
+                yield return T("One or more study details are unavailable for this save version.");
+            }
+
+            if (_result.Issues.HasFlag(CombatSkillQueryIssue.EffectiveCostUnavailable))
+            {
+                yield return T("The current effective cost could not be verified.");
+            }
+
+            foreach (var warning in _result.ProgressMetadata?.Warnings ?? [])
+            {
+                yield return T(warning.Reason);
+            }
+        }
+    }
+
+    private RenderFragment StaticFact<TValue>(
+        string label,
+        CatalogueField<TValue> field,
+        Func<TValue, string> format) => builder =>
+    {
+        builder.OpenComponent<SkillDetailFact>(0);
+        builder.AddAttribute(1, nameof(SkillDetailFact.Label), label);
+        builder.AddAttribute(2, nameof(SkillDetailFact.Value), StaticValue(field, format));
+        builder.AddAttribute(3, nameof(SkillDetailFact.Status), StaticStatus(field));
+        builder.AddAttribute(4, nameof(SkillDetailFact.Reason), field.Reason);
+        builder.AddAttribute(5, nameof(SkillDetailFact.SourceKind),
+            field.Source is null ? null : T(field.Source.Kind.ToString()));
+        builder.CloseComponent();
+    };
+
+    private RenderFragment ProgressFact<TValue>(
+        string label,
+        SkillProgressField<TValue> field,
+        Func<TValue, string> format) => builder =>
+    {
+        builder.OpenComponent<SkillDetailFact>(0);
+        builder.AddAttribute(1, nameof(SkillDetailFact.Label), label);
+        builder.AddAttribute(2, nameof(SkillDetailFact.Value), ProgressValue(field, format));
+        builder.AddAttribute(3, nameof(SkillDetailFact.Status), ProgressStatus(field));
+        builder.AddAttribute(4, nameof(SkillDetailFact.Reason), field.Reason);
+        builder.AddAttribute(5, nameof(SkillDetailFact.SourceKind),
+            field.Source is null ? null : T(field.Source.Kind.ToString()));
+        builder.CloseComponent();
+    };
+
+    private string StaticValue<TValue>(
+        CatalogueField<TValue> field,
+        Func<TValue, string> format) => field.IsAvailable
+            ? format(field.Value)
+            : T("Unavailable");
+
+    private string StaticStatus<TValue>(CatalogueField<TValue> field) =>
+        T(field.Status.ToString());
+
+    private string ProgressValue<TValue>(
+        SkillProgressField<TValue> field,
+        Func<TValue, string> format) => field.IsAvailable
+            ? format(field.Value)
+            : T("Unavailable");
+
+    private string ProgressStatus<TValue>(SkillProgressField<TValue> field) =>
+        T(field.Status.ToString());
+
+    private NameFactView NameView(
+        CombatSkillDefinition definition,
+        CatalogueLanguage language)
+    {
+        var exact = definition.Names.Get(language);
+        if (exact.IsAvailable)
+        {
+            return new NameFactView(
+                exact.Value.Text,
+                T("Available"),
+                Reason: null,
+                exact.Source);
+        }
+
+        var fallbackLanguage = language == CatalogueLanguage.TraditionalChinese
+            ? CatalogueLanguage.English
+            : CatalogueLanguage.TraditionalChinese;
+        var fallback = definition.Names.Get(fallbackLanguage);
+        return fallback.IsAvailable
+            ? new NameFactView(
+                $"{fallback.Value.Text} ({T("fallback")})",
+                T("Fallback"),
+                exact.Reason,
+                fallback.Source)
+            : new NameFactView(
+                T("Unavailable"),
+                T("Unavailable"),
+                exact.Reason,
+                Source: null);
+    }
+
+    private string NameLanguageLabel(CatalogueLanguage language) => language switch
+    {
+        CatalogueLanguage.TraditionalChinese => T("Traditional Chinese name"),
+        CatalogueLanguage.English => T("English name"),
+        _ => language.ToString()
+    };
+
+    private string CategoryLabel(CombatSkillDefinition definition) =>
+        definition.Category.IsAvailable
+            ? CategoryLabel(definition.Category.Value)
+            : T("Unknown category");
+
+    private string CategoryLabel(CombatSkillDiscipline category) =>
+        Language == TaiwuLanguage.Chinese
+            ? category switch
+            {
+                CombatSkillDiscipline.Neigong => "內功",
+                CombatSkillDiscipline.Agility => "身法",
+                CombatSkillDiscipline.SpecialTechnique => "絕技",
+                CombatSkillDiscipline.FistAndPalm => "拳掌",
+                CombatSkillDiscipline.Finger => "指法",
+                CombatSkillDiscipline.Leg => "腿法",
+                CombatSkillDiscipline.HiddenWeapon => "暗器",
+                CombatSkillDiscipline.Sword => "劍法",
+                CombatSkillDiscipline.Blade => "刀法",
+                CombatSkillDiscipline.LongWeapon => "長兵",
+                CombatSkillDiscipline.ExoticWeapon => "奇門",
+                CombatSkillDiscipline.FlexibleWeapon => "軟兵",
+                CombatSkillDiscipline.Archery => "御射",
+                CombatSkillDiscipline.Music => "樂器",
+                _ => category.ToString()
+            }
+            : category.ToString();
+
+    private string FormatSlots(SkillSlotContribution value) =>
+        $"{T("Attack")} {value.Attack} · {T("Agility")} {value.Agility} · "
+        + $"{T("Defense")} {value.Defense} · {T("Assistance")} {value.Assistance} · "
+        + $"{T("Generic")} {value.Generic}";
+
+    private string RequirementLabel(CombatSkillRequirementId requirementId)
+    {
+        var parts = requirementId.Value.Split(':');
+        if (parts.Length == 4
+            && string.Equals(
+                parts[0],
+                "character-property",
+                StringComparison.Ordinal)
+            && string.Equals(parts[2], "slot", StringComparison.Ordinal)
+            && int.TryParse(parts[3], out var slot)
+            && slot >= 0)
+        {
+            return $"{T("Character property requirement")} {slot + 1}";
+        }
+
+        var normalized = requirementId.Value.Replace('-', ' ');
+        return string.IsNullOrEmpty(normalized)
+            ? T("Requirement")
+            : char.ToUpperInvariant(normalized[0]) + normalized[1..];
+    }
+
+    private string YesNo(bool value) => value ? T("Yes") : T("No");
+
+    private string DirectionLabel(PracticeDirection value) => value switch
+    {
+        PracticeDirection.Direct => T("Direct practice"),
+        PracticeDirection.Reverse => T("Reverse practice"),
+        _ => T("Unavailable")
+    };
+
+    private string ProgressStateTitle(CharacterProgressReadStatus status) => status switch
+    {
+        CharacterProgressReadStatus.UnsupportedVersion => T("Character progress mapping is unsupported"),
+        CharacterProgressReadStatus.SaveMissing => T("Current save is unavailable"),
+        _ => T("Character progress could not be read")
+    };
+
+    private string ProgressStateMessage(CharacterProgressReadStatus status) => status switch
+    {
+        CharacterProgressReadStatus.UnsupportedVersion =>
+            T("This save version does not have a verified progress mapping."),
+        CharacterProgressReadStatus.SaveMissing =>
+            T("Configure an existing local save and retry."),
+        _ => T("The static definition remains available; no save-derived values are inferred.")
+    };
+
+    private CancellationTokenSource ReplaceCancellation()
+    {
+        _readCancellation?.Cancel();
+        _readCancellation?.Dispose();
+        _readCancellation = new CancellationTokenSource();
+        return _readCancellation;
+    }
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    public ValueTask DisposeAsync()
+    {
+        _readCancellation?.Cancel();
+        _readCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private sealed record NameFactView(
+        string Value,
+        string Status,
+        string? Reason,
+        CatalogueSourceReference? Source);
+}

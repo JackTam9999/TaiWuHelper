@@ -112,15 +112,16 @@ public sealed class CombatSkillsControllerTests
         var definition = Definition(456, "Black Blood Gu");
         var progress = Progress(42, 456);
         var (source, repository) = Current([definition]);
+        var reader = ProgressReader([progress]);
         var controller = new CombatSkillsController(
             source,
             repository,
-            ProgressReader([progress]));
+            reader);
 
         var action = await controller.Details(
             456,
             CatalogueLanguage.English,
-            characterId: 42,
+            characterId: null,
             CancellationToken);
 
         var response = Response<CombatSkillDetailsResponse>(action);
@@ -135,6 +136,10 @@ public sealed class CombatSkillsControllerTests
         var json = Serialize(response);
         Assert.Contains("Unavailable", json);
         Assert.DoesNotContain("local.sav", json, StringComparison.OrdinalIgnoreCase);
+        await reader.Received(1).ReadAsync(
+            Arg.Is<CharacterCombatSkillProgressReadRequest>(request =>
+                request != null && request.CharacterId == null),
+            CancellationToken);
     }
 
     [Fact]

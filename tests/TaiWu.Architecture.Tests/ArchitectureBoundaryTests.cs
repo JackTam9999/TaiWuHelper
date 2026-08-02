@@ -871,6 +871,7 @@ public sealed partial class ArchitectureBoundaryTests
             "ClearFiltersAsync",
             "CopyAsync",
             "GetRecommendationAsync",
+            "LoadAsync",
             "NextPageAsync",
             "PreviousPageAsync",
             "PrintAsync",
@@ -932,11 +933,43 @@ public sealed partial class ArchitectureBoundaryTests
             atlasCard,
             StringComparison.OrdinalIgnoreCase);
 
+        var detailPage = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Pages",
+                "SkillDetail.razor"));
+        Assert.Contains("@page \"/skills/{SkillId:int}\"", detailPage);
+        Assert.Contains("@attribute [StreamRendering]", detailPage);
+        Assert.Contains("ReadCombatSkillDetails(", detailPage);
+        Assert.Contains("characterId: null", detailPage);
+        Assert.Contains("Reading skill detail and current Taiwu progress", detailPage);
+        Assert.Contains("Static definition", detailPage);
+        Assert.Contains("Current Taiwu state", detailPage);
+        Assert.Contains("Display-only raw text", detailPage);
+        Assert.DoesNotContain("ISaveGameReader", detailPage);
+        Assert.DoesNotContain("DefaultSaveFilePath", detailPage);
+        Assert.DoesNotContain("using GameData", detailPage);
+
+        var studyMap = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Skills",
+                "SkillStudyMap.razor"));
+        Assert.Contains("<ol>", studyMap);
+        Assert.Contains("role=\"list\"", studyMap);
+        Assert.Contains("Not studied", studyMap);
+        Assert.Contains("Unavailable", studyMap);
+        Assert.Contains("Source and availability", studyMap);
+        Assert.DoesNotContain("<svg", studyMap, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<img", studyMap, StringComparison.OrdinalIgnoreCase);
+
         var style = File.ReadAllText(
             Path.Combine(apiRoot, "wwwroot", "app.css"));
         Assert.Contains("@media (max-width: 620px)", style);
         Assert.Contains("@media (prefers-reduced-motion: reduce)", style);
         Assert.Contains(".skill-card-grid", style);
+        Assert.Contains(".study-map", style);
+        Assert.Contains(".study-node.status-not-studied", style);
 
         var checklist = File.ReadAllText(
             Path.Combine(

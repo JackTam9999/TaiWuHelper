@@ -54,7 +54,7 @@ public sealed class ReadCombatSkillDetails(
                                || displayName.UsedFallback)
             ? CombatSkillQueryIssue.PartialLocalization
             : CombatSkillQueryIssue.None;
-        if (request.CharacterId is null || progressReader is null)
+        if (progressReader is null)
         {
             return new CombatSkillDetailsResult(
                 catalogue,
@@ -74,7 +74,7 @@ public sealed class ReadCombatSkillDetails(
         {
             progress = await progressReader.ReadAsync(
                     new CharacterCombatSkillProgressReadRequest(
-                        request.CharacterId.Value,
+                        request.CharacterId,
                         request.PreferredLanguage),
                     cancellationToken)
                 .ConfigureAwait(false);

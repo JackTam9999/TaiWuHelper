@@ -65,8 +65,8 @@ Every item key uses `combat-skill:{skillId}`.
 Parameters:
 
 - `language` selects the preferred display language;
-- optional `characterId` asks the configured save reader to join that
-  character's progress.
+- omitting `characterId` joins the current Taiwu recorded in the configured
+  save; a non-negative value selects an explicit character instead.
 
 The response distinguishes a missing definition from unavailable character
 progress. A progress-only skill can therefore return `definitionFound: false`

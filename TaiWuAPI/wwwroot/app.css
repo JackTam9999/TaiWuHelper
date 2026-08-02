@@ -1769,6 +1769,484 @@ select {
     font-size: 0.76rem;
 }
 
+.skill-detail-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 36px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    color: var(--gold);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.skill-detail-link:hover,
+.skill-detail-link:focus-visible {
+    color: #f2dfa8;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.detail-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-top: 28px;
+    color: var(--muted);
+    font-size: 0.76rem;
+}
+
+.detail-breadcrumb a {
+    color: var(--gold);
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.detail-breadcrumb a:hover,
+.detail-breadcrumb a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.skill-detail-page {
+    display: grid;
+    gap: 22px;
+    padding: 24px 0 64px;
+}
+
+.skill-detail-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 28px;
+    align-items: center;
+    padding: 34px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background:
+        radial-gradient(circle at 90% 20%, rgba(215, 182, 107, 0.12), transparent 30%),
+        linear-gradient(135deg, rgba(34, 61, 57, 0.92), rgba(8, 24, 24, 0.96));
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.16);
+}
+
+.detail-identity h1 {
+    margin: 5px 0 10px;
+}
+
+.detail-identity > p:last-child {
+    max-width: 750px;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+.bilingual-name-panel,
+.skill-detail-section,
+.study-detail-panel {
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--panel);
+}
+
+.skill-detail-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.skill-detail-section {
+    display: grid;
+    gap: 22px;
+}
+
+.character-state-panel {
+    background:
+        linear-gradient(145deg, rgba(44, 112, 96, 0.08), transparent 40%),
+        var(--panel);
+}
+
+.detail-read-time,
+.study-count {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.skill-detail-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 18px 0 0;
+}
+
+.bilingual-name-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.skill-detail-fact {
+    min-width: 0;
+    padding: 13px 14px;
+    border: 1px solid rgba(205, 221, 211, 0.14);
+    background: rgba(7, 22, 22, 0.38);
+}
+
+.skill-detail-fact > dt,
+.field-provenance dt {
+    color: var(--muted);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.skill-detail-fact > dd {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+    margin: 5px 0 0;
+}
+
+.skill-detail-fact > dd strong {
+    overflow-wrap: anywhere;
+    color: #e4ece8;
+    font-size: 0.82rem;
+}
+
+.fact-status {
+    padding: 3px 6px;
+    border: 1px solid rgba(205, 221, 211, 0.22);
+    border-radius: 999px;
+    font-size: 0.58rem;
+    font-weight: 850;
+}
+
+.fact-status.available {
+    border-color: rgba(101, 182, 162, 0.45);
+    color: #bce4d8;
+}
+
+.fact-status.unavailable,
+.fact-status.conflicting {
+    border-color: rgba(215, 182, 107, 0.42);
+    color: #ecd495;
+}
+
+.field-provenance {
+    margin-top: 10px;
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+}
+
+.field-provenance > summary {
+    width: fit-content;
+    color: #b8d8cf;
+    font-size: 0.66rem;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.field-provenance > dl {
+    display: grid;
+    gap: 7px;
+    margin: 10px 0 0;
+}
+
+.field-provenance > dl > div {
+    display: grid;
+    gap: 2px;
+}
+
+.field-provenance dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: #c9d4cf;
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+.field-provenance code {
+    color: #c6e3da;
+    font-size: 0.66rem;
+}
+
+.detail-subsection {
+    display: grid;
+    gap: 10px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.detail-subsection h3,
+.missing-study-details h3 {
+    margin: 0;
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.compact-facts {
+    margin-top: 0;
+}
+
+.detail-empty-note,
+.study-state p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.detail-warning {
+    margin: 0;
+}
+
+.study-detail-panel {
+    display: grid;
+    gap: 18px;
+    background:
+        radial-gradient(circle at 50% 12%, rgba(101, 182, 162, 0.08), transparent 28%),
+        var(--panel);
+}
+
+.study-state {
+    display: grid;
+    gap: 7px;
+    padding: 18px;
+    border: 1px dashed rgba(205, 221, 211, 0.24);
+    background: rgba(7, 22, 22, 0.35);
+}
+
+.study-state strong {
+    color: #e2ebe6;
+}
+
+.study-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.study-legend span {
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    color: #c9d4cf;
+    font-size: 0.68rem;
+}
+
+.study-legend b {
+    margin-right: 4px;
+    color: var(--gold);
+}
+
+.missing-study-details {
+    display: grid;
+    gap: 10px;
+    padding: 15px 17px;
+    border-left: 3px solid var(--gold);
+    background: rgba(215, 182, 107, 0.07);
+}
+
+.missing-study-details ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.missing-study-details li {
+    padding: 4px 7px;
+    border: 1px solid rgba(215, 182, 107, 0.3);
+    color: #e8d59e;
+    font-size: 0.68rem;
+}
+
+.study-complete-note {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 0;
+    padding: 13px 15px;
+    border-left: 3px solid var(--jade);
+    color: #c6e3da;
+    background: rgba(101, 182, 162, 0.08);
+    font-size: 0.78rem;
+    font-weight: 750;
+}
+
+.study-map {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.study-group {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid rgba(205, 221, 211, 0.14);
+    background: rgba(7, 22, 22, 0.42);
+}
+
+.study-group.group-direct {
+    border-top-color: rgba(101, 182, 162, 0.52);
+}
+
+.study-group.group-reverse {
+    border-top-color: rgba(184, 133, 200, 0.58);
+}
+
+.study-group-heading {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.study-group-glyph {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid rgba(215, 182, 107, 0.35);
+    border-radius: 50%;
+    color: var(--gold);
+    background: rgba(215, 182, 107, 0.08);
+    font-family: Georgia, "Microsoft JhengHei", serif;
+}
+
+.study-group-heading h3 {
+    margin: 0;
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.study-group-heading div > span {
+    color: var(--muted);
+    font-size: 0.64rem;
+}
+
+.study-group ol {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.study-node {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid rgba(205, 221, 211, 0.12);
+    background: rgba(22, 43, 41, 0.48);
+}
+
+.study-node-marker {
+    display: grid;
+    width: 27px;
+    height: 27px;
+    place-items: center;
+    border: 1px solid rgba(205, 221, 211, 0.24);
+    border-radius: 50%;
+    color: #dce7e2;
+    font-size: 0.72rem;
+    font-weight: 900;
+}
+
+.study-node.status-studied .study-node-marker {
+    border-color: rgba(101, 182, 162, 0.48);
+    color: #bce4d8;
+}
+
+.study-node.status-not-studied .study-node-marker,
+.study-node.status-unavailable .study-node-marker {
+    border-color: rgba(215, 182, 107, 0.45);
+    color: #ecd495;
+}
+
+.study-node-copy {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.study-node-copy strong {
+    overflow-wrap: anywhere;
+    color: #e3ebe7;
+    font-size: 0.75rem;
+}
+
+.study-node-copy > span {
+    color: var(--muted);
+    font-size: 0.64rem;
+}
+
+.study-node-copy em {
+    width: fit-content;
+    padding: 2px 5px;
+    color: #e8d59e;
+    background: rgba(215, 182, 107, 0.09);
+    font-size: 0.58rem;
+    font-style: normal;
+    font-weight: 800;
+}
+
+.study-node-source {
+    grid-column: 1 / -1;
+    margin-top: 1px;
+}
+
+.raw-description-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.raw-description-list article {
+    display: grid;
+    gap: 9px;
+    padding: 15px;
+    border: 1px solid rgba(205, 221, 211, 0.14);
+    background: rgba(7, 22, 22, 0.38);
+}
+
+.raw-description-list article > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.raw-description-list article > div > span {
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 750;
+}
+
+.raw-description-list p {
+    margin: 0;
+    color: #d4ddd8;
+    font-size: 0.78rem;
+    line-height: 1.6;
+}
+
+.mechanic-trust-label {
+    padding: 3px 6px;
+    border: 1px solid rgba(215, 182, 107, 0.38);
+    color: #ecd495;
+    font-size: 0.58rem;
+}
+
 @media (max-width: 1279px) {
     .briefing-grid {
         grid-template-columns: 1fr;
@@ -1829,6 +2307,11 @@ select {
 
     .skill-card-grid {
         grid-template-columns: repeat(2, minmax(210px, 1fr));
+    }
+
+    .skill-detail-columns,
+    .study-map {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1903,8 +2386,22 @@ select {
     .atlas-metadata,
     .atlas-primary-filters,
     .atlas-filter-grid,
-    .skill-card-grid {
+    .skill-card-grid,
+    .skill-detail-facts,
+    .bilingual-name-facts,
+    .raw-description-list {
         grid-template-columns: 1fr;
+    }
+
+    .skill-detail-hero {
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+
+    .bilingual-name-panel,
+    .skill-detail-section,
+    .study-detail-panel {
+        padding: 20px;
     }
 
     .atlas-metadata > div {

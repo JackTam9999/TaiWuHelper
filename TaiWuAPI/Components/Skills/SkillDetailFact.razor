@@ -1,0 +1,58 @@
+<div class="skill-detail-fact">
+    <dt>@Label</dt>
+    <dd>
+        <strong>@Value</strong>
+        <span class="fact-status @StatusClass">@Status</span>
+    </dd>
+    <details class="field-provenance">
+        <summary>@T("Source and availability")</summary>
+        <dl>
+            <div>
+                <dt>@T("Status")</dt>
+                <dd>@Status</dd>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Reason))
+            {
+                <div>
+                    <dt>@T("Explanation")</dt>
+                    <dd>@Reason</dd>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(SourceKind))
+            {
+                <div>
+                    <dt>@T("Source kind")</dt>
+                    <dd>@SourceKind</dd>
+                </div>
+            }
+        </dl>
+    </details>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Status { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Reason { get; set; }
+
+    [Parameter]
+    public string? SourceKind { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string StatusClass => Status == T("Available")
+        ? "available"
+        : Status == T("Conflicting")
+            ? "conflicting"
+            : "unavailable";
+
+    private string T(string english) => UiText.Get(Language, english);
+}

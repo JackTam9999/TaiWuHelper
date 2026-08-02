@@ -30,7 +30,7 @@ Accept: application/json
 
 ###
 
-GET {{TaiWu_HostAddress}}/api/combat-skills/456?language=English&characterId=42
+GET {{TaiWu_HostAddress}}/api/combat-skills/456?language=English
 Accept: application/json
 
 ###

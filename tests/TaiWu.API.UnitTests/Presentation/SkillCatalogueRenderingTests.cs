@@ -136,6 +136,8 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.DoesNotContain("已大成", text);
         Assert.DoesNotContain("已裝備", text);
         Assert.Contains("15 / 15 已研讀", text);
+        Assert.Contains("href=\"/skills/686\"", html);
+        Assert.Contains("開啟完整功法詳情", text);
         Assert.Contains("role", html);
     }
 

@@ -967,7 +967,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
             new CombatSkillDetailsRequest(
                 2,
                 CatalogueLanguage.English,
-                characterId: 42),
+                characterId: null),
             CancellationToken);
 
         Assert.True(result.Found);
@@ -978,6 +978,10 @@ public sealed class CombatSkillCatalogueUseCaseTests
         Assert.Equal(2, result.CharacterState.CurrentEffectiveGridCost.Value);
         Assert.True(result.Issues.HasFlag(
             CombatSkillQueryIssue.PartialLocalization));
+        await reader.Received(1).ReadAsync(
+            Arg.Is<CharacterCombatSkillProgressReadRequest>(request =>
+                request != null && request.CharacterId == null),
+            CancellationToken);
     }
 
     [Fact]
