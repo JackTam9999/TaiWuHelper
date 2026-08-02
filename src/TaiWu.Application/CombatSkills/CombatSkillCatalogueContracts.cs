@@ -392,27 +392,95 @@ public enum CharacterProgressReadStatus
     UnsupportedVersion = 4
 }
 
+public sealed record CharacterCombatSkillProgressWarning
+{
+    public CharacterCombatSkillProgressWarning(string code, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            throw new ArgumentException(
+                "A progress warning requires a code.",
+                nameof(code));
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new ArgumentException(
+                "A progress warning requires a reason.",
+                nameof(reason));
+        }
+
+        Code = code.Trim();
+        Reason = reason.Trim();
+    }
+
+    public string Code { get; }
+
+    public string Reason { get; }
+}
+
+public sealed record CharacterCombatSkillProgressMetadata
+{
+    public CharacterCombatSkillProgressMetadata(
+        SaveSnapshotIdentity saveSnapshot,
+        string gameDataVersion,
+        IEnumerable<CharacterCombatSkillProgressWarning>? warnings = null)
+    {
+        ArgumentNullException.ThrowIfNull(saveSnapshot);
+        if (string.IsNullOrWhiteSpace(gameDataVersion))
+        {
+            throw new ArgumentException(
+                "A progress snapshot requires a GameData version.",
+                nameof(gameDataVersion));
+        }
+
+        var warningValues = (warnings ?? []).ToImmutableArray();
+        if (warningValues.Any(value => value is null))
+        {
+            throw new ArgumentException(
+                "Progress warnings cannot contain null.",
+                nameof(warnings));
+        }
+
+        SaveSnapshot = saveSnapshot;
+        GameDataVersion = gameDataVersion.Trim();
+        Warnings = warningValues;
+    }
+
+    public SaveSnapshotIdentity SaveSnapshot { get; }
+
+    public string GameDataVersion { get; }
+
+    public ImmutableArray<CharacterCombatSkillProgressWarning> Warnings { get; }
+}
+
 public sealed record CharacterCombatSkillProgressReadResult
 {
     private CharacterCombatSkillProgressReadResult(
         CharacterProgressReadStatus status,
+        CharacterCombatSkillProgressMetadata? metadata,
         ImmutableArray<CharacterCombatSkillProgress> progress,
         string? reason)
     {
         Status = status;
+        Metadata = metadata;
         Progress = progress;
         Reason = reason;
     }
 
     public CharacterProgressReadStatus Status { get; }
 
+    public CharacterCombatSkillProgressMetadata? Metadata { get; }
+
     public ImmutableArray<CharacterCombatSkillProgress> Progress { get; }
 
     public string? Reason { get; }
 
     public static CharacterCombatSkillProgressReadResult Available(
+        CharacterCombatSkillProgressMetadata metadata,
         IEnumerable<CharacterCombatSkillProgress> progress)
     {
+        ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(progress);
         var values = progress.ToImmutableArray();
         if (values.Any(value => value is null))
@@ -430,9 +498,23 @@ public sealed record CharacterCombatSkillProgressReadResult
         }
 
         values = values.OrderBy(value => value.SkillId).ToImmutableArray();
+        if (values.Any(value => value.SaveSnapshot != metadata.SaveSnapshot))
+        {
+            throw new ArgumentException(
+                "Character progress must use the result snapshot identity.",
+                nameof(progress));
+        }
+
+        if (values.Select(value => value.CharacterId).Distinct().Skip(1).Any())
+        {
+            throw new ArgumentException(
+                "Character progress must describe one character.",
+                nameof(progress));
+        }
 
         return new CharacterCombatSkillProgressReadResult(
             CharacterProgressReadStatus.Available,
+            metadata,
             values,
             reason: null);
     }
@@ -463,6 +545,7 @@ public sealed record CharacterCombatSkillProgressReadResult
 
         return new CharacterCombatSkillProgressReadResult(
             status,
+            metadata: null,
             progress: [],
             reason.Trim());
     }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.SaveGames;
@@ -18,6 +19,9 @@ public static class DependencyInjection
             ReadOnlyFileFingerprintProvider>();
         services.AddSingleton<ITaiwuArchiveLoader, TaiwuArchiveLoader>();
         services.AddSingleton<TaiwuArchiveReadSession>();
+        services.AddSingleton<ITaiwuSaveFilePathProvider>(provider =>
+            new ConfiguredTaiwuSaveFilePathProvider(
+                provider.GetService<IConfiguration>()));
         services.AddSingleton<TaiwuGameTextResolver>();
         services.AddSingleton<ITaiwuCatalogueSourcePathProvider>(
             _ => new TaiwuCatalogueSourcePathProvider());
@@ -27,6 +31,11 @@ public static class DependencyInjection
         services.AddSingleton<
             ICombatSkillDefinitionSource,
             TaiwuCombatSkillDefinitionSource>();
+        services.AddSingleton<ICharacterCombatSkillProgressReader>(provider =>
+            new TaiwuCharacterCombatSkillProgressReader(
+                provider.GetRequiredService<TaiwuArchiveReadSession>(),
+                provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
+                TimeProvider.System));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<ITargetLookupReader, TaiwuTargetLookupReader>();

@@ -549,7 +549,7 @@ schema, importer, GameData, or language resources change.
 
 ### E2-009 — Read the character skill-progress overlay
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -563,27 +563,39 @@ session and do not parse legacy diagnostic lines.
 
 #### Acceptance criteria
 
-- [ ] Progress is read for every character combat-skill entry in stable order.
-- [ ] The reader captures the exact obtained/learned fact verified by E2-002.
-- [ ] Proficiency current and maximum values are typed and range-checked.
-- [ ] Breakthrough readiness, available directions, completed breakthrough,
+- [x] Progress is read for every character combat-skill entry in stable order.
+- [x] The reader captures the exact obtained/learned fact verified by E2-002.
+- [x] Proficiency current and maximum values are typed and range-checked.
+- [x] Breakthrough readiness, available directions, completed breakthrough,
       active direction, mastery, activation, and equipment are captured
       independently.
-- [ ] Unknown or invalid source values produce warnings and unavailable fields
+- [x] Unknown or invalid source values produce warnings and unavailable fields
       rather than guessed defaults.
-- [ ] Snapshot metadata includes save hash, read time, game version, and
+- [x] Snapshot metadata includes save hash, read time, game version, and
       warnings.
-- [ ] Character progress is immutable and is not written into the static
+- [x] Character progress is immutable and is not written into the static
       catalogue database.
-- [ ] Existing recommendation snapshot behavior remains compatible or is
+- [x] Existing recommendation snapshot behavior remains compatible or is
       migrated with full regression coverage.
-- [ ] Source fingerprints before and after the read match.
-- [ ] Unit and opt-in integration tests cover the golden progress states.
+- [x] Source fingerprints before and after the read match.
+- [x] Unit and opt-in integration tests cover the golden progress states.
 
 #### Evidence when complete
 
-- Snapshot mapping and integration tests.
-- Updated snapshot architecture documentation.
+- [Read-only character combat-skill progress](../../architecture/CHARACTER-COMBAT-SKILL-PROGRESS-READER.md).
+- Mapping, configuration, Application contract, dependency-registration,
+  architecture, and typed golden integration tests pass locally.
+- The 2026-08-02 golden save fingerprint is
+  `77D88A43934E6369F9475AA3742B3161C79A2E9E749BCA6258A2A91391EA0673`.
+  Two repeated reads returned the same 501-entry progress overlay, and all
+  guarded save and game-source fingerprints matched before and after.
+- Golden cases cover learned zero-state, immediate Direct breakthrough,
+  completed Direct and Reverse breakthrough, activation, equipment, explicit
+  unavailable fields, metadata warnings, stable order, and snapshot identity.
+- Focused golden integration: 1 passed, 0 failed, 0 skipped. Full solution with
+  local catalogue integration: 561 passed, 0 failed, and 3 intentionally
+  save-dependent assertions skipped; the E2-009 golden assertion passed
+  separately with the configured current save.
 
 ### E2-010 — Decode individual study details and completeness
 

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.SaveGames;
@@ -342,5 +343,20 @@ public sealed class CombatSnapshotMappingTests
         Assert.Equal(
             "TaiwuCombatSnapshotReader",
             descriptor.ImplementationType?.Name);
+    }
+
+    [Fact]
+    public void Infrastructure_registers_character_progress_reader_as_singleton()
+    {
+        ServiceCollection services = [];
+
+        services.AddTaiwuInfrastructure();
+
+        var descriptor = Assert.Single(
+            services,
+            service => service.ServiceType
+                == typeof(ICharacterCombatSkillProgressReader));
+        Assert.Equal(ServiceLifetime.Singleton, descriptor.Lifetime);
+        Assert.NotNull(descriptor.ImplementationFactory);
     }
 }

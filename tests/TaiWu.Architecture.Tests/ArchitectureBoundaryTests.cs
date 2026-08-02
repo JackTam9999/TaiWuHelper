@@ -925,6 +925,32 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Character_progress_adapter_uses_typed_archive_data_only()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var source = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "TaiwuCharacterCombatSkillProgressReader.cs"));
+
+        Assert.Contains("GetCharCombatSkills(characterId)", source);
+        Assert.Contains("TryGetElement_CombatSkillProficiencies", source);
+        Assert.Contains("GetReadingState()", source);
+        Assert.Contains("GetActivationState()", source);
+        Assert.Contains("typeof(DomainManager).Assembly.Location", source);
+        Assert.DoesNotContain(
+            "typeof(Config.CombatSkill).Assembly.Location",
+            source);
+        Assert.DoesNotContain("SaveGameReport", source);
+        Assert.DoesNotContain("LegacyReport", source);
+        Assert.DoesNotContain("SKILL|", source);
+        Assert.DoesNotContain("File.Write", source);
+    }
+
+    [Fact]
     public void Publishing_is_blocked_and_game_binaries_are_not_publish_items()
     {
         var repositoryRoot = FindRepositoryRoot();

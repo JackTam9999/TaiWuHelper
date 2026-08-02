@@ -557,15 +557,20 @@ public sealed class CombatSkillCatalogueUseCaseTests
     public async Task Atlas_joins_progress_and_preserves_missing_definition()
     {
         var definitions = Definitions();
+        var progress = new[]
+        {
+            Progress(42, 2),
+            Progress(42, 999)
+        };
         var progressReader = Substitute.For<ICharacterCombatSkillProgressReader>();
         progressReader.ReadAsync(
                 Arg.Any<CharacterCombatSkillProgressReadRequest>(),
                 Arg.Any<CancellationToken>())
             .Returns(CharacterCombatSkillProgressReadResult.Available(
-            [
-                Progress(42, 2),
-                Progress(42, 999)
-            ]));
+                new CharacterCombatSkillProgressMetadata(
+                    progress[0].SaveSnapshot,
+                    "1.0.0-test"),
+                progress));
         var result = await new ReadCharacterCombatSkillAtlas(
                 Source(Available(CurrentIdentity, definitions)),
                 CurrentRepository(definitions),
@@ -661,6 +666,55 @@ public sealed class CombatSkillCatalogueUseCaseTests
         Assert.All(
             typeof(CharacterCombatSkillProgressReadResult).GetProperties(),
             property => Assert.False(property.CanWrite));
+    }
+
+    [Fact]
+    public void Progress_result_preserves_metadata_and_normalizes_skill_order()
+    {
+        var first = Progress(7, 1);
+        var second = Progress(7, 2);
+        List<CharacterCombatSkillProgressWarning> warnings =
+        [
+            new("TEST_WARNING", "A sanitized warning.")
+        ];
+        var metadata = new CharacterCombatSkillProgressMetadata(
+            first.SaveSnapshot,
+            "1.0.0-test",
+            warnings);
+
+        var result = CharacterCombatSkillProgressReadResult.Available(
+            metadata,
+            [second, first]);
+        warnings.Clear();
+
+        var actualMetadata = Assert.IsType<CharacterCombatSkillProgressMetadata>(
+            result.Metadata);
+        Assert.Same(metadata, actualMetadata);
+        Assert.Equal([1, 2], result.Progress.Select(value => value.SkillId));
+        Assert.Single(actualMetadata.Warnings);
+        Assert.Null(result.Reason);
+    }
+
+    [Fact]
+    public void Progress_result_rejects_mixed_snapshot_or_character_data()
+    {
+        var first = Progress(7, 1);
+        var metadata = new CharacterCombatSkillProgressMetadata(
+            new SaveSnapshotIdentity(
+                new string('F', 64),
+                first.SaveSnapshot.ReadAtUtc),
+            "1.0.0-test");
+
+        Assert.Throws<ArgumentException>(
+            () => CharacterCombatSkillProgressReadResult.Available(
+                metadata,
+                [first]));
+        Assert.Throws<ArgumentException>(
+            () => CharacterCombatSkillProgressReadResult.Available(
+                new CharacterCombatSkillProgressMetadata(
+                    first.SaveSnapshot,
+                    "1.0.0-test"),
+                [first, Progress(8, 2)]));
     }
 
     [Fact]

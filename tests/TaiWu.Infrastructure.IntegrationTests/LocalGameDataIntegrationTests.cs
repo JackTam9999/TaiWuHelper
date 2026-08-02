@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,8 +9,10 @@ using TaiWu.Application.Localization;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatSkills;
+using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.SaveGames;
 using TaiWu.Infrastructure.Catalogue;
+using TaiWu.Infrastructure.SaveGames;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -22,6 +25,8 @@ public sealed class LocalGameDataIntegrationTests
     private const string GameDirectoryVariable = "TAIWU_GAME_DIRECTORY";
     private const string Epic2GoldenSaveSha256 =
         "C9EB00A368A6CE25B2D816DAE941AFAC67B6217ED561FF7563F613C3B297CECA";
+    private const string Epic2CharacterProgressGoldenSaveSha256 =
+        "77D88A43934E6369F9475AA3742B3161C79A2E9E749BCA6258A2A91391EA0673";
     private const int GoldenPlayerId = 21396;
     private const int GoldenTargetId = 16317;
 
@@ -530,6 +535,152 @@ public sealed class LocalGameDataIntegrationTests
             AssertUnchanged(before, after);
         }
     }
+
+    [Fact]
+    public async Task Golden_character_progress_overlay_is_typed_and_read_only()
+    {
+        var savePath = RequireSavePath();
+        var guardedPaths = DiscoverGameOwnedReadDependencies(savePath);
+        var before = await CaptureAsync(guardedPaths);
+        Assert.SkipUnless(
+            string.Equals(
+                before[savePath].Sha256,
+                Epic2CharacterProgressGoldenSaveSha256,
+                StringComparison.OrdinalIgnoreCase),
+            "E2-009 skipped: the configured save does not match its "
+            + "golden fingerprint.");
+
+        try
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [ConfiguredTaiwuSaveFilePathProvider.ConfigurationKey] =
+                        savePath
+                })
+                .Build();
+            await using var provider = new ServiceCollection()
+                .AddSingleton<IConfiguration>(configuration)
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var reader = provider
+                .GetRequiredService<ICharacterCombatSkillProgressReader>();
+            var request = new CharacterCombatSkillProgressReadRequest(
+                GoldenPlayerId);
+
+            var first = await reader.ReadAsync(
+                request,
+                TestContext.Current.CancellationToken);
+            var second = await reader.ReadAsync(
+                request,
+                TestContext.Current.CancellationToken);
+
+            AssertGoldenCharacterProgress(first, before[savePath].Sha256);
+            AssertGoldenCharacterProgress(second, before[savePath].Sha256);
+            Assert.Equal(
+                first.Progress.Select(ProgressSignature),
+                second.Progress.Select(ProgressSignature));
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            AssertUnchanged(before, after);
+        }
+    }
+
+    private static void AssertGoldenCharacterProgress(
+        CharacterCombatSkillProgressReadResult result,
+        string expectedSaveSha256)
+    {
+        Assert.True(
+            result.Status == CharacterProgressReadStatus.Available,
+            result.Reason);
+        Assert.NotNull(result.Metadata);
+        Assert.Equal(
+            expectedSaveSha256,
+            result.Metadata.SaveSnapshot.Sha256,
+            ignoreCase: true);
+        Assert.Equal(
+            TaiwuCharacterCombatSkillProgressReader.SupportedGameDataVersion,
+            result.Metadata.GameDataVersion);
+        Assert.Equal(501, result.Progress.Length);
+        Assert.Equal(
+            result.Progress.Select(progress => progress.SkillId).Order(),
+            result.Progress.Select(progress => progress.SkillId));
+        Assert.Contains(
+            result.Metadata.Warnings,
+            warning => warning.Code == "ATTAINMENT_MASTERY_UNAVAILABLE");
+        Assert.Contains(
+            result.Metadata.Warnings,
+            warning => warning.Code == "PROFICIENCY_PERCENTAGE_UNAVAILABLE");
+        Assert.Contains(
+            result.Metadata.Warnings,
+            warning => warning.Code == "STUDY_DETAILS_PENDING_DECODER");
+
+        var reverse = Assert.Single(
+            result.Progress,
+            progress => progress.SkillId == 40);
+        Assert.True(reverse.Learned.Value);
+        Assert.True(reverse.Breakthrough.Value.IsBrokenOut);
+        Assert.Equal(
+            PracticeDirection.Reverse,
+            reverse.ActiveDirection.Value);
+        Assert.True(reverse.Activated.Value);
+        Assert.True(reverse.Equipped.Value);
+
+        var direct = Assert.Single(
+            result.Progress,
+            progress => progress.SkillId == 41);
+        Assert.True(direct.Breakthrough.Value.IsBrokenOut);
+        Assert.Equal(PracticeDirection.Direct, direct.ActiveDirection.Value);
+        Assert.True(direct.Equipped.Value);
+
+        var zeroState = Assert.Single(
+            result.Progress,
+            progress => progress.SkillId == 498);
+        Assert.True(zeroState.Learned.Value);
+        Assert.False(zeroState.Activated.Value);
+        Assert.False(zeroState.Breakthrough.Value.IsBrokenOut);
+
+        var ready = Assert.Single(
+            result.Progress,
+            progress => progress.SkillId == 686);
+        Assert.True(ready.Breakthrough.Value.CanBreakthroughNow);
+        Assert.Equal(
+            [PracticeDirection.Direct],
+            ready.Breakthrough.Value.AvailableDirections);
+
+        Assert.All(
+            result.Progress,
+            progress =>
+            {
+                Assert.False(progress.AttainmentMastered.IsAvailable);
+                Assert.Empty(progress.StudyDetails);
+                Assert.Equal(
+                    result.Metadata.SaveSnapshot,
+                    progress.SaveSnapshot);
+            });
+    }
+
+    private static string ProgressSignature(
+        CharacterCombatSkillProgress progress) => string.Join(
+            '|',
+            progress.SkillId,
+            FieldSignature(progress.Learned),
+            FieldSignature(progress.Proficiency.Current),
+            FieldSignature(progress.Proficiency.Maximum),
+            FieldSignature(progress.Proficiency.Percentage),
+            FieldSignature(progress.Breakthrough),
+            FieldSignature(progress.ActiveDirection),
+            FieldSignature(progress.AttainmentMastered),
+            FieldSignature(progress.Simplified),
+            FieldSignature(progress.Activated),
+            FieldSignature(progress.Equipped));
+
+    private static string FieldSignature<T>(SkillProgressField<T> field) =>
+        field.IsAvailable
+            ? $"{field.Status}:{field.Value}"
+            : $"{field.Status}:{field.Reason}";
 
     private static void AssertGoldenSkillProgress(SaveGameReport rawReport)
     {
