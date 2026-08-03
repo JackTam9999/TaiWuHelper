@@ -79,7 +79,7 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains(
             "class=\"practice-marker direct\" data-practice-state=\"active\"",
             html);
-        Assert.Contains("正 Black Blood Gu", text);
+        Assert.Contains("正 逆 Black Blood Gu", text);
         Assert.Contains("class=\"skill-status-legend\"", html);
         Assert.Contains("class=\"skill-card-name\">Black Blood Gu</span>", decodedHtml);
         Assert.Contains("class=\"skill-study-complete-marker\"", html);
@@ -278,6 +278,14 @@ public sealed partial class SkillCatalogueRenderingTests
             "title=\"雲術 · 已取得 · 可突破 · 逆練 · 15 / 15 已研讀\"",
             decodedHtml);
         Assert.Contains("15 / 15 已研讀", text);
+        Assert.Contains("原始描述 原始說明", text);
+        Assert.Contains("正練描述 正練說明", text);
+        Assert.Contains("逆練描述 逆練說明", text);
+        Assert.DoesNotContain("基礎佔格", text);
+        Assert.DoesNotContain("目前有效佔格", text);
+        Assert.Contains("data-description-kind=\"Effect\"", html);
+        Assert.Contains("data-description-kind=\"DirectEffect\"", html);
+        Assert.Contains("data-description-kind=\"ReverseEffect\"", html);
         Assert.Contains("class=\"skill-study-strip\"", html);
         Assert.Equal(
             15,
@@ -373,6 +381,110 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("data-breakthrough-state=\"completed\"", html);
         Assert.DoesNotContain("skill-card-status", html);
         Assert.DoesNotContain("progress-badge", html);
+    }
+
+    [Fact]
+    public async Task Completed_breakthrough_shows_unfinished_opposite_direction_in_grey()
+    {
+        var definition = Definition(606, "Berserk Blade");
+        var progress = Progress(
+            42,
+            606,
+            new BreakthroughDirectionAvailability(
+                true,
+                false,
+                [],
+                [PracticeDirection.Direct]),
+            PracticeDirection.Direct,
+            mastered: false,
+            simplified: false,
+            activated: true,
+            equipped: true);
+
+        var html = await RenderCardAsync(
+            Entry(definition, progress),
+            TaiwuLanguage.Chinese);
+
+        Assert.Contains(
+            "class=\"practice-marker direct\" data-practice-state=\"active\"",
+            html);
+        Assert.Contains(
+            "class=\"practice-marker reverse\" data-practice-state=\"available\"",
+            html);
+        Assert.DoesNotContain(
+            "class=\"practice-marker reverse\" data-practice-state=\"completed\"",
+            html);
+        var directionLine = html.IndexOf(
+            "class=\"skill-card-direction-line\"",
+            StringComparison.Ordinal);
+        var nameLine = html.IndexOf(
+            "class=\"skill-card-name-line\"",
+            StringComparison.Ordinal);
+        Assert.True(directionLine >= 0);
+        Assert.True(nameLine > directionLine);
+    }
+
+    [Fact]
+    public async Task Inactive_completed_preset_uses_its_direction_colour()
+    {
+        var definition = Definition(606, "Berserk Blade");
+        var progress = Progress(
+            42,
+            606,
+            new BreakthroughDirectionAvailability(
+                true,
+                false,
+                [],
+                [PracticeDirection.Direct, PracticeDirection.Reverse]),
+            PracticeDirection.Direct,
+            mastered: false,
+            simplified: false,
+            activated: true,
+            equipped: true);
+
+        var html = await RenderCardAsync(
+            Entry(definition, progress),
+            TaiwuLanguage.Chinese);
+
+        Assert.Contains(
+            "class=\"practice-marker direct\" data-practice-state=\"active\"",
+            html);
+        Assert.Contains(
+            "class=\"practice-marker reverse\" data-practice-state=\"completed\"",
+            html);
+        Assert.DoesNotContain(
+            "class=\"practice-marker reverse\" data-practice-state=\"available\"",
+            html);
+    }
+
+    [Fact]
+    public async Task Completed_other_preset_remains_coloured_when_current_slot_is_unbroken()
+    {
+        var definition = Definition(606, "Berserk Blade");
+        var progress = Progress(
+            42,
+            606,
+            new BreakthroughDirectionAvailability(
+                false,
+                true,
+                [PracticeDirection.Reverse],
+                [PracticeDirection.Direct]),
+            activeDirection: null,
+            mastered: false,
+            simplified: false,
+            activated: true,
+            equipped: false);
+
+        var html = await RenderCardAsync(
+            Entry(definition, progress),
+            TaiwuLanguage.Chinese);
+
+        Assert.Contains(
+            "class=\"practice-marker direct\" data-practice-state=\"completed\"",
+            html);
+        Assert.Contains(
+            "class=\"practice-marker reverse\" data-practice-state=\"available\"",
+            html);
     }
 
     [Fact]
@@ -686,7 +798,56 @@ public sealed partial class SkillCatalogueRenderingTests
                 CatalogueField<CombatSkillEffectId>.Unavailable("test"),
                 CatalogueField<CombatSkillEffectId>.Unavailable("test"),
                 CatalogueField<CombatSkillEffectId>.Unavailable("test")),
-            rawDescriptions: null,
+            [
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.Effect,
+                    CatalogueLanguage.TraditionalChinese,
+                    "原始說明",
+                    new CatalogueSourceReference(
+                        CatalogueSourceKind.TraditionalChineseLanguageResource,
+                        "language-cnh:test",
+                        $"combat-skill-description:{skillId}")),
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.Effect,
+                    CatalogueLanguage.English,
+                    "Original description text",
+                    new CatalogueSourceReference(
+                        CatalogueSourceKind.EnglishLanguageResource,
+                        "language-en:test",
+                        $"combat-skill-description:{skillId}")),
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.DirectEffect,
+                    CatalogueLanguage.TraditionalChinese,
+                    "正練說明",
+                    new CatalogueSourceReference(
+                        CatalogueSourceKind.TraditionalChineseLanguageResource,
+                        "special-effect-language-cnh:test",
+                        "special-effect-description:331")),
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.DirectEffect,
+                    CatalogueLanguage.English,
+                    "Direct-practice description text",
+                    new CatalogueSourceReference(
+                        CatalogueSourceKind.EnglishLanguageResource,
+                        "special-effect-language-en:test",
+                        "special-effect-description:331")),
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.ReverseEffect,
+                    CatalogueLanguage.TraditionalChinese,
+                    "逆練說明",
+                    new CatalogueSourceReference(
+                        CatalogueSourceKind.TraditionalChineseLanguageResource,
+                        "special-effect-language-cnh:test",
+                        "special-effect-description:1057")),
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.ReverseEffect,
+                    CatalogueLanguage.English,
+                    "Reverse-practice description text",
+                    new CatalogueSourceReference(
+                        CatalogueSourceKind.EnglishLanguageResource,
+                        "special-effect-language-en:test",
+                        "special-effect-description:1057"))
+            ],
             source);
     }
 

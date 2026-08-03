@@ -76,6 +76,9 @@ The full static response contains localized names, typed fields, requirements,
 timing values, effect references, source provenance, and raw descriptions.
 Raw descriptions have `isVerifiedMechanic: false`: they are display text, not
 rules used by recommendations, feasibility, scoring, or loadout generation.
+The `kind` distinguishes the configured original text (`Effect`) from normal
+direct-practice (`DirectEffect`) and reverse-practice (`ReverseEffect`) effect
+descriptions. Each language remains independent.
 
 ## Character skill atlas
 

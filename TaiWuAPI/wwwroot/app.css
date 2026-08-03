@@ -1988,13 +1988,21 @@ select {
     justify-items: center;
 }
 
+.skill-card-direction-line,
 .skill-card-name-line {
     display: flex;
     min-width: 0;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 4px 5px;
+    gap: 5px;
+}
+
+.skill-card-direction-line {
+    min-height: 22px;
+}
+
+.skill-card-name-line {
+    max-width: 100%;
 }
 
 .skill-card-name {
@@ -2123,6 +2131,7 @@ select {
     justify-items: start;
 }
 
+.skill-atlas-card details[open] .skill-card-direction-line,
 .skill-atlas-card details[open] .skill-card-name-line {
     justify-content: flex-start;
 }
@@ -2158,6 +2167,44 @@ select {
     margin: 0;
     color: #dce7e2;
     font-size: 0.76rem;
+}
+
+.skill-card-descriptions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.skill-card-description {
+    display: grid;
+    align-content: start;
+    gap: 5px;
+    min-width: 0;
+    padding: 10px 11px;
+    border: 1px solid rgba(124, 156, 147, 0.2);
+    background: rgba(5, 17, 16, 0.28);
+}
+
+.skill-card-description.description-original {
+    grid-column: 1 / -1;
+}
+
+.skill-card-description dt {
+    color: var(--muted);
+    font-size: 0.69rem;
+    font-weight: 750;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.skill-card-description dd {
+    margin: 0;
+    color: #dce7e2;
+    font-size: 0.76rem;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
 }
 
 .skill-study-progress {
@@ -2925,6 +2972,7 @@ select {
     .atlas-primary-filters,
     .atlas-filter-grid,
     .skill-card-facts,
+    .skill-card-descriptions,
     .skill-detail-facts,
     .raw-description-list {
         grid-template-columns: 1fr;

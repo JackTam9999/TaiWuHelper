@@ -83,9 +83,27 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
         Assert.Equal(
             "character-property:17",
             Assert.Single(first.Requirements).RequirementId.Value);
-        Assert.Equal(
-            "Display effect",
-            Assert.Single(first.RawDescriptions).Text);
+        Assert.Collection(
+            first.RawDescriptions,
+            original =>
+            {
+                Assert.Equal(RawCombatSkillDescriptionKind.Effect, original.Kind);
+                Assert.Equal("Display effect", original.Text);
+            },
+            direct =>
+            {
+                Assert.Equal(
+                    RawCombatSkillDescriptionKind.DirectEffect,
+                    direct.Kind);
+                Assert.Equal("Direct display effect", direct.Text);
+            },
+            reverse =>
+            {
+                Assert.Equal(
+                    RawCombatSkillDescriptionKind.ReverseEffect,
+                    reverse.Kind);
+                Assert.Equal("Reverse display effect", reverse.Text);
+            });
         Assert.Equal(
             "gamedata:test",
             first.SourceRecord.SourceIdentity);
@@ -616,7 +634,9 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
         1,
         new string('A', 64),
         new string('B', 64),
-        new string('C', 64));
+        new string('C', 64),
+        new string('D', 64),
+        new string('E', 64));
 
     private static CombatSkillCatalogueSourceIdentity OlderIdentity { get; } = new(
         "1.0.0-older",
@@ -696,7 +716,23 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
                     Source(
                         CatalogueSourceKind.EnglishLanguageResource,
                         "language-en:test",
-                        $"combat-skill-description:{skillId}"))
+                        $"combat-skill-description:{skillId}")),
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.DirectEffect,
+                    CatalogueLanguage.English,
+                    "Direct display effect",
+                    Source(
+                        CatalogueSourceKind.EnglishLanguageResource,
+                        "special-effect-language-en:test",
+                        "special-effect-description:331")),
+                new RawCombatSkillDescription(
+                    RawCombatSkillDescriptionKind.ReverseEffect,
+                    CatalogueLanguage.English,
+                    "Reverse display effect",
+                    Source(
+                        CatalogueSourceKind.EnglishLanguageResource,
+                        "special-effect-language-en:test",
+                        "special-effect-description:1057"))
             ],
             gameData);
     }

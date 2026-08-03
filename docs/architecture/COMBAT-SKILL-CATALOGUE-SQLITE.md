@@ -19,19 +19,19 @@ database match the repository's `combat-skill-catalogue*.db` ignore rules.
 They are local derived data and are never publish inputs or committed
 artifacts.
 
-## Schema version 2
+## Schema version 3
 
 All tables are SQLite `STRICT` tables. Foreign keys use cascade deletion only
 inside the helper-owned database.
 
 | Table | Stored data and key |
 |---|---|
-| `catalogue_manifest` | One row (`singleton_id = 1`) containing schema version, importer version, installed GameData version, three source fingerprints, UTC build time, definition count, warning count, and error count. |
+| `catalogue_manifest` | One row (`singleton_id = 1`) containing schema version, importer version, installed GameData version, five source fingerprints, UTC build time, definition count, warning count, and error count. |
 | `definitions` | One row per non-negative stable skill ID, with definition-level source provenance. |
 | `localized_names` | Optional Traditional Chinese or English value and provenance, keyed by `(skill_id, language)`, plus a normalized search value. |
 | `definition_fields` | Typed category, grade, faction, element, equipment, grid cost, slot contribution, timing, and effect-reference values keyed by `(skill_id, field_key)`. Status, reason, and optional provenance preserve unavailable and unsupported facts. |
 | `requirements` | Ordered typed requirements keyed by `(skill_id, requirement_id)`, with a unique per-skill order. |
-| `raw_descriptions` | Ordered display-only localized text and provenance. These values are not recommendation rules. |
+| `raw_descriptions` | Ordered display-only localized original, direct-practice, and reverse-practice text with provenance. These values are not recommendation rules. |
 | `import_diagnostics` | Deterministically ordered warning/error code, source-record identity, and reason. Complete source files and binaries are never stored. |
 
 The schema constrains stable skill IDs, the two supported languages, enum and

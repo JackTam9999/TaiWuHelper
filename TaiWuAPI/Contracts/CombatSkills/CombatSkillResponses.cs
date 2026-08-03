@@ -9,7 +9,9 @@ public sealed record CatalogueSourceIdentityResponse(
     int ImporterVersion,
     string GameDataFingerprint,
     string TraditionalChineseFingerprint,
-    string EnglishFingerprint);
+    string EnglishFingerprint,
+    string TraditionalChineseSpecialEffectFingerprint,
+    string EnglishSpecialEffectFingerprint);
 
 public sealed record CombatSkillCatalogueStatusResponse(
     CombatSkillCatalogueStatus Status,
@@ -170,7 +172,8 @@ public sealed record CombatSkillStudyDetailResponse(
 public sealed record BreakthroughAvailabilityResponse(
     bool IsBrokenOut,
     bool CanBreakthroughNow,
-    IReadOnlyList<PracticeDirection> AvailableDirections);
+    IReadOnlyList<PracticeDirection> AvailableDirections,
+    IReadOnlyList<PracticeDirection> CompletedDirections);
 
 public sealed record CharacterCombatSkillProgressResponse(
     int CharacterId,

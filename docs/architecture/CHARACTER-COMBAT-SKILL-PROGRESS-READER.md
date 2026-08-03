@@ -33,8 +33,8 @@ skill ID, the adapter maps these facts independently:
 | Proficiency current | `ExtraDomain.TryGetElement_CombatSkillProficiencies(CombatSkillKey, out int)`; a missing key is unavailable and an out-of-range value becomes unavailable with a warning. |
 | Proficiency maximum | Verified GameData limit `999999999`, with E2-002 rule provenance. |
 | Proficiency percentage | Unavailable because the persisted-to-visible conversion remains unverified. |
-| Breakthrough | The E2-010 mapper combines the decoded detail collection, activation state, `CanBreakout`, completed breakthrough, and achievable directions. |
-| Active direction | Derived only from a supported activation state with completed breakthrough. |
+| Breakthrough | The E2-010 mapper combines the decoded detail collection, activation state, `CanBreakout`, completed breakthrough, achievable directions, and the Direct/Reverse directions completed in Taiwu's saved breakthrough presets. |
+| Active direction | Derived only from the currently selected supported activation state with completed breakthrough; it remains separate from completed inactive preset directions. |
 | Attainment mastery | Unavailable because the save rule for the player-facing `已大成` label remains unverified. |
 | Simplified | `ExtraDomain.IsCombatSkillMasteredByCharacter`; deliberately not labeled attainment mastery. |
 | Activated | Whether any supported activation-state page bit is active. |
@@ -65,6 +65,12 @@ catalogue at
 It uses normalized rows for snapshot metadata, characters, and combat-skill
 fields; it is not a serialized UI-result blob. The configured save path is
 represented only by an opaque SHA-256 path key.
+
+Each cached skill row stores the current activation mask separately from two
+boolean preset facts: completed Direct breakthrough and completed Reverse
+breakthrough. These facts are derived only from successful saved breakthrough
+plates; an incomplete preset containing five normal pages without an outline
+does not count as completed.
 
 A hit requires the same file length and UTC modification time, GameData
 version, mapping version, and requested character. The persisted save SHA-256

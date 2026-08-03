@@ -21,6 +21,9 @@ public sealed class TaiwuCombatSkillDefinitionSourceTests
         var english = directory.Write(
             "en.txt",
             "Name_1\nOne\nName_2\nTwo\n");
+        directory.Write(
+            "SpecialEffect_language.txt",
+            "Desc_1_0\nDirect effect\nDesc_2_0\nReverse effect\n");
         var version = FileVersionInfo.GetVersionInfo(gameData).ProductVersion!;
         var records = new[]
         {
@@ -57,6 +60,12 @@ public sealed class TaiwuCombatSkillDefinitionSourceTests
             result.Definitions[0].Names
                 .Get(Domain.CombatSkills.CatalogueLanguage.English)
                 .Value.Text);
+        Assert.Contains(
+            result.Definitions[0].RawDescriptions,
+            description =>
+                description.Kind
+                    == Domain.CombatSkills.RawCombatSkillDescriptionKind.DirectEffect
+                && description.Text == "Direct effect");
     }
 
     [Fact]

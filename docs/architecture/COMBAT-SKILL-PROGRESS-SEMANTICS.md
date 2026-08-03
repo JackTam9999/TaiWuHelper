@@ -31,6 +31,7 @@ labels are reused.
 | Reading prerequisite | `CombatSkill.CanBreakout()` / `IsReadNormalPagesMeetConditionOfBreakout` | Available |
 | Completed breakthrough | `CombatSkillStateHelper.IsBrokenOut(activationState)`; agrees with `CombatSkillDomain.GetBreakSuccess` | Available |
 | Active direction | `GetCombatSkillDirection(activationState)`, only after completed breakthrough | Available when the activation bitfield is supported |
+| Completed preset directions | For Taiwu, `TaiwuDomain.GetCombatSkillBreakPreset(skillId).Presets`; only successful `BreakPlate.SelectedPages` values that satisfy `IsBrokenOut` contribute Direct or Reverse | Available independently of the active preset |
 | Equipped | `CombatSkillEquipment` membership | Available and independent of activation pages |
 | Simplified | `ExtraDomain.GetCharacterMasteredCombatSkills` membership | Available; this is not the `已大成` attainment label |
 
@@ -132,6 +133,17 @@ The installed version uses three distinct stages:
 Immediate readiness is therefore:
 
 `not completed` + `five normal pages read` + `at least one achievable direction`.
+
+Taiwu's three breakthrough presets are an additional, independent dimension.
+`activationState` still describes only the currently selected preset. The
+helper also unions the direction of each successful saved breakthrough plate.
+It does not treat a preset as completed merely because five Direct or Reverse
+normal page bits are present: the selected state must include an outline and
+pass `IsBrokenOut`. The atlas therefore renders a completed skill as follows:
+
+- the current direction uses its Direct/Reverse colour and active state;
+- an inactive direction completed in another preset uses its normal colour;
+- an opposite direction with no completed preset remains visible in grey.
 
 Golden examples:
 

@@ -14,26 +14,17 @@
             <span class="skill-glyph" aria-hidden="true">
                 <span>@SkillInitial</span>
             </span>
-            <span class="skill-card-title">
-                <span class="skill-card-name-line" title="@ProgressTooltip">
-                    @if (ActiveMarkerDirection is { } activeDirection)
+            <span class="skill-card-title" title="@ProgressTooltip">
+                <span class="skill-card-direction-line">
+                    @if (DirectionMarkers.Count > 0)
                     {
-                        <span class="practice-marker @DirectionClass(activeDirection)"
-                              data-practice-state="active"
-                              role="img"
-                              aria-label="@DirectionLabel(activeDirection)">
-                            <span aria-hidden="true">@DirectionGlyph(activeDirection)</span>
-                        </span>
-                    }
-                    else if (ReadyDirections.Count > 0)
-                    {
-                        @foreach (var readyDirection in ReadyDirections)
+                        @foreach (var marker in DirectionMarkers)
                         {
-                            <span class="practice-marker @DirectionClass(readyDirection)"
-                                  data-practice-state="available"
+                            <span class="practice-marker @DirectionClass(marker.Direction)"
+                                  data-practice-state="@marker.State"
                                   role="img"
-                                  aria-label="@DirectionLabel(readyDirection)">
-                                <span aria-hidden="true">@DirectionGlyph(readyDirection)</span>
+                                  aria-label="@DirectionLabel(marker.Direction)">
+                                <span aria-hidden="true">@DirectionGlyph(marker.Direction)</span>
                             </span>
                         }
                     }
@@ -46,6 +37,8 @@
                             <span aria-hidden="true">?</span>
                         </span>
                     }
+                </span>
+                <span class="skill-card-name-line">
                     <span class="skill-card-name">@DisplayName</span>
                     @if (StudyComplete)
                     {
@@ -94,14 +87,17 @@
                     <dt>@T("Proficiency")</dt>
                     <dd>@ProficiencyText</dd>
                 </div>
-                <div>
-                    <dt>@T("Base grid cost")</dt>
-                    <dd>@BaseCostText</dd>
-                </div>
-                <div>
-                    <dt>@T("Current effective cost")</dt>
-                    <dd>@EffectiveCostText</dd>
-                </div>
+            </dl>
+
+            <dl class="skill-card-descriptions">
+                @foreach (var description in CardDescriptions)
+                {
+                    <div class="skill-card-description @description.CssClass"
+                         data-description-kind="@description.Kind">
+                        <dt>@description.Label</dt>
+                        <dd>@(description.Text ?? T("Unavailable"))</dd>
+                    </div>
+                }
             </dl>
 
             @if (Entry.Issues != CombatSkillQueryIssue.None)
@@ -146,14 +142,56 @@
 
     private IReadOnlyList<PracticeDirection> ReadyDirections =>
         Breakthrough?.CanBreakthroughNow == true
-            ? new[]
-                {
-                    PracticeDirection.Direct,
-                    PracticeDirection.Reverse
-                }
+            ? DirectionDisplayOrder
                 .Where(Breakthrough.Includes)
                 .ToArray()
             : [];
+
+    private static readonly PracticeDirection[] DirectionDisplayOrder =
+    [
+        PracticeDirection.Direct,
+        PracticeDirection.Reverse
+    ];
+
+    private IReadOnlyList<DirectionMarker> DirectionMarkers =>
+        DirectionDisplayOrder
+            .Select(direction => new DirectionMarker(
+                direction,
+                DirectionMarkerState(direction)))
+            .Where(marker => marker.State is not null)
+            .Select(marker => marker with { State = marker.State! })
+            .ToArray();
+
+    private string? DirectionMarkerState(PracticeDirection direction)
+    {
+        if (Breakthrough?.IsBrokenOut == true
+            && ActiveMarkerDirection is null)
+        {
+            return null;
+        }
+
+        if (ActiveMarkerDirection == direction)
+        {
+            return "active";
+        }
+
+        if (Breakthrough?.HasCompleted(direction) == true)
+        {
+            return "completed";
+        }
+
+        if (Breakthrough?.IsBrokenOut == true
+            || Breakthrough?.Includes(direction) == true)
+        {
+            return "available";
+        }
+
+        return null;
+    }
+
+    private sealed record DirectionMarker(
+        PracticeDirection Direction,
+        string? State);
 
     private string DisplayName => Entry.DisplayName.Value.IsAvailable
         ? Entry.DisplayName.Value.Value.Text
@@ -316,21 +354,52 @@
         ? "?"
         : DisplayName.Trim()[0].ToString();
 
-    private string BaseCostText => Entry.BaseGridCost.IsAvailable
-        ? Entry.BaseGridCost.Value.Value.ToString()
-        : T("Unavailable");
-
-    private string EffectiveCostText =>
-        Entry.CurrentEffectiveGridCost.IsAvailable
-            ? Entry.CurrentEffectiveGridCost.Value.ToString()
-            : T("Unavailable");
-
     private string ProficiencyText =>
         Progress?.Proficiency.Current.IsAvailable == true
             ? Progress.Proficiency.Maximum.IsAvailable
                 ? $"{Progress.Proficiency.Current.Value} / {Progress.Proficiency.Maximum.Value}"
                 : Progress.Proficiency.Current.Value.ToString()
             : T("Unavailable");
+
+    private CatalogueLanguage PreferredDescriptionLanguage =>
+        Language == TaiwuLanguage.Chinese
+            ? CatalogueLanguage.TraditionalChinese
+            : CatalogueLanguage.English;
+
+    private IReadOnlyList<CardDescription> CardDescriptions =>
+    [
+        Description(
+            RawCombatSkillDescriptionKind.Effect,
+            T("Original description"),
+            "description-original"),
+        Description(
+            RawCombatSkillDescriptionKind.DirectEffect,
+            T("Direct practice description"),
+            "description-direct"),
+        Description(
+            RawCombatSkillDescriptionKind.ReverseEffect,
+            T("Reverse practice description"),
+            "description-reverse")
+    ];
+
+    private CardDescription Description(
+        RawCombatSkillDescriptionKind kind,
+        string label,
+        string cssClass) => new(
+            kind,
+            label,
+            cssClass,
+            Entry.Definition?.RawDescriptions
+                .FirstOrDefault(description =>
+                    description.Kind == kind
+                    && description.Language == PreferredDescriptionLanguage)
+                ?.Text);
+
+    private sealed record CardDescription(
+        RawCombatSkillDescriptionKind Kind,
+        string Label,
+        string CssClass,
+        string? Text);
 
     private string StudyText => Progress is null
         ? Entry.Learned.IsAvailable && !Entry.Learned.Value

@@ -223,7 +223,9 @@ public enum RawCombatSkillDescriptionKind
 {
     Effect = 0,
     Requirement = 1,
-    Other = 2
+    Other = 2,
+    DirectEffect = 3,
+    ReverseEffect = 4
 }
 
 public sealed record RawCombatSkillDescription

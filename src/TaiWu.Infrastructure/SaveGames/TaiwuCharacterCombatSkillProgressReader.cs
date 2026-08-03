@@ -184,6 +184,9 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
         foreach (var (skillId, skill) in sourceSkills.OrderBy(pair => pair.Key))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var completedDirections = characterId == taiwuCharacterId
+                ? ReadCompletedBreakthroughDirections(skillId, skill)
+                : ReadCurrentBreakthroughDirection(skill.GetActivationState());
             int? proficiency = DomainManager.Extra
                 .TryGetElement_CombatSkillProficiencies(
                     new CombatSkillKey(characterId, skillId),
@@ -200,7 +203,9 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
                 DomainManager.Extra.IsCombatSkillMasteredByCharacter(
                     characterId,
                     skillId),
-                equippedSkillIds.Contains(skillId)));
+                equippedSkillIds.Contains(skillId),
+                completedDirections.Direct,
+                completedDirections.Reverse));
         }
 
         return new RawCharacterCombatSkillSnapshot(
@@ -210,6 +215,56 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
             characterId,
             context.LoadWarning,
             progress.ToImmutable());
+    }
+
+    private static (bool Direct, bool Reverse)
+        ReadCompletedBreakthroughDirections(
+            short skillId,
+            CombatSkill skill)
+    {
+        var completed = ReadCurrentBreakthroughDirection(
+            skill.GetActivationState());
+        var preset = DomainManager.Taiwu.GetCombatSkillBreakPreset(skillId);
+        if (preset?.Presets is null)
+        {
+            return completed;
+        }
+
+        foreach (var snapshot in preset.Presets)
+        {
+            if (snapshot?.BreakPlate is not { Success: true } plate)
+            {
+                continue;
+            }
+
+            completed = MergeCompletedDirection(
+                completed,
+                plate.SelectedPages);
+        }
+
+        return completed;
+    }
+
+    private static (bool Direct, bool Reverse)
+        ReadCurrentBreakthroughDirection(ushort activationState) =>
+            MergeCompletedDirection((false, false), activationState);
+
+    private static (bool Direct, bool Reverse) MergeCompletedDirection(
+        (bool Direct, bool Reverse) completed,
+        ushort activationState)
+    {
+        if (!CombatSkillStateHelper.IsBrokenOut(activationState))
+        {
+            return completed;
+        }
+
+        return CombatSkillStateHelper.GetCombatSkillDirection(activationState)
+            switch
+            {
+                0 => (true, completed.Reverse),
+                1 => (completed.Direct, true),
+                _ => completed
+            };
     }
 
     private static CharacterCombatSkillProgressReadResult Map(

@@ -10,7 +10,9 @@ public sealed record CombatSkillCatalogueSourceIdentity
         int importerVersion,
         string gameDataFingerprint,
         string traditionalChineseFingerprint,
-        string englishFingerprint)
+        string englishFingerprint,
+        string? traditionalChineseSpecialEffectFingerprint = null,
+        string? englishSpecialEffectFingerprint = null)
     {
         if (string.IsNullOrWhiteSpace(gameDataVersion))
         {
@@ -38,6 +40,13 @@ public sealed record CombatSkillCatalogueSourceIdentity
         EnglishFingerprint = ValidateFingerprint(
             englishFingerprint,
             nameof(englishFingerprint));
+        TraditionalChineseSpecialEffectFingerprint = ValidateFingerprint(
+            traditionalChineseSpecialEffectFingerprint
+                ?? traditionalChineseFingerprint,
+            nameof(traditionalChineseSpecialEffectFingerprint));
+        EnglishSpecialEffectFingerprint = ValidateFingerprint(
+            englishSpecialEffectFingerprint ?? englishFingerprint,
+            nameof(englishSpecialEffectFingerprint));
     }
 
     public string GameDataVersion { get; }
@@ -49,6 +58,10 @@ public sealed record CombatSkillCatalogueSourceIdentity
     public string TraditionalChineseFingerprint { get; }
 
     public string EnglishFingerprint { get; }
+
+    public string TraditionalChineseSpecialEffectFingerprint { get; }
+
+    public string EnglishSpecialEffectFingerprint { get; }
 
     private static string ValidateFingerprint(
         string value,

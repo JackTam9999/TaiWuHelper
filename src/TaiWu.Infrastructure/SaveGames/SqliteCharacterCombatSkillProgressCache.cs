@@ -16,7 +16,7 @@ internal sealed record RawCharacterCombatSkillSnapshot(
 internal sealed class SqliteCharacterCombatSkillProgressCache(
     SaveProgressCacheStoragePathProvider pathProvider)
 {
-    internal const int SchemaVersion = 1;
+    internal const int SchemaVersion = 2;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _schemaReady;
@@ -124,7 +124,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     activation_state,
                     meets_breakthrough_requirement,
                     simplified,
-                    equipped
+                    equipped,
+                    direct_breakthrough_completed,
+                    reverse_breakthrough_completed
                 FROM combat_skill_progress
                 WHERE path_key = $path_key
                   AND character_id = $character_id
@@ -151,7 +153,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                         reader.GetInt32(4),
                         reader.GetBoolean(5),
                         reader.GetBoolean(6),
-                        reader.GetBoolean(7));
+                        reader.GetBoolean(7),
+                        reader.GetBoolean(8),
+                        reader.GetBoolean(9));
                     if (value.SkillId < 0)
                     {
                         throw new InvalidDataException(
@@ -322,6 +326,10 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                         CHECK (meets_breakthrough_requirement IN (0, 1)),
                     simplified INTEGER NOT NULL CHECK (simplified IN (0, 1)),
                     equipped INTEGER NOT NULL CHECK (equipped IN (0, 1)),
+                    direct_breakthrough_completed INTEGER NOT NULL
+                        CHECK (direct_breakthrough_completed IN (0, 1)),
+                    reverse_breakthrough_completed INTEGER NOT NULL
+                        CHECK (reverse_breakthrough_completed IN (0, 1)),
                     PRIMARY KEY (path_key, character_id, skill_id),
                     FOREIGN KEY (path_key, character_id)
                         REFERENCES cached_characters(path_key, character_id)
@@ -555,7 +563,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     activation_state,
                     meets_breakthrough_requirement,
                     simplified,
-                    equipped)
+                    equipped,
+                    direct_breakthrough_completed,
+                    reverse_breakthrough_completed)
                 VALUES (
                     $path_key,
                     $character_id,
@@ -566,7 +576,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     $activation_state,
                     $meets_breakthrough_requirement,
                     $simplified,
-                    $equipped);
+                    $equipped,
+                    $direct_breakthrough_completed,
+                    $reverse_breakthrough_completed);
                 """;
             command.Parameters.AddWithValue("$path_key", pathKey);
             command.Parameters.AddWithValue(
@@ -594,6 +606,12 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
             command.Parameters.AddWithValue(
                 "$equipped",
                 progress.Equipped ? 1 : 0);
+            command.Parameters.AddWithValue(
+                "$direct_breakthrough_completed",
+                progress.DirectBreakthroughCompleted ? 1 : 0);
+            command.Parameters.AddWithValue(
+                "$reverse_breakthrough_completed",
+                progress.ReverseBreakthroughCompleted ? 1 : 0);
             await command.ExecuteNonQueryAsync(cancellationToken)
                 .ConfigureAwait(false);
         }

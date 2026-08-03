@@ -255,10 +255,43 @@ public sealed class CombatSkillProgressMappingTests
 
         Assert.True(progress.Breakthrough.Value.IsBrokenOut);
         Assert.Equal(expectedDirection, progress.ActiveDirection.Value);
+        Assert.Contains(
+            expectedDirection,
+            progress.Breakthrough.Value.CompletedDirections);
         Assert.True(progress.StudySummary.IsComplete.Value);
         Assert.Equal(
             6,
             progress.StudyDetails.Count(detail => detail.IsActive.Value));
+        Assert.Empty(warnings);
+    }
+
+    [Fact]
+    public void Completed_preset_directions_include_inactive_reverse_preset()
+    {
+        List<CharacterCombatSkillProgressWarning> warnings = [];
+
+        var progress = CombatSkillProgressMapping.Map(
+            characterId: 7,
+            Snapshot,
+            new RawCharacterCombatSkillProgress(
+                SkillId: 606,
+                Learned: true,
+                Proficiency: 0,
+                ReadingState: 32767,
+                ActivationState: 1986,
+                MeetsBreakthroughReadingRequirement: true,
+                Simplified: false,
+                Equipped: true,
+                DirectBreakthroughCompleted: true,
+                ReverseBreakthroughCompleted: true),
+            CombatSkillStudyDetailDecoder.SupportedGameDataVersion,
+            Labels,
+            warnings);
+
+        Assert.Equal(PracticeDirection.Direct, progress.ActiveDirection.Value);
+        Assert.Equal(
+            [PracticeDirection.Direct, PracticeDirection.Reverse],
+            progress.Breakthrough.Value.CompletedDirections);
         Assert.Empty(warnings);
     }
 

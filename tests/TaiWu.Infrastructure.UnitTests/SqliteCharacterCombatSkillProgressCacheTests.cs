@@ -224,7 +224,9 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
                 22,
                 true,
                 true,
-                true),
+                true,
+                DirectBreakthroughCompleted: true,
+                ReverseBreakthroughCompleted: true),
             new RawCharacterCombatSkillProgress(
                 687,
                 true,

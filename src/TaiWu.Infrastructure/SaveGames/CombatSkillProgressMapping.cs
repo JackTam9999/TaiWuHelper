@@ -14,11 +14,13 @@ internal sealed record RawCharacterCombatSkillProgress(
     int ActivationState,
     bool MeetsBreakthroughReadingRequirement,
     bool Simplified,
-    bool Equipped);
+    bool Equipped,
+    bool DirectBreakthroughCompleted = false,
+    bool ReverseBreakthroughCompleted = false);
 
 internal static class CombatSkillProgressMapping
 {
-    internal const int CacheMappingVersion = 1;
+    internal const int CacheMappingVersion = 2;
 
     internal static CharacterCombatSkillProgress Map(
         int characterId,
@@ -187,7 +189,8 @@ internal static class CombatSkillProgressMapping
                     new BreakthroughDirectionAvailability(
                         isBrokenOut: true,
                         canBreakthroughNow: false,
-                        availableDirections: []),
+                        availableDirections: [],
+                        completedDirections: CompletedDirections(raw)),
                     source);
         }
 
@@ -198,7 +201,8 @@ internal static class CombatSkillProgressMapping
                     new BreakthroughDirectionAvailability(
                         isBrokenOut: false,
                         canBreakthroughNow: false,
-                        availableDirections: []),
+                        availableDirections: [],
+                        completedDirections: CompletedDirections(raw)),
                     source);
         }
 
@@ -245,8 +249,32 @@ internal static class CombatSkillProgressMapping
                 new BreakthroughDirectionAvailability(
                     isBrokenOut: false,
                     canBreakthroughNow: true,
-                    directions),
+                    directions,
+                    CompletedDirections(raw)),
                 source);
+    }
+
+    private static IReadOnlyList<PracticeDirection> CompletedDirections(
+        RawCharacterCombatSkillProgress raw)
+    {
+        List<PracticeDirection> directions = [];
+        var currentDirection = raw.ActivationState is >= 0 and <= ushort.MaxValue
+                               && CombatSkillStateHelper.IsBrokenOut(
+                                   (ushort)raw.ActivationState)
+            ? CombatSkillStateHelper.GetCombatSkillDirection(
+                (ushort)raw.ActivationState)
+            : -1;
+        if (raw.DirectBreakthroughCompleted || currentDirection == 0)
+        {
+            directions.Add(PracticeDirection.Direct);
+        }
+
+        if (raw.ReverseBreakthroughCompleted || currentDirection == 1)
+        {
+            directions.Add(PracticeDirection.Reverse);
+        }
+
+        return directions;
     }
 
     private static SkillProgressField<BreakthroughDirectionAvailability>

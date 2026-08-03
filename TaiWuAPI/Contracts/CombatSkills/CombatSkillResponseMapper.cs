@@ -112,7 +112,8 @@ public static class CombatSkillResponseMapper
             value => new BreakthroughAvailabilityResponse(
                 value.IsBrokenOut,
                 value.CanBreakthroughNow,
-                value.AvailableDirections)),
+                value.AvailableDirections,
+                value.CompletedDirections)),
         Map(progress.ActiveDirection, value => value.ToString()),
         Map(progress.AttainmentMastered, value => value),
         Map(progress.Simplified, value => value),
@@ -206,7 +207,9 @@ public static class CombatSkillResponseMapper
             source.ImporterVersion,
             source.GameDataFingerprint,
             source.TraditionalChineseFingerprint,
-            source.EnglishFingerprint);
+            source.EnglishFingerprint,
+            source.TraditionalChineseSpecialEffectFingerprint,
+            source.EnglishSpecialEffectFingerprint);
 
     private static CatalogueSourceReferenceResponse Map(
         CatalogueSourceReference source) => new(

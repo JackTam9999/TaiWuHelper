@@ -9,11 +9,15 @@ internal static class CombatSkillDefinitionMapper
         CombatSkillSourceRecord record,
         TaiwuLanguageCatalog traditionalChinese,
         TaiwuLanguageCatalog english,
+        TaiwuLanguageCatalog traditionalChineseEffects,
+        TaiwuLanguageCatalog englishEffects,
         CombatSkillCatalogueMappingSources sources)
     {
         ArgumentNullException.ThrowIfNull(record);
         ArgumentNullException.ThrowIfNull(traditionalChinese);
         ArgumentNullException.ThrowIfNull(english);
+        ArgumentNullException.ThrowIfNull(traditionalChineseEffects);
+        ArgumentNullException.ThrowIfNull(englishEffects);
         ArgumentNullException.ThrowIfNull(sources);
 
         var recordSource = sources.GameDataRecord(record.SkillId);
@@ -72,6 +76,8 @@ internal static class CombatSkillDefinitionMapper
                 record,
                 traditionalChinese,
                 english,
+                traditionalChineseEffects,
+                englishEffects,
                 sources),
             recordSource);
     }
@@ -218,24 +224,80 @@ internal static class CombatSkillDefinitionMapper
         CombatSkillSourceRecord record,
         TaiwuLanguageCatalog traditionalChinese,
         TaiwuLanguageCatalog english,
+        TaiwuLanguageCatalog traditionalChineseEffects,
+        TaiwuLanguageCatalog englishEffects,
         CombatSkillCatalogueMappingSources sources)
     {
         List<RawCombatSkillDescription> values = [];
         AddDescription(
             values,
+            RawCombatSkillDescriptionKind.Effect,
             CatalogueLanguage.TraditionalChinese,
             traditionalChinese.Find(record.DescriptionKey),
             sources.TraditionalChineseDescription(record.SkillId));
         AddDescription(
             values,
+            RawCombatSkillDescriptionKind.Effect,
             CatalogueLanguage.English,
             english.Find(record.DescriptionKey),
             sources.EnglishDescription(record.SkillId));
+        AddEffectDescription(
+            values,
+            RawCombatSkillDescriptionKind.DirectEffect,
+            CatalogueLanguage.TraditionalChinese,
+            record.DirectEffectId,
+            traditionalChineseEffects,
+            sources.TraditionalChineseEffectDescription(
+                record.DirectEffectId));
+        AddEffectDescription(
+            values,
+            RawCombatSkillDescriptionKind.DirectEffect,
+            CatalogueLanguage.English,
+            record.DirectEffectId,
+            englishEffects,
+            sources.EnglishEffectDescription(record.DirectEffectId));
+        AddEffectDescription(
+            values,
+            RawCombatSkillDescriptionKind.ReverseEffect,
+            CatalogueLanguage.TraditionalChinese,
+            record.ReverseEffectId,
+            traditionalChineseEffects,
+            sources.TraditionalChineseEffectDescription(
+                record.ReverseEffectId));
+        AddEffectDescription(
+            values,
+            RawCombatSkillDescriptionKind.ReverseEffect,
+            CatalogueLanguage.English,
+            record.ReverseEffectId,
+            englishEffects,
+            sources.EnglishEffectDescription(record.ReverseEffectId));
         return values;
+    }
+
+    private static void AddEffectDescription(
+        ICollection<RawCombatSkillDescription> descriptions,
+        RawCombatSkillDescriptionKind kind,
+        CatalogueLanguage language,
+        int effectId,
+        TaiwuLanguageCatalog catalog,
+        CatalogueSourceReference source)
+    {
+        if (effectId <= 0)
+        {
+            return;
+        }
+
+        AddDescription(
+            descriptions,
+            kind,
+            language,
+            catalog.Find($"Desc_{effectId}_0"),
+            source);
     }
 
     private static void AddDescription(
         ICollection<RawCombatSkillDescription> descriptions,
+        RawCombatSkillDescriptionKind kind,
         CatalogueLanguage language,
         string? value,
         CatalogueSourceReference source)
@@ -243,7 +305,7 @@ internal static class CombatSkillDefinitionMapper
         if (!string.IsNullOrWhiteSpace(value))
         {
             descriptions.Add(new RawCombatSkillDescription(
-                RawCombatSkillDescriptionKind.Effect,
+                kind,
                 language,
                 value,
                 source));
@@ -254,7 +316,9 @@ internal static class CombatSkillDefinitionMapper
 internal sealed record CombatSkillCatalogueMappingSources(
     string GameDataIdentity,
     string TraditionalChineseIdentity,
-    string EnglishIdentity)
+    string EnglishIdentity,
+    string TraditionalChineseEffectIdentity,
+    string EnglishEffectIdentity)
 {
     internal CatalogueSourceReference GameDataRecord(int skillId) => new(
         CatalogueSourceKind.GameData,
@@ -289,4 +353,16 @@ internal sealed record CombatSkillCatalogueMappingSources(
         CatalogueSourceKind.EnglishLanguageResource,
         EnglishIdentity,
         $"combat-skill-description:{skillId}");
+
+    internal CatalogueSourceReference TraditionalChineseEffectDescription(
+        int effectId) => new(
+            CatalogueSourceKind.TraditionalChineseLanguageResource,
+            TraditionalChineseEffectIdentity,
+            $"special-effect-description:{effectId}");
+
+    internal CatalogueSourceReference EnglishEffectDescription(
+        int effectId) => new(
+            CatalogueSourceKind.EnglishLanguageResource,
+            EnglishEffectIdentity,
+            $"special-effect-description:{effectId}");
 }

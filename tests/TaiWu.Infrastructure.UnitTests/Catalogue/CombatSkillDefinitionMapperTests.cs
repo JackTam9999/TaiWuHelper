@@ -19,6 +19,12 @@ public sealed class CombatSkillDefinitionMapperTests
             Catalog(
                 ("Name_456", "Corruptive Gu Infection"),
                 ("Desc_456", "English effect")),
+            Catalog(
+                ("Desc_331_0", "繁體正練效果"),
+                ("Desc_1057_0", "繁體逆練效果")),
+            Catalog(
+                ("Desc_331_0", "English direct effect"),
+                ("Desc_1057_0", "English reverse effect")),
             Sources());
 
         Assert.Equal(456, definition.SkillId);
@@ -56,6 +62,9 @@ public sealed class CombatSkillDefinitionMapperTests
             traditionalChinese =>
             {
                 Assert.Equal(
+                    RawCombatSkillDescriptionKind.Effect,
+                    traditionalChinese.Kind);
+                Assert.Equal(
                     CatalogueLanguage.TraditionalChinese,
                     traditionalChinese.Language);
                 Assert.Equal("繁體效果", traditionalChinese.Text);
@@ -63,9 +72,58 @@ public sealed class CombatSkillDefinitionMapperTests
             },
             english =>
             {
+                Assert.Equal(
+                    RawCombatSkillDescriptionKind.Effect,
+                    english.Kind);
                 Assert.Equal(CatalogueLanguage.English, english.Language);
                 Assert.Equal("English effect", english.Text);
                 Assert.False(english.IsVerifiedMechanic);
+            },
+            traditionalChineseDirect =>
+            {
+                Assert.Equal(
+                    RawCombatSkillDescriptionKind.DirectEffect,
+                    traditionalChineseDirect.Kind);
+                Assert.Equal(
+                    CatalogueLanguage.TraditionalChinese,
+                    traditionalChineseDirect.Language);
+                Assert.Equal("繁體正練效果", traditionalChineseDirect.Text);
+                Assert.Equal(
+                    "special-effect-description:331",
+                    traditionalChineseDirect.Source.RecordIdentity);
+            },
+            englishDirect =>
+            {
+                Assert.Equal(
+                    RawCombatSkillDescriptionKind.DirectEffect,
+                    englishDirect.Kind);
+                Assert.Equal(
+                    CatalogueLanguage.English,
+                    englishDirect.Language);
+                Assert.Equal("English direct effect", englishDirect.Text);
+            },
+            traditionalChineseReverse =>
+            {
+                Assert.Equal(
+                    RawCombatSkillDescriptionKind.ReverseEffect,
+                    traditionalChineseReverse.Kind);
+                Assert.Equal(
+                    CatalogueLanguage.TraditionalChinese,
+                    traditionalChineseReverse.Language);
+                Assert.Equal("繁體逆練效果", traditionalChineseReverse.Text);
+                Assert.Equal(
+                    "special-effect-description:1057",
+                    traditionalChineseReverse.Source.RecordIdentity);
+            },
+            englishReverse =>
+            {
+                Assert.Equal(
+                    RawCombatSkillDescriptionKind.ReverseEffect,
+                    englishReverse.Kind);
+                Assert.Equal(
+                    CatalogueLanguage.English,
+                    englishReverse.Language);
+                Assert.Equal("English reverse effect", englishReverse.Text);
             });
         Assert.Equal(
             "gamedata:test",
@@ -78,6 +136,8 @@ public sealed class CombatSkillDefinitionMapperTests
         var definition = CombatSkillDefinitionMapper.Map(
             Record(),
             Catalog(("Name_456", "黑血蠱降")),
+            Catalog(),
+            Catalog(),
             Catalog(),
             Sources());
 
@@ -117,6 +177,8 @@ public sealed class CombatSkillDefinitionMapperTests
 
         var definition = CombatSkillDefinitionMapper.Map(
             malformed,
+            Catalog(),
+            Catalog(),
             Catalog(),
             Catalog(),
             Sources());
@@ -198,5 +260,7 @@ public sealed class CombatSkillDefinitionMapperTests
     private static CombatSkillCatalogueMappingSources Sources() => new(
         "gamedata:test",
         "language-cnh:test",
-        "language-en:test");
+        "language-en:test",
+        "special-effect-language-cnh:test",
+        "special-effect-language-en:test");
 }

@@ -16,9 +16,11 @@ source filenames are:
 - `Backend/GameData.Shared.dll`, which contains the imported combat-skill
   configuration;
 - `Language_CNH/CombatSkill_language.txt`;
-- `Language_EN/CombatSkill_language.txt`.
+- `Language_EN/CombatSkill_language.txt`;
+- `Language_CNH/SpecialEffect_language.txt`;
+- `Language_EN/SpecialEffect_language.txt`.
 
-The adapter fingerprints all three files with explicitly read-only streams
+The adapter fingerprints all five files with explicitly read-only streams
 before import and again afterward. A changed source invalidates the entire
 result. It also requires the installed configuration assembly's version and
 hash to match the loaded read-only adapter assembly, so a game update cannot
@@ -43,9 +45,12 @@ one language does not copy or invent text from the other language. Application
 performs display fallback later. Names and descriptions retain separate
 language-resource provenance.
 
-Descriptions are imported as `RawCombatSkillDescription` values with
+The configured `Desc` text and the normal direct/reverse effect text at
+`Desc_{effectId}_0` are imported as `RawCombatSkillDescription` values with
 `IsVerifiedMechanic == false`. They are for display only and cannot feed a
-recommendation rule without a separate verified typed mechanic.
+recommendation rule without a separate verified typed mechanic. Detailed
+effect variants are intentionally not substituted for the normal in-game
+descriptions.
 
 ## Faction display profiles
 
@@ -84,6 +89,7 @@ redistributed.
 | `BreathStanceTotalCost` | Breath/stance cost | Negative value is `Unsupported` |
 | `CastSpeed` | Cast speed | Negative value is `Unsupported` |
 | `DirectEffectID`, `ReverseEffectID` | Typed effect references | Non-positive value is `Unavailable` |
+| `SpecialEffect Desc_{effectId}_0` | Display-only localized direct/reverse descriptions | Language remains absent |
 | No verified neutral-effect field | Neutral effect reference | Explicitly `Unavailable` |
 | `Desc` localization key | Display-only localized effect description | Language remains absent |
 
@@ -110,7 +116,7 @@ committed. The imported inventory was:
 | Reverse effects | 946 available |
 | Neutral effects | 946 unavailable by verified schema policy |
 | Typed requirement entries | 3,724 available, 0 unsupported |
-| Localized display-only descriptions | 1,512 |
+| Localized display-only base descriptions | 1,512 |
 | Import diagnostics | 2 warnings, 0 errors |
 
 Both warnings are deterministic `LANGUAGE_VALUE_MISSING` diagnostics for
@@ -120,3 +126,7 @@ trailing keys without a following value line. They do not affect any of the
 The importer returned the same source identity and stable skill-ID order on
 two consecutive reads. Golden skill `456` resolved independently to
 `黑血蠱降` and `Corruptive Gu Infection`.
+
+The inventory above records importer version 1, before direct/reverse effect
+descriptions were added. Importer version 2 fingerprints both SpecialEffect
+language files and imports those extra display-only rows.

@@ -15,7 +15,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
     Func<int, CancellationToken, ValueTask>? writeCheckpoint = null)
     : ICombatSkillCatalogueRepository
 {
-    internal const int SchemaVersion = 2;
+    internal const int SchemaVersion = 3;
 
     private const string CategoryField = "category";
     private const string GradeField = "grade";
@@ -503,6 +503,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 game_data_fingerprint TEXT NOT NULL CHECK (length(game_data_fingerprint) = 64),
                 traditional_chinese_fingerprint TEXT NOT NULL CHECK (length(traditional_chinese_fingerprint) = 64),
                 english_fingerprint TEXT NOT NULL CHECK (length(english_fingerprint) = 64),
+                traditional_chinese_special_effect_fingerprint TEXT NOT NULL CHECK (length(traditional_chinese_special_effect_fingerprint) = 64),
+                english_special_effect_fingerprint TEXT NOT NULL CHECK (length(english_special_effect_fingerprint) = 64),
                 built_at_utc TEXT NOT NULL,
                 definition_count INTEGER NOT NULL CHECK (definition_count >= 0),
                 warning_count INTEGER NOT NULL CHECK (warning_count >= 0),
@@ -572,7 +574,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             CREATE TABLE raw_descriptions (
                 skill_id INTEGER NOT NULL REFERENCES definitions(skill_id) ON DELETE CASCADE,
                 sort_order INTEGER NOT NULL CHECK (sort_order >= 0),
-                kind INTEGER NOT NULL CHECK (kind BETWEEN 0 AND 2),
+                kind INTEGER NOT NULL CHECK (kind BETWEEN 0 AND 4),
                 language INTEGER NOT NULL CHECK (language IN (0, 1)),
                 text TEXT NOT NULL CHECK (length(trim(text)) > 0),
                 source_kind INTEGER NOT NULL CHECK (source_kind BETWEEN 0 AND 3),
@@ -625,6 +627,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 game_data_fingerprint,
                 traditional_chinese_fingerprint,
                 english_fingerprint,
+                traditional_chinese_special_effect_fingerprint,
+                english_special_effect_fingerprint,
                 built_at_utc,
                 definition_count,
                 warning_count,
@@ -637,6 +641,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 $gameDataFingerprint,
                 $traditionalChineseFingerprint,
                 $englishFingerprint,
+                $traditionalChineseSpecialEffectFingerprint,
+                $englishSpecialEffectFingerprint,
                 $builtAtUtc,
                 $definitionCount,
                 $warningCount,
@@ -658,6 +664,12 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         command.Parameters.AddWithValue(
             "$englishFingerprint",
             identity.EnglishFingerprint);
+        command.Parameters.AddWithValue(
+            "$traditionalChineseSpecialEffectFingerprint",
+            identity.TraditionalChineseSpecialEffectFingerprint);
+        command.Parameters.AddWithValue(
+            "$englishSpecialEffectFingerprint",
+            identity.EnglishSpecialEffectFingerprint);
         command.Parameters.AddWithValue(
             "$builtAtUtc",
             builtAtUtc.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
@@ -1033,6 +1045,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 game_data_fingerprint,
                 traditional_chinese_fingerprint,
                 english_fingerprint,
+                traditional_chinese_special_effect_fingerprint,
+                english_special_effect_fingerprint,
                 built_at_utc,
                 definition_count,
                 warning_count,
@@ -1055,15 +1069,17 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 reader.GetInt32(2),
                 reader.GetString(3),
                 reader.GetString(4),
-                reader.GetString(5)),
-            DateTimeOffset.ParseExact(
+                reader.GetString(5),
                 reader.GetString(6),
+                reader.GetString(7)),
+            DateTimeOffset.ParseExact(
+                reader.GetString(8),
                 "O",
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind),
-            reader.GetInt32(7),
-            reader.GetInt32(8),
-            reader.GetInt32(9));
+            reader.GetInt32(9),
+            reader.GetInt32(10),
+            reader.GetInt32(11));
         if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             throw new InvalidDataException(

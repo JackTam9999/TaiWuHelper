@@ -77,7 +77,9 @@ public sealed class LocalGameDataIntegrationTests
             Assert.Equal(DefinitionSourceReadStatus.Available, second.Status);
             Assert.NotNull(first.SourceIdentity);
             Assert.Equal(first.SourceIdentity, second.SourceIdentity);
-            Assert.Equal(1, first.SourceIdentity!.ImporterVersion);
+            Assert.Equal(
+                TaiwuCombatSkillDefinitionSource.ImporterVersion,
+                first.SourceIdentity!.ImporterVersion);
             Assert.True(first.Definitions.Length > 0);
             Assert.Equal(
                 first.Definitions.Select(definition => definition.SkillId),
@@ -103,6 +105,24 @@ public sealed class LocalGameDataIntegrationTests
             Assert.Equal(
                 "Corruptive Gu Infection",
                 golden.Names.Get(CatalogueLanguage.English).Value.Text);
+            Assert.All(
+                new[]
+                {
+                    (RawCombatSkillDescriptionKind.DirectEffect,
+                        CatalogueLanguage.TraditionalChinese),
+                    (RawCombatSkillDescriptionKind.DirectEffect,
+                        CatalogueLanguage.English),
+                    (RawCombatSkillDescriptionKind.ReverseEffect,
+                        CatalogueLanguage.TraditionalChinese),
+                    (RawCombatSkillDescriptionKind.ReverseEffect,
+                        CatalogueLanguage.English)
+                },
+                expected => Assert.Contains(
+                    golden.RawDescriptions,
+                    description =>
+                        description.Kind == expected.Item1
+                        && description.Language == expected.Item2
+                        && !string.IsNullOrWhiteSpace(description.Text)));
             Assert.Equal(
                 before[guardedPaths[0]].Sha256,
                 first.SourceIdentity!.GameDataFingerprint,
@@ -114,6 +134,14 @@ public sealed class LocalGameDataIntegrationTests
             Assert.Equal(
                 before[guardedPaths[2]].Sha256,
                 first.SourceIdentity.EnglishFingerprint,
+                ignoreCase: true);
+            Assert.Equal(
+                before[guardedPaths[3]].Sha256,
+                first.SourceIdentity.TraditionalChineseSpecialEffectFingerprint,
+                ignoreCase: true);
+            Assert.Equal(
+                before[guardedPaths[4]].Sha256,
+                first.SourceIdentity.EnglishSpecialEffectFingerprint,
                 ignoreCase: true);
             Assert.DoesNotContain(
                 first.Diagnostics,
@@ -531,7 +559,15 @@ public sealed class LocalGameDataIntegrationTests
             Path.Combine(
                 streamingAssets,
                 "Language_EN",
-                "CombatSkill_language.txt")
+                "CombatSkill_language.txt"),
+            Path.Combine(
+                streamingAssets,
+                "Language_CNH",
+                "SpecialEffect_language.txt"),
+            Path.Combine(
+                streamingAssets,
+                "Language_EN",
+                "SpecialEffect_language.txt")
         };
         Assert.SkipWhen(
             paths.Any(path => !File.Exists(path)),
