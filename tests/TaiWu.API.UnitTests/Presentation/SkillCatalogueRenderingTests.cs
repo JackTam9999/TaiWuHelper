@@ -262,6 +262,10 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.DoesNotContain("已大成", text);
         Assert.DoesNotContain("已裝備", text);
         Assert.Contains("15 / 15 已研讀", text);
+        Assert.Contains("class=\"skill-study-strip\"", html);
+        Assert.Equal(
+            15,
+            Regex.Matches(html, "data-study-status=\"studied\"").Count);
         Assert.Contains("href=\"/skills/686\"", html);
         Assert.Contains("開啟完整功法詳情", text);
         Assert.Contains("role", html);
@@ -296,6 +300,35 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains(
             "class=\"practice-marker reverse\" data-practice-state=\"available\"",
             html);
+    }
+
+    [Fact]
+    public async Task Skill_card_colours_the_red_and_blue_study_paths()
+    {
+        var definition = Definition(686, "Cloud Formula");
+        string[] labels =
+        [
+            "承", "合", "解", "異", "獨",
+            "修", "思", "源", "參", "藏",
+            "用", "奇", "巧", "化", "絕"
+        ];
+        var progress = Progress(
+            42,
+            686,
+            new BreakthroughDirectionAvailability(false, false, []),
+            activeDirection: null,
+            mastered: false,
+            simplified: false,
+            activated: false,
+            equipped: false,
+            studyLabels: labels);
+
+        var html = await RenderCardAsync(
+            Entry(definition, progress),
+            TaiwuLanguage.Chinese);
+
+        Assert.Equal(5, Regex.Matches(html, "study-path-red").Count);
+        Assert.Equal(5, Regex.Matches(html, "study-path-blue").Count);
     }
 
     [Fact]
@@ -587,19 +620,24 @@ public sealed partial class SkillCatalogueRenderingTests
         bool mastered,
         bool simplified,
         bool activated,
-        bool equipped)
+        bool equipped,
+        IReadOnlyList<string>? studyLabels = null)
     {
         var source = new SkillProgressSource(
             SkillProgressSourceKind.SaveSnapshot,
             $"save:{new string('E', 64)}",
             "test");
-        var details = Enumerable.Range(0, 15)
-            .Select(index => new CombatSkillStudyDetailProgress(
+        var labels = studyLabels
+            ?? Enumerable.Range(1, 15)
+                .Select(index => $"Detail {index}")
+                .ToArray();
+        var details = labels
+            .Select((label, index) => new CombatSkillStudyDetailProgress(
                 $"outline-{index}",
                 index,
                 CombatSkillStudyDetailGroup.Outline,
                 CatalogueField<string>.Available(
-                    $"Detail {index + 1}",
+                    label,
                     new CatalogueSourceReference(
                         CatalogueSourceKind.EnglishLanguageResource,
                         "language-en:test",

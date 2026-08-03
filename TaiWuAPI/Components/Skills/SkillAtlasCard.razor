@@ -86,9 +86,33 @@
             </div>
 
             <dl class="skill-card-facts">
-                <div>
+                <div class="skill-study-fact">
                     <dt>@T("Study progress")</dt>
-                    <dd>@StudyText</dd>
+                    @if (OrderedStudyDetails.Count > 0)
+                    {
+                        <dd class="skill-study-progress">
+                            <span class="skill-study-strip"
+                                  role="list"
+                                  aria-label="@StudyText">
+                                @foreach (var detail in OrderedStudyDetails)
+                                {
+                                    <span class="skill-study-glyph @StudyDetailStatusClass(detail) @StudyDetailPathClass(detail) @StudyDetailActiveClass(detail)"
+                                          data-study-detail="@detail.DetailId"
+                                          data-study-status="@StudyDetailStatusKey(detail)"
+                                          role="listitem"
+                                          aria-label="@StudyDetailAriaLabel(detail)"
+                                          title="@StudyDetailAriaLabel(detail)">
+                                        <span aria-hidden="true">@StudyDetailGlyph(detail)</span>
+                                    </span>
+                                }
+                            </span>
+                            <span class="skill-study-summary">@StudyText</span>
+                        </dd>
+                    }
+                    else
+                    {
+                        <dd>@StudyText</dd>
+                    }
                 </div>
                 <div>
                     <dt>@T("Proficiency")</dt>
@@ -253,6 +277,64 @@
         : Progress.StudySummary.TotalCount == 0
             ? T("Unavailable")
             : $"{Progress.StudySummary.ReadCount} / {Progress.StudySummary.TotalCount} {T("studied")}";
+
+    private IReadOnlyList<CombatSkillStudyDetailProgress> OrderedStudyDetails =>
+        Progress?.StudyDetails
+            .OrderBy(detail => detail.DisplayOrder)
+            .ToArray()
+        ?? [];
+
+    private string StudyDetailLabel(CombatSkillStudyDetailProgress detail) =>
+        detail.Label.IsAvailable
+            ? detail.Label.Value
+            : $"{T("Unnamed detail")} ({detail.DetailId})";
+
+    private string StudyDetailGlyph(CombatSkillStudyDetailProgress detail)
+    {
+        var label = StudyDetailLabel(detail).Trim();
+        return label.Length == 0 ? "?" : label[0].ToString();
+    }
+
+    private static string StudyDetailStatusKey(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.ReadState.IsAvailable
+            ? detail.ReadState.Value == CombatSkillStudyState.Read
+                ? "studied"
+                : "not-studied"
+            : "unavailable";
+
+    private static string StudyDetailStatusClass(
+        CombatSkillStudyDetailProgress detail) =>
+        $"status-{StudyDetailStatusKey(detail)}";
+
+    private static string StudyDetailActiveClass(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.IsActive.IsAvailable && detail.IsActive.Value
+            ? "is-active"
+            : string.Empty;
+
+    private string StudyDetailPathClass(
+        CombatSkillStudyDetailProgress detail) =>
+        StudyDetailGlyph(detail) switch
+        {
+            "用" or "奇" or "巧" or "化" or "絕" => "study-path-red",
+            "修" or "思" or "源" or "參" or "藏" => "study-path-blue",
+            _ => string.Empty
+        };
+
+    private string StudyDetailStatusLabel(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.ReadState.IsAvailable
+            ? detail.ReadState.Value == CombatSkillStudyState.Read
+                ? T("Studied")
+                : T("Not studied")
+            : T("Unavailable");
+
+    private string StudyDetailAriaLabel(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.IsActive.IsAvailable && detail.IsActive.Value
+            ? $"{StudyDetailLabel(detail)} · {StudyDetailStatusLabel(detail)} · {T("Active detail")}"
+            : $"{StudyDetailLabel(detail)} · {StudyDetailStatusLabel(detail)}";
 
     private bool HasPositiveProgressBadge => IsTrue(Entry.Learned)
         || Breakthrough?.CanBreakthroughNow == true

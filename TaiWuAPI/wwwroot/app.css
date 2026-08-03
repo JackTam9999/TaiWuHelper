@@ -2085,10 +2085,107 @@ select {
     gap: 3px;
 }
 
+.skill-card-facts > .skill-study-fact {
+    gap: 6px;
+}
+
 .skill-card-facts dd {
     margin: 0;
     color: #dce7e2;
     font-size: 0.76rem;
+}
+
+.skill-study-progress {
+    display: grid;
+    gap: 6px;
+}
+
+.skill-study-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.skill-study-glyph {
+    --study-glyph-color: #d8c985;
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border: 2px solid var(--study-glyph-color);
+    border-radius: 50%;
+    color: var(--study-glyph-color);
+    background:
+        radial-gradient(circle at 50% 42%, rgba(216, 201, 133, 0.1), transparent 62%),
+        rgba(5, 17, 16, 0.42);
+    box-shadow:
+        0 0 0 1px rgba(4, 12, 12, 0.82),
+        inset 0 0 0 1px rgba(216, 201, 133, 0.12);
+    font-family: Georgia, "Microsoft JhengHei", "PingFang TC", serif;
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.skill-study-glyph::after {
+    position: absolute;
+    inset: 3px;
+    border: 1px solid color-mix(in srgb, var(--study-glyph-color) 52%, transparent);
+    border-radius: inherit;
+    content: "";
+}
+
+.skill-study-glyph > span {
+    position: relative;
+    z-index: 1;
+}
+
+.skill-study-glyph.status-not-studied {
+    --study-glyph-color: #7b8580;
+    background: rgba(5, 17, 16, 0.25);
+    opacity: 0.74;
+}
+
+.skill-study-glyph.status-unavailable {
+    --study-glyph-color: #606965;
+    border-style: dashed;
+    background: transparent;
+    opacity: 0.55;
+}
+
+.skill-study-glyph.study-path-red {
+    --study-glyph-color: #e45a55;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(228, 90, 85, 0.14), transparent 62%),
+        rgba(72, 21, 22, 0.28);
+}
+
+.skill-study-glyph.study-path-blue {
+    --study-glyph-color: #69cce9;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(105, 204, 233, 0.14), transparent 62%),
+        rgba(18, 56, 70, 0.3);
+}
+
+.skill-study-glyph.status-unavailable.study-path-red,
+.skill-study-glyph.status-unavailable.study-path-blue {
+    background: transparent;
+}
+
+.skill-study-glyph.is-active {
+    box-shadow:
+        0 0 0 1px rgba(4, 12, 12, 0.82),
+        0 0 10px color-mix(in srgb, var(--study-glyph-color) 34%, transparent),
+        inset 0 0 0 1px rgba(216, 201, 133, 0.2);
+}
+
+.skill-study-summary {
+    color: var(--muted);
+    font-size: 0.66rem;
 }
 
 .skill-partial-note {
@@ -2762,6 +2859,7 @@ select {
     .atlas-metadata,
     .atlas-primary-filters,
     .atlas-filter-grid,
+    .skill-card-facts,
     .skill-detail-facts,
     .raw-description-list {
         grid-template-columns: 1fr;
