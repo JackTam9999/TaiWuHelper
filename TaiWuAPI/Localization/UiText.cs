@@ -55,6 +55,9 @@ public static class UiText
             ["More catalogue and progress filters"] = "更多目錄與進度篩選",
             ["Faction"] = "門派",
             ["All factions"] = "所有門派",
+            ["No faction filter"] = "不限制門派",
+            ["Faction text uses its inner-power color; the outer ring uses its alignment color."] =
+                "門派文字使用主內力屬性顏色；外圈使用主立場顏色。",
             ["Unknown faction"] = "未知門派",
             ["Any"] = "不限",
             ["Element"] = "五行",

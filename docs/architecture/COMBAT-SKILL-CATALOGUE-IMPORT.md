@@ -47,6 +47,25 @@ Descriptions are imported as `RawCombatSkillDescription` values with
 `IsVerifiedMechanic == false`. They are for display only and cannot feed a
 recommendation rule without a separate verified typed mechanic.
 
+## Faction display profiles
+
+The faction filter uses a separate read-only
+`ICombatSkillFactionProfileSource`. It reads `Config.Organization` from the
+same installed, version-checked `GameData.Shared` assembly and immediately
+projects primitive values into Domain-owned records. No GameData object crosses
+the Infrastructure boundary, and these presentation profiles are not persisted
+in the helper catalogue database.
+
+| Installed field | Display meaning | Unknown handling |
+|---|---|---|
+| `Organization.FiveElementsType` | Main inner-power element; colors the active-language faction initial and label | Neutral color plus `Unavailable` text |
+| `Organization.MainMorality`, normalized through `BehaviorType.GetBehaviorType` | Primary alignment; colors the circular outer ring | White ring plus `Unavailable` text |
+
+The UI always writes the localized element and alignment beside the mark, so
+neither meaning depends on color perception. Installed language colors are
+copied as CSS values only; no icon, texture, or proprietary artwork is read or
+redistributed.
+
 ## Field mapping
 
 | Installed field | Domain field | Invalid or absent handling |

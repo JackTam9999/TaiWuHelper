@@ -31,6 +31,9 @@ public static class DependencyInjection
         services.AddSingleton<
             ICombatSkillDefinitionSource,
             TaiwuCombatSkillDefinitionSource>();
+        services.AddSingleton<
+            ICombatSkillFactionProfileSource,
+            TaiwuCombatSkillFactionProfileSource>();
         services.AddSingleton(provider =>
             CatalogueStoragePathProvider.CreateDefault(
                 ProtectedGameOwnedDirectories(provider)));

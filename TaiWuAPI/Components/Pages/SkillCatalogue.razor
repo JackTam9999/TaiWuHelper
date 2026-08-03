@@ -5,6 +5,7 @@
 @using TaiWu.Domain.CombatSkills
 @using TaiWu.Domain.CombatSnapshots
 @inject ICombatSkillDefinitionSource DefinitionSource
+@inject ICombatSkillFactionProfileSource FactionProfileSource
 @inject ICombatSkillCatalogueRepository CatalogueRepository
 @inject ICharacterCombatSkillProgressReader ProgressReader
 @inject ILogger<SkillCatalogue> Logger
@@ -153,17 +154,6 @@
                            autocomplete="off" />
                 </label>
 
-                <label class="atlas-filter-field" for="atlas-faction">
-                    <span>@T("Faction")</span>
-                    <select id="atlas-faction" @bind="_filters.Faction">
-                        <option value="">@T("All factions")</option>
-                        @foreach (var factionId in _factionIds)
-                        {
-                            <option value="@factionId">@FactionLabel(factionId)</option>
-                        }
-                    </select>
-                </label>
-
                 <label class="atlas-filter-field" for="atlas-grade">
                     <span>@T("Grade")</span>
                     <select id="atlas-grade" @bind="_filters.Grade">
@@ -185,6 +175,46 @@
                 </button>
             </div>
 
+            <fieldset class="atlas-faction-picker">
+                <legend>@T("Faction")</legend>
+                <p class="faction-picker-hint">
+                    @T("Faction text uses its inner-power color; the outer ring uses its alignment color.")
+                </p>
+                <div class="atlas-faction-options">
+                    <button type="button"
+                            class="@FactionOptionClass(null)"
+                            data-faction-id="all"
+                            aria-pressed="@(!_filters.Faction.HasValue)"
+                            aria-label="@T("All factions")"
+                            @onclick="() => SelectFactionAsync(null)"
+                            disabled="@IsBusy">
+                        <span class="faction-filter-emblem" aria-hidden="true">
+                            <span class="faction-filter-monogram">@FactionInitial(T("All factions"))</span>
+                        </span>
+                        <span class="faction-filter-name">@T("All factions")</span>
+                        <span class="faction-filter-meta">@T("No faction filter")</span>
+                    </button>
+                    @foreach (var option in _factionOptions)
+                    {
+                        var factionLabel = FactionLabel(option.FactionId);
+                        <button type="button"
+                                class="@FactionOptionClass(option)"
+                                data-faction-id="@option.FactionId"
+                                aria-pressed="@(_filters.Faction == option.FactionId)"
+                                aria-label="@FactionOptionAriaLabel(option)"
+                                title="@FactionOptionAriaLabel(option)"
+                                @onclick="() => SelectFactionAsync(option.FactionId)"
+                                disabled="@IsBusy">
+                            <span class="faction-filter-emblem" aria-hidden="true">
+                                <span class="faction-filter-monogram">@FactionInitial(factionLabel)</span>
+                            </span>
+                            <span class="faction-filter-name">@factionLabel</span>
+                            <span class="faction-filter-meta">@FactionProfileSummary(option)</span>
+                        </button>
+                    }
+                </div>
+            </fieldset>
+
             <details class="atlas-advanced-filters">
                 <summary>@T("More catalogue and progress filters")</summary>
                 <div class="atlas-filter-grid">
@@ -204,7 +234,7 @@
                             <option value="">@T("Any")</option>
                             @foreach (var element in Enum.GetValues<CombatSkillElement>())
                             {
-                                <option value="@element">@T(element.ToString())</option>
+                                <option value="@element">@ElementLabel(element)</option>
                             }
                         </select>
                     </label>
@@ -372,7 +402,7 @@
     private bool _loading;
     private bool _rebuilding;
     private int _offset;
-    private int[] _factionIds = [];
+    private FactionFilterOption[] _factionOptions = [];
 
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
@@ -407,7 +437,7 @@
             if (_catalogue.Status != CombatSkillCatalogueStatus.Current)
             {
                 _atlas = null;
-                _factionIds = [];
+                _factionOptions = [];
                 return;
             }
 
@@ -456,11 +486,22 @@
         var definitions = await CatalogueRepository.QueryAsync(
             new CombatSkillCatalogueFilter(),
             cancellationToken);
-        _factionIds = definitions
+        var profiles = await FactionProfileSource.ReadAsync(cancellationToken);
+        var profileByFaction = profiles.ToDictionary(
+            profile => profile.Faction.Value);
+        _factionOptions = definitions
             .Where(definition => definition.Faction.IsAvailable)
             .Select(definition => definition.Faction.Value.Value)
             .Distinct()
             .Order()
+            .Select(factionId =>
+            {
+                profileByFaction.TryGetValue(factionId, out var profile);
+                return new FactionFilterOption(
+                    factionId,
+                    profile?.PrimaryElement,
+                    profile?.PrimaryAlignment);
+            })
             .ToArray();
     }
 
@@ -474,7 +515,7 @@
                     DefinitionSource,
                     CatalogueRepository)
                 .ExecuteAsync();
-            _factionIds = [];
+            _factionOptions = [];
             _offset = 0;
             await LoadAsync();
         }
@@ -491,6 +532,13 @@
 
     private Task ApplyFiltersAsync()
     {
+        _offset = 0;
+        return LoadAsync();
+    }
+
+    private Task SelectFactionAsync(int? factionId)
+    {
+        _filters.Faction = factionId;
         _offset = 0;
         return LoadAsync();
     }
@@ -541,6 +589,58 @@
 
     private string FactionLabel(int factionId) =>
         CombatSkillUiText.Faction(Language, factionId);
+
+    private string ElementLabel(CombatSkillElement element) =>
+        CombatSkillUiText.Element(Language, element);
+
+    private string AlignmentLabel(CombatSkillFactionAlignment alignment) =>
+        CombatSkillUiText.Alignment(Language, alignment);
+
+    private string FactionOptionClass(FactionFilterOption? option)
+    {
+        var selected = option is null
+            ? !_filters.Faction.HasValue
+            : _filters.Faction == option.FactionId;
+        return string.Join(
+            ' ',
+            "faction-filter-option",
+            ElementClass(option?.PrimaryElement),
+            AlignmentClass(option?.PrimaryAlignment),
+            selected ? "selected" : null);
+    }
+
+    private string FactionOptionAriaLabel(FactionFilterOption option) =>
+        $"{FactionLabel(option.FactionId)} · {FactionProfileSummary(option)}";
+
+    private string FactionProfileSummary(FactionFilterOption option) =>
+        $"{(option.PrimaryElement is { } element ? ElementLabel(element) : T("Unavailable"))} · "
+        + $"{(option.PrimaryAlignment is { } alignment ? AlignmentLabel(alignment) : T("Unavailable"))}";
+
+    private static string FactionInitial(string label) =>
+        string.IsNullOrWhiteSpace(label) ? "?" : label.Trim()[0].ToString();
+
+    private static string ElementClass(CombatSkillElement? element) =>
+        element switch
+        {
+            CombatSkillElement.Metal => "element-metal",
+            CombatSkillElement.Wood => "element-wood",
+            CombatSkillElement.Water => "element-water",
+            CombatSkillElement.Fire => "element-fire",
+            CombatSkillElement.Earth => "element-earth",
+            CombatSkillElement.Mixed => "element-mixed",
+            _ => "element-unknown"
+        };
+
+    private static string AlignmentClass(
+        CombatSkillFactionAlignment? alignment) => alignment switch
+        {
+            CombatSkillFactionAlignment.Just => "alignment-just",
+            CombatSkillFactionAlignment.Kind => "alignment-kind",
+            CombatSkillFactionAlignment.Even => "alignment-even",
+            CombatSkillFactionAlignment.Rebel => "alignment-rebel",
+            CombatSkillFactionAlignment.Egoistic => "alignment-egoistic",
+            _ => "alignment-unknown"
+        };
 
     private string CatalogueStatusLabel(CombatSkillCatalogueStatus status) =>
         T(status.ToString());
@@ -669,4 +769,9 @@
             Equipped = null;
         }
     }
+
+    private sealed record FactionFilterOption(
+        int FactionId,
+        CombatSkillElement? PrimaryElement,
+        CombatSkillFactionAlignment? PrimaryAlignment);
 }

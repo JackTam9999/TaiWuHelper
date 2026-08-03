@@ -783,6 +783,12 @@ hierarchy of the game without copying proprietary artwork.
       independent progress facts including breakthrough and mastery.
 - [x] Skills can be filtered and grouped by familiar named factions, with
       category available as an additional filter.
+- [x] The faction filter presents a compact circular mark using the first
+      character of the faction name in the active language, without requiring
+      proprietary artwork.
+- [x] Faction-name and monogram color comes from the installed faction's main
+      inner-power element; the outer ring comes from its primary alignment,
+      with both meanings also written as localized text.
 - [x] Each collapsed skill card shows the active-language name, faction, grade,
       category, and a primary current status before exposing the full set of
       independent progress badges.
@@ -809,9 +815,13 @@ hierarchy of the game without copying proprietary artwork.
 - `ArchitectureBoundaryTests` protects the read-only page boundary, automatic
   current-Taiwu selection, semantic list/details markup, responsive grid, and
   reduced-motion treatment.
-- Product-owner review promoted a named faction selector into the primary
-  filter row, grouped results by faction, relabeled `品階` as `品級`, and moved
-  grade plus the primary current status into each collapsed card.
+- Product-owner review replaced the faction dropdown with a horizontally
+  scrollable circular picker. Each mark uses the active-language faction
+  initial, installed `Organization.FiveElementsType` for its text color, and
+  installed `Organization.MainMorality` for its outer ring; localized element
+  and alignment labels preserve the same information without relying on color.
+- Results remain grouped by faction, `品階` is relabeled as `品級`, and grade
+  plus the primary current status remain visible in each collapsed card.
 - Product-owner review replaced repeated long-form direction text beside the
   primary status with compact, accessible circled `正`/`逆` markers before the
   skill name; ready skills show `突破` and their verified available directions.
@@ -1055,9 +1065,12 @@ final completion decision.
   matches both original in-game captures by SHA-256 and compares every visible
   list/detail observation with the versioned decoder and helper UI.
 - The current-save vertical check passed with 946 joined definitions and
-  unchanged source fingerprints. After product-owner UI revisions, the default
-  solution suite passed 618 tests: 613 passed, 0 failed, and 5 documented
-  opt-in checks skipped.
+  unchanged source fingerprints. After product-owner UI revisions including
+  the installed faction-profile picker, the default solution suite passed 645
+  tests: 640 passed, 0 failed, and 5 documented opt-in checks skipped.
+- Installed-catalogue verification passed 641 tests with 4 save-dependent
+  skips and verified deterministic faction element/alignment profiles without
+  changing any inspected source.
 - Source/save freshness, transactional rebuild/recovery, recommendation
   independence, and all Epic 2 milestone criteria are mapped to automated or
   recorded evidence in the review.

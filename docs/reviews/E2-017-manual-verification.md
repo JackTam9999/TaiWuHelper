@@ -51,8 +51,13 @@ wheel sectors exactly equal activation mask `0x7C00`.
   `Corruptive Gu Infection` resolve stable skill ID `456`.
 - Each language tab now renders only its selected-language skill name and raw
   descriptions. The detail page no longer combines Chinese and English text.
-- The primary filters include a named 門派 selector populated from the current
-  catalogue. Results are grouped by 門派, while every collapsed card exposes
+- The 門派 filter is a horizontal circular picker populated from the current
+  catalogue. Each mark uses the active-language faction initial instead of
+  game artwork. Its text color comes from the installed faction's main
+  inner-power element and its outer ring from primary alignment; localized
+  element and alignment labels keep the meaning non-color-only. Factions with
+  no alignment use a white ring and retain an explicit unavailable label.
+  Results are grouped by 門派, while every collapsed card exposes
   門派、品級、類別及主要狀態 before expansion.
 - Completed breakthroughs place one circled `正` or `逆` marker before the
   active-language skill name. Ready breakthroughs place `突破` followed by
@@ -86,9 +91,9 @@ remain outside the write boundary.
 
 All 24 milestone criteria in EPIC-002 have implementation and evidence across
 E2-000 through E2-016. After product-owner UI revisions, the final automated
-run passed **618 total: 613 passed, 0 failed, 5 documented opt-in skips**.
+run passed **645 total: 640 passed, 0 failed, 5 documented opt-in skips**.
 Installed-catalogue verification passed
-**614** with 4 save-dependent skips, and the current-save vertical check passed
+**641** with 4 save-dependent skips, and the current-save vertical check passed
 **1 of 1**.
 
 Three standalone semantics remain unavailable because the inspected save does

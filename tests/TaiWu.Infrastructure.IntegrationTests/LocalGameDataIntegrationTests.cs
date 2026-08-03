@@ -61,10 +61,16 @@ public sealed class LocalGameDataIntegrationTests
                 .BuildServiceProvider();
             var source =
                 provider.GetRequiredService<ICombatSkillDefinitionSource>();
+            var factionProfileSource = provider.GetRequiredService<
+                ICombatSkillFactionProfileSource>();
 
             var first = await source.ReadAsync(
                 TestContext.Current.CancellationToken);
             var second = await source.ReadAsync(
+                TestContext.Current.CancellationToken);
+            var firstFactionProfiles = await factionProfileSource.ReadAsync(
+                TestContext.Current.CancellationToken);
+            var secondFactionProfiles = await factionProfileSource.ReadAsync(
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(DefinitionSourceReadStatus.Available, first.Status);
@@ -113,6 +119,35 @@ public sealed class LocalGameDataIntegrationTests
                 first.Diagnostics,
                 diagnostic => diagnostic.Severity
                     == CombatSkillImportDiagnosticSeverity.Error);
+            Assert.NotEmpty(firstFactionProfiles);
+            Assert.Equal(firstFactionProfiles, secondFactionProfiles);
+            Assert.Equal(
+                firstFactionProfiles.Select(profile => profile.Faction.Value),
+                firstFactionProfiles
+                    .Select(profile => profile.Faction.Value)
+                    .Order());
+            Assert.Equal(
+                firstFactionProfiles.Count,
+                firstFactionProfiles
+                    .Select(profile => profile.Faction.Value)
+                    .Distinct()
+                    .Count());
+
+            AssertFactionProfile(
+                firstFactionProfiles,
+                1,
+                CombatSkillElement.Metal,
+                CombatSkillFactionAlignment.Kind);
+            AssertFactionProfile(
+                firstFactionProfiles,
+                4,
+                CombatSkillElement.Fire,
+                CombatSkillFactionAlignment.Even);
+            AssertFactionProfile(
+                firstFactionProfiles,
+                15,
+                CombatSkillElement.Earth,
+                CombatSkillFactionAlignment.Egoistic);
 
             var helperRoot = Path.Combine(
                 Path.GetTempPath(),
@@ -159,6 +194,19 @@ public sealed class LocalGameDataIntegrationTests
             var after = await CaptureAsync(guardedPaths);
             AssertUnchanged(before, after);
         }
+    }
+
+    private static void AssertFactionProfile(
+        IReadOnlyList<CombatSkillFactionProfile> profiles,
+        int factionId,
+        CombatSkillElement element,
+        CombatSkillFactionAlignment alignment)
+    {
+        var profile = Assert.Single(
+            profiles,
+            item => item.Faction.Value == factionId);
+        Assert.Equal(element, profile.PrimaryElement);
+        Assert.Equal(alignment, profile.PrimaryAlignment);
     }
 
     [Fact]

@@ -858,6 +858,8 @@ public sealed partial class ArchitectureBoundaryTests
             .ToArray();
         var expectedHandlers = new[]
         {
+            "() => SelectFactionAsync(null)",
+            "() => SelectFactionAsync(option.FactionId)",
             "() => SelectTarget(target)",
             "() => SelectedReferenceChanged.InvokeAsync(null)",
             "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
@@ -914,7 +916,9 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("using GameData", atlasPage);
         Assert.Contains("aria-live", atlasPage);
         Assert.Contains("Candidate limit reached", atlasPage);
-        Assert.Contains("id=\"atlas-faction\"", atlasPage);
+        Assert.Contains("class=\"atlas-faction-picker\"", atlasPage);
+        Assert.Contains("data-faction-id", atlasPage);
+        Assert.Contains("ICombatSkillFactionProfileSource", atlasPage);
         Assert.Contains("GroupBy(FactionOf)", atlasPage);
 
         var atlasCard = File.ReadAllText(
@@ -1009,6 +1013,11 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("@media (max-width: 620px)", style);
         Assert.Contains("@media (prefers-reduced-motion: reduce)", style);
         Assert.Contains(".skill-card-grid", style);
+        Assert.Contains(".atlas-faction-options", style);
+        Assert.Contains(".element-metal", style);
+        Assert.Contains(".alignment-just", style);
+        Assert.Contains(".alignment-unknown", style);
+        Assert.Contains("--alignment-color: #ffffff", style);
         Assert.Contains(".study-map", style);
         Assert.Contains(".study-node.status-not-studied", style);
 

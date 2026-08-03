@@ -10,6 +10,12 @@ public interface ICombatSkillDefinitionSource : IReadOnlyGameDataSource
         CancellationToken cancellationToken = default);
 }
 
+public interface ICombatSkillFactionProfileSource : IReadOnlyGameDataSource
+{
+    Task<IReadOnlyList<CombatSkillFactionProfile>> ReadAsync(
+        CancellationToken cancellationToken = default);
+}
+
 public interface ICombatSkillCatalogueRepository
 {
     Task<CombatSkillCatalogueRepositorySnapshot> ReadStateAsync(

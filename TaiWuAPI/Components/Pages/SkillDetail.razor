@@ -120,7 +120,7 @@
                     @StaticFact(T("Category"), definition.Category, value => CategoryLabel(value))
                     @StaticFact(T("Grade"), definition.Grade, value => value.Value.ToString())
                     @StaticFact(T("Faction"), definition.Faction, value => CombatSkillUiText.Faction(Language, value))
-                    @StaticFact(T("Element"), definition.Element, value => T(value.ToString()))
+                    @StaticFact(T("Element"), definition.Element, value => CombatSkillUiText.Element(Language, value))
                     @StaticFact(T("Equipment type"), definition.EquipmentType, value => T(value.ToString()))
                     @StaticFact(T("Base grid cost"), definition.BaseGridCost, value => value.Value.ToString())
                     @StaticFact(T("Slot contribution"), definition.SlotContribution, FormatSlots)

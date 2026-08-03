@@ -34,14 +34,22 @@ public sealed partial class SkillCatalogueRenderingTests
         var reader = ProgressReader([progress]);
 
         var html = await RenderPageAsync(source, repository, reader);
+        var decodedHtml = WebUtility.HtmlDecode(html);
         var text = VisibleText(html);
 
         Assert.Contains("Your martial arts, mapped.", text);
         Assert.Contains("Catalogue Current", text);
         Assert.Contains("Find a combat skill", text);
         Assert.Contains("Search in this language", html);
-        Assert.Contains("Faction All factions", text);
-        Assert.Contains("<option value=\"1\">Shaolin Sect</option>", html);
+        Assert.Contains("Faction", text);
+        Assert.Contains("All factions", text);
+        Assert.Contains("data-faction-id=\"1\"", html);
+        Assert.Contains("element-metal alignment-kind", html);
+        Assert.Contains(
+            "aria-label=\"Shaolin Sect · Metal Qi · Benevolent\"",
+            decodedHtml);
+        Assert.Contains("S Shaolin Sect Metal Qi · Benevolent", text);
+        Assert.DoesNotContain("id=\"atlas-faction\"", html);
         Assert.Contains("Category All categories", text);
         Assert.Contains("Grade All grades", text);
         Assert.Contains("More catalogue and progress filters", text);
@@ -73,6 +81,39 @@ public sealed partial class SkillCatalogueRenderingTests
                 && request.CharacterId == null
                 && request.PreferredLanguage == CatalogueLanguage.English),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Faction_picker_uses_active_language_initial_and_profile_labels()
+    {
+        var definition = Definition(456, "Black Blood Gu");
+        var progress = Progress(
+            42,
+            456,
+            new BreakthroughDirectionAvailability(true, false, []),
+            PracticeDirection.Direct,
+            mastered: true,
+            simplified: true,
+            activated: true,
+            equipped: true);
+        var (source, repository) = Current([definition]);
+
+        var html = await RenderPageAsync(
+            source,
+            repository,
+            ProgressReader([progress]),
+            TaiwuLanguage.Chinese);
+        var decodedHtml = WebUtility.HtmlDecode(html);
+        var text = VisibleText(html);
+
+        Assert.Contains("少 少林派 金剛 · 仁善", text);
+        Assert.Contains("element-metal alignment-kind", html);
+        Assert.Contains(
+            "aria-label=\"少林派 · 金剛 · 仁善\"",
+            decodedHtml);
+        Assert.DoesNotContain("Shaolin Sect", text);
+        Assert.DoesNotContain("Metal Qi", text);
+        Assert.DoesNotContain("Benevolent", text);
     }
 
     [Fact]
@@ -226,6 +267,17 @@ public sealed partial class SkillCatalogueRenderingTests
         services.AddSingleton(source);
         services.AddSingleton(repository);
         services.AddSingleton(progressReader);
+        var factionProfiles = Substitute.For<
+            ICombatSkillFactionProfileSource>();
+        factionProfiles.ReadAsync(Arg.Any<CancellationToken>())
+            .Returns(
+            [
+                new CombatSkillFactionProfile(
+                    new CombatSkillFactionId(1),
+                    CombatSkillElement.Metal,
+                    CombatSkillFactionAlignment.Kind)
+            ]);
+        services.AddSingleton(factionProfiles);
         using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(
             provider,

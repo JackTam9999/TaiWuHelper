@@ -1,5 +1,6 @@
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatSkills;
+using TaiWu.Domain.CombatSnapshots;
 
 namespace TaiWuAPI.Localization;
 
@@ -81,5 +82,52 @@ public static class CombatSkillUiText
                 18 => "Vigilante",
                 19 => "Xiangshu Underling",
                 _ => $"Faction {factionId}"
+            };
+
+    public static string Element(
+        TaiwuLanguage language,
+        CombatSkillElement element) => language == TaiwuLanguage.Chinese
+            ? element switch
+            {
+                CombatSkillElement.Metal => "金剛",
+                CombatSkillElement.Wood => "紫霞",
+                CombatSkillElement.Water => "玄陰",
+                CombatSkillElement.Fire => "純陽",
+                CombatSkillElement.Earth => "歸元",
+                CombatSkillElement.Mixed => "混元",
+                _ => element.ToString()
+            }
+            : element switch
+            {
+                CombatSkillElement.Metal => "Metal Qi",
+                CombatSkillElement.Wood => "Wood Qi",
+                CombatSkillElement.Water => "Water Qi",
+                CombatSkillElement.Fire => "Fire Qi",
+                CombatSkillElement.Earth => "Earth Qi",
+                CombatSkillElement.Mixed => "Hunyuan Qi",
+                _ => element.ToString()
+            };
+
+    public static string Alignment(
+        TaiwuLanguage language,
+        CombatSkillFactionAlignment alignment) =>
+        language == TaiwuLanguage.Chinese
+            ? alignment switch
+            {
+                CombatSkillFactionAlignment.Just => "剛正",
+                CombatSkillFactionAlignment.Kind => "仁善",
+                CombatSkillFactionAlignment.Even => "中庸",
+                CombatSkillFactionAlignment.Rebel => "叛逆",
+                CombatSkillFactionAlignment.Egoistic => "唯我",
+                _ => alignment.ToString()
+            }
+            : alignment switch
+            {
+                CombatSkillFactionAlignment.Just => "Principled",
+                CombatSkillFactionAlignment.Kind => "Benevolent",
+                CombatSkillFactionAlignment.Even => "Moderate",
+                CombatSkillFactionAlignment.Rebel => "Rebellious",
+                CombatSkillFactionAlignment.Egoistic => "Egocentric",
+                _ => alignment.ToString()
             };
 }

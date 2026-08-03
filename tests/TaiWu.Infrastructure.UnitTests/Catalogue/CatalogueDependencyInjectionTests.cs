@@ -35,5 +35,14 @@ public sealed class CatalogueDependencyInjectionTests
 
         Assert.IsType<SqliteCombatSkillCatalogueStore>(first);
         Assert.Same(first, second);
+
+        var firstFactionProfiles = services.GetRequiredService<
+            ICombatSkillFactionProfileSource>();
+        var secondFactionProfiles = services.GetRequiredService<
+            ICombatSkillFactionProfileSource>();
+
+        Assert.IsType<TaiwuCombatSkillFactionProfileSource>(
+            firstFactionProfiles);
+        Assert.Same(firstFactionProfiles, secondFactionProfiles);
     }
 }
