@@ -56,11 +56,18 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Grade All grades", text);
         Assert.Contains("More catalogue and progress filters", text);
         Assert.Contains("Learned state", text);
+        Assert.True(
+            html.IndexOf("id=\"atlas-learned\"", StringComparison.Ordinal)
+            < html.IndexOf(
+                "class=\"atlas-advanced-filters\"",
+                StringComparison.Ordinal));
         Assert.Contains("Breakthrough ready", text);
         Assert.Contains("Breakthrough completed", text);
         Assert.Contains("Attainment mastery", text);
         Assert.Contains("Equipped", text);
-        Assert.Contains("Finger 1 skills", text);
+        Assert.Contains("Finger 1 skills · 1 Learned · 0 Not learned", text);
+        Assert.Contains("Low grade 0 1 2 3 4 5 6 7 8 High grade", text);
+        Assert.Contains("data-grade-order=\"low-to-high\"", html);
         Assert.Contains("Shaolin Sect", text);
         Assert.Contains("Black Blood Gu", text);
         Assert.Contains("class=\"skill-glyph\"", html);
@@ -187,6 +194,9 @@ public sealed partial class SkillCatalogueRenderingTests
         var text = VisibleText(html);
 
         Assert.Contains("少 少林派 金剛 · 仁善", text);
+        Assert.Contains("取得狀態 不限 已取得 未取得", text);
+        Assert.Contains("低品 0 1 2 3 4 5 6 7 8 高品", text);
+        Assert.Contains("指法 1 項功法 · 1 已取得 · 0 未取得", text);
         Assert.Contains("element-metal alignment-kind", html);
         Assert.Contains(
             "aria-label=\"少林派 · 金剛 · 仁善\"",
@@ -513,6 +523,7 @@ public sealed partial class SkillCatalogueRenderingTests
 
         Assert.Contains("Unlearned Skill", text);
         Assert.Contains("Not learned", text);
+        Assert.Contains("Finger 2 skills · 1 Learned · 1 Not learned", text);
         Assert.Contains(
             "class=\"skill-atlas-card grade-5 status-unlearned\"",
             html);

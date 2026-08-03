@@ -1143,6 +1143,48 @@ history or weakening the read-only save boundary.
 - Installed-catalogue verification: 675 total, 671 passed, 0 failed, and 4
   save-dependent checks skipped.
 
+### E2-019 — Clarify ownership and grade order in the atlas
+
+**Status:** Complete
+
+**Priority:** P1
+
+**Estimate:** S
+
+**Dependencies:** E2-013, E2-017
+
+Make the most common ownership question and the existing low-to-high grade
+ordering immediately visible without opening the advanced filters or inferring
+meaning from color alone.
+
+#### Acceptance criteria
+
+- [x] Learned/all/not-learned is a primary filter beside name and grade.
+- [x] The advanced disclosure retains only secondary catalogue and progress
+      filters.
+- [x] Every displayed category reports shown, learned, and not-learned counts,
+      plus unavailable ownership when present.
+- [x] A compact nine-grade legend states that ordering runs from low to high.
+- [x] Every grade swatch has a numeric label as well as its existing color.
+- [x] English and Chinese tabs localize all new labels independently.
+- [x] Responsive layouts keep the controls and legend usable without changing
+      the nine-card desktop category row.
+- [x] Presentation and architecture tests protect placement, text, counts,
+      order, and non-color semantics.
+
+#### Evidence
+
+- `SkillCatalogueRenderingTests`: 22/22 passed, including primary-filter
+  placement, English and Chinese ownership counts, nine labeled grade
+  swatches, low-to-high order, and learned/unlearned catalogue entries.
+- `ArchitectureBoundaryTests`: 34/34 passed and protects the primary learned
+  control, numeric grade-order legend, grouped counts, nine-card desktop grid,
+  and non-color status semantics.
+- Default full solution: 675 total, 670 passed, 0 failed, and 5 documented
+  opt-in local-data checks skipped.
+- Installed-catalogue verification: 675 total, 671 passed, 0 failed, and 4
+  save-dependent checks skipped.
+
 ## Deferred backlog
 
 The following ideas are related but are not required for Epic 2 completion:

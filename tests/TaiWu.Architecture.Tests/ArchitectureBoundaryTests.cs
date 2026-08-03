@@ -976,6 +976,13 @@ public sealed partial class ArchitectureBoundaryTests
             "CharacterCombatSkillAtlasSort.CategoryThenGrade",
             atlasPage);
         Assert.Contains("class=\"skill-status-legend\"", atlasPage);
+        Assert.Contains("data-grade-order=\"low-to-high\"", atlasPage);
+        Assert.True(
+            atlasPage.IndexOf("Id=\"atlas-learned\"", StringComparison.Ordinal)
+            < atlasPage.IndexOf(
+                "class=\"atlas-advanced-filters\"",
+                StringComparison.Ordinal));
+        Assert.Contains("LearnedCount(group)", atlasPage);
 
         var atlasCard = File.ReadAllText(
             Path.Combine(

@@ -1506,7 +1506,7 @@ select {
 
 .atlas-primary-filters {
     display: grid;
-    grid-template-columns: minmax(260px, 1.7fr) minmax(120px, 0.45fr) auto;
+    grid-template-columns: minmax(260px, 1.6fr) repeat(2, minmax(120px, 0.48fr)) auto;
     gap: 14px;
     align-items: end;
 }
@@ -1817,9 +1817,37 @@ select {
     font-size: 1.35rem;
 }
 
-.skill-category-heading span {
+.skill-category-counts {
     color: var(--muted);
     font-size: 0.74rem;
+}
+
+.skill-grade-order {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.68rem;
+}
+
+.skill-grade-swatches {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.skill-grade-swatch {
+    --skill-grade-color: #8f9693;
+    display: inline-grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border: 1px solid var(--skill-grade-color);
+    border-radius: 50%;
+    color: var(--skill-grade-color);
+    background: color-mix(in srgb, var(--skill-grade-color) 9%, transparent);
+    font-size: 0.62rem;
+    font-weight: 800;
 }
 
 .skill-status-legend {
@@ -1910,39 +1938,48 @@ select {
     transition: border-color 140ms ease, background-color 140ms ease;
 }
 
-.skill-atlas-card.grade-0 {
+.skill-atlas-card.grade-0,
+.skill-grade-swatch.grade-0 {
     --skill-grade-color: #8f9693;
 }
 
-.skill-atlas-card.grade-1 {
+.skill-atlas-card.grade-1,
+.skill-grade-swatch.grade-1 {
     --skill-grade-color: #e8eeee;
 }
 
-.skill-atlas-card.grade-2 {
+.skill-atlas-card.grade-2,
+.skill-grade-swatch.grade-2 {
     --skill-grade-color: #8eb657;
 }
 
-.skill-atlas-card.grade-3 {
+.skill-atlas-card.grade-3,
+.skill-grade-swatch.grade-3 {
     --skill-grade-color: #4f82b7;
 }
 
-.skill-atlas-card.grade-4 {
+.skill-atlas-card.grade-4,
+.skill-grade-swatch.grade-4 {
     --skill-grade-color: #4faaa8;
 }
 
-.skill-atlas-card.grade-5 {
+.skill-atlas-card.grade-5,
+.skill-grade-swatch.grade-5 {
     --skill-grade-color: #9d5cb3;
 }
 
-.skill-atlas-card.grade-6 {
+.skill-atlas-card.grade-6,
+.skill-grade-swatch.grade-6 {
     --skill-grade-color: #c9a13d;
 }
 
-.skill-atlas-card.grade-7 {
+.skill-atlas-card.grade-7,
+.skill-grade-swatch.grade-7 {
     --skill-grade-color: #d66f2d;
 }
 
-.skill-atlas-card.grade-8 {
+.skill-atlas-card.grade-8,
+.skill-grade-swatch.grade-8 {
     --skill-grade-color: #d84b48;
 }
 
@@ -3067,6 +3104,21 @@ select {
     .atlas-pagination {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .skill-grade-order {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 4px;
+    }
+
+    .skill-grade-swatches {
+        gap: 2px;
+    }
+
+    .skill-grade-swatch {
+        width: 18px;
+        height: 18px;
     }
 
     .atlas-pagination button {

@@ -184,6 +184,13 @@
                     </select>
                 </label>
 
+                <TriStateFilter Id="atlas-learned"
+                                Label="@T("Learned state")"
+                                AllLabel="@T("Any")"
+                                YesLabel="@T("Learned")"
+                                NoLabel="@T("Not learned")"
+                                @bind-Value="_filters.Learned" />
+
                 <button type="button"
                         class="primary-button atlas-search-button"
                         @onclick="ApplyFiltersAsync"
@@ -265,12 +272,6 @@
                             }
                         </select>
                     </label>
-                    <TriStateFilter Id="atlas-learned"
-                                    Label="@T("Learned state")"
-                                    AllLabel="@T("Any")"
-                                    YesLabel="@T("Learned")"
-                                    NoLabel="@T("Not learned")"
-                                    @bind-Value="_filters.Learned" />
                     <TriStateFilter Id="atlas-proficiency"
                                     Label="@T("Proficiency available")"
                                     AllLabel="@T("Any")"
@@ -368,6 +369,23 @@
                 }
             </div>
 
+            <div class="skill-grade-order"
+                 data-grade-order="low-to-high"
+                 aria-label="@T("Grade order: low to high")">
+                <span>@T("Low grade")</span>
+                <div class="skill-grade-swatches" role="list">
+                    @for (var grade = CombatSkillGrade.Minimum;
+                        grade <= CombatSkillGrade.Maximum;
+                        grade++)
+                    {
+                        <span class="skill-grade-swatch grade-@grade"
+                              role="listitem"
+                              aria-label="@T("Grade") @grade">@grade</span>
+                    }
+                </div>
+                <span>@T("High grade")</span>
+            </div>
+
             <div class="skill-status-legend"
                  role="list"
                  aria-label="@T("Skill status legend")">
@@ -412,7 +430,15 @@
                              aria-labelledby="@CategoryHeadingId(group.Key)">
                         <div class="skill-category-heading">
                             <h3 id="@CategoryHeadingId(group.Key)">@CategoryHeading(group.Key)</h3>
-                            <span>@group.Count() @T("skills")</span>
+                            <span class="skill-category-counts">
+                                @group.Count() @T("skills") ·
+                                @LearnedCount(group) @T("Learned") ·
+                                @UnlearnedCount(group) @T("Not learned")
+                                @if (UnavailableLearnedCount(group) > 0)
+                                {
+                                    <text> · @UnavailableLearnedCount(group) @T("Status unavailable")</text>
+                                }
+                            </span>
                         </div>
                         <div class="skill-card-grid">
                             @foreach (var entry in group
@@ -664,6 +690,18 @@
         entry.Definition?.Grade.IsAvailable == true
             ? entry.Definition.Grade.Value.Value
             : int.MaxValue;
+
+    private static int LearnedCount(
+        IEnumerable<CharacterCombatSkillAtlasEntry> entries) =>
+        entries.Count(entry => entry.Learned.IsAvailable && entry.Learned.Value);
+
+    private static int UnlearnedCount(
+        IEnumerable<CharacterCombatSkillAtlasEntry> entries) =>
+        entries.Count(entry => entry.Learned.IsAvailable && !entry.Learned.Value);
+
+    private static int UnavailableLearnedCount(
+        IEnumerable<CharacterCombatSkillAtlasEntry> entries) =>
+        entries.Count(entry => !entry.Learned.IsAvailable);
 
     private static string DisplayNameOf(
         CharacterCombatSkillAtlasEntry entry) =>
