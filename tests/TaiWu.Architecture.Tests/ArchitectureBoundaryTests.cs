@@ -920,7 +920,7 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("data-faction-id", atlasPage);
         Assert.Contains("ICombatSkillFactionProfileSource", atlasPage);
         Assert.Contains("GroupBy(CategoryOf)", atlasPage);
-        Assert.Contains("OrderByDescending(GradeOf)", atlasPage);
+        Assert.Contains("OrderBy(GradeOf)", atlasPage);
         Assert.Contains(
             "CharacterCombatSkillAtlasSort.CategoryThenGrade",
             atlasPage);

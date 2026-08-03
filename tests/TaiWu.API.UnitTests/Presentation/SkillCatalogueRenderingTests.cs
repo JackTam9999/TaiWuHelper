@@ -140,8 +140,8 @@ public sealed partial class SkillCatalogueRenderingTests
 
         Assert.True(agilityHeader >= 0);
         Assert.True(fingerHeader > agilityHeader);
-        Assert.True(higherSkill > fingerHeader);
-        Assert.True(lowerSkill > higherSkill);
+        Assert.True(lowerSkill > fingerHeader);
+        Assert.True(higherSkill > lowerSkill);
         Assert.Contains("class=\"skill-atlas-card grade-8\"", html);
         Assert.Contains("class=\"skill-atlas-card grade-2\"", html);
     }

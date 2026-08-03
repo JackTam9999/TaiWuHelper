@@ -782,7 +782,7 @@ hierarchy of the game without copying proprietary artwork.
 - [x] Filters cover category, grade, faction, equipment type, element, and
       independent progress facts including breakthrough and mastery.
 - [x] Skills can be filtered by familiar named factions and are grouped by
-      combat-skill category, with each category ordered from higher to lower
+      combat-skill category, with each category ordered from lower to higher
       installed grade.
 - [x] The faction filter presents a compact circular mark using the first
       character of the faction name in the active language, without requiring
@@ -832,7 +832,7 @@ hierarchy of the game without copying proprietary artwork.
   localized element and alignment labels preserve the same information without
   relying on color.
 - Faction remains a named filter; results are grouped by category and ordered
-  from higher to lower grade. The circle and skill name use the installed
+  from lower to higher grade. The circle and skill name use the installed
   nine-grade sequence (grey through red), while accessible card text preserves
   the numeric grade without adding another visible badge.
 - Product-owner review replaced repeated long-form direction text beside the

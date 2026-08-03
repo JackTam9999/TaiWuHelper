@@ -997,7 +997,7 @@ public sealed class CombatSkillCatalogueUseCaseTests
             CancellationToken);
 
         Assert.Equal(3, result.TotalMatches);
-        Assert.Equal([12, 10], result.Entries.Select(entry => entry.SkillId));
+        Assert.Equal([10, 12], result.Entries.Select(entry => entry.SkillId));
     }
 
     [Fact]

@@ -314,7 +314,7 @@ public sealed class ReadCharacterCombatSkillAtlas(
                         : int.MaxValue)
                 .ThenBy(value =>
                     value.Entry.Definition?.Grade.IsAvailable == true ? 0 : 1)
-                .ThenByDescending(value =>
+                .ThenBy(value =>
                     value.Entry.Definition?.Grade.IsAvailable == true
                         ? value.Entry.Definition.Grade.Value.Value
                         : int.MinValue)

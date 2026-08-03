@@ -59,7 +59,7 @@ wheel sectors exactly equal activation mask `0x7C00`.
   localized element and alignment labels keep the meaning non-color-only.
   Factions with no alignment use a white ring and retain an explicit
   unavailable label. Faction remains a filter, while results are grouped by
-  combat-skill category and ordered from higher to lower installed grade.
+  combat-skill category and ordered from lower to higher installed grade.
 - Completed breakthroughs place one circled `正` or `逆` marker before the
   active-language skill name. Ready breakthroughs place `突破` followed by
   only the verified available `正`/`逆` choices before the name; those choices

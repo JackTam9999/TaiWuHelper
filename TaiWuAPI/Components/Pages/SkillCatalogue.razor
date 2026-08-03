@@ -364,7 +364,7 @@
                         </div>
                         <div class="skill-card-grid">
                             @foreach (var entry in group
-                                .OrderByDescending(GradeOf)
+                                .OrderBy(GradeOf)
                                 .ThenBy(DisplayNameOf, StringComparer.Ordinal)
                                 .ThenBy(entry => entry.SkillId))
                             {
@@ -584,7 +584,7 @@
     private static int GradeOf(CharacterCombatSkillAtlasEntry entry) =>
         entry.Definition?.Grade.IsAvailable == true
             ? entry.Definition.Grade.Value.Value
-            : int.MinValue;
+            : int.MaxValue;
 
     private static string DisplayNameOf(
         CharacterCombatSkillAtlasEntry entry) =>
