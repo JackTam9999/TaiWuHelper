@@ -12,11 +12,15 @@ public sealed class TaiwuArchiveReadSessionTests
         var fingerprints = new StubFingerprintProvider(
             fingerprint,
             fingerprint);
+        var revisions = new StubRevisionProvider(Revision(fingerprint));
         var warning = new TaiwuArchiveLoadWarning(
             TaiwuArchiveLoadWarning.StandaloneEventRuntimeUnavailable,
             "Void InitRuntimeEnvironment()");
         var loader = new StubArchiveLoader(warning);
-        var session = new TaiwuArchiveReadSession(fingerprints, loader);
+        var session = new TaiwuArchiveReadSession(
+            revisions,
+            fingerprints,
+            loader);
         var path = await CreateSaveAsync();
 
         try
@@ -36,6 +40,7 @@ public sealed class TaiwuArchiveReadSessionTests
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(42, result);
+            Assert.Equal(1, revisions.CaptureCount);
             Assert.Equal(2, fingerprints.CaptureCount);
             Assert.Equal(Path.GetFullPath(path), loader.LoadedPath);
         }
@@ -51,8 +56,13 @@ public sealed class TaiwuArchiveReadSessionTests
         var fingerprints = new StubFingerprintProvider(
             Fingerprint("BEFORE"),
             Fingerprint("AFTER"));
+        var revisions = new StubRevisionProvider(
+            Revision(Fingerprint("BEFORE")));
         var loader = new StubArchiveLoader();
-        var session = new TaiwuArchiveReadSession(fingerprints, loader);
+        var session = new TaiwuArchiveReadSession(
+            revisions,
+            fingerprints,
+            loader);
         var path = await CreateSaveAsync();
 
         try
@@ -78,8 +88,13 @@ public sealed class TaiwuArchiveReadSessionTests
         using var cancellation = CancellationTokenSource
             .CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         var fingerprints = new StubFingerprintProvider(Fingerprint("A"));
+        var revisions = new StubRevisionProvider(
+            Revision(Fingerprint("A")));
         var loader = new StubArchiveLoader();
-        var session = new TaiwuArchiveReadSession(fingerprints, loader);
+        var session = new TaiwuArchiveReadSession(
+            revisions,
+            fingerprints,
+            loader);
         var path = await CreateSaveAsync();
 
         try
@@ -102,14 +117,158 @@ public sealed class TaiwuArchiveReadSessionTests
         }
     }
 
-    private static ReadOnlyFileFingerprint Fingerprint(string hash)
+    [Fact]
+    public async Task ReadAsync_WhenRevisionIsUnchanged_ReusesLoadedArchive()
+    {
+        var fingerprint = Fingerprint("A");
+        var revision = Revision(fingerprint);
+        var revisions = new StubRevisionProvider(
+            revision,
+            revision,
+            revision);
+        var fingerprints = new StubFingerprintProvider(
+            fingerprint,
+            fingerprint);
+        var warning = new TaiwuArchiveLoadWarning(
+            TaiwuArchiveLoadWarning.StandaloneEventRuntimeUnavailable,
+            "Void InitRuntimeEnvironment()");
+        var loader = new StubArchiveLoader(warning);
+        var session = new TaiwuArchiveReadSession(
+            revisions,
+            fingerprints,
+            loader);
+        var path = await CreateSaveAsync();
+
+        try
+        {
+            var first = await session.ReadAsync(
+                path,
+                static (_, _) => 1,
+                TestContext.Current.CancellationToken);
+            var second = await session.ReadAsync(
+                path,
+                (context, _) =>
+                {
+                    Assert.Same(fingerprint, context.SourceFingerprint);
+                    Assert.Same(warning, context.LoadWarning);
+                    return 2;
+                },
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(1, first);
+            Assert.Equal(2, second);
+            Assert.Equal(3, revisions.CaptureCount);
+            Assert.Equal(2, fingerprints.CaptureCount);
+            Assert.Equal(1, loader.LoadCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ReadAsync_WhenRevisionChanges_ReloadsArchive()
+    {
+        var firstFingerprint = Fingerprint("A");
+        var secondFingerprint = Fingerprint(
+            "B",
+            DateTimeOffset.Parse("2026-07-31T00:01:00Z"));
+        var revisions = new StubRevisionProvider(
+            Revision(firstFingerprint),
+            Revision(secondFingerprint));
+        var fingerprints = new StubFingerprintProvider(
+            firstFingerprint,
+            firstFingerprint,
+            secondFingerprint,
+            secondFingerprint);
+        var loader = new StubArchiveLoader();
+        var session = new TaiwuArchiveReadSession(
+            revisions,
+            fingerprints,
+            loader);
+        var path = await CreateSaveAsync();
+
+        try
+        {
+            await session.ReadAsync(
+                path,
+                static (_, _) => 1,
+                TestContext.Current.CancellationToken);
+            var secondHash = await session.ReadAsync(
+                path,
+                static (context, _) => context.SourceFingerprint.Sha256,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal("B", secondHash);
+            Assert.Equal(2, revisions.CaptureCount);
+            Assert.Equal(4, fingerprints.CaptureCount);
+            Assert.Equal(2, loader.LoadCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ReadAsync_WhenCachedSourceChanges_DiscardsProjection()
+    {
+        var fingerprint = Fingerprint("A");
+        var changed = new ReadOnlyFileRevision(
+            fingerprint.Length + 1,
+            fingerprint.LastWriteTimeUtc.AddMinutes(1));
+        var revisions = new StubRevisionProvider(
+            Revision(fingerprint),
+            Revision(fingerprint),
+            changed);
+        var fingerprints = new StubFingerprintProvider(
+            fingerprint,
+            fingerprint);
+        var loader = new StubArchiveLoader();
+        var session = new TaiwuArchiveReadSession(
+            revisions,
+            fingerprints,
+            loader);
+        var path = await CreateSaveAsync();
+
+        try
+        {
+            await session.ReadAsync(
+                path,
+                static (_, _) => 1,
+                TestContext.Current.CancellationToken);
+
+            var exception = await Assert.ThrowsAsync<InvalidDataException>(
+                () => session.ReadAsync(
+                    path,
+                    static (_, _) => "discard me",
+                    TestContext.Current.CancellationToken));
+
+            Assert.Contains("changed while it was being read", exception.Message);
+            Assert.Equal(2, fingerprints.CaptureCount);
+            Assert.Equal(1, loader.LoadCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    private static ReadOnlyFileFingerprint Fingerprint(
+        string hash,
+        DateTimeOffset? lastWriteTimeUtc = null)
     {
         return new ReadOnlyFileFingerprint(
             Length: 4,
             Sha256: hash,
-            LastWriteTimeUtc:
-                DateTimeOffset.Parse("2026-07-31T00:00:00Z"));
+            LastWriteTimeUtc: lastWriteTimeUtc
+                ?? DateTimeOffset.Parse("2026-07-31T00:00:00Z"));
     }
+
+    private static ReadOnlyFileRevision Revision(
+        ReadOnlyFileFingerprint fingerprint) =>
+        ReadOnlyFileRevision.From(fingerprint);
 
     private static async Task<string> CreateSaveAsync()
     {
@@ -146,13 +305,32 @@ public sealed class TaiwuArchiveReadSessionTests
         }
     }
 
+    private sealed class StubRevisionProvider(
+        params ReadOnlyFileRevision[] revisions)
+        : IReadOnlyFileRevisionProvider
+    {
+        private readonly Queue<ReadOnlyFileRevision> _revisions =
+            new(revisions);
+
+        public int CaptureCount { get; private set; }
+
+        public ReadOnlyFileRevision Capture(string path)
+        {
+            CaptureCount++;
+            return _revisions.Dequeue();
+        }
+    }
+
     private sealed class StubArchiveLoader(
         TaiwuArchiveLoadWarning? warning = null) : ITaiwuArchiveLoader
     {
         public string? LoadedPath { get; private set; }
 
+        public int LoadCount { get; private set; }
+
         public TaiwuArchiveLoadWarning? Load(string saveFilePath)
         {
+            LoadCount++;
             LoadedPath = saveFilePath;
             return warning;
         }

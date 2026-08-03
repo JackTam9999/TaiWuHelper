@@ -17,6 +17,9 @@ public static class DependencyInjection
         services.AddSingleton<
             IReadOnlyFileFingerprintProvider,
             ReadOnlyFileFingerprintProvider>();
+        services.AddSingleton<
+            IReadOnlyFileRevisionProvider,
+            ReadOnlyFileRevisionProvider>();
         services.AddSingleton<ITaiwuArchiveLoader, TaiwuArchiveLoader>();
         services.AddSingleton<TaiwuArchiveReadSession>();
         services.AddSingleton<ITaiwuSaveFilePathProvider>(provider =>
