@@ -1520,25 +1520,20 @@ select {
 }
 
 .atlas-faction-options {
-    display: flex;
-    gap: 18px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+    gap: 12px;
     min-width: 0;
-    overflow-x: auto;
     padding: 8px 4px 14px;
-    scroll-padding-inline: 4px;
-    scroll-snap-type: x proximity;
-    scrollbar-color: rgba(215, 182, 107, 0.42) rgba(8, 23, 23, 0.38);
 }
 
 .faction-filter-option {
     --element-color: #b9c5c0;
     --alignment-color: #7f8c86;
     display: grid;
-    width: 96px;
-    min-width: 96px;
+    width: 100%;
+    min-width: 0;
     min-height: 118px;
-    flex: 0 0 96px;
-    scroll-snap-align: start;
     justify-items: center;
     align-content: start;
     gap: 5px;
@@ -2704,13 +2699,13 @@ select {
     }
 
     .atlas-faction-options {
-        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+        gap: 10px 6px;
     }
 
     .faction-filter-option {
-        width: 86px;
-        min-width: 86px;
-        flex-basis: 86px;
+        width: 100%;
+        min-width: 0;
     }
 
     .faction-filter-emblem {

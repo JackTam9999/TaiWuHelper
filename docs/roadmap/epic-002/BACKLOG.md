@@ -815,11 +815,13 @@ hierarchy of the game without copying proprietary artwork.
 - `ArchitectureBoundaryTests` protects the read-only page boundary, automatic
   current-Taiwu selection, semantic list/details markup, responsive grid, and
   reduced-motion treatment.
-- Product-owner review replaced the faction dropdown with a horizontally
-  scrollable circular picker. Each mark uses the active-language faction
-  initial, installed `Organization.FiveElementsType` for its text color, and
-  installed `Organization.MainMorality` for its outer ring; localized element
-  and alignment labels preserve the same information without relying on color.
+- Product-owner review replaced the faction dropdown with a responsive
+  circular picker that forms two rows at desktop width and reflows without
+  horizontal scrolling on narrow screens. Each mark uses the active-language
+  faction initial, installed `Organization.FiveElementsType` for its text
+  color, and installed `Organization.MainMorality` for its outer ring;
+  localized element and alignment labels preserve the same information without
+  relying on color.
 - Results remain grouped by faction, `品階` is relabeled as `品級`, and grade
   plus the primary current status remain visible in each collapsed card.
 - Product-owner review replaced repeated long-form direction text beside the

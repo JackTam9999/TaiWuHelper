@@ -51,14 +51,15 @@ wheel sectors exactly equal activation mask `0x7C00`.
   `Corruptive Gu Infection` resolve stable skill ID `456`.
 - Each language tab now renders only its selected-language skill name and raw
   descriptions. The detail page no longer combines Chinese and English text.
-- The 門派 filter is a horizontal circular picker populated from the current
-  catalogue. Each mark uses the active-language faction initial instead of
-  game artwork. Its text color comes from the installed faction's main
-  inner-power element and its outer ring from primary alignment; localized
-  element and alignment labels keep the meaning non-color-only. Factions with
-  no alignment use a white ring and retain an explicit unavailable label.
-  Results are grouped by 門派, while every collapsed card exposes
-  門派、品級、類別及主要狀態 before expansion.
+- The 門派 filter is a responsive circular picker populated from the current
+  catalogue. It forms two rows at desktop width and reflows without horizontal
+  scrolling on narrow screens. Each mark uses the active-language faction
+  initial instead of game artwork. Its text color comes from the installed
+  faction's main inner-power element and its outer ring from primary alignment;
+  localized element and alignment labels keep the meaning non-color-only.
+  Factions with no alignment use a white ring and retain an explicit
+  unavailable label. Results are grouped by 門派, while every collapsed card
+  exposes 門派、品級、類別及主要狀態 before expansion.
 - Completed breakthroughs place one circled `正` or `逆` marker before the
   active-language skill name. Ready breakthroughs place `突破` followed by
   only the verified available `正`/`逆` choices before the name; those choices

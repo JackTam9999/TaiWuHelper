@@ -1014,6 +1014,10 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("@media (prefers-reduced-motion: reduce)", style);
         Assert.Contains(".skill-card-grid", style);
         Assert.Contains(".atlas-faction-options", style);
+        Assert.Contains(
+            "grid-template-columns: repeat(auto-fit, minmax(86px, 1fr))",
+            style);
+        Assert.DoesNotContain("scroll-snap-type: x proximity", style);
         Assert.Contains(".element-metal", style);
         Assert.Contains(".alignment-just", style);
         Assert.Contains(".alignment-unknown", style);
