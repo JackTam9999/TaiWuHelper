@@ -1607,7 +1607,7 @@ select {
 
 .faction-filter-name {
     display: -webkit-box;
-    min-height: 2.35em;
+    min-height: 1.18em;
     overflow: hidden;
     color: var(--element-color);
     font-family: Georgia, "Microsoft JhengHei", serif;
