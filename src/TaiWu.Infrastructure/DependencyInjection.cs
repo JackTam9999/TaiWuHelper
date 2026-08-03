@@ -55,6 +55,10 @@ public static class DependencyInjection
             new SqliteCombatSkillCatalogueStore(
                 provider.GetRequiredService<CatalogueStoragePathProvider>()));
         services.AddSingleton<SqliteCharacterCombatSkillProgressCache>();
+        services.AddSingleton<
+            ICharacterCombatSkillProgressCacheMaintenance>(provider =>
+            provider.GetRequiredService<
+                SqliteCharacterCombatSkillProgressCache>());
         services.AddSingleton<CombatSkillStudyDetailLabelSource>();
         services.AddSingleton<ICharacterCombatSkillProgressReader>(provider =>
             new TaiwuCharacterCombatSkillProgressReader(

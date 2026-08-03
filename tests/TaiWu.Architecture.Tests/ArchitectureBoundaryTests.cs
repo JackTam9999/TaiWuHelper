@@ -623,7 +623,8 @@ public sealed partial class ArchitectureBoundaryTests
         {
             typeof(ICombatSkillDefinitionSource),
             typeof(ICombatSkillCatalogueRepository),
-            typeof(ICharacterCombatSkillProgressReader)
+            typeof(ICharacterCombatSkillProgressReader),
+            typeof(ICharacterCombatSkillProgressCacheMaintenance)
         };
         var signatureTypes = ports
             .SelectMany(port => port.GetMethods())
@@ -684,12 +685,14 @@ public sealed partial class ArchitectureBoundaryTests
             action => action.GetCustomAttribute<HttpPutAttribute>() is not null
                 || action.GetCustomAttribute<HttpPatchAttribute>() is not null
                 || action.GetCustomAttribute<HttpDeleteAttribute>() is not null);
-        var maintenance = Assert.Single(
-            actions,
-            action => action.GetCustomAttribute<HttpPostAttribute>() is not null);
         Assert.Equal(
-            "catalogue-cache/rebuild",
-            maintenance.GetCustomAttribute<HttpPostAttribute>()!.Template);
+            ["catalogue-cache/rebuild", "progress-cache/clear"],
+            actions
+                .Select(action => action.GetCustomAttribute<HttpPostAttribute>())
+                .Where(attribute => attribute is not null)
+                .Select(attribute => attribute!.Template!)
+                .Order(StringComparer.Ordinal)
+                .ToArray());
 
         var repositoryRoot = FindRepositoryRoot();
         var sources = controllers.Select(controller => File.ReadAllText(
@@ -800,6 +803,9 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Equal(typeof(DependencyInjection).Assembly, cacheType.Assembly);
         Assert.Equal("TaiWu.Infrastructure.SaveGames", cacheType.Namespace);
         Assert.False(cacheType.IsPublic);
+        Assert.True(
+            typeof(ICharacterCombatSkillProgressCacheMaintenance)
+                .IsAssignableFrom(cacheType));
         var constructors = cacheType.GetConstructors(
             BindingFlags.Instance
             | BindingFlags.Public
@@ -913,6 +919,7 @@ public sealed partial class ArchitectureBoundaryTests
             "ApplyFiltersAsync",
             "ChangeAsync",
             "ClearFiltersAsync",
+            "ClearProgressCacheAsync",
             "CopyAsync",
             "GetRecommendationAsync",
             "LoadAsync",
@@ -951,6 +958,7 @@ public sealed partial class ArchitectureBoundaryTests
                 "SkillCatalogue.razor"));
         Assert.Contains("ReadCharacterCombatSkillAtlas(", atlasPage);
         Assert.Contains("EnsureCombatSkillCatalogue(", atlasPage);
+        Assert.Contains("ClearCharacterCombatSkillProgressCache(", atlasPage);
         Assert.Contains("_catalogue = _atlas!.Catalogue", atlasPage);
         Assert.DoesNotContain("ReadCombatSkillCatalogueStatus(", atlasPage);
         Assert.Contains("characterId: null", atlasPage);

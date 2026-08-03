@@ -23,7 +23,8 @@ public sealed class CombatSkillsControllerTests
         var controller = new CombatSkillsController(
             source,
             repository,
-            Substitute.For<ICharacterCombatSkillProgressReader>());
+            Substitute.For<ICharacterCombatSkillProgressReader>(),
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
 
         var action = await controller.Search(
             query: "blood",
@@ -67,7 +68,8 @@ public sealed class CombatSkillsControllerTests
         var controller = new CombatSkillsController(
             source,
             repository,
-            Substitute.For<ICharacterCombatSkillProgressReader>());
+            Substitute.For<ICharacterCombatSkillProgressReader>(),
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
 
         var action = await controller.Search(
             grade: 99,
@@ -93,7 +95,8 @@ public sealed class CombatSkillsControllerTests
         var controller = new CombatSkillsController(
             source,
             repository,
-            Substitute.For<ICharacterCombatSkillProgressReader>());
+            Substitute.For<ICharacterCombatSkillProgressReader>(),
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
 
         var response = Response<CombatSkillCatalogueStatusResponse>(
             await controller.Status(CancellationToken));
@@ -116,7 +119,8 @@ public sealed class CombatSkillsControllerTests
         var controller = new CombatSkillsController(
             source,
             repository,
-            reader);
+            reader,
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
 
         var action = await controller.Details(
             456,
@@ -156,7 +160,8 @@ public sealed class CombatSkillsControllerTests
         var controller = new CombatSkillsController(
             source,
             repository,
-            progressReader);
+            progressReader,
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
 
         var response = Response<CombatSkillDetailsResponse>(
             await controller.Details(
@@ -263,7 +268,8 @@ public sealed class CombatSkillsControllerTests
         var controller = new CombatSkillsController(
             source,
             repository,
-            Substitute.For<ICharacterCombatSkillProgressReader>());
+            Substitute.For<ICharacterCombatSkillProgressReader>(),
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
 
         var response = Response<CombatSkillCatalogueMaintenanceResponse>(
             await controller.RebuildCatalogueCache(CancellationToken));
@@ -275,6 +281,33 @@ public sealed class CombatSkillsControllerTests
                 values != null && values.Count == 1 && values[0] == definition),
             Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
             CancellationToken);
+    }
+
+    [Fact]
+    public async Task Progress_cache_clear_is_explicit_and_reports_derived_rows()
+    {
+        var source = Substitute.For<ICombatSkillDefinitionSource>();
+        var repository = Substitute.For<ICombatSkillCatalogueRepository>();
+        var maintenance =
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>();
+        maintenance.ClearAsync(Arg.Any<CancellationToken>()).Returns(2);
+        var controller = new CombatSkillsController(
+            source,
+            repository,
+            Substitute.For<ICharacterCombatSkillProgressReader>(),
+            maintenance);
+
+        var response = Response<CharacterProgressCacheMaintenanceResponse>(
+            await controller.ClearProgressCache(CancellationToken));
+
+        Assert.Equal(
+            ClearCharacterCombatSkillProgressCacheStatus.Cleared,
+            response.Status);
+        Assert.Equal(2, response.ClearedSnapshotCount);
+        Assert.Null(response.Reason);
+        await maintenance.Received(1).ClearAsync(CancellationToken);
+        Assert.Empty(source.ReceivedCalls());
+        Assert.Empty(repository.ReceivedCalls());
     }
 
     [Fact]
@@ -311,12 +344,14 @@ public sealed class CombatSkillsControllerTests
             action => action.GetCustomAttribute<HttpPutAttribute>() is not null
                 || action.GetCustomAttribute<HttpPatchAttribute>() is not null
                 || action.GetCustomAttribute<HttpDeleteAttribute>() is not null);
-        var maintenance = Assert.Single(
-            actions,
-            action => action.GetCustomAttribute<HttpPostAttribute>() is not null);
         Assert.Equal(
-            "catalogue-cache/rebuild",
-            maintenance.GetCustomAttribute<HttpPostAttribute>()!.Template);
+            ["catalogue-cache/rebuild", "progress-cache/clear"],
+            actions
+                .Select(action => action.GetCustomAttribute<HttpPostAttribute>())
+                .Where(attribute => attribute is not null)
+                .Select(attribute => attribute!.Template!)
+                .Order(StringComparer.Ordinal)
+                .ToArray());
     }
 
     [Theory]

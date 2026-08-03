@@ -123,6 +123,16 @@ The response returns `Current`, `Rebuilt`, `MissingSources`,
 `UnsupportedVersion`, `SourceReadFailed`, or `RebuildFailed`, plus any retained
 cache recovery state.
 
+`POST /api/combat-skills/progress-cache/clear`
+
+This explicitly named maintenance operation clears all bounded, helper-owned
+current progress snapshots. It accepts no body or path and never reads,
+changes, or deletes the configured save. The next atlas read reconstructs the
+current snapshot through the normal fingerprinted, read-only save workflow.
+
+The response returns `Cleared`, the number of save snapshots removed, and a
+safe failure reason when the helper-owned database could not be cleared.
+
 ## Partial data and errors
 
 Successful query endpoints return HTTP 200 even when their typed source status

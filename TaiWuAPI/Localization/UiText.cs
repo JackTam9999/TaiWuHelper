@@ -30,11 +30,20 @@ public static class UiText
             ["Combat skill atlas"] = "戰鬥功法圖鑑",
             ["Rebuilding local catalogue…"] = "正在重建本機功法目錄……",
             ["Reading catalogue and save…"] = "正在讀取目錄與存檔……",
+            ["Clearing local progress cache…"] = "正在清除本機進度快取……",
             ["Atlas freshness"] = "圖鑑新鮮度",
             ["Catalogue"] = "目錄",
             ["Catalogue built"] = "目錄建立時間",
             ["Save read"] = "存檔讀取時間",
             ["Matching skills"] = "符合的功法",
+            ["Derived progress cache"] = "衍生人物進度快取",
+            ["Stores only recent helper-owned snapshots. Clearing it never changes the save; the next read rebuilds it."] =
+                "只保留近期的助手自有快照；清除不會改動存檔，下次讀取時會重新建立。",
+            ["Clear local progress cache"] = "清除本機進度快取",
+            ["Local progress cache cleared."] = "已清除本機進度快取。",
+            ["Local progress cache was already empty."] = "本機進度快取原本已是空白。",
+            ["The local progress cache could not be cleared safely."] =
+                "無法安全清除本機進度快取。",
             ["Failure"] = "失敗",
             ["The skill atlas could not be read"] = "無法讀取功法圖鑑",
             ["The configured local sources could not be read safely."] =

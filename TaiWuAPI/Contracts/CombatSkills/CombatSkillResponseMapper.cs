@@ -26,6 +26,14 @@ public static class CombatSkillResponseMapper
         result.RetainedDefinitionCount,
         result.RetainedBuiltAtUtc);
 
+    public static CharacterProgressCacheMaintenanceResponse Map(
+        ClearCharacterCombatSkillProgressCacheResult result) => new(
+        result.Status,
+        result.ClearedSnapshotCount,
+        result.Status == ClearCharacterCombatSkillProgressCacheStatus.Failed
+            ? "The helper-owned progress cache could not be cleared."
+            : null);
+
     public static CombatSkillSearchResponse Map(
         CombatSkillSearchResult result) => new(
         Map(result.Catalogue),

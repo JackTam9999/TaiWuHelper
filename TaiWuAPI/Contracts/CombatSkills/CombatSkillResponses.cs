@@ -31,6 +31,11 @@ public sealed record CombatSkillCatalogueMaintenanceResponse(
     int RetainedDefinitionCount,
     DateTimeOffset? RetainedBuiltAtUtc);
 
+public sealed record CharacterProgressCacheMaintenanceResponse(
+    ClearCharacterCombatSkillProgressCacheStatus Status,
+    int ClearedSnapshotCount,
+    string? Reason);
+
 public sealed record CatalogueSourceReferenceResponse(
     CatalogueSourceKind Kind,
     string SourceIdentity,

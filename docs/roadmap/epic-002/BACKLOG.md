@@ -1098,6 +1098,51 @@ final completion decision.
 - The completion decision remains pending product-owner approval. Unsupported
   attainment, percentage, and runtime-power semantics are captured by E2-F06.
 
+### E2-018 — Govern the derived current-progress cache
+
+**Status:** Complete
+
+**Priority:** P1
+
+**Estimate:** M
+
+**Dependencies:** E2-009, E2-016
+
+Formalize the existing SQLite progress snapshot accelerator as bounded,
+clearable helper-owned state without turning it into character-progress
+history or weakening the read-only save boundary.
+
+#### Acceptance criteria
+
+- [x] The cache retains only the latest source revision for a save path.
+- [x] Retention is bounded to the eight most recently read save paths.
+- [x] An explicit clear use case and UI/API action delete every derived
+      snapshot without accepting a filesystem path.
+- [x] Clear and retention operations target only the fixed, path-safe
+      helper-owned progress database.
+- [x] Clearing never opens, writes, renames, or deletes the configured save and
+      the next read can rebuild the snapshot normally.
+- [x] SQLite secure deletion, WAL checkpointing, compaction, and query-aware
+      retention indexing constrain residual and unbounded helper data.
+- [x] Cache maintenance failure is safe and never exposes a local path.
+- [x] Unit, API, presentation, and architecture tests cover retention, clear,
+      route boundaries, localization, and source non-interference.
+
+#### Evidence when complete
+
+- [Read-only character combat-skill progress](../../architecture/CHARACTER-COMBAT-SKILL-PROGRESS-READER.md)
+  documents current-snapshot semantics, the eight-path limit, and clear
+  behavior.
+- [Combat-skill catalogue and character-atlas API](../../api/COMBAT-SKILLS.md)
+  documents the path-free `progress-cache/clear` maintenance endpoint.
+- `SqliteCharacterCombatSkillProgressCacheTests` passes 6/6 cases, including
+  complete clear and deterministic eight-path retention; Application, API,
+  Presentation, and Architecture focused suites also pass.
+- Default full solution: 675 total, 670 passed, 0 failed, and 5 documented
+  opt-in local-data checks skipped.
+- Installed-catalogue verification: 675 total, 671 passed, 0 failed, and 4
+  save-dependent checks skipped.
+
 ## Deferred backlog
 
 The following ideas are related but are not required for Epic 2 completion:
@@ -1114,8 +1159,9 @@ verified effects without turning raw text differences into mechanical claims.
 
 ### E2-F03 — Persist historical character skill progress
 
-Store helper-owned, hash-keyed progress history only after retention, deletion,
-freshness, and privacy behavior is separately approved. Current save data must
+Store time-series character progress only after historical retention,
+deletion, freshness, and privacy behavior is separately approved. The bounded
+current-snapshot cache from E2-018 is not history, and current save data must
 remain authoritative.
 
 ### E2-F04 — Add verified acquisition guidance

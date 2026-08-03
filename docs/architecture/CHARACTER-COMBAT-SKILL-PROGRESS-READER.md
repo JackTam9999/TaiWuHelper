@@ -80,6 +80,19 @@ derived rows after a verified read. Language labels are reapplied from the
 current installed language source, so changing UI language does not reload the
 save.
 
+This is a bounded current-snapshot accelerator, not a progress-history store.
+It retains at most the eight most recently read configured save paths, ordered
+by snapshot read time, and deletes older path snapshots transactionally. Each
+path still holds only its latest source revision and characters; a newer
+revision replaces the older derived rows for that path.
+
+The local atlas and `POST /api/combat-skills/progress-cache/clear` expose an
+explicit clear operation. It deletes every derived snapshot through the fixed
+path-safe adapter, checkpoints the write-ahead log, compacts the database, and
+enables SQLite secure deletion. Clearing accepts no path, never opens or
+changes a source save, and simply causes the next atlas read to rebuild the
+current snapshot from the configured read-only source.
+
 Cache read or write failure falls back to the read-only source path and never
 blocks a valid save read. The cache path is helper-owned, cannot overlap the
 game or save directories, and is guarded against reparse-point traversal. The
@@ -95,10 +108,11 @@ cache hits directly distinguishable.
 Pure mapping tests cover independent facts, missing proficiency, zero-state
 learned skills, immediate Direct breakthrough, completed Reverse breakthrough,
 and invalid values. SQLite tests cover structured round trips, revision,
-GameData and mapping-version misses, atomic snapshot replacement, and multiple
-characters. Architecture tests require typed GameData access, restrict
-persistence to named helper-owned stores, and continue to reject archive or
-game writes.
+GameData and mapping-version misses, atomic snapshot replacement, multiple
+characters, bounded save-path retention, and complete derived-row clearing
+without source access. Architecture tests require typed GameData access,
+restrict persistence to named helper-owned stores, and continue to reject
+archive or game writes.
 
 The opt-in golden integration assertion passed on 2026-08-02 against save
 fingerprint

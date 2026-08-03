@@ -1125,6 +1125,37 @@ public sealed class CombatSkillCatalogueUseCaseTests
     }
 
     [Fact]
+    public async Task Progress_cache_clear_reports_success_and_safe_failure()
+    {
+        var maintenance = Substitute.For<
+            ICharacterCombatSkillProgressCacheMaintenance>();
+        maintenance.ClearAsync(CancellationToken).Returns(3);
+
+        var cleared = await new ClearCharacterCombatSkillProgressCache(
+                maintenance)
+            .ExecuteAsync(CancellationToken);
+
+        Assert.Equal(
+            ClearCharacterCombatSkillProgressCacheStatus.Cleared,
+            cleared.Status);
+        Assert.Equal(3, cleared.ClearedSnapshotCount);
+        Assert.Null(cleared.Reason);
+
+        maintenance.ClearAsync(CancellationToken)
+            .Returns<int>(_ => throw new InvalidOperationException(
+                "cache failure"));
+        var failed = await new ClearCharacterCombatSkillProgressCache(
+                maintenance)
+            .ExecuteAsync(CancellationToken);
+
+        Assert.Equal(
+            ClearCharacterCombatSkillProgressCacheStatus.Failed,
+            failed.Status);
+        Assert.Equal(0, failed.ClearedSnapshotCount);
+        Assert.Equal("cache failure", failed.Reason);
+    }
+
+    [Fact]
     public void Contracts_are_bounded_immutable_and_path_free()
     {
         Assert.Null(new CharacterCombatSkillProgressReadRequest().CharacterId);

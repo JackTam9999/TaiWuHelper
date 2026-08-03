@@ -39,6 +39,8 @@ public sealed partial class SkillCatalogueRenderingTests
 
         Assert.Contains("Your martial arts, mapped.", text);
         Assert.Contains("Catalogue Current", text);
+        Assert.Contains("Derived progress cache", text);
+        Assert.Contains("Clear local progress cache", text);
         Assert.Contains("Find a combat skill", text);
         Assert.Contains("Search in this language", html);
         Assert.Contains("Faction", text);
@@ -608,6 +610,8 @@ public sealed partial class SkillCatalogueRenderingTests
         services.AddSingleton(source);
         services.AddSingleton(repository);
         services.AddSingleton(progressReader);
+        services.AddSingleton(
+            Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
         var factionProfiles = Substitute.For<
             ICombatSkillFactionProfileSource>();
         factionProfiles.ReadAsync(Arg.Any<CancellationToken>())

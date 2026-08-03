@@ -43,6 +43,11 @@ public interface ICharacterCombatSkillProgressReader
         CancellationToken cancellationToken = default);
 }
 
+public interface ICharacterCombatSkillProgressCacheMaintenance
+{
+    Task<int> ClearAsync(CancellationToken cancellationToken = default);
+}
+
 public sealed record CharacterCombatSkillProgressReadRequest
 {
     public CharacterCombatSkillProgressReadRequest(

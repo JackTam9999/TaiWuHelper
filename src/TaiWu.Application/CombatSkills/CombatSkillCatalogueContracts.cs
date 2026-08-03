@@ -397,6 +397,17 @@ public sealed record EnsureCombatSkillCatalogueResult(
     int RetainedDefinitionCount = 0,
     DateTimeOffset? RetainedBuiltAtUtc = null);
 
+public enum ClearCharacterCombatSkillProgressCacheStatus
+{
+    Cleared = 0,
+    Failed = 1
+}
+
+public sealed record ClearCharacterCombatSkillProgressCacheResult(
+    ClearCharacterCombatSkillProgressCacheStatus Status,
+    int ClearedSnapshotCount,
+    string? Reason);
+
 public enum CharacterProgressReadStatus
 {
     NotRead = 0,

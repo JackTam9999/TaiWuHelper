@@ -11,7 +11,9 @@ namespace TaiWuAPI.Controllers;
 public sealed class CombatSkillsController(
     ICombatSkillDefinitionSource definitionSource,
     ICombatSkillCatalogueRepository repository,
-    ICharacterCombatSkillProgressReader progressReader) : ControllerBase
+    ICharacterCombatSkillProgressReader progressReader,
+    ICharacterCombatSkillProgressCacheMaintenance progressCacheMaintenance)
+    : ControllerBase
 {
     [HttpGet("status")]
     [ProducesResponseType<CombatSkillCatalogueStatusResponse>(
@@ -108,6 +110,18 @@ public sealed class CombatSkillsController(
         var result = await new EnsureCombatSkillCatalogue(
                 definitionSource,
                 repository)
+            .ExecuteAsync(cancellationToken);
+        return Ok(CombatSkillResponseMapper.Map(result));
+    }
+
+    [HttpPost("progress-cache/clear")]
+    [ProducesResponseType<CharacterProgressCacheMaintenanceResponse>(
+        StatusCodes.Status200OK)]
+    public async Task<ActionResult<CharacterProgressCacheMaintenanceResponse>>
+        ClearProgressCache(CancellationToken cancellationToken = default)
+    {
+        var result = await new ClearCharacterCombatSkillProgressCache(
+                progressCacheMaintenance)
             .ExecuteAsync(cancellationToken);
         return Ok(CombatSkillResponseMapper.Map(result));
     }

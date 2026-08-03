@@ -167,11 +167,12 @@ continues to apply:
 - The helper never interacts with the running game process.
 - The catalogue database lives in a validated helper-owned application-data
   directory outside the game installation and every save directory.
-- Only the catalogue Infrastructure adapter may write catalogue data.
+- Only the named catalogue and derived progress-cache Infrastructure adapters
+  may write their respective helper-owned data.
 - Presentation and public API contracts expose queries and cache maintenance
   for helper-owned data only; they expose no game command.
-- Rebuild and deletion operations may affect only the exact validated
-  helper-owned catalogue path.
+- Rebuild, retention, and deletion operations may affect only their exact
+  validated helper-owned cache paths.
 
 ## Terminology
 
@@ -316,8 +317,11 @@ database. The Infrastructure implementation must provide:
 - Import counts and diagnostics visible to Application and Presentation.
 - No pre-populated database in source control or release artifacts.
 
-Character progress may be held in memory for the active snapshot. Any future
-progress cache requires a separate decision and is outside this epic.
+Character progress may be held in memory or in a bounded helper-owned cache for
+the active/current source snapshot. The cache is an accelerator only: it keeps
+at most eight recent save-path snapshots, replaces stale revisions, can be
+cleared explicitly, and never becomes authoritative progress history.
+Historical character progress remains outside this epic.
 
 ### 5. Catalogue and atlas queries
 

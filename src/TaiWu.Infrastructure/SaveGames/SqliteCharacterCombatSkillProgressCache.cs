@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.Sqlite;
+using TaiWu.Application.CombatSkills;
 
 namespace TaiWu.Infrastructure.SaveGames;
 
@@ -15,8 +16,10 @@ internal sealed record RawCharacterCombatSkillSnapshot(
 
 internal sealed class SqliteCharacterCombatSkillProgressCache(
     SaveProgressCacheStoragePathProvider pathProvider)
+    : ICharacterCombatSkillProgressCacheMaintenance
 {
-    internal const int SchemaVersion = 2;
+    internal const int SchemaVersion = 3;
+    internal const int MaximumCachedSavePaths = 8;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _schemaReady;
@@ -247,8 +250,64 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     snapshot,
                     cancellationToken)
                 .ConfigureAwait(false);
+            await PruneOldSavePathsAsync(
+                    connection,
+                    transaction,
+                    cancellationToken)
+                .ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken)
                 .ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<int> ClearAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var databasePath = pathProvider.DatabasePath;
+            if (!File.Exists(databasePath))
+            {
+                return 0;
+            }
+
+            await EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+            await using var connection = await OpenConnectionAsync(
+                    cancellationToken)
+                .ConfigureAwait(false);
+            await using var count = connection.CreateCommand();
+            count.CommandText = "SELECT COUNT(*) FROM save_snapshots;";
+            var clearedSnapshotCount = Convert.ToInt32(
+                await count.ExecuteScalarAsync(cancellationToken)
+                    .ConfigureAwait(false));
+
+            await using (var transaction = (SqliteTransaction)await connection
+                             .BeginTransactionAsync(cancellationToken)
+                             .ConfigureAwait(false))
+            {
+                await using var clear = connection.CreateCommand();
+                clear.Transaction = transaction;
+                clear.CommandText = "DELETE FROM save_snapshots;";
+                await clear.ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            await using var compact = connection.CreateCommand();
+            compact.CommandText = """
+                PRAGMA wal_checkpoint(TRUNCATE);
+                VACUUM;
+                PRAGMA optimize;
+                """;
+            await compact.ExecuteNonQueryAsync(cancellationToken)
+                .ConfigureAwait(false);
+            return clearedSnapshotCount;
         }
         finally
         {
@@ -338,6 +397,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
 
                 CREATE INDEX IF NOT EXISTS ix_combat_skill_progress_character
                     ON combat_skill_progress(path_key, character_id);
+
+                CREATE INDEX IF NOT EXISTS ix_save_snapshots_retention
+                    ON save_snapshots(read_at_utc_ticks DESC, path_key DESC);
                 """,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -368,6 +430,7 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
             PRAGMA foreign_keys = ON;
             PRAGMA busy_timeout = 5000;
             PRAGMA journal_mode = WAL;
+            PRAGMA secure_delete = ON;
             """;
         await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -418,6 +481,29 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
         command.CommandText =
             "DELETE FROM save_snapshots WHERE path_key = $path_key;";
         command.Parameters.AddWithValue("$path_key", pathKey);
+        await command.ExecuteNonQueryAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static async Task PruneOldSavePathsAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            DELETE FROM save_snapshots
+            WHERE path_key IN (
+                SELECT path_key
+                FROM save_snapshots
+                ORDER BY read_at_utc_ticks DESC, path_key DESC
+                LIMIT -1 OFFSET $maximum_cached_save_paths
+            );
+            """;
+        command.Parameters.AddWithValue(
+            "$maximum_cached_save_paths",
+            MaximumCachedSavePaths);
         await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);
     }

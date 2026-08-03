@@ -204,6 +204,72 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
         Assert.Equal(777, Assert.Single(explicitCharacter.Progress).SkillId);
     }
 
+    [Fact]
+    public async Task Clear_removes_all_derived_snapshots_without_source_access()
+    {
+        using var fixture = Fixture.Create();
+        var snapshot = Snapshot();
+        await fixture.Cache.StoreAsync(
+            fixture.SavePath,
+            "0.0.85.0",
+            1,
+            snapshot,
+            TestContext.Current.CancellationToken);
+
+        var cleared = await fixture.Cache.ClearAsync(
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, cleared);
+        Assert.Null(await fixture.Cache.TryReadAsync(
+            fixture.SavePath,
+            ReadOnlyFileRevision.From(snapshot.SourceFingerprint),
+            null,
+            "0.0.85.0",
+            1,
+            TestContext.Current.CancellationToken));
+        Assert.Equal(
+            0,
+            await fixture.Cache.ClearAsync(
+                TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Retention_keeps_only_the_most_recent_save_paths()
+    {
+        using var fixture = Fixture.Create();
+        var first = Snapshot();
+        var paths = Enumerable.Range(
+                0,
+                SqliteCharacterCombatSkillProgressCache
+                    .MaximumCachedSavePaths + 1)
+            .Select(index => $"{fixture.SavePath}.{index}")
+            .ToArray();
+        for (var index = 0; index < paths.Length; index++)
+        {
+            await fixture.Cache.StoreAsync(
+                paths[index],
+                "0.0.85.0",
+                1,
+                first with { ReadAtUtc = first.ReadAtUtc.AddMinutes(index) },
+                TestContext.Current.CancellationToken);
+        }
+
+        Assert.Null(await fixture.Cache.TryReadAsync(
+            paths[0],
+            ReadOnlyFileRevision.From(first.SourceFingerprint),
+            null,
+            "0.0.85.0",
+            1,
+            TestContext.Current.CancellationToken));
+        Assert.NotNull(await fixture.Cache.TryReadAsync(
+            paths[^1],
+            ReadOnlyFileRevision.From(first.SourceFingerprint),
+            null,
+            "0.0.85.0",
+            1,
+            TestContext.Current.CancellationToken));
+    }
+
     private static RawCharacterCombatSkillSnapshot Snapshot() => new(
         new ReadOnlyFileFingerprint(
             213_937_298,
