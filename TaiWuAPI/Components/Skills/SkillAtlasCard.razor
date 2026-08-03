@@ -5,7 +5,9 @@
 <article class="skill-atlas-card" data-reference="@Entry.StableKey">
     <details>
         <summary>
-            <span class="skill-glyph" aria-hidden="true">@CategoryGlyph</span>
+            <span class="skill-glyph" aria-hidden="true">
+                <span>@SkillInitial</span>
+            </span>
             <span class="skill-card-title">
                 <span class="skill-card-name-line">
                     @if (ActiveMarkerDirection is { } activeDirection)
@@ -30,9 +32,9 @@
                             </span>
                         }
                     }
-                    <strong>@DisplayName</strong>
+                    <strong title="@DisplayName">@DisplayName</strong>
                 </span>
-                <small>@StaticSummary</small>
+                <small title="@StaticSummary">@StaticSummary</small>
                 <span class="skill-card-summary-tags">
                     <span class="skill-card-grade">@GradeText</span>
                     <span class="skill-card-status @PrimaryStatusClass">@PrimaryStatusText</span>
@@ -206,27 +208,9 @@
                     ? "learned"
                     : "neutral";
 
-    private string CategoryGlyph =>
-        Entry.Definition?.Category.IsAvailable == true
-            ? Entry.Definition.Category.Value switch
-            {
-                CombatSkillDiscipline.Neigong => "內",
-                CombatSkillDiscipline.Agility => "身",
-                CombatSkillDiscipline.SpecialTechnique => "絕",
-                CombatSkillDiscipline.FistAndPalm => "掌",
-                CombatSkillDiscipline.Finger => "指",
-                CombatSkillDiscipline.Leg => "腿",
-                CombatSkillDiscipline.HiddenWeapon => "暗",
-                CombatSkillDiscipline.Sword => "劍",
-                CombatSkillDiscipline.Blade => "刀",
-                CombatSkillDiscipline.LongWeapon => "長",
-                CombatSkillDiscipline.ExoticWeapon => "奇",
-                CombatSkillDiscipline.FlexibleWeapon => "軟",
-                CombatSkillDiscipline.Archery => "弓",
-                CombatSkillDiscipline.Music => "樂",
-                _ => "功"
-            }
-            : "?";
+    private string SkillInitial => string.IsNullOrWhiteSpace(DisplayName)
+        ? "?"
+        : DisplayName.Trim()[0].ToString();
 
     private string CostText => Entry.BaseGridCost.IsAvailable
         ? Entry.BaseGridCost.Value.Value.ToString()

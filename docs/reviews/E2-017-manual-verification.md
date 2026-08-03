@@ -64,6 +64,10 @@ wheel sectors exactly equal activation mask `0x7C00`.
   active-language skill name. Ready breakthroughs place `突破` followed by
   only the verified available `正`/`逆` choices before the name; those choices
   are never presented as already active.
+- Collapsed skill results use a circular first character from the
+  active-language skill name instead of game artwork. Grade, faction, category,
+  and primary progress status remain visible; opening a skill expands its facts
+  across the result row and retains the stable-ID detail link.
 - Live E2-013 validation exercised the current 946-definition atlas in both
   languages at desktop and mobile sizes without horizontal overflow.
 - Live E2-014 validation showed static and current facts separately, all 15

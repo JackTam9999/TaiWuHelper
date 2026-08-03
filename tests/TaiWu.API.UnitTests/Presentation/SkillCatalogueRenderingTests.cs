@@ -62,6 +62,8 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Shaolin Sect", text);
         Assert.Contains("Grade 5", text);
         Assert.Contains("Black Blood Gu", text);
+        Assert.Contains("class=\"skill-glyph\"", html);
+        Assert.Contains("<span>B</span>", decodedHtml);
         Assert.DoesNotContain("黑血蠱降", text);
         Assert.Contains("Learned", text);
         Assert.Contains("Broken through", text);
@@ -178,8 +180,11 @@ public sealed partial class SkillCatalogueRenderingTests
         var entry = Entry(definition, progress);
 
         var html = await RenderCardAsync(entry, TaiwuLanguage.Chinese);
+        var decodedHtml = WebUtility.HtmlDecode(html);
         var text = VisibleText(html);
 
+        Assert.Contains("class=\"skill-glyph\"", html);
+        Assert.Contains("<span>雲</span>", decodedHtml);
         Assert.Contains("雲術", text);
         Assert.Contains("少林派", text);
         Assert.Contains("品級 5", text);

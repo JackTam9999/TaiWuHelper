@@ -792,6 +792,9 @@ hierarchy of the game without copying proprietary artwork.
 - [x] Each collapsed skill card shows the active-language name, faction, grade,
       category, and a primary current status before exposing the full set of
       independent progress badges.
+- [x] Each collapsed skill card uses a circular active-language name initial
+      instead of game artwork, while an expanded card spans the result row for
+      readable facts and navigation.
 - [x] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
       appear only when supported by the corresponding typed fact.
 - [x] A completed breakthrough places one circled `正` or `逆` marker before
@@ -827,6 +830,10 @@ hierarchy of the game without copying proprietary artwork.
 - Product-owner review replaced repeated long-form direction text beside the
   primary status with compact, accessible circled `正`/`逆` markers before the
   skill name; ready skills show `突破` and their verified available directions.
+- Product-owner review changed the collapsed results into a compact circular
+  skill atlas. Each mark uses the first character of the active-language skill
+  name; opening a mark expands that card across the row without removing its
+  grade, faction, category, progress status, or detail link.
 - Live validation used the current save and the explicitly rebuilt helper-owned
   GameData `1.0.0` catalogue: 946 definitions matched the character overlay.
   Traditional Chinese search for `黑血蠱降` returned the English-localized

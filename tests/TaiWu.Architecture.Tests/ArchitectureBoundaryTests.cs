@@ -932,6 +932,8 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("@T(\"Learned\")", atlasCard);
         Assert.Contains("skill-card-grade", atlasCard);
         Assert.Contains("skill-card-status", atlasCard);
+        Assert.Contains("@SkillInitial", atlasCard);
+        Assert.DoesNotContain("CategoryGlyph", atlasCard);
         Assert.Contains("practice-marker", atlasCard);
         Assert.Contains(".Where(Breakthrough.Includes)", atlasCard);
         Assert.DoesNotContain(
@@ -1013,6 +1015,10 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("@media (max-width: 620px)", style);
         Assert.Contains("@media (prefers-reduced-motion: reduce)", style);
         Assert.Contains(".skill-card-grid", style);
+        Assert.Contains(
+            "grid-template-columns: repeat(auto-fit, minmax(148px, 1fr))",
+            style);
+        Assert.Contains(".skill-glyph::after", style);
         Assert.Contains(".atlas-faction-options", style);
         Assert.Contains(
             "grid-template-columns: repeat(auto-fit, minmax(86px, 1fr))",
