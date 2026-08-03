@@ -5,7 +5,7 @@
 | Status | In progress — awaiting product-owner completion decision |
 | Milestone | 2 |
 | Target release | TBD |
-| Last updated | 2026-08-02 |
+| Last updated | 2026-08-04 |
 
 ## Summary
 
@@ -416,9 +416,10 @@ non-interference guarantees.
 ### Application
 
 - `EnsureCombatSkillCatalogue`.
-- `SearchCombatSkills`.
-- `GetCombatSkillDetails`.
-- `ReadCharacterSkillAtlas`.
+- `SearchCombatSkillDefinitions`.
+- `ReadCombatSkillDetails`.
+- `ReadCharacterCombatSkillAtlas`.
+- `ClearCharacterCombatSkillProgressCache`.
 - Query-only ports for installed definitions and save-derived progress.
 - A helper-owned catalogue repository port with no arbitrary-path parameter.
 - Join and language-fallback policies.
@@ -430,6 +431,7 @@ non-interference guarantees.
 - Validated helper-owned catalogue-path provider.
 - Source identity, hashing, and invalidation adapter.
 - Save-derived character-progress adapter using the existing read-only session.
+- Bounded, path-safe current-progress snapshot cache with explicit clearing.
 
 ### Presentation
 
@@ -439,54 +441,60 @@ non-interference guarantees.
 - Explicit stale, unavailable, unsupported, and partial-data states.
 - Deep links from recommendation skill cards.
 - Information-only contracts with no game mutation or control action.
+- Primary ownership filtering, grouped ownership counts, and a numeric
+  low-to-high grade legend.
 
 ## Milestone acceptance criteria
 
-- [ ] A clean local installation can build the catalogue from permitted local
+- [x] A clean local installation can build the catalogue from permitted local
       GameData and language resources without a pre-populated database.
-- [ ] Every configured combat skill is imported or appears in a deterministic
+- [x] Every configured combat skill is imported or appears in a deterministic
       diagnostic explaining why it was rejected.
-- [ ] Stable identifiers are unique and query ordering is deterministic.
-- [ ] Traditional Chinese and English names are searchable with documented
+- [x] Stable identifiers are unique and query ordering is deterministic.
+- [x] Traditional Chinese and English names are searchable with documented
       fallback when one language value is unavailable.
-- [ ] The source manifest records schema, importer, GameData, and language
+- [x] The source manifest records schema, importer, GameData, and language
       identities sufficient to determine catalogue freshness.
-- [ ] Relevant source or schema changes invalidate and rebuild the catalogue.
-- [ ] Interrupted, corrupt, or missing helper databases recover without
+- [x] Relevant source or schema changes invalidate and rebuild the catalogue.
+- [x] Interrupted, corrupt, or missing helper databases recover without
       modifying any source file.
-- [ ] The database exists only in a validated helper-owned directory and is
+- [x] The database exists only in a validated helper-owned directory and is
       excluded from Git and release artifacts.
-- [ ] Character progress is read from the current save snapshot and is not
+- [x] Character progress is read from the current save snapshot and is not
       treated as static catalogue data.
-- [ ] Obtained, proficiency, study, breakthrough, direction, mastery,
+- [x] Obtained, proficiency, study, breakthrough, direction, mastery,
       activation, and equipment facts remain independent.
-- [ ] The exact reading-state-to-study-detail mapping is documented with
+- [x] The exact reading-state-to-study-detail mapping is documented with
       versioned evidence.
-- [ ] Every study detail is shown as studied, not studied, or unavailable with
+- [x] Every study detail is shown as studied, not studied, or unavailable with
       a reason; unknown is never silently shown as incomplete.
-- [ ] Breakthrough availability and practice direction agree with verified
+- [x] Breakthrough availability and practice direction agree with verified
       save evidence for the golden character skills.
-- [ ] The UI can filter learned, breakthrough-ready, broken-through, mastered,
+- [x] The UI can filter learned, breakthrough-ready, broken-through, mastered,
       and equipped skills independently.
-- [ ] The UI shows both catalogue freshness and save-snapshot freshness.
-- [ ] A player can search in either installed language and open a skill detail
+- [x] The UI shows both catalogue freshness and save-snapshot freshness.
+- [x] A player can search in either installed language and open a skill detail
       page from both the atlas and a recommendation.
-- [ ] Base definition values and current character-effective values are
+- [x] Base definition values and current character-effective values are
       visually and semantically distinct.
-- [ ] Raw descriptions are labeled as display evidence and never become
+- [x] Raw descriptions are labeled as display evidence and never become
       recommendation mechanics without a typed verified rule.
-- [ ] Catalogue absence or rebuild does not break the Epic 1 recommendation
+- [x] Catalogue absence or rebuild does not break the Epic 1 recommendation
       workflow.
-- [ ] No generated database, proprietary binary, complete extracted resource,
+- [x] No generated database, proprietary binary, complete extracted resource,
       or game artwork is committed or distributed.
-- [ ] Before-and-after fingerprints prove every inspected game-owned source is
+- [x] Before-and-after fingerprints prove every inspected game-owned source is
       unchanged by import, rebuild, query, and character-atlas operations.
-- [ ] Architecture tests keep file-write permission narrowly limited to the
-      validated helper-owned catalogue Infrastructure adapter.
-- [ ] Domain, Application, Infrastructure, API, Presentation, integration, and
+- [x] Architecture tests keep file-write permission narrowly limited to the
+      named, validated helper-owned cache Infrastructure adapters.
+- [x] Domain, Application, Infrastructure, API, Presentation, integration, and
       architecture behavior is covered by xUnit v3 tests.
-- [ ] Manual comparison against the agreed in-game skill list and study-detail
+- [x] Manual comparison against the agreed in-game skill list and study-detail
       screens confirms the atlas labels and progress for the golden save.
+- [x] The current-progress cache is bounded, path-safe, explicitly clearable,
+      and cannot become authoritative character-progress history.
+- [x] Ownership filtering and per-category counts are primary UI information;
+      low-to-high grade order is explained by numeric labels as well as color.
 
 ## Success measures
 
@@ -517,25 +525,20 @@ non-interference guarantees.
 | Extracted game artwork creates distribution risk | Use helper-owned UI assets and text-first presentation |
 | Catalogue growth makes the UI slow | Index normalized names/filters and virtualize or page results |
 
-## Open evidence questions
+## Evidence decisions
 
-These questions are work for the first backlog slice, not permission to infer:
+E2-001 through E2-017 established the versioned membership, 15-detail reading
+map, Direct/Reverse activation states, importable static fields, display-only
+raw-text boundary, and source-identity rules used by the atlas. Those decisions
+are recorded in the linked architecture and review evidence rather than
+inferred at runtime.
 
-- Does character skill-collection membership mean obtained, learned, or both?
-- Which saved value drives the percentage shown in the study-detail screen?
-- What is the complete version-specific mapping from reading state to visible
-  study details?
-- Which details are common, direct, reverse, mutually exclusive, or optional?
-- Can a skill be mastered before or without a completed breakthrough?
-- Which activation-state values mean active, broken through, direct, reverse,
-  or neutral?
-- Which static fields are safe to import across all combat-skill categories?
-- Which localized effect fields may be displayed without implying verified
-  mechanical meaning?
-- Which installed version identifiers reliably change when GameData or
-  language resources change?
+Three standalone semantics remain deliberately unavailable: visible `已大成`
+attainment, the study-screen centre percentage, and calculated runtime
+power/maximum power. They are deferred to E2-F06 and do not block honest
+catalogue or progress states.
 
 ## Delivery reference
 
-Implementation is planned in
+Implementation and completion evidence are tracked in
 [the Epic 2 backlog](./BACKLOG.md).

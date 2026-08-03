@@ -1086,11 +1086,12 @@ final completion decision.
   matches both original in-game captures by SHA-256 and compares every visible
   list/detail observation with the versioned decoder and helper UI.
 - The current-save vertical check passed with 946 joined definitions and
-  unchanged source fingerprints. After product-owner UI revisions including
-  the installed faction-profile picker, the default solution suite passed 649
-  tests: 644 passed, 0 failed, and 5 documented opt-in checks skipped.
-- Installed-catalogue verification passed 645 tests with 4 save-dependent
-  skips and verified deterministic faction element/alignment profiles without
+  unchanged source fingerprints. After product-owner UI revisions and
+  E2-018/E2-019 cache governance and atlas discoverability work, the default
+  solution suite passed 675 tests: 670 passed, 0 failed, and 5 documented
+  opt-in checks skipped.
+- Installed-catalogue verification passed 675 tests: 671 passed, 0 failed, and
+  4 save-dependent skips. It verified deterministic faction profiles without
   changing any inspected source.
 - Source/save freshness, transactional rebuild/recovery, recommendation
   independence, and all Epic 2 milestone criteria are mapped to automated or

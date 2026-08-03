@@ -1,6 +1,8 @@
 # E2-017 manual verification
 
-**Date:** 2026-08-02
+**Evidence date:** 2026-08-02
+
+**Last updated:** 2026-08-04
 
 **Decision:** Awaiting product-owner approval
 
@@ -75,6 +77,10 @@ wheel sectors exactly equal activation mask `0x7C00`.
   circled `正`/`逆` direction omits the repeated collapsed `已突破` label, while
   expanded facts retain it. Static catalogue entries without save progress are
   shown as `未取得` and remain available through the learned-state filter.
+- The learned/all/not-learned control is now a primary filter. Each displayed
+  category reports learned and not-learned counts, and the compact grade
+  legend labels all nine colors numerically from low to high in either active
+  language.
 - Live E2-013 validation exercised the current 946-definition atlas in both
   languages at desktop and mobile sizes without horizontal overflow.
 - Live E2-014 validation showed static and current facts separately, all 15
@@ -93,20 +99,22 @@ wheel sectors exactly equal activation mask `0x7C00`.
 | Missing/stale/corrupt catalogue | Lifecycle and SQLite recovery tests | Deterministic rebuild |
 | Rebuild fails or is interrupted | Transaction rollback/concurrent-reader/recovery tests | Complete old catalogue retained only as explicitly stale |
 | Helper path overlaps game/save path | Storage path-guard and architecture tests | Rejected before write |
+| Progress cache exceeds eight save paths | SQLite retention test | Oldest derived path snapshot is removed transactionally |
+| Player clears progress cache | Application, SQLite, API, and UI tests | Only helper-owned derived snapshots are removed; the save is not opened or changed |
 | Full current-save vertical read | E2-016 local integration | All inspected game/save fingerprints unchanged |
 
-Only the validated helper-owned catalogue database and its named rebuild file
-can be written. Game files, saves, directories, runtime processes, and memory
-remain outside the write boundary.
+Only the validated helper-owned catalogue database, its named rebuild file,
+and the bounded current-progress cache can be written. Game files, saves,
+directories, runtime processes, and memory remain outside the write boundary.
 
 ## Epic acceptance audit
 
-All 24 milestone criteria in EPIC-002 have implementation and evidence across
-E2-000 through E2-016. After product-owner UI revisions, the final automated
-run passed **649 total: 644 passed, 0 failed, 5 documented opt-in skips**.
-Installed-catalogue verification passed
-**645** with 4 save-dependent skips, and the current-save vertical check passed
-**1 of 1**.
+All 26 milestone criteria in EPIC-002 have implementation and evidence across
+E2-000 through E2-019. After the latest cache-governance and atlas UI work, the
+final automated run passed **675 total: 670 passed, 0 failed, 5 documented
+opt-in skips**. Installed-catalogue verification passed **675 total: 671
+passed, 0 failed, 4 save-dependent skips**, and the current-save vertical check
+passed **1 of 1**.
 
 Three standalone semantics remain unavailable because the inspected save does
 not prove them: the persisted rule for visible `已大成`, the conversion to the
