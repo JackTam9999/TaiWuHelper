@@ -71,6 +71,10 @@ wheel sectors exactly equal activation mask `0x7C00`.
   accessible summary rather than a repeated visible badge. Primary progress
   status remains visible, and opening a skill expands its facts across the
   result row while retaining the stable-ID detail link.
+- Wide category rows use nine columns. A completed breakthrough with an active
+  circled `正`/`逆` direction omits the repeated collapsed `已突破` label, while
+  expanded facts retain it. Static catalogue entries without save progress are
+  shown as `未取得` and remain available through the learned-state filter.
 - Live E2-013 validation exercised the current 946-definition atlas in both
   languages at desktop and mobile sizes without horizontal overflow.
 - Live E2-014 validation showed static and current facts separately, all 15
@@ -99,9 +103,9 @@ remain outside the write boundary.
 
 All 24 milestone criteria in EPIC-002 have implementation and evidence across
 E2-000 through E2-016. After product-owner UI revisions, the final automated
-run passed **647 total: 642 passed, 0 failed, 5 documented opt-in skips**.
+run passed **649 total: 644 passed, 0 failed, 5 documented opt-in skips**.
 Installed-catalogue verification passed
-**643** with 4 save-dependent skips, and the current-save vertical check passed
+**645** with 4 save-dependent skips, and the current-save vertical check passed
 **1 of 1**.
 
 Three standalone semantics remain unavailable because the inspected save does

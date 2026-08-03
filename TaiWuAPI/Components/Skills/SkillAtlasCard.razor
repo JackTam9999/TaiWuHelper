@@ -11,7 +11,10 @@
                 <span>@SkillInitial</span>
             </span>
             <span class="skill-card-title">
-                <span class="skill-card-status @PrimaryStatusClass">@PrimaryStatusText</span>
+                @if (ShowCollapsedPrimaryStatus)
+                {
+                    <span class="skill-card-status @PrimaryStatusClass">@PrimaryStatusText</span>
+                }
                 <span class="skill-card-name-line">
                     @if (ActiveMarkerDirection is { } activeDirection)
                     {
@@ -193,6 +196,11 @@
         : "unknown";
 
     private string PrimaryStatusText => PrimaryProgressStatusText;
+
+    private bool ShowCollapsedPrimaryStatus =>
+        IsTrue(Progress?.AttainmentMastered)
+        || Breakthrough?.IsBrokenOut != true
+        || ActiveMarkerDirection is null;
 
     private string PrimaryProgressStatusText => IsTrue(Progress?.AttainmentMastered)
         ? T("Mastered")

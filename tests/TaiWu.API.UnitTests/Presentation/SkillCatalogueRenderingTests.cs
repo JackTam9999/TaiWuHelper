@@ -299,6 +299,58 @@ public sealed partial class SkillCatalogueRenderingTests
     }
 
     [Fact]
+    public async Task Completed_breakthrough_uses_direction_without_repeated_status()
+    {
+        var definition = Definition(686, "Cloud Formula");
+        var progress = Progress(
+            42,
+            686,
+            new BreakthroughDirectionAvailability(true, false, []),
+            PracticeDirection.Reverse,
+            mastered: false,
+            simplified: false,
+            activated: false,
+            equipped: false);
+
+        var html = await RenderCardAsync(
+            Entry(definition, progress),
+            TaiwuLanguage.Chinese);
+
+        Assert.Contains(
+            "class=\"practice-marker reverse\" data-practice-state=\"active\"",
+            html);
+        Assert.DoesNotContain("class=\"skill-card-status broken\"", html);
+        Assert.Contains("class=\"progress-badge broken\"", html);
+    }
+
+    [Fact]
+    public async Task Atlas_includes_catalogue_skills_without_save_progress()
+    {
+        var learned = Definition(456, "Learned Skill");
+        var unlearned = Definition(457, "Unlearned Skill");
+        var progress = Progress(
+            42,
+            learned.SkillId,
+            new BreakthroughDirectionAvailability(false, false, []),
+            activeDirection: null,
+            mastered: false,
+            simplified: false,
+            activated: false,
+            equipped: false);
+        var (source, repository) = Current([learned, unlearned]);
+
+        var html = await RenderPageAsync(
+            source,
+            repository,
+            ProgressReader([progress]));
+        var text = VisibleText(html);
+
+        Assert.Contains("Unlearned Skill", text);
+        Assert.Contains("Not learned", text);
+        Assert.Contains("class=\"skill-card-status neutral\"", html);
+    }
+
+    [Fact]
     public async Task Skill_card_keeps_an_unavailable_status_distinct_from_not_learned()
     {
         var definition = Definition(456, "Black Blood Gu");

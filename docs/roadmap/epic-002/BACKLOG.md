@@ -796,6 +796,11 @@ hierarchy of the game without copying proprietary artwork.
 - [x] Each collapsed skill card uses a circular glyph containing the first
       character of its active-language skill name instead of game artwork, while
       an expanded card spans the result row for readable facts and navigation.
+- [x] Desktop category rows present up to nine skills on one line; completed
+      breakthrough cards rely on their circled active `正`/`逆` marker instead
+      of repeating a visible `已突破` status above the name.
+- [x] Catalogue definitions without save progress remain visible as `未取得`
+      skills and can be isolated with the learned-state filter.
 - [x] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
       appear only when supported by the corresponding typed fact.
 - [x] A completed breakthrough places one circled `正` or `逆` marker before
@@ -837,6 +842,10 @@ hierarchy of the game without copying proprietary artwork.
   skill atlas. Each mark uses the first character of the active-language skill
   name, while opening a mark expands that card across the row without removing
   its progress facts or stable-ID detail link.
+- Product-owner review set wide category rows to nine columns and removed the
+  repeated collapsed `已突破` label when the active circled `正`/`逆` marker
+  already communicates completed breakthrough. Expanded facts retain the full
+  breakthrough status.
 - Live validation used the current save and the explicitly rebuilt helper-owned
   GameData `1.0.0` catalogue: 946 definitions matched the character overlay.
   Traditional Chinese search for `黑血蠱降` returned the English-localized
@@ -1078,9 +1087,9 @@ final completion decision.
   list/detail observation with the versioned decoder and helper UI.
 - The current-save vertical check passed with 946 joined definitions and
   unchanged source fingerprints. After product-owner UI revisions including
-  the installed faction-profile picker, the default solution suite passed 647
-  tests: 642 passed, 0 failed, and 5 documented opt-in checks skipped.
-- Installed-catalogue verification passed 643 tests with 4 save-dependent
+  the installed faction-profile picker, the default solution suite passed 649
+  tests: 644 passed, 0 failed, and 5 documented opt-in checks skipped.
+- Installed-catalogue verification passed 645 tests with 4 save-dependent
   skips and verified deterministic faction element/alignment profiles without
   changing any inspected source.
 - Source/save freshness, transactional rebuild/recovery, recommendation

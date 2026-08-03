@@ -938,6 +938,7 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("data-grade=\"@GradeValue\"", atlasCard);
         Assert.Contains("@SkillInitial", atlasCard);
         Assert.DoesNotContain("CategoryGlyph", atlasCard);
+        Assert.Contains("ShowCollapsedPrimaryStatus", atlasCard);
         Assert.Contains("practice-marker", atlasCard);
         Assert.Contains(".Where(Breakthrough.Includes)", atlasCard);
         Assert.DoesNotContain(
@@ -1021,6 +1022,10 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains(".skill-card-grid", style);
         Assert.Contains(
             "grid-template-columns: repeat(auto-fit, minmax(148px, 1fr))",
+            style);
+        Assert.Contains("@media (min-width: 1100px)", style);
+        Assert.Contains(
+            "grid-template-columns: repeat(9, minmax(0, 1fr))",
             style);
         Assert.Contains(".skill-glyph::after", style);
         Assert.Contains(".skill-atlas-card.grade-0", style);

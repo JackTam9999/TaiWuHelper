@@ -1797,6 +1797,13 @@ select {
     gap: 12px;
 }
 
+@media (min-width: 1100px) {
+    .skill-card-grid {
+        grid-template-columns: repeat(9, minmax(0, 1fr));
+        column-gap: 6px;
+    }
+}
+
 .skill-atlas-card {
     --skill-grade-color: #8f9693;
     min-width: 0;
