@@ -58,12 +58,13 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Breakthrough completed", text);
         Assert.Contains("Attainment mastery", text);
         Assert.Contains("Equipped", text);
-        Assert.Contains("Shaolin Sect 1 skills", text);
+        Assert.Contains("Finger 1 skills", text);
         Assert.Contains("Shaolin Sect", text);
-        Assert.Contains("Grade 5", text);
         Assert.Contains("Black Blood Gu", text);
         Assert.Contains("class=\"skill-glyph\"", html);
         Assert.Contains("<span>B</span>", decodedHtml);
+        Assert.Contains("class=\"skill-atlas-card grade-5\"", html);
+        Assert.Contains("data-grade=\"5\"", html);
         Assert.DoesNotContain("黑血蠱降", text);
         Assert.Contains("Learned", text);
         Assert.Contains("Broken through", text);
@@ -83,6 +84,66 @@ public sealed partial class SkillCatalogueRenderingTests
                 && request.CharacterId == null
                 && request.PreferredLanguage == CatalogueLanguage.English),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Atlas_groups_by_category_and_orders_each_group_by_grade()
+    {
+        var definitions = new[]
+        {
+            Definition(
+                701,
+                "Lower Finger Skill",
+                CombatSkillDiscipline.Finger,
+                grade: 2),
+            Definition(
+                702,
+                "Higher Finger Skill",
+                CombatSkillDiscipline.Finger,
+                grade: 8),
+            Definition(
+                703,
+                "Agility Skill",
+                CombatSkillDiscipline.Agility,
+                grade: 4)
+        };
+        var progress = definitions
+            .Select(definition => Progress(
+                42,
+                definition.SkillId,
+                new BreakthroughDirectionAvailability(true, false, []),
+                PracticeDirection.Direct,
+                mastered: false,
+                simplified: false,
+                activated: false,
+                equipped: false))
+            .ToArray();
+        var (source, repository) = Current(definitions);
+
+        var html = WebUtility.HtmlDecode(await RenderPageAsync(
+            source,
+            repository,
+            ProgressReader(progress)));
+
+        var agilityHeader = html.IndexOf(
+            "id=\"skill-category-Agility\"",
+            StringComparison.Ordinal);
+        var fingerHeader = html.IndexOf(
+            "id=\"skill-category-Finger\"",
+            StringComparison.Ordinal);
+        var higherSkill = html.IndexOf(
+            "Higher Finger Skill",
+            StringComparison.Ordinal);
+        var lowerSkill = html.IndexOf(
+            "Lower Finger Skill",
+            StringComparison.Ordinal);
+
+        Assert.True(agilityHeader >= 0);
+        Assert.True(fingerHeader > agilityHeader);
+        Assert.True(higherSkill > fingerHeader);
+        Assert.True(lowerSkill > higherSkill);
+        Assert.Contains("class=\"skill-atlas-card grade-8\"", html);
+        Assert.Contains("class=\"skill-atlas-card grade-2\"", html);
     }
 
     [Fact]
@@ -186,8 +247,8 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("class=\"skill-glyph\"", html);
         Assert.Contains("<span>雲</span>", decodedHtml);
         Assert.Contains("雲術", text);
-        Assert.Contains("少林派", text);
-        Assert.Contains("品級 5", text);
+        Assert.DoesNotContain("少林派", text);
+        Assert.DoesNotContain("品級 5", text);
         Assert.Contains("已取得", text);
         Assert.Contains("可突破", text);
         Assert.Contains("突破 逆 雲術", text);
@@ -405,7 +466,11 @@ public sealed partial class SkillCatalogueRenderingTests
         return reader;
     }
 
-    private static CombatSkillDefinition Definition(int skillId, string english)
+    private static CombatSkillDefinition Definition(
+        int skillId,
+        string english,
+        CombatSkillDiscipline category = CombatSkillDiscipline.Finger,
+        int grade = 5)
     {
         var source = new CatalogueSourceReference(
             CatalogueSourceKind.GameData,
@@ -431,10 +496,10 @@ public sealed partial class SkillCatalogueRenderingTests
                             $"combat-skill-name:{skillId}"))
                 ]),
             CatalogueField<CombatSkillDiscipline>.Available(
-                CombatSkillDiscipline.Finger,
+                category,
                 source),
             CatalogueField<CombatSkillGrade>.Available(
-                new CombatSkillGrade(5),
+                new CombatSkillGrade(grade),
                 source),
             CatalogueField<CombatSkillFactionId>.Available(
                 new CombatSkillFactionId(1),

@@ -291,6 +291,12 @@ public sealed record CharacterCombatSkillProgressFilter
     public bool? Equipped { get; }
 }
 
+public enum CharacterCombatSkillAtlasSort
+{
+    DisplayName = 0,
+    CategoryThenGrade = 1
+}
+
 public sealed record CharacterCombatSkillAtlasRequest
 {
     public CharacterCombatSkillAtlasRequest(
@@ -300,7 +306,9 @@ public sealed record CharacterCombatSkillAtlasRequest
         CombatSkillCatalogueFilter? definitionFilter = null,
         CharacterCombatSkillProgressFilter? progressFilter = null,
         int offset = 0,
-        int limit = 100)
+        int limit = 100,
+        CharacterCombatSkillAtlasSort sort =
+            CharacterCombatSkillAtlasSort.DisplayName)
     {
         if (characterId < 0)
         {
@@ -344,6 +352,14 @@ public sealed record CharacterCombatSkillAtlasRequest
                 + $"{CombatSkillSearchRequest.MaximumPageSize}.");
         }
 
+        if (!Enum.IsDefined(sort))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sort),
+                sort,
+                "Unknown atlas sort order.");
+        }
+
         var actualDefinitionFilter = definitionFilter
             ?? new CombatSkillCatalogueFilter();
         if (offset > actualDefinitionFilter.CandidateLimit)
@@ -361,6 +377,7 @@ public sealed record CharacterCombatSkillAtlasRequest
         ProgressFilter = progressFilter ?? new CharacterCombatSkillProgressFilter();
         Offset = offset;
         Limit = limit;
+        Sort = sort;
     }
 
     public int? CharacterId { get; }
@@ -376,6 +393,8 @@ public sealed record CharacterCombatSkillAtlasRequest
     public int Offset { get; }
 
     public int Limit { get; }
+
+    public CharacterCombatSkillAtlasSort Sort { get; }
 }
 
 public sealed record CharacterCombatSkillAtlasEntry

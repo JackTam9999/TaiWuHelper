@@ -781,20 +781,21 @@ hierarchy of the game without copying proprietary artwork.
 - [x] Search accepts Traditional Chinese or English names.
 - [x] Filters cover category, grade, faction, equipment type, element, and
       independent progress facts including breakthrough and mastery.
-- [x] Skills can be filtered and grouped by familiar named factions, with
-      category available as an additional filter.
+- [x] Skills can be filtered by familiar named factions and are grouped by
+      combat-skill category, with each category ordered from higher to lower
+      installed grade.
 - [x] The faction filter presents a compact circular mark using the first
       character of the faction name in the active language, without requiring
       proprietary artwork.
 - [x] Faction-name and monogram color comes from the installed faction's main
       inner-power element; the outer ring comes from its primary alignment,
       with both meanings also written as localized text.
-- [x] Each collapsed skill card shows the active-language name, faction, grade,
-      category, and a primary current status before exposing the full set of
-      independent progress badges.
-- [x] Each collapsed skill card uses a circular active-language name initial
-      instead of game artwork, while an expanded card spans the result row for
-      readable facts and navigation.
+- [x] Each collapsed skill card shows the active-language name and a primary
+      current status; its category is carried by the group, and its grade by the
+      verified nine-grade color scale plus accessible text.
+- [x] Each collapsed skill card uses a circular glyph containing the first
+      character of its active-language skill name instead of game artwork, while
+      an expanded card spans the result row for readable facts and navigation.
 - [x] `已取得`, `可突破`, `已突破`, `正`, `逆`, `已大成`, and `已裝備` labels
       appear only when supported by the corresponding typed fact.
 - [x] A completed breakthrough places one circled `正` or `逆` marker before
@@ -825,15 +826,17 @@ hierarchy of the game without copying proprietary artwork.
   color, and installed `Organization.MainMorality` for its outer ring;
   localized element and alignment labels preserve the same information without
   relying on color.
-- Results remain grouped by faction, `品階` is relabeled as `品級`, and grade
-  plus the primary current status remain visible in each collapsed card.
+- Faction remains a named filter; results are grouped by category and ordered
+  from higher to lower grade. The circle and skill name use the installed
+  nine-grade sequence (grey through red), while accessible card text preserves
+  the numeric grade without adding another visible badge.
 - Product-owner review replaced repeated long-form direction text beside the
   primary status with compact, accessible circled `正`/`逆` markers before the
   skill name; ready skills show `突破` and their verified available directions.
 - Product-owner review changed the collapsed results into a compact circular
   skill atlas. Each mark uses the first character of the active-language skill
-  name; opening a mark expands that card across the row without removing its
-  grade, faction, category, progress status, or detail link.
+  name, while opening a mark expands that card across the row without removing
+  its progress facts or stable-ID detail link.
 - Live validation used the current save and the explicitly rebuilt helper-owned
   GameData `1.0.0` catalogue: 946 definitions matched the character overlay.
   Traditional Chinese search for `黑血蠱降` returned the English-localized
@@ -1075,9 +1078,9 @@ final completion decision.
   list/detail observation with the versioned decoder and helper UI.
 - The current-save vertical check passed with 946 joined definitions and
   unchanged source fingerprints. After product-owner UI revisions including
-  the installed faction-profile picker, the default solution suite passed 645
-  tests: 640 passed, 0 failed, and 5 documented opt-in checks skipped.
-- Installed-catalogue verification passed 641 tests with 4 save-dependent
+  the installed faction-profile picker, the default solution suite passed 647
+  tests: 642 passed, 0 failed, and 5 documented opt-in checks skipped.
+- Installed-catalogue verification passed 643 tests with 4 save-dependent
   skips and verified deterministic faction element/alignment profiles without
   changing any inspected source.
 - Source/save freshness, transactional rebuild/recovery, recommendation

@@ -1405,7 +1405,7 @@ select {
 
 .atlas-heading h2,
 .compact-heading h3,
-.skill-faction-heading h3 {
+.skill-category-heading h3 {
     margin: 0;
     font-family: Georgia, "Microsoft JhengHei", serif;
     font-weight: 500;
@@ -1749,7 +1749,7 @@ select {
 }
 
 .atlas-result-heading,
-.skill-faction-heading,
+.skill-category-heading,
 .atlas-pagination {
     display: flex;
     align-items: center;
@@ -1767,26 +1767,26 @@ select {
     color: var(--ink);
 }
 
-.skill-faction-list {
+.skill-category-list {
     display: grid;
     gap: 32px;
 }
 
-.skill-faction-section {
+.skill-category-section {
     display: grid;
     gap: 13px;
 }
 
-.skill-faction-heading {
+.skill-category-heading {
     padding-bottom: 10px;
     border-bottom: 1px solid var(--line);
 }
 
-.skill-faction-heading h3 {
+.skill-category-heading h3 {
     font-size: 1.35rem;
 }
 
-.skill-faction-heading span {
+.skill-category-heading span {
     color: var(--muted);
     font-size: 0.74rem;
 }
@@ -1798,11 +1798,48 @@ select {
 }
 
 .skill-atlas-card {
+    --skill-grade-color: #8f9693;
     min-width: 0;
     border: 1px solid transparent;
     border-radius: 3px;
     background: transparent;
     transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.skill-atlas-card.grade-0 {
+    --skill-grade-color: #8f9693;
+}
+
+.skill-atlas-card.grade-1 {
+    --skill-grade-color: #e8eeee;
+}
+
+.skill-atlas-card.grade-2 {
+    --skill-grade-color: #8eb657;
+}
+
+.skill-atlas-card.grade-3 {
+    --skill-grade-color: #4f82b7;
+}
+
+.skill-atlas-card.grade-4 {
+    --skill-grade-color: #4faaa8;
+}
+
+.skill-atlas-card.grade-5 {
+    --skill-grade-color: #9d5cb3;
+}
+
+.skill-atlas-card.grade-6 {
+    --skill-grade-color: #c9a13d;
+}
+
+.skill-atlas-card.grade-7 {
+    --skill-grade-color: #d66f2d;
+}
+
+.skill-atlas-card.grade-8 {
+    --skill-grade-color: #d84b48;
 }
 
 .skill-atlas-card:hover {
@@ -1820,7 +1857,7 @@ select {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
-    min-height: 188px;
+    min-height: 152px;
     justify-items: center;
     align-content: start;
     padding: 12px 8px 14px;
@@ -1844,9 +1881,9 @@ select {
     width: 68px;
     height: 68px;
     place-items: center;
-    border: 3px solid rgba(215, 182, 107, 0.78);
+    border: 3px solid var(--skill-grade-color);
     border-radius: 50%;
-    color: var(--gold);
+    color: var(--skill-grade-color);
     background:
         radial-gradient(circle at 50% 42%, rgba(51, 72, 69, 0.9), rgba(8, 22, 23, 0.98) 72%);
     font-family: Georgia, "Microsoft JhengHei", serif;
@@ -1861,7 +1898,7 @@ select {
 .skill-glyph::after {
     position: absolute;
     inset: 5px;
-    border: 1px solid rgba(215, 182, 107, 0.3);
+    border: 1px solid color-mix(in srgb, var(--skill-grade-color) 42%, transparent);
     border-radius: inherit;
     content: "";
 }
@@ -1934,7 +1971,7 @@ select {
 }
 
 .skill-card-title strong {
-    color: #edf2ee;
+    color: var(--skill-grade-color);
     font-size: 0.9rem;
 }
 
@@ -1943,63 +1980,26 @@ select {
     font-size: 0.68rem;
 }
 
-.skill-card-summary-tags {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 5px;
-    margin-top: 3px;
-}
-
-.skill-card-grade,
 .skill-card-status {
     width: fit-content;
-    padding: 3px 6px;
-    border: 1px solid rgba(205, 221, 211, 0.18);
-    border-radius: 999px;
     color: #c8d3ce;
-    background: rgba(205, 221, 211, 0.06);
-    font-size: 0.59rem;
+    font-size: 0.63rem;
     font-weight: 800;
     line-height: 1.2;
 }
 
-.skill-card-grade {
-    border-color: rgba(215, 182, 107, 0.32);
-    color: #ecd495;
-}
-
 .skill-card-status.learned {
-    border-color: rgba(101, 182, 162, 0.38);
     color: #bce4d8;
-    background: rgba(44, 112, 96, 0.15);
 }
 
 .skill-card-status.ready,
 .skill-card-status.broken,
 .skill-card-status.mastered {
-    border-color: rgba(215, 182, 107, 0.38);
     color: #ecd495;
-    background: rgba(215, 182, 107, 0.1);
-}
-
-.skill-card-cost {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: grid;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    border: 1px solid rgba(101, 182, 162, 0.33);
-    border-radius: 50%;
-    color: #bce4d8;
-    font-size: 0.72rem;
-    font-weight: 800;
 }
 
 .skill-atlas-card details[open] > summary {
-    grid-template-columns: 72px minmax(0, 1fr) auto;
+    grid-template-columns: 72px minmax(0, 1fr);
     gap: 13px;
     min-height: 98px;
     align-items: center;
@@ -2017,17 +2017,12 @@ select {
     justify-items: start;
 }
 
-.skill-atlas-card details[open] .skill-card-name-line,
-.skill-atlas-card details[open] .skill-card-summary-tags {
+.skill-atlas-card details[open] .skill-card-name-line {
     justify-content: flex-start;
 }
 
 .skill-atlas-card details[open] .skill-card-name-line strong {
     flex: 1 1 90px;
-}
-
-.skill-atlas-card details[open] .skill-card-cost {
-    position: static;
 }
 
 .skill-card-body {
@@ -2794,14 +2789,6 @@ select {
         font-size: 1.35rem;
     }
 
-    .skill-atlas-card details[open] .skill-card-title {
-        padding-inline-end: 30px;
-    }
-
-    .skill-atlas-card details[open] .skill-card-cost {
-        position: absolute;
-    }
-
     .skill-detail-hero {
         grid-template-columns: 1fr;
         padding: 24px;
@@ -2822,7 +2809,7 @@ select {
     }
 
     .atlas-result-heading,
-    .skill-faction-heading,
+    .skill-category-heading,
     .atlas-pagination {
         align-items: flex-start;
         flex-direction: column;

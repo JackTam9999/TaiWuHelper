@@ -2,13 +2,16 @@
 @using TaiWu.Domain.CombatSkills
 @using TaiWu.Domain.CombatSnapshots
 
-<article class="skill-atlas-card" data-reference="@Entry.StableKey">
+<article class="skill-atlas-card @GradeClass"
+         data-reference="@Entry.StableKey"
+         data-grade="@GradeValue">
     <details>
-        <summary>
+        <summary aria-label="@SummaryAriaLabel">
             <span class="skill-glyph" aria-hidden="true">
                 <span>@SkillInitial</span>
             </span>
             <span class="skill-card-title">
+                <span class="skill-card-status @PrimaryStatusClass">@PrimaryStatusText</span>
                 <span class="skill-card-name-line">
                     @if (ActiveMarkerDirection is { } activeDirection)
                     {
@@ -34,14 +37,6 @@
                     }
                     <strong title="@DisplayName">@DisplayName</strong>
                 </span>
-                <small title="@StaticSummary">@StaticSummary</small>
-                <span class="skill-card-summary-tags">
-                    <span class="skill-card-grade">@GradeText</span>
-                    <span class="skill-card-status @PrimaryStatusClass">@PrimaryStatusText</span>
-                </span>
-            </span>
-            <span class="skill-card-cost" aria-label="@T("Base grid cost")">
-                @CostText
             </span>
         </summary>
 
@@ -161,9 +156,16 @@
         ? Entry.DisplayName.Value.Value.Text
         : T("Unnamed skill");
 
-    private string StaticSummary => string.Join(
+    private string SummaryAriaLabel => string.Join(
         " · ",
-        new[] { FactionText, CategoryText }
+        new[]
+        {
+            DisplayName,
+            GradeText,
+            CategoryText,
+            FactionText,
+            PrimaryStatusText
+        }
             .Where(value => !string.IsNullOrWhiteSpace(value)));
 
     private string FactionText =>
@@ -181,6 +183,14 @@
     private string GradeText => Entry.Definition?.Grade.IsAvailable == true
         ? $"{T("Grade")} {Entry.Definition.Grade.Value.Value}"
         : T("Grade unavailable");
+
+    private string GradeClass => Entry.Definition?.Grade.IsAvailable == true
+        ? $"grade-{Entry.Definition.Grade.Value.Value}"
+        : "grade-unknown";
+
+    private string GradeValue => Entry.Definition?.Grade.IsAvailable == true
+        ? Entry.Definition.Grade.Value.Value.ToString()
+        : "unknown";
 
     private string PrimaryStatusText => PrimaryProgressStatusText;
 
@@ -211,10 +221,6 @@
     private string SkillInitial => string.IsNullOrWhiteSpace(DisplayName)
         ? "?"
         : DisplayName.Trim()[0].ToString();
-
-    private string CostText => Entry.BaseGridCost.IsAvailable
-        ? Entry.BaseGridCost.Value.Value.ToString()
-        : "—";
 
     private string BaseCostText => Entry.BaseGridCost.IsAvailable
         ? Entry.BaseGridCost.Value.Value.ToString()

@@ -919,7 +919,11 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("class=\"atlas-faction-picker\"", atlasPage);
         Assert.Contains("data-faction-id", atlasPage);
         Assert.Contains("ICombatSkillFactionProfileSource", atlasPage);
-        Assert.Contains("GroupBy(FactionOf)", atlasPage);
+        Assert.Contains("GroupBy(CategoryOf)", atlasPage);
+        Assert.Contains("OrderByDescending(GradeOf)", atlasPage);
+        Assert.Contains(
+            "CharacterCombatSkillAtlasSort.CategoryThenGrade",
+            atlasPage);
 
         var atlasCard = File.ReadAllText(
             Path.Combine(
@@ -927,11 +931,11 @@ public sealed partial class ArchitectureBoundaryTests
                 "Skills",
                 "SkillAtlasCard.razor"));
         Assert.Contains("<details>", atlasCard);
-        Assert.Contains("<summary>", atlasCard);
+        Assert.Contains("<summary aria-label=\"@SummaryAriaLabel\">", atlasCard);
         Assert.Contains("role=\"list\"", atlasCard);
         Assert.Contains("@T(\"Learned\")", atlasCard);
-        Assert.Contains("skill-card-grade", atlasCard);
         Assert.Contains("skill-card-status", atlasCard);
+        Assert.Contains("data-grade=\"@GradeValue\"", atlasCard);
         Assert.Contains("@SkillInitial", atlasCard);
         Assert.DoesNotContain("CategoryGlyph", atlasCard);
         Assert.Contains("practice-marker", atlasCard);
@@ -1019,6 +1023,10 @@ public sealed partial class ArchitectureBoundaryTests
             "grid-template-columns: repeat(auto-fit, minmax(148px, 1fr))",
             style);
         Assert.Contains(".skill-glyph::after", style);
+        Assert.Contains(".skill-atlas-card.grade-0", style);
+        Assert.Contains(".skill-atlas-card.grade-8", style);
+        Assert.Contains("--skill-grade-color", style);
+        Assert.Contains(".skill-category-list", style);
         Assert.Contains(".atlas-faction-options", style);
         Assert.Contains(
             "grid-template-columns: repeat(auto-fit, minmax(86px, 1fr))",

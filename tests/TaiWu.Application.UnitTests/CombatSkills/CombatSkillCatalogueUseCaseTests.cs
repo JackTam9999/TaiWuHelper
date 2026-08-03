@@ -953,6 +953,54 @@ public sealed class CombatSkillCatalogueUseCaseTests
     }
 
     [Fact]
+    public async Task Atlas_category_and_grade_sort_is_applied_before_paging()
+    {
+        var definitions = new[]
+        {
+            DefinitionWithFields(
+                10,
+                CombatSkillDiscipline.Neigong,
+                grade: 2,
+                faction: 1,
+                CombatSkillElement.Wood,
+                CombatSkillEquipmentType.Attack,
+                (CatalogueLanguage.English, "Alpha Low Grade")),
+            DefinitionWithFields(
+                11,
+                CombatSkillDiscipline.Finger,
+                grade: 8,
+                faction: 1,
+                CombatSkillElement.Wood,
+                CombatSkillEquipmentType.Attack,
+                (CatalogueLanguage.English, "Zulu High Grade")),
+            DefinitionWithFields(
+                12,
+                CombatSkillDiscipline.Neigong,
+                grade: 5,
+                faction: 1,
+                CombatSkillElement.Wood,
+                CombatSkillEquipmentType.Attack,
+                (CatalogueLanguage.English, "Bravo Middle Grade"))
+        };
+        var useCase = new ReadCharacterCombatSkillAtlas(
+            Source(Available(CurrentIdentity, definitions)),
+            CurrentRepository(definitions),
+            ProgressReader([]));
+
+        var result = await useCase.ExecuteAsync(
+            new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                offset: 0,
+                limit: 2,
+                sort: CharacterCombatSkillAtlasSort.CategoryThenGrade),
+            CancellationToken);
+
+        Assert.Equal(3, result.TotalMatches);
+        Assert.Equal([12, 10], result.Entries.Select(entry => entry.SkillId));
+    }
+
+    [Fact]
     public async Task Details_can_join_definition_and_character_progress()
     {
         var definitions = Definitions();
@@ -1106,6 +1154,11 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 new string(
                     'x',
                     CombatSkillSearchRequest.MaximumQueryLength + 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CharacterCombatSkillAtlasRequest(
+                42,
+                CatalogueLanguage.English,
+                sort: (CharacterCombatSkillAtlasSort)int.MaxValue));
         Assert.Throws<ArgumentOutOfRangeException>(
             () => new CharacterCombatSkillProgressFilter(
                 activeDirection: PracticeDirection.Neutral));

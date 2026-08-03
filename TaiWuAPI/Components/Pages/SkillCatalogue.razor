@@ -351,19 +351,22 @@
                 }
             </div>
 
-            <div class="skill-faction-list">
+            <div class="skill-category-list">
                 @foreach (var group in _atlas.Entries
-                    .GroupBy(FactionOf)
-                    .OrderBy(group => group.Key ?? int.MaxValue))
+                    .GroupBy(CategoryOf)
+                    .OrderBy(group => group.Key.HasValue ? (int)group.Key.Value : int.MaxValue))
                 {
-                    <section class="skill-faction-section"
-                             aria-labelledby="@FactionHeadingId(group.Key)">
-                        <div class="skill-faction-heading">
-                            <h3 id="@FactionHeadingId(group.Key)">@FactionHeading(group.Key)</h3>
+                    <section class="skill-category-section"
+                             aria-labelledby="@CategoryHeadingId(group.Key)">
+                        <div class="skill-category-heading">
+                            <h3 id="@CategoryHeadingId(group.Key)">@CategoryHeading(group.Key)</h3>
                             <span>@group.Count() @T("skills")</span>
                         </div>
                         <div class="skill-card-grid">
-                            @foreach (var entry in group)
+                            @foreach (var entry in group
+                                .OrderByDescending(GradeOf)
+                                .ThenBy(DisplayNameOf, StringComparer.Ordinal)
+                                .ThenBy(entry => entry.SkillId))
                             {
                                 <SkillAtlasCard @key="entry.StableKey" Entry="entry" />
                             }
@@ -476,7 +479,8 @@
                     _filters.DefinitionFilter,
                     _filters.ProgressFilter,
                     _offset,
-                    PageSize),
+                    PageSize,
+                    CharacterCombatSkillAtlasSort.CategoryThenGrade),
                 cancellationToken);
     }
 
@@ -571,18 +575,31 @@
         ? string.Empty
         : $"{T("Page")} {(_atlas.Offset / PageSize) + 1} · {_atlas.TotalMatches} {T("results")}";
 
-    private static int? FactionOf(
+    private static CombatSkillDiscipline? CategoryOf(
         CharacterCombatSkillAtlasEntry entry) =>
-        entry.Definition?.Faction.IsAvailable == true
-            ? entry.Definition.Faction.Value.Value
+        entry.Definition?.Category.IsAvailable == true
+            ? entry.Definition.Category.Value
             : null;
 
-    private string FactionHeading(int? factionId) => factionId.HasValue
-        ? FactionLabel(factionId.Value)
-        : T("Unknown faction");
+    private static int GradeOf(CharacterCombatSkillAtlasEntry entry) =>
+        entry.Definition?.Grade.IsAvailable == true
+            ? entry.Definition.Grade.Value.Value
+            : int.MinValue;
 
-    private static string FactionHeadingId(int? factionId) =>
-        $"skill-faction-{(factionId?.ToString() ?? "unknown")}";
+    private static string DisplayNameOf(
+        CharacterCombatSkillAtlasEntry entry) =>
+        entry.DisplayName.Value.IsAvailable
+            ? entry.DisplayName.Value.Value.Text
+            : string.Empty;
+
+    private string CategoryHeading(CombatSkillDiscipline? category) =>
+        category.HasValue
+            ? CategoryLabel(category.Value)
+            : T("Unknown category");
+
+    private static string CategoryHeadingId(
+        CombatSkillDiscipline? category) =>
+        $"skill-category-{(category?.ToString() ?? "unknown")}";
 
     private string CategoryLabel(CombatSkillDiscipline category) =>
         CombatSkillUiText.Category(Language, category);

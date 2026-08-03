@@ -107,7 +107,7 @@ public sealed class ReadCharacterCombatSkillAtlas(
             value => value.SkillId);
         var normalizedQuery = SearchCombatSkillDefinitions.NormalizeSearchText(
             request.Query);
-        var ranked = bySkillId.Keys
+        var candidates = bySkillId.Keys
             .Concat(progressBySkillId.Keys)
             .Distinct()
             .Select(skillId =>
@@ -131,16 +131,8 @@ public sealed class ReadCharacterCombatSkillAtlas(
             .Select(entry => new RankedEntry(
                 entry,
                 IsExactMatch(entry.Definition, normalizedQuery)))
-            .OrderByDescending(value => value.IsExactMatch)
-            .ThenBy(value =>
-                value.Entry.DisplayName.Value.IsAvailable ? 0 : 1)
-            .ThenBy(
-                value => value.Entry.DisplayName.Value.IsAvailable
-                    ? SearchCombatSkillDefinitions.NormalizeSearchText(
-                        value.Entry.DisplayName.Value.Value.Text)
-                    : string.Empty,
-                StringComparer.Ordinal)
-            .ThenBy(value => value.Entry.SkillId)
+            .ToImmutableArray();
+        var ranked = OrderCandidates(candidates, request.Sort)
             .ToImmutableArray();
         var entries = ranked
             .Skip(request.Offset)
@@ -310,6 +302,44 @@ public sealed class ReadCharacterCombatSkillAtlas(
             SearchCombatSkillDefinitions.NormalizeSearchText(name.Text),
             normalizedQuery,
             StringComparison.Ordinal));
+
+    private static IOrderedEnumerable<RankedEntry> OrderCandidates(
+        IEnumerable<RankedEntry> candidates,
+        CharacterCombatSkillAtlasSort sort) => sort switch
+        {
+            CharacterCombatSkillAtlasSort.CategoryThenGrade => candidates
+                .OrderBy(value =>
+                    value.Entry.Definition?.Category.IsAvailable == true
+                        ? (int)value.Entry.Definition.Category.Value
+                        : int.MaxValue)
+                .ThenBy(value =>
+                    value.Entry.Definition?.Grade.IsAvailable == true ? 0 : 1)
+                .ThenByDescending(value =>
+                    value.Entry.Definition?.Grade.IsAvailable == true
+                        ? value.Entry.Definition.Grade.Value.Value
+                        : int.MinValue)
+                .ThenBy(DisplayNameAvailability)
+                .ThenBy(
+                    NormalizedDisplayName,
+                    StringComparer.Ordinal)
+                .ThenBy(value => value.Entry.SkillId),
+            _ => candidates
+                .OrderByDescending(value => value.IsExactMatch)
+                .ThenBy(DisplayNameAvailability)
+                .ThenBy(
+                    NormalizedDisplayName,
+                    StringComparer.Ordinal)
+                .ThenBy(value => value.Entry.SkillId)
+        };
+
+    private static int DisplayNameAvailability(RankedEntry value) =>
+        value.Entry.DisplayName.Value.IsAvailable ? 0 : 1;
+
+    private static string NormalizedDisplayName(RankedEntry value) =>
+        value.Entry.DisplayName.Value.IsAvailable
+            ? SearchCombatSkillDefinitions.NormalizeSearchText(
+                value.Entry.DisplayName.Value.Value.Text)!
+            : string.Empty;
 
     private static bool MatchesProgressFilter(
         CharacterCombatSkillAtlasEntry entry,
