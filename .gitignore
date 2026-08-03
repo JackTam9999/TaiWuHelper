@@ -45,6 +45,8 @@ steam_api64.dll
 # Helper-owned generated combat-skill catalogue
 combat-skill-catalogue*.db
 combat-skill-catalogue*.db-*
+character-combat-skill-progress*.db
+character-combat-skill-progress*.db-*
 
 # Local-only Taiwu game UI evidence
 docs/scenarios/evidence/*.png

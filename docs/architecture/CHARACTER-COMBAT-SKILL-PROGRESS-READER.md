@@ -13,6 +13,10 @@ lock, read-only archive loader, before/after SHA-256 capture, and rejection of a
 save that changes during the read. It projects typed GameData values directly
 and never consumes `SaveGameReport`, legacy report lines, or diagnostic text.
 
+Before opening the archive, the adapter checks a helper-owned structured SQLite
+cache. A matching cache entry bypasses GameData archive loading. Cache misses
+retain the full before/after SHA-256 verification described above.
+
 The verified mapping is restricted to the main GameData domain assembly's
 product version
 `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a`. Other versions return the
@@ -53,16 +57,42 @@ separate typed states. Failure messages omit the configured local path. Invalid
 proficiency, reading, or activation values become unavailable fields plus
 warnings rather than guessed defaults.
 
-The overlay remains in memory and is never inserted into the static SQLite
-catalogue. The save, game files, running process, and in-game state remain
-unchanged.
+## Structured local cache
+
+The derived raw progress snapshot is stored separately from the static skill
+catalogue at
+`%LOCALAPPDATA%\TaiWuHelper\save-cache\character-combat-skill-progress.db`.
+It uses normalized rows for snapshot metadata, characters, and combat-skill
+fields; it is not a serialized UI-result blob. The configured save path is
+represented only by an opaque SHA-256 path key.
+
+A hit requires the same file length and UTC modification time, GameData
+version, mapping version, and requested character. The persisted save SHA-256
+continues to identify all reconstructed Domain values. A changed save, game
+version, or mapping version misses the cache and atomically replaces stale
+derived rows after a verified read. Language labels are reapplied from the
+current installed language source, so changing UI language does not reload the
+save.
+
+Cache read or write failure falls back to the read-only source path and never
+blocks a valid save read. The cache path is helper-owned, cannot overlap the
+game or save directories, and is guarded against reparse-point traversal. The
+save, game files, running process, and in-game state remain unchanged.
+
+Information-level timing logs separate label loading, cache lookup, archive
+work, cache storage, file revision capture, both full fingerprints, GameData
+archive loading, and projection. These timings make cold misses and persistent
+cache hits directly distinguishable.
 
 ## Verification status
 
 Pure mapping tests cover independent facts, missing proficiency, zero-state
 learned skills, immediate Direct breakthrough, completed Reverse breakthrough,
-and invalid values. Architecture tests require typed GameData access and reject
-legacy report parsing or file writes.
+and invalid values. SQLite tests cover structured round trips, revision,
+GameData and mapping-version misses, atomic snapshot replacement, and multiple
+characters. Architecture tests require typed GameData access, restrict
+persistence to named helper-owned stores, and continue to reject archive or
+game writes.
 
 The opt-in golden integration assertion passed on 2026-08-02 against save
 fingerprint

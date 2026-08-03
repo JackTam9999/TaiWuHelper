@@ -1791,6 +1791,72 @@ select {
     font-size: 0.74rem;
 }
 
+.skill-status-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: rgba(205, 221, 211, 0.025);
+}
+
+.skill-status-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 0.65rem;
+}
+
+.skill-status-legend-directions {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.skill-status-legend .practice-marker {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
+    font-size: 0.58rem;
+}
+
+.skill-status-legend-name,
+.skill-status-legend-symbol {
+    display: inline-grid;
+    min-width: 20px;
+    height: 20px;
+    place-items: center;
+    color: #c8d3ce;
+    font-size: 0.68rem;
+}
+
+.skill-status-legend-name.is-unlearned {
+    text-decoration-line: line-through;
+    opacity: 0.58;
+}
+
+.skill-status-legend-name.is-equipped {
+    color: #eef4f1;
+    font-weight: 900;
+}
+
+.skill-status-legend-symbol {
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-weight: 900;
+}
+
+.skill-status-legend-symbol.is-complete {
+    color: #9ee0cf;
+    background: rgba(44, 112, 96, 0.18);
+}
+
+.skill-status-legend-symbol.is-unavailable {
+    color: #8a918e;
+    border-style: dashed;
+}
+
 .skill-card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
@@ -1931,10 +1997,11 @@ select {
     gap: 4px 5px;
 }
 
-.skill-card-name-line strong {
+.skill-card-name {
     flex: 0 1 auto;
     min-width: 0;
     max-width: 100%;
+    font-weight: 650;
 }
 
 .practice-marker {
@@ -1962,22 +2029,28 @@ select {
     background: rgba(151, 58, 39, 0.22);
 }
 
-.breakthrough-prefix {
-    flex: 0 0 auto;
-    color: #ecd495;
-    font-size: 0.64rem;
-    font-weight: 900;
-    letter-spacing: 0.02em;
+.practice-marker[data-practice-state="available"] {
+    color: #7f8984;
+    background: rgba(127, 137, 132, 0.08);
+    box-shadow: inset 0 0 0 2px rgba(7, 21, 22, 0.58);
+    opacity: 0.84;
 }
 
-.skill-card-title strong,
+.practice-marker.unavailable {
+    color: #8a918e;
+    border-style: dashed;
+    background: transparent;
+    opacity: 0.72;
+}
+
+.skill-card-name,
 .skill-card-title small {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.skill-card-title strong {
+.skill-card-name {
     color: var(--skill-grade-color);
     font-size: 0.9rem;
 }
@@ -1987,22 +2060,48 @@ select {
     font-size: 0.68rem;
 }
 
-.skill-card-status {
-    width: fit-content;
-    color: #c8d3ce;
-    font-size: 0.63rem;
-    font-weight: 800;
-    line-height: 1.2;
+.skill-atlas-card.status-unlearned .skill-card-name {
+    text-decoration-line: line-through;
+    text-decoration-thickness: 1px;
+    text-decoration-color: currentColor;
+    opacity: 0.56;
 }
 
-.skill-card-status.learned {
-    color: #bce4d8;
+.skill-atlas-card.status-unlearned .skill-glyph {
+    filter: saturate(0.48);
+    opacity: 0.62;
 }
 
-.skill-card-status.ready,
-.skill-card-status.broken,
-.skill-card-status.mastered {
-    color: #ecd495;
+.skill-atlas-card.status-unknown .skill-card-name {
+    opacity: 0.72;
+}
+
+.skill-atlas-card.is-equipped .skill-card-name {
+    font-weight: 900;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--skill-grade-color) 24%, transparent);
+}
+
+.skill-atlas-card.is-equipped .practice-marker[data-practice-state="active"] {
+    border-width: 2px;
+    font-weight: 900;
+    box-shadow:
+        0 0 7px color-mix(in srgb, currentColor 34%, transparent),
+        inset 0 0 0 1px rgba(7, 21, 22, 0.72);
+}
+
+.skill-study-complete-marker {
+    display: inline-grid;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    place-items: center;
+    border: 1px solid rgba(101, 182, 162, 0.5);
+    border-radius: 50%;
+    color: #9ee0cf;
+    background: rgba(44, 112, 96, 0.18);
+    font-size: 0.68rem;
+    font-weight: 900;
+    line-height: 1;
 }
 
 .skill-atlas-card details[open] > summary {
@@ -2028,49 +2127,15 @@ select {
     justify-content: flex-start;
 }
 
-.skill-atlas-card details[open] .skill-card-name-line strong {
+.skill-atlas-card details[open] .skill-card-name {
     flex: 1 1 90px;
 }
 
 .skill-card-body {
     display: grid;
     gap: 14px;
-    padding: 0 13px 14px;
+    padding: 12px 13px 14px;
     border-top: 1px solid var(--line);
-}
-
-.skill-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding-top: 12px;
-}
-
-.progress-badge {
-    padding: 4px 7px;
-    border: 1px solid rgba(205, 221, 211, 0.18);
-    border-radius: 999px;
-    color: #c8d3ce;
-    background: rgba(205, 221, 211, 0.06);
-    font-size: 0.63rem;
-    font-weight: 800;
-}
-
-.progress-badge.learned,
-.progress-badge.equipped,
-.progress-badge.active {
-    border-color: rgba(101, 182, 162, 0.38);
-    color: #bce4d8;
-    background: rgba(44, 112, 96, 0.15);
-}
-
-.progress-badge.ready,
-.progress-badge.broken,
-.progress-badge.mastered,
-.progress-badge.direction {
-    border-color: rgba(215, 182, 107, 0.38);
-    color: #ecd495;
-    background: rgba(215, 182, 107, 0.1);
 }
 
 .skill-card-facts {

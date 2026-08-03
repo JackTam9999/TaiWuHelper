@@ -2,20 +2,20 @@
 @using TaiWu.Domain.CombatSkills
 @using TaiWu.Domain.CombatSnapshots
 
-<article class="skill-atlas-card @GradeClass"
+<article class="skill-atlas-card @GradeClass @ProgressVisualClasses"
          data-reference="@Entry.StableKey"
-         data-grade="@GradeValue">
+         data-grade="@GradeValue"
+         data-learned-state="@LearnedStateKey"
+         data-breakthrough-state="@BreakthroughStateKey"
+         data-equipped="@IsEquipped.ToString().ToLowerInvariant()"
+         data-study-complete="@StudyComplete.ToString().ToLowerInvariant()">
     <details>
         <summary aria-label="@SummaryAriaLabel">
             <span class="skill-glyph" aria-hidden="true">
                 <span>@SkillInitial</span>
             </span>
             <span class="skill-card-title">
-                @if (ShowCollapsedPrimaryStatus)
-                {
-                    <span class="skill-card-status @PrimaryStatusClass">@PrimaryStatusText</span>
-                }
-                <span class="skill-card-name-line">
+                <span class="skill-card-name-line" title="@ProgressTooltip">
                     @if (ActiveMarkerDirection is { } activeDirection)
                     {
                         <span class="practice-marker @DirectionClass(activeDirection)"
@@ -27,7 +27,6 @@
                     }
                     else if (ReadyDirections.Count > 0)
                     {
-                        <span class="breakthrough-prefix">@T("Breakthrough")</span>
                         @foreach (var readyDirection in ReadyDirections)
                         {
                             <span class="practice-marker @DirectionClass(readyDirection)"
@@ -38,53 +37,30 @@
                             </span>
                         }
                     }
-                    <strong title="@DisplayName">@DisplayName</strong>
+                    else if (ShowUnavailableMarker)
+                    {
+                        <span class="practice-marker unavailable"
+                              data-practice-state="unavailable"
+                              role="img"
+                              aria-label="@T("Status unavailable")">
+                            <span aria-hidden="true">?</span>
+                        </span>
+                    }
+                    <span class="skill-card-name">@DisplayName</span>
+                    @if (StudyComplete)
+                    {
+                        <span class="skill-study-complete-marker"
+                              role="img"
+                              aria-label="@T("All details studied")"
+                              title="@StudyText">
+                            <span aria-hidden="true">✓</span>
+                        </span>
+                    }
                 </span>
             </span>
         </summary>
 
         <div class="skill-card-body">
-            <div class="skill-badges"
-                 role="list"
-                 aria-label="@T("Character progress")">
-                @if (IsTrue(Entry.Learned))
-                {
-                    <span class="progress-badge learned" role="listitem">@T("Learned")</span>
-                }
-                @if (Breakthrough?.CanBreakthroughNow == true)
-                {
-                    <span class="progress-badge ready" role="listitem">@T("Ready to break through")</span>
-                }
-                @if (Breakthrough?.IsBrokenOut == true)
-                {
-                    <span class="progress-badge broken" role="listitem">@T("Broken through")</span>
-                }
-                @if (ActiveMarkerDirection is { } direction)
-                {
-                    <span class="progress-badge direction" role="listitem">@DirectionLabel(direction)</span>
-                }
-                @if (IsTrue(Progress?.AttainmentMastered))
-                {
-                    <span class="progress-badge mastered" role="listitem">@T("Mastered")</span>
-                }
-                @if (IsTrue(Progress?.Simplified))
-                {
-                    <span class="progress-badge simplified" role="listitem">@T("Simplified")</span>
-                }
-                @if (IsTrue(Progress?.Activated))
-                {
-                    <span class="progress-badge active" role="listitem">@T("Activated")</span>
-                }
-                @if (IsTrue(Progress?.Equipped))
-                {
-                    <span class="progress-badge equipped" role="listitem">@T("Equipped")</span>
-                }
-                @if (!HasPositiveProgressBadge)
-                {
-                    <span class="progress-badge neutral" role="listitem">@NonPositiveStatusText</span>
-                }
-            </div>
-
             <dl class="skill-card-facts">
                 <div class="skill-study-fact">
                     <dt>@T("Study progress")</dt>
@@ -191,7 +167,7 @@
             GradeText,
             CategoryText,
             FactionText,
-            PrimaryStatusText
+            ProgressDescription
         }
             .Where(value => !string.IsNullOrWhiteSpace(value)));
 
@@ -219,36 +195,122 @@
         ? Entry.Definition.Grade.Value.Value.ToString()
         : "unknown";
 
-    private string PrimaryStatusText => PrimaryProgressStatusText;
+    private bool IsEquipped => IsTrue(Progress?.Equipped);
 
-    private bool ShowCollapsedPrimaryStatus =>
-        IsTrue(Progress?.AttainmentMastered)
-        || Breakthrough?.IsBrokenOut != true
-        || ActiveMarkerDirection is null;
+    private bool StudyComplete =>
+        Progress?.StudySummary is
+        {
+            TotalCount: 15,
+            ReadCount: 15,
+            NotReadCount: 0,
+            UnavailableCount: 0,
+            IsComplete.IsAvailable: true,
+            IsComplete.Value: true
+        };
 
-    private string PrimaryProgressStatusText => IsTrue(Progress?.AttainmentMastered)
-        ? T("Mastered")
-        : Breakthrough?.IsBrokenOut == true
-            ? T("Broken through")
-            : Breakthrough?.CanBreakthroughNow == true
-                ? T("Ready to break through")
-                : IsTrue(Entry.Learned)
-                    ? T("Learned")
-                    : NonPositiveStatusText;
+    private bool ShowUnavailableMarker =>
+        !Entry.Learned.IsAvailable
+        || IsTrue(Entry.Learned)
+        && (Progress is null
+            || !Progress.Breakthrough.IsAvailable
+            || Breakthrough?.IsBrokenOut == true
+            && ActiveMarkerDirection is null);
 
-    private string NonPositiveStatusText => Entry.Learned.IsAvailable
-        ? T("Not learned")
-        : T("Status unavailable");
+    private string LearnedStateKey => !Entry.Learned.IsAvailable
+        ? "unavailable"
+        : Entry.Learned.Value
+            ? "learned"
+            : "not-learned";
 
-    private string PrimaryStatusClass => IsTrue(Progress?.AttainmentMastered)
-        ? "mastered"
-        : Breakthrough?.IsBrokenOut == true
-            ? "broken"
-            : Breakthrough?.CanBreakthroughNow == true
-                ? "ready"
-                : IsTrue(Entry.Learned)
-                    ? "learned"
-                    : "neutral";
+    private string BreakthroughStateKey => !IsTrue(Entry.Learned)
+        ? "not-applicable"
+        : Progress?.Breakthrough.IsAvailable != true
+            ? "unavailable"
+            : Breakthrough?.IsBrokenOut == true
+                ? "completed"
+                : Breakthrough?.CanBreakthroughNow == true
+                    ? "ready"
+                    : "not-ready";
+
+    private string ProgressVisualClasses => string.Join(
+        " ",
+        new[]
+        {
+            LearnedStateKey switch
+            {
+                "not-learned" => "status-unlearned",
+                "unavailable" => "status-unknown",
+                _ => "status-learned"
+            },
+            IsEquipped ? "is-equipped" : string.Empty,
+            StudyComplete ? "study-complete" : string.Empty
+        }.Where(value => value.Length > 0));
+
+    private string ProgressDescription => string.Join(
+        " · ",
+        ProgressDescriptionParts());
+
+    private string ProgressTooltip => string.Join(
+        " · ",
+        new[] { DisplayName, ProgressDescription }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private IEnumerable<string> ProgressDescriptionParts()
+    {
+        if (!Entry.Learned.IsAvailable)
+        {
+            yield return T("Status unavailable");
+            yield break;
+        }
+
+        if (!Entry.Learned.Value)
+        {
+            yield return T("Not learned");
+            yield break;
+        }
+
+        yield return T("Learned");
+        if (Progress?.Breakthrough.IsAvailable != true)
+        {
+            yield return T("Status unavailable");
+        }
+        else if (Breakthrough?.IsBrokenOut == true)
+        {
+            yield return T("Broken through");
+            yield return ActiveMarkerDirection is { } direction
+                ? DirectionLabel(direction)
+                : T("Status unavailable");
+        }
+        else if (Breakthrough?.CanBreakthroughNow == true)
+        {
+            yield return T("Ready to break through");
+            foreach (var direction in ReadyDirections)
+            {
+                yield return DirectionLabel(direction);
+            }
+        }
+        else
+        {
+            yield return T("Not ready to break through");
+        }
+
+        if (IsTrue(Progress?.Simplified))
+        {
+            yield return T("Simplified");
+        }
+        if (IsTrue(Progress?.Activated))
+        {
+            yield return T("Activated");
+        }
+        if (IsEquipped)
+        {
+            yield return T("Equipped");
+        }
+        if (Progress?.StudySummary.TotalCount > 0)
+        {
+            yield return StudyText;
+        }
+    }
 
     private string SkillInitial => string.IsNullOrWhiteSpace(DisplayName)
         ? "?"
@@ -335,15 +397,6 @@
         detail.IsActive.IsAvailable && detail.IsActive.Value
             ? $"{StudyDetailLabel(detail)} · {StudyDetailStatusLabel(detail)} · {T("Active detail")}"
             : $"{StudyDetailLabel(detail)} · {StudyDetailStatusLabel(detail)}";
-
-    private bool HasPositiveProgressBadge => IsTrue(Entry.Learned)
-        || Breakthrough?.CanBreakthroughNow == true
-        || Breakthrough?.IsBrokenOut == true
-        || ActiveMarkerDirection is not null
-        || IsTrue(Progress?.AttainmentMastered)
-        || IsTrue(Progress?.Simplified)
-        || IsTrue(Progress?.Activated)
-        || IsTrue(Progress?.Equipped);
 
     private static bool IsTrue(SkillProgressField<bool>? field) =>
         field?.IsAvailable == true && field.Value;

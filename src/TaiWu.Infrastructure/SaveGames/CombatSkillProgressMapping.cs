@@ -18,6 +18,8 @@ internal sealed record RawCharacterCombatSkillProgress(
 
 internal static class CombatSkillProgressMapping
 {
+    internal const int CacheMappingVersion = 1;
+
     internal static CharacterCombatSkillProgress Map(
         int characterId,
         SaveSnapshotIdentity snapshot,

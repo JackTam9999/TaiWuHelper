@@ -351,6 +351,41 @@
                 }
             </div>
 
+            <div class="skill-status-legend"
+                 role="list"
+                 aria-label="@T("Skill status legend")">
+                <span class="skill-status-legend-item" role="listitem">
+                    <span class="skill-status-legend-name is-unlearned" aria-hidden="true">功</span>
+                    <span>@T("Not learned")</span>
+                </span>
+                <span class="skill-status-legend-item" role="listitem">
+                    <span class="skill-status-legend-directions" aria-hidden="true">
+                        <span class="practice-marker direct" data-practice-state="available">正</span>
+                        <span class="practice-marker reverse" data-practice-state="available">逆</span>
+                    </span>
+                    <span>@T("Ready to break through")</span>
+                </span>
+                <span class="skill-status-legend-item" role="listitem">
+                    <span class="skill-status-legend-directions" aria-hidden="true">
+                        <span class="practice-marker direct" data-practice-state="active">正</span>
+                        <span class="practice-marker reverse" data-practice-state="active">逆</span>
+                    </span>
+                    <span>@T("Broken through")</span>
+                </span>
+                <span class="skill-status-legend-item" role="listitem">
+                    <span class="skill-status-legend-name is-equipped" aria-hidden="true">功</span>
+                    <span>@T("Equipped")</span>
+                </span>
+                <span class="skill-status-legend-item" role="listitem">
+                    <span class="skill-status-legend-symbol is-complete" aria-hidden="true">✓</span>
+                    <span>@T("All details studied")</span>
+                </span>
+                <span class="skill-status-legend-item" role="listitem">
+                    <span class="skill-status-legend-symbol is-unavailable" aria-hidden="true">?</span>
+                    <span>@T("Status unavailable")</span>
+                </span>
+            </div>
+
             <div class="skill-category-list">
                 @foreach (var group in _atlas.Entries
                     .GroupBy(CategoryOf)
@@ -433,10 +468,8 @@
         _failure = null;
         try
         {
-            _catalogue = await new ReadCombatSkillCatalogueStatus(
-                    DefinitionSource,
-                    CatalogueRepository)
-                .ExecuteAsync(cancellation.Token);
+            await ReadAtlasAsync(cancellation.Token);
+            _catalogue = _atlas!.Catalogue;
             if (_catalogue.Status != CombatSkillCatalogueStatus.Current)
             {
                 _atlas = null;
@@ -445,7 +478,6 @@
             }
 
             await ReadFactionOptionsAsync(cancellation.Token);
-            await ReadAtlasAsync(cancellation.Token);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {

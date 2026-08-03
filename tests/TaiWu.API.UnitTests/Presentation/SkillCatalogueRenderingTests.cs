@@ -63,8 +63,13 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Black Blood Gu", text);
         Assert.Contains("class=\"skill-glyph\"", html);
         Assert.Contains("<span>B</span>", decodedHtml);
-        Assert.Contains("class=\"skill-atlas-card grade-5\"", html);
+        Assert.Contains(
+            "class=\"skill-atlas-card grade-5 status-learned is-equipped study-complete\"",
+            html);
         Assert.Contains("data-grade=\"5\"", html);
+        Assert.Contains("data-breakthrough-state=\"completed\"", html);
+        Assert.Contains("data-equipped=\"true\"", html);
+        Assert.Contains("data-study-complete=\"true\"", html);
         Assert.DoesNotContain("黑血蠱降", text);
         Assert.Contains("Learned", text);
         Assert.Contains("Broken through", text);
@@ -75,6 +80,11 @@ public sealed partial class SkillCatalogueRenderingTests
             "class=\"practice-marker direct\" data-practice-state=\"active\"",
             html);
         Assert.Contains("正 Black Blood Gu", text);
+        Assert.Contains("class=\"skill-status-legend\"", html);
+        Assert.Contains("class=\"skill-card-name\">Black Blood Gu</span>", decodedHtml);
+        Assert.Contains("class=\"skill-study-complete-marker\"", html);
+        Assert.DoesNotContain("skill-card-status", html);
+        Assert.DoesNotContain("progress-badge", html);
         Assert.Contains("<details", html);
         Assert.Contains("<summary", html);
         Assert.Contains("aria-busy=\"false\"", html);
@@ -84,6 +94,7 @@ public sealed partial class SkillCatalogueRenderingTests
                 && request.CharacterId == null
                 && request.PreferredLanguage == CatalogueLanguage.English),
             Arg.Any<CancellationToken>());
+        await source.Received(1).ReadAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -142,8 +153,12 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.True(fingerHeader > agilityHeader);
         Assert.True(lowerSkill > fingerHeader);
         Assert.True(higherSkill > lowerSkill);
-        Assert.Contains("class=\"skill-atlas-card grade-8\"", html);
-        Assert.Contains("class=\"skill-atlas-card grade-2\"", html);
+        Assert.Contains(
+            "class=\"skill-atlas-card grade-8 status-learned study-complete\"",
+            html);
+        Assert.Contains(
+            "class=\"skill-atlas-card grade-2 status-learned study-complete\"",
+            html);
     }
 
     [Fact]
@@ -223,7 +238,7 @@ public sealed partial class SkillCatalogueRenderingTests
     }
 
     [Fact]
-    public async Task Skill_card_shows_only_supported_positive_progress_badges()
+    public async Task Skill_card_shows_only_the_available_breakthrough_direction_in_grey()
     {
         var definition = Definition(686, "Cloud Formula");
         var progress = Progress(
@@ -249,18 +264,19 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("雲術", text);
         Assert.DoesNotContain("少林派", text);
         Assert.DoesNotContain("品級 5", text);
-        Assert.Contains("已取得", text);
-        Assert.Contains("可突破", text);
-        Assert.Contains("突破 逆 雲術", text);
+        Assert.Contains("逆 雲術 ✓", text);
+        Assert.Contains("data-breakthrough-state=\"ready\"", html);
         Assert.Contains(
             "class=\"practice-marker reverse\" data-practice-state=\"available\"",
             html);
         Assert.DoesNotContain(
             "class=\"practice-marker direct\" data-practice-state=\"available\"",
             html);
-        Assert.DoesNotContain("已突破", text);
-        Assert.DoesNotContain("已大成", text);
-        Assert.DoesNotContain("已裝備", text);
+        Assert.DoesNotContain("skill-card-status", html);
+        Assert.DoesNotContain("progress-badge", html);
+        Assert.Contains(
+            "title=\"雲術 · 已取得 · 可突破 · 逆練 · 15 / 15 已研讀\"",
+            decodedHtml);
         Assert.Contains("15 / 15 已研讀", text);
         Assert.Contains("class=\"skill-study-strip\"", html);
         Assert.Equal(
@@ -293,7 +309,7 @@ public sealed partial class SkillCatalogueRenderingTests
             TaiwuLanguage.Chinese);
         var text = VisibleText(html);
 
-        Assert.Contains("突破 正 逆 雲術", text);
+        Assert.Contains("正 逆 雲術 ✓", text);
         Assert.Contains(
             "class=\"practice-marker direct\" data-practice-state=\"available\"",
             html);
@@ -329,6 +345,8 @@ public sealed partial class SkillCatalogueRenderingTests
 
         Assert.Equal(5, Regex.Matches(html, "study-path-red").Count);
         Assert.Equal(5, Regex.Matches(html, "study-path-blue").Count);
+        Assert.Contains("data-breakthrough-state=\"not-ready\"", html);
+        Assert.DoesNotContain("practice-marker", html);
     }
 
     [Fact]
@@ -352,8 +370,9 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains(
             "class=\"practice-marker reverse\" data-practice-state=\"active\"",
             html);
-        Assert.DoesNotContain("class=\"skill-card-status broken\"", html);
-        Assert.Contains("class=\"progress-badge broken\"", html);
+        Assert.Contains("data-breakthrough-state=\"completed\"", html);
+        Assert.DoesNotContain("skill-card-status", html);
+        Assert.DoesNotContain("progress-badge", html);
     }
 
     [Fact]
@@ -380,7 +399,11 @@ public sealed partial class SkillCatalogueRenderingTests
 
         Assert.Contains("Unlearned Skill", text);
         Assert.Contains("Not learned", text);
-        Assert.Contains("class=\"skill-card-status neutral\"", html);
+        Assert.Contains(
+            "class=\"skill-atlas-card grade-5 status-unlearned\"",
+            html);
+        Assert.Contains("data-learned-state=\"not-learned\"", html);
+        Assert.DoesNotContain("skill-card-status", html);
     }
 
     [Fact]
@@ -399,12 +422,67 @@ public sealed partial class SkillCatalogueRenderingTests
             SkillProgressField<bool>.Unavailable("test status unavailable"),
             SkillProgressField<int>.Unavailable("test cost unavailable"));
 
-        var text = VisibleText(await RenderCardAsync(
+        var html = await RenderCardAsync(
             entry,
-            TaiwuLanguage.Chinese));
+            TaiwuLanguage.Chinese);
+        var decodedHtml = WebUtility.HtmlDecode(html);
 
-        Assert.Contains("狀態不可用", text);
-        Assert.DoesNotContain("未取得", text);
+        Assert.Contains("data-learned-state=\"unavailable\"", html);
+        Assert.Contains("data-practice-state=\"unavailable\"", html);
+        Assert.Contains("aria-label=\"狀態不可用\"", decodedHtml);
+        Assert.DoesNotContain("status-unlearned", html);
+    }
+
+    [Fact]
+    public async Task Equipped_skill_bolds_the_name_and_active_direction()
+    {
+        var progress = Progress(
+            42,
+            686,
+            new BreakthroughDirectionAvailability(true, false, []),
+            PracticeDirection.Direct,
+            mastered: false,
+            simplified: false,
+            activated: false,
+            equipped: true);
+
+        var html = await RenderCardAsync(
+            Entry(Definition(686, "Cloud Formula"), progress),
+            TaiwuLanguage.Chinese);
+        var decodedHtml = WebUtility.HtmlDecode(html);
+
+        Assert.Contains(
+            "class=\"skill-atlas-card grade-5 status-learned is-equipped study-complete\"",
+            html);
+        Assert.Contains(
+            "class=\"practice-marker direct\" data-practice-state=\"active\"",
+            html);
+        Assert.Contains("class=\"skill-card-name\">雲術</span>", decodedHtml);
+    }
+
+    [Fact]
+    public async Task Study_tick_requires_exactly_fifteen_read_details()
+    {
+        var labels = Enumerable.Range(1, 14)
+            .Select(index => $"Detail {index}")
+            .ToArray();
+        var progress = Progress(
+            42,
+            686,
+            new BreakthroughDirectionAvailability(false, false, []),
+            activeDirection: null,
+            mastered: false,
+            simplified: false,
+            activated: false,
+            equipped: false,
+            studyLabels: labels);
+
+        var html = await RenderCardAsync(
+            Entry(Definition(686, "Cloud Formula"), progress),
+            TaiwuLanguage.Chinese);
+
+        Assert.Contains("data-study-complete=\"false\"", html);
+        Assert.DoesNotContain("skill-study-complete-marker", html);
     }
 
     private static async Task<string> RenderPageAsync(

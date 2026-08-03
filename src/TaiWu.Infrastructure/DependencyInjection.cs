@@ -21,7 +21,15 @@ public static class DependencyInjection
             IReadOnlyFileRevisionProvider,
             ReadOnlyFileRevisionProvider>();
         services.AddSingleton<ITaiwuArchiveLoader, TaiwuArchiveLoader>();
-        services.AddSingleton<TaiwuArchiveReadSession>();
+        services.AddSingleton(provider => new TaiwuArchiveReadSession(
+            provider.GetRequiredService<IReadOnlyFileRevisionProvider>(),
+            provider.GetRequiredService<IReadOnlyFileFingerprintProvider>(),
+            provider.GetRequiredService<ITaiwuArchiveLoader>(),
+            TimeProvider.System,
+            provider.GetService<Microsoft.Extensions.Logging.ILogger<
+                TaiwuArchiveReadSession>>()
+            ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                TaiwuArchiveReadSession>.Instance));
         services.AddSingleton<ITaiwuSaveFilePathProvider>(provider =>
             new ConfiguredTaiwuSaveFilePathProvider(
                 provider.GetService<IConfiguration>()));
@@ -40,9 +48,13 @@ public static class DependencyInjection
         services.AddSingleton(provider =>
             CatalogueStoragePathProvider.CreateDefault(
                 ProtectedGameOwnedDirectories(provider)));
+        services.AddSingleton(provider =>
+            SaveProgressCacheStoragePathProvider.CreateDefault(
+                ProtectedGameOwnedDirectories(provider)));
         services.AddSingleton<ICombatSkillCatalogueRepository>(provider =>
             new SqliteCombatSkillCatalogueStore(
                 provider.GetRequiredService<CatalogueStoragePathProvider>()));
+        services.AddSingleton<SqliteCharacterCombatSkillProgressCache>();
         services.AddSingleton<CombatSkillStudyDetailLabelSource>();
         services.AddSingleton<ICharacterCombatSkillProgressReader>(provider =>
             new TaiwuCharacterCombatSkillProgressReader(
@@ -50,7 +62,14 @@ public static class DependencyInjection
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
                 provider.GetRequiredService<
                     CombatSkillStudyDetailLabelSource>(),
-                TimeProvider.System));
+                provider.GetRequiredService<IReadOnlyFileRevisionProvider>(),
+                provider.GetRequiredService<
+                    SqliteCharacterCombatSkillProgressCache>(),
+                TimeProvider.System,
+                provider.GetService<Microsoft.Extensions.Logging.ILogger<
+                    TaiwuCharacterCombatSkillProgressReader>>()
+                ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                    TaiwuCharacterCombatSkillProgressReader>.Instance));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<ITargetLookupReader, TaiwuTargetLookupReader>();

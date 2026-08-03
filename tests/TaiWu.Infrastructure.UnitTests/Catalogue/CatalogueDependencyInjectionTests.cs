@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Infrastructure.Catalogue;
+using TaiWu.Infrastructure.SaveGames;
 using Xunit;
 
 namespace TaiWu.Infrastructure.UnitTests.Catalogue;
@@ -44,5 +45,13 @@ public sealed class CatalogueDependencyInjectionTests
         Assert.IsType<TaiwuCombatSkillFactionProfileSource>(
             firstFactionProfiles);
         Assert.Same(firstFactionProfiles, secondFactionProfiles);
+
+        var firstProgressReader = services.GetRequiredService<
+            ICharacterCombatSkillProgressReader>();
+        var secondProgressReader = services.GetRequiredService<
+            ICharacterCombatSkillProgressReader>();
+        Assert.IsType<TaiwuCharacterCombatSkillProgressReader>(
+            firstProgressReader);
+        Assert.Same(firstProgressReader, secondProgressReader);
     }
 }
