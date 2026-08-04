@@ -65,7 +65,12 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Breakthrough completed", text);
         Assert.Contains("Attainment mastery", text);
         Assert.Contains("Equipped", text);
-        Assert.Contains("Finger 1 skills · 1 Learned · 0 Not learned", text);
+        Assert.Contains(
+            "Finger 1/1/1",
+            text);
+        Assert.Contains(
+            "title=\"1 Study complete (15/15) · 1 Learned · 1 skill · 0 Not learned\"",
+            decodedHtml);
         Assert.Contains("Low grade 0 1 2 3 4 5 6 7 8 High grade", text);
         Assert.Contains("data-grade-order=\"low-to-high\"", html);
         Assert.Contains("Shaolin Sect", text);
@@ -128,7 +133,7 @@ public sealed partial class SkillCatalogueRenderingTests
                 grade: 4)
         };
         var progress = definitions
-            .Select(definition => Progress(
+            .Select((definition, index) => Progress(
                 42,
                 definition.SkillId,
                 new BreakthroughDirectionAvailability(true, false, []),
@@ -136,7 +141,12 @@ public sealed partial class SkillCatalogueRenderingTests
                 mastered: false,
                 simplified: false,
                 activated: false,
-                equipped: false))
+                equipped: false,
+                studyLabels: index == 1
+                    ? Enumerable.Range(1, 14)
+                        .Select(detail => $"Detail {detail}")
+                        .ToArray()
+                    : null))
             .ToArray();
         var (source, repository) = Current(definitions);
 
@@ -163,7 +173,13 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.True(lowerSkill > fingerHeader);
         Assert.True(higherSkill > lowerSkill);
         Assert.Contains(
-            "class=\"skill-atlas-card grade-8 status-learned study-complete\"",
+            "Finger 1/2/2",
+            VisibleText(html));
+        Assert.Contains(
+            "title=\"1 Study complete (15/15) · 2 Learned · 2 skills · 0 Not learned\"",
+            html);
+        Assert.Contains(
+            "class=\"skill-atlas-card grade-8 status-learned\"",
             html);
         Assert.Contains(
             "class=\"skill-atlas-card grade-2 status-learned study-complete\"",
@@ -196,7 +212,12 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("少 少林派 金剛 · 仁善", text);
         Assert.Contains("取得狀態 不限 已取得 未取得", text);
         Assert.Contains("低品 0 1 2 3 4 5 6 7 8 高品", text);
-        Assert.Contains("指法 1 項功法 · 1 已取得 · 0 未取得", text);
+        Assert.Contains(
+            "指法 1/1/1",
+            text);
+        Assert.Contains(
+            "title=\"1 已完成（15/15 研讀） · 1 已取得 · 1 項功法 · 0 未取得\"",
+            decodedHtml);
         Assert.Contains("element-metal alignment-kind", html);
         Assert.Contains(
             "aria-label=\"少林派 · 金剛 · 仁善\"",
@@ -523,7 +544,12 @@ public sealed partial class SkillCatalogueRenderingTests
 
         Assert.Contains("Unlearned Skill", text);
         Assert.Contains("Not learned", text);
-        Assert.Contains("Finger 2 skills · 1 Learned · 1 Not learned", text);
+        Assert.Contains(
+            "Finger 1/1/2",
+            text);
+        Assert.Contains(
+            "title=\"1 Study complete (15/15) · 1 Learned · 2 skills · 1 Not learned\"",
+            WebUtility.HtmlDecode(html));
         Assert.Contains(
             "class=\"skill-atlas-card grade-5 status-unlearned\"",
             html);

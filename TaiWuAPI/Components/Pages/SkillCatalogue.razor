@@ -426,22 +426,29 @@
                     .GroupBy(CategoryOf)
                     .OrderBy(group => group.Key.HasValue ? (int)group.Key.Value : int.MaxValue))
                 {
+                    var categoryEntries = group.ToArray();
+                    var learnedCount = LearnedCount(categoryEntries);
+                    var unlearnedCount = UnlearnedCount(categoryEntries);
+                    var unavailableCount = UnavailableLearnedCount(categoryEntries);
+                    var fullyStudiedCount = FullyStudiedCount(categoryEntries);
+                    var countDetails = CategoryCountsDetails(
+                        fullyStudiedCount,
+                        learnedCount,
+                        categoryEntries.Length,
+                        unlearnedCount,
+                        unavailableCount);
                     <section class="skill-category-section"
                              aria-labelledby="@CategoryHeadingId(group.Key)">
                         <div class="skill-category-heading">
                             <h3 id="@CategoryHeadingId(group.Key)">@CategoryHeading(group.Key)</h3>
-                            <span class="skill-category-counts">
-                                @group.Count() @T("skills") ·
-                                @LearnedCount(group) @T("Learned") ·
-                                @UnlearnedCount(group) @T("Not learned")
-                                @if (UnavailableLearnedCount(group) > 0)
-                                {
-                                    <text> · @UnavailableLearnedCount(group) @T("Status unavailable")</text>
-                                }
+                            <span class="skill-category-counts"
+                                  title="@countDetails"
+                                  aria-label="@countDetails">
+                                @fullyStudiedCount/@learnedCount/@categoryEntries.Length
                             </span>
                         </div>
                         <div class="skill-card-grid">
-                            @foreach (var entry in group
+                            @foreach (var entry in categoryEntries
                                 .OrderBy(GradeOf)
                                 .ThenBy(DisplayNameOf, StringComparer.Ordinal)
                                 .ThenBy(entry => entry.SkillId))
@@ -474,6 +481,7 @@
 
 @code {
     private const int PageSize = 60;
+    private const int CompleteStudyDetailCount = 15;
     private readonly AtlasFilters _filters = new();
     private CombatSkillCatalogueStatusResult? _catalogue;
     private CharacterCombatSkillAtlasResult? _atlas;
@@ -702,6 +710,34 @@
     private static int UnavailableLearnedCount(
         IEnumerable<CharacterCombatSkillAtlasEntry> entries) =>
         entries.Count(entry => !entry.Learned.IsAvailable);
+
+    private static int FullyStudiedCount(
+        IEnumerable<CharacterCombatSkillAtlasEntry> entries) =>
+        entries.Count(entry => entry.Progress?.StudySummary is
+        {
+            TotalCount: CompleteStudyDetailCount,
+            ReadCount: CompleteStudyDetailCount,
+            NotReadCount: 0,
+            UnavailableCount: 0,
+            IsComplete.IsAvailable: true,
+            IsComplete.Value: true
+        });
+
+    private string CategoryCountsDetails(
+        int fullyStudied,
+        int learned,
+        int total,
+        int unlearned,
+        int unavailable)
+    {
+        var details = $"{fullyStudied} {T("Study complete (15/15)")} · "
+            + $"{learned} {T("Learned")} · "
+            + $"{total} {T(total == 1 ? "skill" : "skills")} · "
+            + $"{unlearned} {T("Not learned")}";
+        return unavailable > 0
+            ? $"{details} · {unavailable} {T("Status unavailable")}"
+            : details;
+    }
 
     private static string DisplayNameOf(
         CharacterCombatSkillAtlasEntry entry) =>

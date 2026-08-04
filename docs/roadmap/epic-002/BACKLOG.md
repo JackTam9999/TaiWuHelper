@@ -1163,8 +1163,10 @@ meaning from color alone.
 - [x] Learned/all/not-learned is a primary filter beside name and grade.
 - [x] The advanced disclosure retains only secondary catalogue and progress
       filters.
-- [x] Every displayed category reports shown, learned, and not-learned counts,
-      plus unavailable ownership when present.
+- [x] Every displayed category reports shown, learned, not-learned, and exact
+      15/15 study-complete counts, plus unavailable ownership when present;
+      the compact visible order is complete/learned/total and a tooltip gives
+      the full labels.
 - [x] A compact nine-grade legend states that ordering runs from low to high.
 - [x] Every grade swatch has a numeric label as well as its existing color.
 - [x] English and Chinese tabs localize all new labels independently.
@@ -1176,8 +1178,9 @@ meaning from color alone.
 #### Evidence
 
 - `SkillCatalogueRenderingTests`: 22/22 passed, including primary-filter
-  placement, English and Chinese ownership counts, nine labeled grade
-  swatches, low-to-high order, and learned/unlearned catalogue entries.
+  placement, English and Chinese ownership/study-complete counts, exclusion of
+  14/15 progress, nine labeled grade swatches, low-to-high order, and
+  learned/unlearned catalogue entries.
 - `ArchitectureBoundaryTests`: 34/34 passed and protects the primary learned
   control, numeric grade-order legend, grouped counts, nine-card desktop grid,
   and non-color status semantics.

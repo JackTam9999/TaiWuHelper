@@ -982,7 +982,8 @@ public sealed partial class ArchitectureBoundaryTests
             < atlasPage.IndexOf(
                 "class=\"atlas-advanced-filters\"",
                 StringComparison.Ordinal));
-        Assert.Contains("LearnedCount(group)", atlasPage);
+        Assert.Contains("LearnedCount(categoryEntries)", atlasPage);
+        Assert.Contains("FullyStudiedCount(categoryEntries)", atlasPage);
 
         var atlasCard = File.ReadAllText(
             Path.Combine(
