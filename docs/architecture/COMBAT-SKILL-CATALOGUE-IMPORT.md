@@ -18,9 +18,11 @@ source filenames are:
 - `Language_CNH/CombatSkill_language.txt`;
 - `Language_EN/CombatSkill_language.txt`;
 - `Language_CNH/SpecialEffect_language.txt`;
-- `Language_EN/SpecialEffect_language.txt`.
+- `Language_EN/SpecialEffect_language.txt`;
+- `Language_CNH/LegendaryBookSlot_language.txt`;
+- `Language_EN/LegendaryBookSlot_language.txt`.
 
-The adapter fingerprints all five files with explicitly read-only streams
+The adapter fingerprints all seven files with explicitly read-only streams
 before import and again afterward. A changed source invalidates the entire
 result. It also requires the installed configuration assembly's version and
 hash to match the loaded read-only adapter assembly, so a game update cannot
@@ -51,6 +53,13 @@ The configured `Desc` text and the normal direct/reverse effect text at
 recommendation rule without a separate verified typed mechanic. Detailed
 effect variants are intentionally not substituted for the normal in-game
 descriptions.
+
+The current in-game legendary-book slot resources are mapped separately from
+the encyclopedia assets. Each non-empty `Name_{effectId}` or
+`Desc_{effectId}` value becomes a bilingual `LegendaryBookEffectDefinition`
+with field-level provenance. This preserves the current UI text; for example,
+blade effect `83` is `解破`, and its current description does not inherit the
+obsolete 50% cast-time penalty still present in the encyclopedia TSV.
 
 ## Faction display profiles
 
@@ -117,6 +126,7 @@ committed. The imported inventory was:
 | Neutral effects | 946 unavailable by verified schema policy |
 | Typed requirement entries | 3,724 available, 0 unsupported |
 | Localized display-only base descriptions | 1,512 |
+| Legendary-book slot effects / localized rows | 84 / 168 |
 | Import diagnostics | 2 warnings, 0 errors |
 
 Both warnings are deterministic `LANGUAGE_VALUE_MISSING` diagnostics for
@@ -125,8 +135,12 @@ trailing keys without a following value line. They do not affect any of the
 
 The importer returned the same source identity and stable skill-ID order on
 two consecutive reads. Golden skill `456` resolved independently to
-`黑血蠱降` and `Corruptive Gu Infection`.
+`黑血蠱降` and `Corruptive Gu Infection`. The importer-version-3 verification
+on 2026-08-04 also round-tripped all 84 legendary-book effects through SQLite;
+effect `83` resolved to the current `解破` text without the obsolete penalty.
 
 The inventory above records importer version 1, before direct/reverse effect
 descriptions were added. Importer version 2 fingerprints both SpecialEffect
-language files and imports those extra display-only rows.
+language files and imports those extra display-only rows. Importer version 3
+also fingerprints both LegendaryBookSlot language files and imports their
+current names and descriptions.

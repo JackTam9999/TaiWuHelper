@@ -94,6 +94,19 @@ public sealed class LocalGameDataIntegrationTests
                 first.Definitions.Select(definition => definition.SkillId)
                     .Distinct()
                     .Count());
+            Assert.Equal(84, first.LegendaryBookEffects.Length);
+            Assert.Equivalent(
+                first.LegendaryBookEffects,
+                second.LegendaryBookEffects);
+            var bladeCounterBreak = Assert.Single(
+                first.LegendaryBookEffects,
+                effect => effect.EffectId == 83);
+            var bladeCounterBreakCnh = bladeCounterBreak.Find(
+                CatalogueLanguage.TraditionalChinese)!;
+            Assert.Equal("解破", bladeCounterBreakCnh.Name);
+            Assert.DoesNotContain(
+                "施展此功法所需的時間提高50%",
+                bladeCounterBreakCnh.Description);
 
             var golden = Assert.Single(
                 first.Definitions,
@@ -143,6 +156,14 @@ public sealed class LocalGameDataIntegrationTests
                 before[guardedPaths[4]].Sha256,
                 first.SourceIdentity.EnglishSpecialEffectFingerprint,
                 ignoreCase: true);
+            Assert.Equal(
+                before[guardedPaths[5]].Sha256,
+                first.SourceIdentity.TraditionalChineseLegendaryBookFingerprint,
+                ignoreCase: true);
+            Assert.Equal(
+                before[guardedPaths[6]].Sha256,
+                first.SourceIdentity.EnglishLegendaryBookFingerprint,
+                ignoreCase: true);
             Assert.DoesNotContain(
                 first.Diagnostics,
                 diagnostic => diagnostic.Severity
@@ -190,24 +211,43 @@ public sealed class LocalGameDataIntegrationTests
                     first.SourceIdentity,
                     first.Definitions,
                     first.Diagnostics,
-                    TestContext.Current.CancellationToken)).Succeeded);
+                    TestContext.Current.CancellationToken,
+                    first.LegendaryBookEffects)).Succeeded);
                 var firstStored = await store.QueryAsync(
                     new CombatSkillCatalogueFilter(),
                     TestContext.Current.CancellationToken);
+                var legendaryBookStore =
+                    (ILegendaryBookEffectCatalogueRepository)store;
+                var firstStoredLegendaryBookEffects =
+                    await legendaryBookStore.QueryAsync(
+                        TestContext.Current.CancellationToken);
                 Assert.True((await store.ReplaceAsync(
                     second.SourceIdentity!,
                     second.Definitions,
                     second.Diagnostics,
-                    TestContext.Current.CancellationToken)).Succeeded);
+                    TestContext.Current.CancellationToken,
+                    second.LegendaryBookEffects)).Succeeded);
                 var secondStored = await store.QueryAsync(
                     new CombatSkillCatalogueFilter(),
                     TestContext.Current.CancellationToken);
+                var secondStoredLegendaryBookEffects =
+                    await legendaryBookStore.QueryAsync(
+                        TestContext.Current.CancellationToken);
 
                 Assert.Equal(first.Definitions.Length, firstStored.Count);
                 Assert.Equal(firstStored.Count, secondStored.Count);
                 Assert.Equal(
                     CatalogueContentIdentity(firstStored),
                     CatalogueContentIdentity(secondStored));
+                Assert.Equal(
+                    first.LegendaryBookEffects.Length,
+                    firstStoredLegendaryBookEffects.Count);
+                Assert.Equivalent(
+                    first.LegendaryBookEffects,
+                    firstStoredLegendaryBookEffects);
+                Assert.Equivalent(
+                    firstStoredLegendaryBookEffects,
+                    secondStoredLegendaryBookEffects);
             }
             finally
             {
@@ -287,7 +327,8 @@ public sealed class LocalGameDataIntegrationTests
                 imported.SourceIdentity!,
                 imported.Definitions,
                 imported.Diagnostics,
-                TestContext.Current.CancellationToken)).Succeeded);
+                TestContext.Current.CancellationToken,
+                imported.LegendaryBookEffects)).Succeeded);
 
             var useCase = new ReadCharacterCombatSkillAtlas(
                 source,
@@ -567,7 +608,15 @@ public sealed class LocalGameDataIntegrationTests
             Path.Combine(
                 streamingAssets,
                 "Language_EN",
-                "SpecialEffect_language.txt")
+                "SpecialEffect_language.txt"),
+            Path.Combine(
+                streamingAssets,
+                "Language_CNH",
+                "LegendaryBookSlot_language.txt"),
+            Path.Combine(
+                streamingAssets,
+                "Language_EN",
+                "LegendaryBookSlot_language.txt")
         };
         Assert.SkipWhen(
             paths.Any(path => !File.Exists(path)),

@@ -14,12 +14,13 @@ and HTTP types out of the use-case layer.
 |---|---|---|
 | `ICombatSkillDefinitionSource` | Read immutable definitions and the installed bilingual source identity | Read-only GameData-source marker; no GameData objects or paths |
 | `ICombatSkillCatalogueRepository` | Read the stored manifest, query/get definitions, or atomically replace derived definitions | No source or destination path; Infrastructure owns the fixed helper path |
+| `ILegendaryBookEffectCatalogueRepository` | Query/get immutable current-UI legendary-book effect names and descriptions from the same derived catalogue | Read-only queries; no source or destination path |
 | `ICharacterCombatSkillProgressReader` | Read immutable progress for one character from the configured save | Character ID only; no request-supplied save path |
 
 The source identity contains the detected GameData version plus independent
-SHA-256 fingerprints for the imported GameData configuration assembly and the
-Traditional Chinese and English sources. The repository stores that value
-with its build time and definition count. It does not decide whether a
+SHA-256 fingerprints for the imported GameData configuration assembly and all
+six Traditional Chinese/English language resources. The repository stores that
+value with its build time and content counts. It does not decide whether a
 catalogue is current.
 
 ## Freshness policy

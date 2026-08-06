@@ -1,6 +1,7 @@
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Application.GameData;
+using TaiWu.Domain.LegendaryBooks;
 
 namespace TaiWu.Application.CombatSkills;
 
@@ -33,6 +34,17 @@ public interface ICombatSkillCatalogueRepository
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IReadOnlyList<CombatSkillDefinition> definitions,
         IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<LegendaryBookEffectDefinition>? legendaryBookEffects = null);
+}
+
+public interface ILegendaryBookEffectCatalogueRepository
+{
+    Task<IReadOnlyList<LegendaryBookEffectDefinition>> QueryAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<LegendaryBookEffectDefinition?> GetAsync(
+        int effectId,
         CancellationToken cancellationToken = default);
 }
 

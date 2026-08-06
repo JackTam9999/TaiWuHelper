@@ -19,19 +19,21 @@ database match the repository's `combat-skill-catalogue*.db` ignore rules.
 They are local derived data and are never publish inputs or committed
 artifacts.
 
-## Schema version 3
+## Schema version 4
 
 All tables are SQLite `STRICT` tables. Foreign keys use cascade deletion only
 inside the helper-owned database.
 
 | Table | Stored data and key |
 |---|---|
-| `catalogue_manifest` | One row (`singleton_id = 1`) containing schema version, importer version, installed GameData version, five source fingerprints, UTC build time, definition count, warning count, and error count. |
+| `catalogue_manifest` | One row (`singleton_id = 1`) containing schema version, importer version, installed GameData version, seven source fingerprints, UTC build time, combat-skill definition count, legendary-book effect count, warning count, and error count. |
 | `definitions` | One row per non-negative stable skill ID, with definition-level source provenance. |
 | `localized_names` | Optional Traditional Chinese or English value and provenance, keyed by `(skill_id, language)`, plus a normalized search value. |
 | `definition_fields` | Typed category, grade, faction, element, equipment, grid cost, slot contribution, timing, and effect-reference values keyed by `(skill_id, field_key)`. Status, reason, and optional provenance preserve unavailable and unsupported facts. |
 | `requirements` | Ordered typed requirements keyed by `(skill_id, requirement_id)`, with a unique per-skill order. |
 | `raw_descriptions` | Ordered display-only localized original, direct-practice, and reverse-practice text with provenance. These values are not recommendation rules. |
+| `legendary_book_effects` | One row per non-negative stable legendary-book slot effect ID. |
+| `legendary_book_effect_texts` | Optional Traditional Chinese and English name/description pairs keyed by `(effect_id, language)`, with independent source-record provenance for each field. |
 | `import_diagnostics` | Deterministically ordered warning/error code, source-record identity, and reason. Complete source files and binaries are never stored. |
 
 The schema constrains stable skill IDs, the two supported languages, enum and
@@ -46,15 +48,17 @@ requirements/descriptions, and diagnostic lookup:
 - `ix_definition_fields_filter(field_key, status, value_1, skill_id)`
 - `ix_requirements_skill_order(skill_id, sort_order)`
 - `ix_descriptions_skill_order(skill_id, sort_order)`
+- `ix_legendary_book_effect_texts_language(language, effect_id)`
 - `ix_diagnostics_source(source_record_identity, code)`
 
 ## Replacement and observation semantics
 
-Definitions are sorted by stable skill ID. Diagnostics are sorted by source
-record identity and code. Child values retain their Domain-defined order.
-Every replacement recreates the schema and inserts the complete manifest and
-content in one transaction with foreign keys enabled, WAL journaling, full
-synchronous durability, and a bounded busy timeout.
+Combat-skill definitions and legendary-book effects are sorted by their stable
+numeric IDs. Diagnostics are sorted by source record identity and code. Child
+values retain their Domain-defined order. Every replacement recreates the
+schema and inserts the complete manifest and content in one transaction with
+foreign keys enabled, WAL journaling, full synchronous durability, and a
+bounded busy timeout.
 
 The process-local replacement gate prevents competing writers. SQLite readers
 use a read transaction and observe either the previously committed catalogue
@@ -64,9 +68,9 @@ mid-write failure rolls the transaction back. A previously committed catalogue
 therefore remains intact.
 
 `ReadStateAsync` distinguishes missing, ready, corrupt, and inaccessible
-storage. It validates the schema version and reconciles manifest definition,
-warning, and error counts with stored rows. Failure messages are sanitized and
-do not reveal the local catalogue path.
+storage. It validates the schema version and reconciles manifest combat-skill,
+legendary-book effect, warning, and error counts with stored rows. Failure
+messages are sanitized and do not reveal the local catalogue path.
 
 When the existing file is structurally corrupt or uses an old schema, the
 adapter commits a complete database at the separately validated

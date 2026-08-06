@@ -27,6 +27,8 @@ internal sealed class TaiwuLanguageCatalog
             ? value
             : null;
 
+    internal IEnumerable<string> Keys => _values.Keys;
+
     internal static async Task<TaiwuLanguageCatalogReadResult> ReadAsync(
         string path,
         string sourceIdentity,

@@ -6,6 +6,7 @@ using System.Text;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LegendaryBooks;
 
 namespace TaiWu.Infrastructure.Catalogue;
 
@@ -13,9 +14,10 @@ internal sealed class SqliteCombatSkillCatalogueStore(
     CatalogueStoragePathProvider pathProvider,
     TimeProvider? timeProvider = null,
     Func<int, CancellationToken, ValueTask>? writeCheckpoint = null)
-    : ICombatSkillCatalogueRepository
+    : ICombatSkillCatalogueRepository,
+      ILegendaryBookEffectCatalogueRepository
 {
-    internal const int SchemaVersion = 3;
+    internal const int SchemaVersion = 4;
 
     private const string CategoryField = "category";
     private const string GradeField = "grade";
@@ -93,6 +95,20 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 return CorruptSnapshot(
                     "The catalogue manifest definition count does not match "
                     + "the stored definitions.");
+            }
+
+            var actualLegendaryBookEffectCount =
+                await CountLegendaryBookEffectsAsync(
+                        connection,
+                        transaction,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            if (actualLegendaryBookEffectCount
+                != manifest.LegendaryBookEffectCount)
+            {
+                return CorruptSnapshot(
+                    "The catalogue manifest legendary-book effect count does "
+                    + "not match the stored effects.");
             }
 
             var actualWarningCount = await CountDiagnosticsAsync(
@@ -229,16 +245,78 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         return definition;
     }
 
+    async Task<IReadOnlyList<LegendaryBookEffectDefinition>>
+        ILegendaryBookEffectCatalogueRepository.QueryAsync(
+            CancellationToken cancellationToken)
+    {
+        var databasePath = RequireExistingDatabasePath();
+        await using var connection = CreateConnection(
+            databasePath,
+            SqliteOpenMode.ReadOnly);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = (SqliteTransaction)
+            await connection.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        var values = await ReadLegendaryBookEffectsAsync(
+                connection,
+                transaction,
+                effectId: null,
+                cancellationToken)
+            .ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return values;
+    }
+
+    async Task<LegendaryBookEffectDefinition?>
+        ILegendaryBookEffectCatalogueRepository.GetAsync(
+            int effectId,
+            CancellationToken cancellationToken)
+    {
+        if (effectId < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(effectId),
+                effectId,
+                "A legendary-book effect ID cannot be negative.");
+        }
+
+        var databasePath = RequireExistingDatabasePath();
+        await using var connection = CreateConnection(
+            databasePath,
+            SqliteOpenMode.ReadOnly);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = (SqliteTransaction)
+            await connection.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        var values = await ReadLegendaryBookEffectsAsync(
+                connection,
+                transaction,
+                effectId,
+                cancellationToken)
+            .ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return values.SingleOrDefault();
+    }
+
     public async Task<CatalogueReplaceResult> ReplaceAsync(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IReadOnlyList<CombatSkillDefinition> definitions,
         IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<LegendaryBookEffectDefinition>? legendaryBookEffects = null)
     {
         ArgumentNullException.ThrowIfNull(sourceIdentity);
         ArgumentNullException.ThrowIfNull(definitions);
         ArgumentNullException.ThrowIfNull(diagnostics);
-        var validationFailure = ValidateReplacement(definitions, diagnostics);
+        var effectValues = legendaryBookEffects ?? [];
+        var validationFailure = ValidateReplacement(
+            definitions,
+            diagnostics,
+            effectValues);
         if (validationFailure is not null)
         {
             return CatalogueReplaceResult.Failure(validationFailure);
@@ -252,6 +330,9 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 diagnostic => diagnostic.SourceRecordIdentity,
                 StringComparer.Ordinal)
             .ThenBy(diagnostic => diagnostic.Code, StringComparer.Ordinal)
+            .ToImmutableArray();
+        var orderedLegendaryBookEffects = effectValues
+            .OrderBy(effect => effect.EffectId)
             .ToImmutableArray();
 
         await _replacementGate.WaitAsync(cancellationToken)
@@ -277,6 +358,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                         sourceIdentity,
                         orderedDefinitions,
                         orderedDiagnostics,
+                        orderedLegendaryBookEffects,
                         cancellationToken)
                     .ConfigureAwait(false);
                 return CatalogueReplaceResult.Success();
@@ -287,6 +369,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                     sourceIdentity,
                     orderedDefinitions,
                     orderedDiagnostics,
+                    orderedLegendaryBookEffects,
                     cancellationToken)
                 .ConfigureAwait(false);
             return CatalogueReplaceResult.Success();
@@ -316,6 +399,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         ImmutableArray<CombatSkillDefinition> definitions,
         ImmutableArray<CombatSkillImportDiagnostic> diagnostics,
+        ImmutableArray<LegendaryBookEffectDefinition> legendaryBookEffects,
         CancellationToken cancellationToken)
     {
         var rebuildPath = pathProvider.RebuildDatabasePath;
@@ -331,6 +415,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                     sourceIdentity,
                     definitions,
                     diagnostics,
+                    legendaryBookEffects,
                     cancellationToken)
                 .ConfigureAwait(false);
             File.Replace(
@@ -353,6 +438,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         ImmutableArray<CombatSkillDefinition> definitions,
         ImmutableArray<CombatSkillImportDiagnostic> diagnostics,
+        ImmutableArray<LegendaryBookEffectDefinition> legendaryBookEffects,
         CancellationToken cancellationToken)
     {
         await using var connection = CreateConnection(
@@ -388,6 +474,17 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                     .ConfigureAwait(false);
             }
 
+            foreach (var effect in legendaryBookEffects)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await InsertLegendaryBookEffectAsync(
+                        connection,
+                        transaction,
+                        effect,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             for (var index = 0; index < diagnostics.Length; index++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -405,6 +502,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                     transaction,
                     sourceIdentity,
                     definitions.Length,
+                    legendaryBookEffects.Length,
                     diagnostics.Count(diagnostic => diagnostic.Severity
                         == CombatSkillImportDiagnosticSeverity.Warning),
                     diagnostics.Count(diagnostic => diagnostic.Severity
@@ -446,7 +544,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
 
     private static string? ValidateReplacement(
         IReadOnlyList<CombatSkillDefinition> definitions,
-        IReadOnlyList<CombatSkillImportDiagnostic> diagnostics)
+        IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
+        IReadOnlyList<LegendaryBookEffectDefinition> legendaryBookEffects)
     {
         if (definitions.Any(definition => definition is null))
         {
@@ -457,6 +556,17 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             .Any(group => group.Count() > 1))
         {
             return "Definitions cannot contain duplicate skill IDs.";
+        }
+
+        if (legendaryBookEffects.Any(effect => effect is null))
+        {
+            return "Legendary-book effects cannot contain null.";
+        }
+
+        if (legendaryBookEffects.GroupBy(effect => effect.EffectId)
+            .Any(group => group.Count() > 1))
+        {
+            return "Legendary-book effects cannot contain duplicate effect IDs.";
         }
 
         return diagnostics.Any(diagnostic => diagnostic is null)
@@ -488,6 +598,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         command.Transaction = transaction;
         command.CommandText = """
             DROP TABLE IF EXISTS import_diagnostics;
+            DROP TABLE IF EXISTS legendary_book_effect_texts;
+            DROP TABLE IF EXISTS legendary_book_effects;
             DROP TABLE IF EXISTS raw_descriptions;
             DROP TABLE IF EXISTS requirements;
             DROP TABLE IF EXISTS definition_fields;
@@ -505,8 +617,11 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 english_fingerprint TEXT NOT NULL CHECK (length(english_fingerprint) = 64),
                 traditional_chinese_special_effect_fingerprint TEXT NOT NULL CHECK (length(traditional_chinese_special_effect_fingerprint) = 64),
                 english_special_effect_fingerprint TEXT NOT NULL CHECK (length(english_special_effect_fingerprint) = 64),
+                traditional_chinese_legendary_book_fingerprint TEXT NOT NULL CHECK (length(traditional_chinese_legendary_book_fingerprint) = 64),
+                english_legendary_book_fingerprint TEXT NOT NULL CHECK (length(english_legendary_book_fingerprint) = 64),
                 built_at_utc TEXT NOT NULL,
                 definition_count INTEGER NOT NULL CHECK (definition_count >= 0),
+                legendary_book_effect_count INTEGER NOT NULL CHECK (legendary_book_effect_count >= 0),
                 warning_count INTEGER NOT NULL CHECK (warning_count >= 0),
                 error_count INTEGER NOT NULL CHECK (error_count >= 0)
             ) STRICT;
@@ -583,6 +698,47 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 PRIMARY KEY (skill_id, sort_order)
             ) STRICT;
 
+            CREATE TABLE legendary_book_effects (
+                effect_id INTEGER NOT NULL PRIMARY KEY CHECK (effect_id >= 0)
+            ) STRICT;
+
+            CREATE TABLE legendary_book_effect_texts (
+                effect_id INTEGER NOT NULL REFERENCES legendary_book_effects(effect_id) ON DELETE CASCADE,
+                language INTEGER NOT NULL CHECK (language IN (0, 1)),
+                name TEXT,
+                description TEXT,
+                name_source_kind INTEGER CHECK (name_source_kind BETWEEN 0 AND 3),
+                name_source_identity TEXT,
+                name_source_record_identity TEXT,
+                description_source_kind INTEGER CHECK (description_source_kind BETWEEN 0 AND 3),
+                description_source_identity TEXT,
+                description_source_record_identity TEXT,
+                PRIMARY KEY (effect_id, language),
+                CHECK (name IS NOT NULL OR description IS NOT NULL),
+                CHECK (
+                    (name IS NULL
+                        AND name_source_kind IS NULL
+                        AND name_source_identity IS NULL
+                        AND name_source_record_identity IS NULL)
+                    OR
+                    (length(trim(name)) > 0
+                        AND name_source_kind IS NOT NULL
+                        AND name_source_identity IS NOT NULL
+                        AND name_source_record_identity IS NOT NULL)
+                ),
+                CHECK (
+                    (description IS NULL
+                        AND description_source_kind IS NULL
+                        AND description_source_identity IS NULL
+                        AND description_source_record_identity IS NULL)
+                    OR
+                    (length(trim(description)) > 0
+                        AND description_source_kind IS NOT NULL
+                        AND description_source_identity IS NOT NULL
+                        AND description_source_record_identity IS NOT NULL)
+                )
+            ) STRICT;
+
             CREATE TABLE import_diagnostics (
                 sort_order INTEGER NOT NULL PRIMARY KEY CHECK (sort_order >= 0),
                 severity INTEGER NOT NULL CHECK (severity IN (0, 1)),
@@ -599,6 +755,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 ON requirements(skill_id, sort_order);
             CREATE INDEX ix_descriptions_skill_order
                 ON raw_descriptions(skill_id, sort_order);
+            CREATE INDEX ix_legendary_book_effect_texts_language
+                ON legendary_book_effect_texts(language, effect_id);
             CREATE INDEX ix_diagnostics_source
                 ON import_diagnostics(source_record_identity, code);
             """;
@@ -611,6 +769,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         SqliteTransaction transaction,
         CombatSkillCatalogueSourceIdentity identity,
         int definitionCount,
+        int legendaryBookEffectCount,
         int warningCount,
         int errorCount,
         DateTimeOffset builtAtUtc,
@@ -629,8 +788,11 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 english_fingerprint,
                 traditional_chinese_special_effect_fingerprint,
                 english_special_effect_fingerprint,
+                traditional_chinese_legendary_book_fingerprint,
+                english_legendary_book_fingerprint,
                 built_at_utc,
                 definition_count,
+                legendary_book_effect_count,
                 warning_count,
                 error_count)
             VALUES (
@@ -643,8 +805,11 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 $englishFingerprint,
                 $traditionalChineseSpecialEffectFingerprint,
                 $englishSpecialEffectFingerprint,
+                $traditionalChineseLegendaryBookFingerprint,
+                $englishLegendaryBookFingerprint,
                 $builtAtUtc,
                 $definitionCount,
+                $legendaryBookEffectCount,
                 $warningCount,
                 $errorCount);
             """;
@@ -671,9 +836,18 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             "$englishSpecialEffectFingerprint",
             identity.EnglishSpecialEffectFingerprint);
         command.Parameters.AddWithValue(
+            "$traditionalChineseLegendaryBookFingerprint",
+            identity.TraditionalChineseLegendaryBookFingerprint);
+        command.Parameters.AddWithValue(
+            "$englishLegendaryBookFingerprint",
+            identity.EnglishLegendaryBookFingerprint);
+        command.Parameters.AddWithValue(
             "$builtAtUtc",
             builtAtUtc.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
         command.Parameters.AddWithValue("$definitionCount", definitionCount);
+        command.Parameters.AddWithValue(
+            "$legendaryBookEffectCount",
+            legendaryBookEffectCount);
         command.Parameters.AddWithValue("$warningCount", warningCount);
         command.Parameters.AddWithValue("$errorCount", errorCount);
         await command.ExecuteNonQueryAsync(cancellationToken)
@@ -996,6 +1170,86 @@ internal sealed class SqliteCombatSkillCatalogueStore(
             .ConfigureAwait(false);
     }
 
+    private static async Task InsertLegendaryBookEffectAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        LegendaryBookEffectDefinition effect,
+        CancellationToken cancellationToken)
+    {
+        await using (var command = connection.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandText = """
+                INSERT INTO legendary_book_effects (effect_id)
+                VALUES ($effectId);
+                """;
+            command.Parameters.AddWithValue("$effectId", effect.EffectId);
+            await command.ExecuteNonQueryAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        foreach (var localization in effect.Localizations)
+        {
+            await using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = """
+                INSERT INTO legendary_book_effect_texts (
+                    effect_id,
+                    language,
+                    name,
+                    description,
+                    name_source_kind,
+                    name_source_identity,
+                    name_source_record_identity,
+                    description_source_kind,
+                    description_source_identity,
+                    description_source_record_identity)
+                VALUES (
+                    $effectId,
+                    $language,
+                    $name,
+                    $description,
+                    $nameSourceKind,
+                    $nameSourceIdentity,
+                    $nameSourceRecord,
+                    $descriptionSourceKind,
+                    $descriptionSourceIdentity,
+                    $descriptionSourceRecord);
+                """;
+            command.Parameters.AddWithValue("$effectId", effect.EffectId);
+            command.Parameters.AddWithValue(
+                "$language",
+                (int)localization.Language);
+            command.Parameters.AddWithValue("$name", DbValue(localization.Name));
+            command.Parameters.AddWithValue(
+                "$description",
+                DbValue(localization.Description));
+            AddSourceParameters(command, "name", localization.NameSource);
+            AddSourceParameters(
+                command,
+                "description",
+                localization.DescriptionSource);
+            await command.ExecuteNonQueryAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    private static void AddSourceParameters(
+        SqliteCommand command,
+        string prefix,
+        CatalogueSourceReference? source)
+    {
+        command.Parameters.AddWithValue(
+            $"${prefix}SourceKind",
+            source is null ? DBNull.Value : (int)source.Kind);
+        command.Parameters.AddWithValue(
+            $"${prefix}SourceIdentity",
+            DbValue(source?.SourceIdentity));
+        command.Parameters.AddWithValue(
+            $"${prefix}SourceRecord",
+            DbValue(source?.RecordIdentity));
+    }
+
     private static async Task InsertDiagnosticAsync(
         SqliteConnection connection,
         SqliteTransaction transaction,
@@ -1047,8 +1301,11 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 english_fingerprint,
                 traditional_chinese_special_effect_fingerprint,
                 english_special_effect_fingerprint,
+                traditional_chinese_legendary_book_fingerprint,
+                english_legendary_book_fingerprint,
                 built_at_utc,
                 definition_count,
+                legendary_book_effect_count,
                 warning_count,
                 error_count
             FROM catalogue_manifest
@@ -1071,15 +1328,18 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 reader.GetString(4),
                 reader.GetString(5),
                 reader.GetString(6),
-                reader.GetString(7)),
-            DateTimeOffset.ParseExact(
+                reader.GetString(7),
                 reader.GetString(8),
+                reader.GetString(9)),
+            DateTimeOffset.ParseExact(
+                reader.GetString(10),
                 "O",
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind),
-            reader.GetInt32(9),
-            reader.GetInt32(10),
-            reader.GetInt32(11));
+            reader.GetInt32(11),
+            reader.GetInt32(12),
+            reader.GetInt32(13),
+            reader.GetInt32(14));
         if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             throw new InvalidDataException(
@@ -1097,6 +1357,20 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
         command.CommandText = "SELECT COUNT(*) FROM definitions;";
+        return Convert.ToInt32(
+            await command.ExecuteScalarAsync(cancellationToken)
+                .ConfigureAwait(false),
+            CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<int> CountLegendaryBookEffectsAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT COUNT(*) FROM legendary_book_effects;";
         return Convert.ToInt32(
             await command.ExecuteScalarAsync(cancellationToken)
                 .ConfigureAwait(false),
@@ -1481,6 +1755,64 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         return values.ToImmutable();
     }
 
+    private static async Task<ImmutableArray<LegendaryBookEffectDefinition>>
+        ReadLegendaryBookEffectsAsync(
+            SqliteConnection connection,
+            SqliteTransaction transaction,
+            int? effectId,
+            CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT
+                e.effect_id,
+                t.language,
+                t.name,
+                t.description,
+                t.name_source_kind,
+                t.name_source_identity,
+                t.name_source_record_identity,
+                t.description_source_kind,
+                t.description_source_identity,
+                t.description_source_record_identity
+            FROM legendary_book_effects e
+            INNER JOIN legendary_book_effect_texts t
+                ON t.effect_id = e.effect_id
+            WHERE $effectId IS NULL OR e.effect_id = $effectId
+            ORDER BY e.effect_id, t.language;
+            """;
+        command.Parameters.AddWithValue(
+            "$effectId",
+            effectId is null ? DBNull.Value : effectId.Value);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
+            .ConfigureAwait(false);
+        Dictionary<int, List<LocalizedLegendaryBookEffect>> values = [];
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var id = reader.GetInt32(0);
+            if (!values.TryGetValue(id, out var localizations))
+            {
+                localizations = [];
+                values.Add(id, localizations);
+            }
+
+            localizations.Add(new LocalizedLegendaryBookEffect(
+                (CatalogueLanguage)reader.GetInt32(1),
+                reader.IsDBNull(2) ? null : reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                ReadOptionalSource(reader, 4),
+                ReadOptionalSource(reader, 7)));
+        }
+
+        return values
+            .OrderBy(pair => pair.Key)
+            .Select(pair => new LegendaryBookEffectDefinition(
+                pair.Key,
+                pair.Value))
+            .ToImmutableArray();
+    }
+
     private static ReadField RequiredField(
         IReadOnlyDictionary<string, ReadField> fields,
         string key) => fields.TryGetValue(key, out var value)
@@ -1566,6 +1898,7 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         CombatSkillCatalogueSourceIdentity SourceIdentity,
         DateTimeOffset BuiltAtUtc,
         int DefinitionCount,
+        int LegendaryBookEffectCount,
         int WarningCount,
         int ErrorCount);
 

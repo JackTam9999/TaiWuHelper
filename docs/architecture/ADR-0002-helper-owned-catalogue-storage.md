@@ -10,7 +10,9 @@
 ## Context
 
 Epic 2 introduces a rebuildable SQLite catalogue derived from installed combat
-skill configuration and language resources. This is the first production
+skill configuration and language resources. The same catalogue also stores
+current legendary-book slot names and descriptions derived from the installed
+`LegendaryBookSlot_language.txt` resources. This is the first production
 feature that needs to write persistent helper-owned data.
 
 The permanent boundary in

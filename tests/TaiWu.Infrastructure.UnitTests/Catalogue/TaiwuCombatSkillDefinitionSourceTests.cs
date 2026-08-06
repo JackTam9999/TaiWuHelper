@@ -24,6 +24,9 @@ public sealed class TaiwuCombatSkillDefinitionSourceTests
         directory.Write(
             "SpecialEffect_language.txt",
             "Desc_1_0\nDirect effect\nDesc_2_0\nReverse effect\n");
+        directory.Write(
+            "LegendaryBookSlot_language.txt",
+            "Name_83\n解破\nDesc_83\nInterrupt the enemy skill.\n");
         var version = FileVersionInfo.GetVersionInfo(gameData).ProductVersion!;
         var records = new[]
         {
@@ -66,6 +69,14 @@ public sealed class TaiwuCombatSkillDefinitionSourceTests
                 description.Kind
                     == Domain.CombatSkills.RawCombatSkillDescriptionKind.DirectEffect
                 && description.Text == "Direct effect");
+        var legendaryBookEffect = Assert.Single(
+            result.LegendaryBookEffects);
+        Assert.Equal(83, legendaryBookEffect.EffectId);
+        Assert.Equal(
+            "解破",
+            legendaryBookEffect.Find(
+                Domain.CombatSkills.CatalogueLanguage.TraditionalChinese)!
+                .Name);
     }
 
     [Fact]

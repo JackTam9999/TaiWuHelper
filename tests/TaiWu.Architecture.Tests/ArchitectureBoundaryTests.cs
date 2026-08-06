@@ -772,6 +772,9 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.False(storeType.IsPublic);
         Assert.True(
             typeof(ICombatSkillCatalogueRepository).IsAssignableFrom(storeType));
+        Assert.True(
+            typeof(ILegendaryBookEffectCatalogueRepository)
+                .IsAssignableFrom(storeType));
 
         var constructors = storeType.GetConstructors(
             BindingFlags.Instance

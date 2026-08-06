@@ -51,9 +51,13 @@ public static class DependencyInjection
         services.AddSingleton(provider =>
             SaveProgressCacheStoragePathProvider.CreateDefault(
                 ProtectedGameOwnedDirectories(provider)));
-        services.AddSingleton<ICombatSkillCatalogueRepository>(provider =>
+        services.AddSingleton(provider =>
             new SqliteCombatSkillCatalogueStore(
                 provider.GetRequiredService<CatalogueStoragePathProvider>()));
+        services.AddSingleton<ICombatSkillCatalogueRepository>(provider =>
+            provider.GetRequiredService<SqliteCombatSkillCatalogueStore>());
+        services.AddSingleton<ILegendaryBookEffectCatalogueRepository>(provider =>
+            provider.GetRequiredService<SqliteCombatSkillCatalogueStore>());
         services.AddSingleton<SqliteCharacterCombatSkillProgressCache>();
         services.AddSingleton<
             ICharacterCombatSkillProgressCacheMaintenance>(provider =>

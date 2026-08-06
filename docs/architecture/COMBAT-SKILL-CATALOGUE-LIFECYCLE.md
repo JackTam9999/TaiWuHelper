@@ -10,12 +10,16 @@ and stored counts agree. `CombatSkillCatalogueSourceIdentity` contains:
   `TaiwuCombatSkillDefinitionSource`;
 - the SHA-256 fingerprint of the imported GameData configuration assembly;
 - the SHA-256 fingerprint of the Traditional Chinese combat-skill resource;
-- the SHA-256 fingerprint of the English combat-skill resource.
+- the SHA-256 fingerprint of the English combat-skill resource;
+- both Traditional Chinese and English special-effect resource fingerprints;
+- both Traditional Chinese and English legendary-book slot resource
+  fingerprints.
 
-The schema version remains an Infrastructure storage concern. Schema version 2
-stores the complete source identity, UTC build time, definition count, warning
-count, and error count in its singleton manifest. `ReadStateAsync` rejects an
-unknown schema or a count that does not match the stored rows as corrupt.
+The schema version remains an Infrastructure storage concern. Schema version 4
+stores the complete source identity, UTC build time, combat-skill definition
+count, legendary-book effect count, warning count, and error count in its
+singleton manifest. `ReadStateAsync` rejects an unknown schema or a count that
+does not match the stored rows as corrupt.
 
 Importer behavior that can change mapped catalogue content must increment
 `TaiwuCombatSkillDefinitionSource.ImporterVersion`. A compatible schema change
@@ -48,12 +52,12 @@ state after acquiring the gate. Consequently, the first request performs the
 rebuild and later concurrent requests observe `Current` instead of rebuilding
 again. The store also retains its writer gate for direct repository callers.
 
-Definitions are imported and persisted in stable skill-ID order. Diagnostics
-are ordered by source-record identity and code; child collections retain their
-typed Domain order. Repeating an import from identical sources produces the
-same definition count, query order, and complete field-level content identity.
-Build time is intentionally observational metadata and is not part of this
-content-equivalence claim.
+Combat-skill definitions and legendary-book effects are imported and persisted
+in stable numeric-ID order. Diagnostics are ordered by source-record identity
+and code; child collections retain their typed Domain order. Repeating an
+import from identical sources produces the same counts, query order, and
+complete field-level content identity. Build time is intentionally
+observational metadata and is not part of this content-equivalence claim.
 
 ## Recovery and non-interference
 

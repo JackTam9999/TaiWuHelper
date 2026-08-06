@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LegendaryBooks;
 using TaiWu.Infrastructure.Catalogue;
 using Xunit;
 
@@ -20,6 +21,55 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
         Assert.Equal(CatalogueRepositoryState.Missing, state.State);
         Assert.False(Directory.Exists(fixture.Provider.CatalogueDirectory));
         Assert.False(File.Exists(fixture.Provider.DatabasePath));
+    }
+
+    [Fact]
+    public async Task Round_trip_preserves_legendary_book_effect_texts_and_provenance()
+    {
+        using var fixture = StoreFixture.Create();
+        var store = fixture.CreateStore();
+        var effect = LegendaryBookEffect(83);
+
+        var replacement = await store.ReplaceAsync(
+            Identity,
+            [Definition(1, "First", CombatSkillDiscipline.Blade)],
+            diagnostics: [],
+            CancellationToken,
+            [effect]);
+        var repository = (ILegendaryBookEffectCatalogueRepository)store;
+        var all = await repository.QueryAsync(CancellationToken);
+        var loaded = await repository.GetAsync(83, CancellationToken);
+        var missing = await repository.GetAsync(84, CancellationToken);
+
+        Assert.True(replacement.Succeeded);
+        Assert.Equal(83, Assert.Single(all).EffectId);
+        Assert.NotNull(loaded);
+        Assert.Null(missing);
+        var cnh = loaded.Find(CatalogueLanguage.TraditionalChinese)!;
+        Assert.Equal("解破", cnh.Name);
+        Assert.Equal(
+            "<color=#brightblue>打斷敵人的功法施展；</color>",
+            cnh.Description);
+        Assert.Equal(
+            "legendary-book-slot:Desc_83",
+            cnh.DescriptionSource!.RecordIdentity);
+
+        await using var connection = new SqliteConnection(
+            $"Data Source={fixture.Provider.DatabasePath};Mode=ReadOnly;Pooling=False");
+        await connection.OpenAsync(CancellationToken);
+        Assert.Equal(
+            1L,
+            await ScalarAsync(
+                connection,
+                "SELECT legendary_book_effect_count FROM catalogue_manifest;"));
+        Assert.Equal(
+            2L,
+            await ScalarAsync(
+                connection,
+                "SELECT COUNT(*) FROM legendary_book_effect_texts;"));
+        Assert.True(await IndexExistsAsync(
+            connection,
+            "ix_legendary_book_effect_texts_language"));
     }
 
     [Fact]
@@ -480,6 +530,27 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
     }
 
     [Fact]
+    public async Task Legendary_book_effect_count_mismatch_is_reported_as_corrupt()
+    {
+        using var fixture = StoreFixture.Create();
+        var store = fixture.CreateStore();
+        Assert.True((await store.ReplaceAsync(
+            Identity,
+            [Definition(1, "One", CombatSkillDiscipline.Finger)],
+            diagnostics: [],
+            CancellationToken,
+            [LegendaryBookEffect(83)])).Succeeded);
+        await ExecuteAsync(
+            fixture.Provider.DatabasePath,
+            "UPDATE catalogue_manifest SET legendary_book_effect_count = 2;");
+
+        var state = await store.ReadStateAsync(CancellationToken);
+
+        Assert.Equal(CatalogueRepositoryState.Corrupt, state.State);
+        Assert.Contains("legendary-book effect count", state.Reason);
+    }
+
+    [Fact]
     public async Task Ensure_recovers_empty_malformed_and_old_schema_databases()
     {
         foreach (var condition in new[] { "empty", "malformed", "old-schema" })
@@ -735,6 +806,41 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
                         "special-effect-description:1057"))
             ],
             gameData);
+    }
+
+    private static LegendaryBookEffectDefinition LegendaryBookEffect(
+        int effectId)
+    {
+        var cnhIdentity = "legendary-book-slot-language-cnh:test";
+        var enIdentity = "legendary-book-slot-language-en:test";
+        return new LegendaryBookEffectDefinition(
+            effectId,
+            [
+                new LocalizedLegendaryBookEffect(
+                    CatalogueLanguage.TraditionalChinese,
+                    "解破",
+                    "<color=#brightblue>打斷敵人的功法施展；</color>",
+                    Source(
+                        CatalogueSourceKind.TraditionalChineseLanguageResource,
+                        cnhIdentity,
+                        $"legendary-book-slot:Name_{effectId}"),
+                    Source(
+                        CatalogueSourceKind.TraditionalChineseLanguageResource,
+                        cnhIdentity,
+                        $"legendary-book-slot:Desc_{effectId}")),
+                new LocalizedLegendaryBookEffect(
+                    CatalogueLanguage.English,
+                    "Counter Break",
+                    "Interrupt the enemy skill.",
+                    Source(
+                        CatalogueSourceKind.EnglishLanguageResource,
+                        enIdentity,
+                        $"legendary-book-slot:Name_{effectId}"),
+                    Source(
+                        CatalogueSourceKind.EnglishLanguageResource,
+                        enIdentity,
+                        $"legendary-book-slot:Desc_{effectId}"))
+            ]);
     }
 
     private static CombatSkillDefinition NonavailableDefinition(int skillId)

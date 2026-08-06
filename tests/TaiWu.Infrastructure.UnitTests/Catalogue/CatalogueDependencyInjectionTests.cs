@@ -36,6 +36,9 @@ public sealed class CatalogueDependencyInjectionTests
 
         Assert.IsType<SqliteCombatSkillCatalogueStore>(first);
         Assert.Same(first, second);
+        var legendaryBookEffects = services.GetRequiredService<
+            ILegendaryBookEffectCatalogueRepository>();
+        Assert.Same(first, legendaryBookEffects);
 
         var firstFactionProfiles = services.GetRequiredService<
             ICombatSkillFactionProfileSource>();

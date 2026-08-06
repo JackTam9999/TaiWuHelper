@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using TaiWu.Domain.CombatSkills;
+using TaiWu.Domain.LegendaryBooks;
 
 namespace TaiWu.Application.CombatSkills;
 
@@ -12,7 +13,9 @@ public sealed record CombatSkillCatalogueSourceIdentity
         string traditionalChineseFingerprint,
         string englishFingerprint,
         string? traditionalChineseSpecialEffectFingerprint = null,
-        string? englishSpecialEffectFingerprint = null)
+        string? englishSpecialEffectFingerprint = null,
+        string? traditionalChineseLegendaryBookFingerprint = null,
+        string? englishLegendaryBookFingerprint = null)
     {
         if (string.IsNullOrWhiteSpace(gameDataVersion))
         {
@@ -47,6 +50,13 @@ public sealed record CombatSkillCatalogueSourceIdentity
         EnglishSpecialEffectFingerprint = ValidateFingerprint(
             englishSpecialEffectFingerprint ?? englishFingerprint,
             nameof(englishSpecialEffectFingerprint));
+        TraditionalChineseLegendaryBookFingerprint = ValidateFingerprint(
+            traditionalChineseLegendaryBookFingerprint
+                ?? traditionalChineseFingerprint,
+            nameof(traditionalChineseLegendaryBookFingerprint));
+        EnglishLegendaryBookFingerprint = ValidateFingerprint(
+            englishLegendaryBookFingerprint ?? englishFingerprint,
+            nameof(englishLegendaryBookFingerprint));
     }
 
     public string GameDataVersion { get; }
@@ -62,6 +72,10 @@ public sealed record CombatSkillCatalogueSourceIdentity
     public string TraditionalChineseSpecialEffectFingerprint { get; }
 
     public string EnglishSpecialEffectFingerprint { get; }
+
+    public string TraditionalChineseLegendaryBookFingerprint { get; }
+
+    public string EnglishLegendaryBookFingerprint { get; }
 
     private static string ValidateFingerprint(
         string value,
@@ -159,12 +173,14 @@ public sealed record CombatSkillDefinitionSourceResult
         DefinitionSourceReadStatus status,
         CombatSkillCatalogueSourceIdentity? sourceIdentity,
         ImmutableArray<CombatSkillDefinition> definitions,
+        ImmutableArray<LegendaryBookEffectDefinition> legendaryBookEffects,
         ImmutableArray<CombatSkillImportDiagnostic> diagnostics,
         string? reason)
     {
         Status = status;
         SourceIdentity = sourceIdentity;
         Definitions = definitions;
+        LegendaryBookEffects = legendaryBookEffects;
         Diagnostics = diagnostics;
         Reason = reason;
     }
@@ -175,6 +191,9 @@ public sealed record CombatSkillDefinitionSourceResult
 
     public ImmutableArray<CombatSkillDefinition> Definitions { get; }
 
+    public ImmutableArray<LegendaryBookEffectDefinition> LegendaryBookEffects
+    { get; }
+
     public ImmutableArray<CombatSkillImportDiagnostic> Diagnostics { get; }
 
     public string? Reason { get; }
@@ -182,7 +201,8 @@ public sealed record CombatSkillDefinitionSourceResult
     public static CombatSkillDefinitionSourceResult Available(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IEnumerable<CombatSkillDefinition> definitions,
-        IEnumerable<CombatSkillImportDiagnostic>? diagnostics = null)
+        IEnumerable<CombatSkillImportDiagnostic>? diagnostics = null,
+        IEnumerable<LegendaryBookEffectDefinition>? legendaryBookEffects = null)
     {
         ArgumentNullException.ThrowIfNull(sourceIdentity);
         ArgumentNullException.ThrowIfNull(definitions);
@@ -202,6 +222,26 @@ public sealed record CombatSkillDefinitionSourceResult
         }
 
         values = values.OrderBy(value => value.SkillId).ToImmutableArray();
+        var legendaryBookValues = (legendaryBookEffects ?? [])
+            .ToImmutableArray();
+        if (legendaryBookValues.Any(value => value is null))
+        {
+            throw new ArgumentException(
+                "Legendary-book effects cannot contain null.",
+                nameof(legendaryBookEffects));
+        }
+
+        if (legendaryBookValues.GroupBy(value => value.EffectId)
+            .Any(group => group.Count() > 1))
+        {
+            throw new ArgumentException(
+                "Definition-source results cannot contain duplicate legendary-book effect IDs.",
+                nameof(legendaryBookEffects));
+        }
+
+        legendaryBookValues = legendaryBookValues
+            .OrderBy(value => value.EffectId)
+            .ToImmutableArray();
         var diagnosticValues = (diagnostics ?? []).ToImmutableArray();
         if (diagnosticValues.Any(value => value is null))
         {
@@ -218,6 +258,7 @@ public sealed record CombatSkillDefinitionSourceResult
             DefinitionSourceReadStatus.Available,
             sourceIdentity,
             values,
+            legendaryBookValues,
             diagnosticValues,
             reason: null);
     }
@@ -248,6 +289,7 @@ public sealed record CombatSkillDefinitionSourceResult
             status,
             sourceIdentity: null,
             definitions: [],
+            legendaryBookEffects: [],
             diagnostics: [],
             reason.Trim());
     }

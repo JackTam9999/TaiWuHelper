@@ -15,6 +15,14 @@ internal sealed record TaiwuCatalogueSourcePaths(
         Path.GetDirectoryName(EnglishCombatSkillLanguage)!,
         "SpecialEffect_language.txt");
 
+    internal string TraditionalChineseLegendaryBookSlotLanguage => Path.Combine(
+        Path.GetDirectoryName(TraditionalChineseCombatSkillLanguage)!,
+        "LegendaryBookSlot_language.txt");
+
+    internal string EnglishLegendaryBookSlotLanguage => Path.Combine(
+        Path.GetDirectoryName(EnglishCombatSkillLanguage)!,
+        "LegendaryBookSlot_language.txt");
+
     internal string TraditionalChineseUiLanguage => Path.Combine(
         Path.GetDirectoryName(TraditionalChineseCombatSkillLanguage)!,
         "ui_language.txt");

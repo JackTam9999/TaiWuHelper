@@ -12,7 +12,7 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
     ICombatSkillConfigurationReader configurationReader)
     : ICombatSkillDefinitionSource
 {
-    internal const int ImporterVersion = 2;
+    internal const int ImporterVersion = 3;
 
     public async Task<CombatSkillDefinitionSourceResult> ReadAsync(
         CancellationToken cancellationToken = default)
@@ -96,6 +96,17 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
                     "special-effect-language-en",
                     cancellationToken)
                 .ConfigureAwait(false);
+            var traditionalChineseLegendaryBook =
+                await TaiwuLanguageCatalog.ReadAsync(
+                        paths.TraditionalChineseLegendaryBookSlotLanguage,
+                        "legendary-book-slot-language-cnh",
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            var englishLegendaryBook = await TaiwuLanguageCatalog.ReadAsync(
+                    paths.EnglishLegendaryBookSlotLanguage,
+                    "legendary-book-slot-language-en",
+                    cancellationToken)
+                .ConfigureAwait(false);
             var configuration = configurationReader.ReadAll(cancellationToken);
             var sources = new CombatSkillCatalogueMappingSources(
                 $"gamedata:{installedVersion}:{before.GameData.Sha256}",
@@ -105,6 +116,13 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
                 + before.TraditionalChineseSpecialEffect.Sha256,
                 $"special-effect-language-en:"
                 + before.EnglishSpecialEffect.Sha256);
+            var legendaryBookEffects = LegendaryBookEffectDefinitionMapper.Map(
+                traditionalChineseLegendaryBook.Catalog,
+                englishLegendaryBook.Catalog,
+                $"legendary-book-slot-language-cnh:"
+                + before.TraditionalChineseLegendaryBook.Sha256,
+                $"legendary-book-slot-language-en:"
+                + before.EnglishLegendaryBook.Sha256);
             var definitions = new List<Domain.CombatSkills.CombatSkillDefinition>();
             var diagnostics = new List<CombatSkillImportDiagnostic>();
             diagnostics.AddRange(configuration.Diagnostics);
@@ -112,6 +130,8 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
             diagnostics.AddRange(english.Diagnostics);
             diagnostics.AddRange(traditionalChineseEffects.Diagnostics);
             diagnostics.AddRange(englishEffects.Diagnostics);
+            diagnostics.AddRange(traditionalChineseLegendaryBook.Diagnostics);
+            diagnostics.AddRange(englishLegendaryBook.Diagnostics);
             foreach (var record in configuration.Records.OrderBy(value => value.SkillId))
             {
                 try
@@ -151,9 +171,12 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
                     before.TraditionalChinese.Sha256,
                     before.English.Sha256,
                     before.TraditionalChineseSpecialEffect.Sha256,
-                    before.EnglishSpecialEffect.Sha256),
+                    before.EnglishSpecialEffect.Sha256,
+                    before.TraditionalChineseLegendaryBook.Sha256,
+                    before.EnglishLegendaryBook.Sha256),
                 definitions,
-                diagnostics);
+                diagnostics,
+                legendaryBookEffects);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -196,12 +219,23 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
                 paths.EnglishSpecialEffectLanguage,
                 cancellationToken)
             .ConfigureAwait(false);
+        var traditionalChineseLegendaryBook =
+            await fingerprintProvider.CaptureAsync(
+                    paths.TraditionalChineseLegendaryBookSlotLanguage,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        var englishLegendaryBook = await fingerprintProvider.CaptureAsync(
+                paths.EnglishLegendaryBookSlotLanguage,
+                cancellationToken)
+            .ConfigureAwait(false);
         return new CapturedCatalogueSources(
             gameData,
             traditionalChinese,
             english,
             traditionalChineseSpecialEffect,
-            englishSpecialEffect);
+            englishSpecialEffect,
+            traditionalChineseLegendaryBook,
+            englishLegendaryBook);
     }
 
     private static ImmutableArray<string> MissingSourceNames(
@@ -233,6 +267,16 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
             missing.Add("Language_EN/SpecialEffect_language.txt");
         }
 
+        if (!File.Exists(paths.TraditionalChineseLegendaryBookSlotLanguage))
+        {
+            missing.Add("Language_CNH/LegendaryBookSlot_language.txt");
+        }
+
+        if (!File.Exists(paths.EnglishLegendaryBookSlotLanguage))
+        {
+            missing.Add("Language_EN/LegendaryBookSlot_language.txt");
+        }
+
         return missing.Order(StringComparer.Ordinal).ToImmutableArray();
     }
 
@@ -241,5 +285,7 @@ internal sealed class TaiwuCombatSkillDefinitionSource(
         ReadOnlyFileFingerprint TraditionalChinese,
         ReadOnlyFileFingerprint English,
         ReadOnlyFileFingerprint TraditionalChineseSpecialEffect,
-        ReadOnlyFileFingerprint EnglishSpecialEffect);
+        ReadOnlyFileFingerprint EnglishSpecialEffect,
+        ReadOnlyFileFingerprint TraditionalChineseLegendaryBook,
+        ReadOnlyFileFingerprint EnglishLegendaryBook);
 }

@@ -88,12 +88,20 @@ public sealed class EnsureCombatSkillCatalogue(
         Interlocked.Exchange(ref _isRebuilding, 1);
         try
         {
-            replacement = await repository.ReplaceAsync(
-                    identity,
-                    installed.Definitions,
-                    installed.Diagnostics,
-                    cancellationToken)
-                .ConfigureAwait(false);
+            replacement = installed.LegendaryBookEffects.Length == 0
+                ? await repository.ReplaceAsync(
+                        identity,
+                        installed.Definitions,
+                        installed.Diagnostics,
+                        cancellationToken)
+                    .ConfigureAwait(false)
+                : await repository.ReplaceAsync(
+                        identity,
+                        installed.Definitions,
+                        installed.Diagnostics,
+                        cancellationToken,
+                        installed.LegendaryBookEffects)
+                    .ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

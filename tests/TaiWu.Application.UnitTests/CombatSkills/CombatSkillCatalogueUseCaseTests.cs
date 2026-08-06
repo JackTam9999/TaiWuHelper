@@ -2,6 +2,7 @@ using NSubstitute;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LegendaryBooks;
 using Xunit;
 
 namespace TaiWu.Application.UnitTests.CombatSkills;
@@ -212,6 +213,57 @@ public sealed class CombatSkillCatalogueUseCaseTests
     }
 
     [Fact]
+    public async Task Ensure_replaces_legendary_book_effects_with_the_catalogue()
+    {
+        var sourceReference = new CatalogueSourceReference(
+            CatalogueSourceKind.TraditionalChineseLanguageResource,
+            "legendary-book-slot-language-cnh:test",
+            "legendary-book-slot:Desc_83");
+        var effects = new[]
+        {
+            new LegendaryBookEffectDefinition(
+                83,
+                [
+                    new LocalizedLegendaryBookEffect(
+                        CatalogueLanguage.TraditionalChinese,
+                        name: null,
+                        "現版解破效果",
+                        nameSource: null,
+                        sourceReference)
+                ])
+        };
+        var repository = Repository(MissingRepository());
+        repository.ReplaceAsync(
+                Arg.Any<CombatSkillCatalogueSourceIdentity>(),
+                Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+                Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<IReadOnlyList<LegendaryBookEffectDefinition>>())
+            .Returns(CatalogueReplaceResult.Success());
+        var installed = CombatSkillDefinitionSourceResult.Available(
+            CurrentIdentity,
+            Definitions(),
+            diagnostics: null,
+            effects);
+
+        var result = await new EnsureCombatSkillCatalogue(
+                Source(installed),
+                repository)
+            .ExecuteAsync(CancellationToken);
+
+        Assert.Equal(EnsureCombatSkillCatalogueStatus.Rebuilt, result.Status);
+        await repository.Received(1).ReplaceAsync(
+            CurrentIdentity,
+            Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
+            Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
+            CancellationToken,
+            Arg.Is<IReadOnlyList<LegendaryBookEffectDefinition>>(values =>
+                values != null
+                && values.Count == 1
+                && values[0].EffectId == 83));
+    }
+
+    [Fact]
     public async Task Ensure_does_not_write_when_repository_is_unavailable()
     {
         var repository = Repository(new CombatSkillCatalogueRepositorySnapshot(
@@ -365,7 +417,27 @@ public sealed class CombatSkillCatalogueUseCaseTests
             Identity("1.0.0-current", 2, '0', 'A', 'B'),
             Identity("1.0.0-current", 1, '1', 'A', 'B'),
             Identity("1.0.0-current", 1, '0', 'C', 'B'),
-            Identity("1.0.0-current", 1, '0', 'A', 'D')
+            Identity("1.0.0-current", 1, '0', 'A', 'D'),
+            new CombatSkillCatalogueSourceIdentity(
+                "1.0.0-current",
+                1,
+                new string('0', 64),
+                new string('A', 64),
+                new string('B', 64),
+                new string('A', 64),
+                new string('B', 64),
+                new string('C', 64),
+                new string('B', 64)),
+            new CombatSkillCatalogueSourceIdentity(
+                "1.0.0-current",
+                1,
+                new string('0', 64),
+                new string('A', 64),
+                new string('B', 64),
+                new string('A', 64),
+                new string('B', 64),
+                new string('A', 64),
+                new string('D', 64))
         };
 
         foreach (var storedIdentity in storedIdentities)
