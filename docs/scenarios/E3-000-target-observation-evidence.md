@@ -54,12 +54,27 @@ unchanged. Machine-specific paths and fingerprint values are not committed.
 | Visible result | The opponent-information surface displays `秘而不宣` and exposes no character details or `運功` page |
 
 This capture is negative evidence, not an empty-loadout observation. It proves
-that some combat targets deny observation at the character-information
-boundary. Epic 3 must represent this state as unavailable or unsupported and
-must never interpret it as zero equipped skills, empty slots, or a complete
-loadout. The capture does not expose enough identity detail to resolve a stable
-character ID, so its target identity remains the product-owner-provided
-scenario description.
+that the representative story target denies observation at the
+character-information boundary. Epic 3 must represent this state as
+unavailable or unsupported and must never interpret it as zero equipped
+skills, empty slots, or a complete loadout. The capture does not expose enough
+identity detail to resolve a stable character ID, so its target identity
+remains the product-owner-provided scenario description.
+
+### E3-000-ACCESS-001 — encounter access boundary
+
+| Field | Value |
+|---|---|
+| Product-owner report time (UTC) | `2026-08-07T20:39:31.8552837Z` |
+| Opaque evidence reference | `E3-000-ACCESS-001` |
+| Reported rule | Opponent `運功` is visible for `切磋武功`; hostile and story characters do not expose the opponent `運功` page |
+| Representative corroboration | `E3-000-CAP-001` is an inaccessible story target; `E3-000-CAP-002` is an accessible sparring target |
+
+This access distinction limits the feature's honest product scope. A manual
+current-screen loadout observation can be collected for a sparring opponent.
+It cannot be requested for a hostile or story target in this UI version. For
+those targets, the helper must retain save-only uncertainty and present an
+explicit unavailable state.
 
 ### E3-000-CAP-002 — accessible sparring-opponent loadout
 
@@ -93,7 +108,7 @@ lookup before constructing the typed observation.
 | Candidate field | Current status | Required evidence |
 |---|---|---|
 | Target identity | Available only as paired manual context | `E3-000-CAP-002` contains no identity; `E3-000-ID-001` reports `霍劍嬋`, which must be resolved and confirmed before typed observation construction |
-| Character-information accessibility | Verified for one inaccessible target | `E3-000-CAP-001` proves that `秘而不宣` can prevent all target-loadout observation |
+| Character-information accessibility | Context-dependent | `E3-000-ACCESS-001` reports sparring as accessible and hostile/story targets as unavailable; the two captures provide representative examples |
 | Equipped skill name | Verified | `E3-000-CAP-002` visibly labels every equipped card |
 | Stable skill ID | Not directly visible | Resolve the visible bilingual name through the Epic 2 catalogue and ask for confirmation on ambiguity |
 | Skill category | Verified | All five category rows are visibly separated and labeled |
@@ -104,13 +119,14 @@ lookup before constructing the typed observation.
 | Observation time | Available from helper capture metadata | Record UTC attachment/capture time |
 | Evidence reference | Available from helper capture metadata | Record a short opaque label plus SHA-256; do not commit the image by default |
 
-For this UI version, Epic 3 may design complete-current-loadout semantics when
-all five category rows and their capacity states are captured like
-`E3-000-CAP-002`. Completeness applies only to the current displayed combat
-loadout, never to other presets. `秘而不宣`, missing category rows, cropped
-screens, or unresolved target identity must not produce a complete
-observation. Practice direction is observable for `正` and `逆`; `相抵`
-remains unsupported until separately observed.
+For this UI version, Epic 3 may design complete-current-loadout semantics only
+for a confirmed sparring opponent when all five category rows and their
+capacity states are captured like `E3-000-CAP-002`. Completeness applies only
+to the current displayed combat loadout, never to other presets. A hostile or
+story target, `秘而不宣`, missing category rows, cropped screens, or unresolved
+target identity must not produce an observation. Practice direction is
+observable for `正` and `逆`; `相抵` remains unsupported until separately
+observed.
 
 ## Versioned completeness rule
 
@@ -119,10 +135,10 @@ remains unsupported until separately observed.
 | Rule ID | `TAIWU-CNH-TARGET-LOADOUT-1.0.0-68032f25` |
 | Applicable GameData version | Exact match to `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a` |
 | Applicable language/layout | Guarded installed Traditional Chinese (`CNH`) resource |
-| Complete-current-loadout requirements | Confirmed target identity; accessible opponent `運功`; all five labeled category rows; every row's capacity state; no cropped or hidden continuation |
+| Complete-current-loadout requirements | Confirmed sparring context and target identity; accessible opponent `運功`; all five labeled category rows; every row's capacity state; no cropped or hidden continuation |
 | Supported direction | Visible `正` and `逆` only; `相抵` remains unsupported |
 | Preset semantics | Current displayed combat loadout only; no inference about other presets |
-| Unavailable semantics | `秘而不宣` means unavailable, never empty |
+| Unavailable semantics | Hostile/story context or `秘而不宣` means unavailable, never empty |
 | Invalidation | Any GameData version, language-resource fingerprint, or layout change makes completeness unsupported until re-observed |
 
 Later Domain and Application items may consume this rule as evidence for
@@ -134,8 +150,9 @@ observation even when the installed version matches.
 Use the game normally; no mod, automation, memory inspection, or save change is
 required.
 
-1. Select and explicitly confirm an accessible opponent, such as the
-   `切磋武功` opponent reported as `霍劍嬋` in `E3-000-ID-001`.
+1. Select and explicitly confirm a `切磋武功` opponent, such as the opponent
+   reported as `霍劍嬋` in `E3-000-ID-001`. Do not request this workflow for a
+   hostile or story target.
 2. Pause the battle if the UI permits it.
 3. Use `查看對方人物` to open the opponent's character information.
 4. Open the opponent's `運功` page.
@@ -156,17 +173,19 @@ capture time, and SHA-256.
 
 ## Resolved decisions
 
-1. The full current displayed loadout is observable when all five rows and
-   capacity states appear as in `E3-000-CAP-002`.
-2. All five categories are visible and clearly labeled.
-3. The captured unavailable slot is explicitly locked rather than silently
+1. The opponent loadout is observable in sparring context, not for hostile or
+   story targets in the supported UI version.
+2. The full current displayed sparring loadout is observable when all five
+   rows and capacity states appear as in `E3-000-CAP-002`.
+3. All five categories are visible and clearly labeled.
+4. The captured unavailable slot is explicitly locked rather than silently
    omitted; a cropped or missing row still cannot prove absence.
-4. No preset identity or selector is visible, so completeness never extends
+5. No preset identity or selector is visible, so completeness never extends
    beyond the current displayed combat loadout.
-5. `正` and `逆` are visible on equipped cards; `相抵` is not yet supported.
-6. Power percentages are visible, but this evidence does not claim that any
+6. `正` and `逆` are visible on equipped cards; `相抵` is not yet supported.
+7. Power percentages are visible, but this evidence does not claim that any
    displayed field changes only after combat begins.
-7. Target identity is not visible on the loadout screen. Explicit paired
+8. Target identity is not visible on the loadout screen. Explicit paired
    target selection and confirmation are mandatory.
 
 ## Current E3-000 status
@@ -177,5 +196,7 @@ treated as an empty loadout. `E3-000-CAP-002` supports complete-current-loadout
 coverage and visible `正`/`逆` direction for an accessible sparring opponent.
 `E3-000-ID-001` identifies that sparring opponent as `霍劍嬋` while preserving
 the rule that stable IDs must be resolved and explicitly confirmed rather than
-guessed. The versioned observable-field boundary is complete and ready for the
-E3-001 Domain model.
+guessed. `E3-000-ACCESS-001` limits that model to UI-visible sparring evidence
+and requires an explicit unavailable state for hostile/story targets. The
+versioned observable-field boundary is complete and ready for the E3-001
+Domain model.

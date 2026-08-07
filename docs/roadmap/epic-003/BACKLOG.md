@@ -79,6 +79,8 @@ meaning and completeness of every field proposed for manual entry.
       versions without committing proprietary assets.
 - [x] Target identity, skill name, category, slot visibility, empty-slot
       behavior, paging, and direction visibility are evaluated separately.
+- [x] Sparring, hostile, and story-target access semantics are evaluated
+      separately; unavailable hostile/story UI never implies an empty loadout.
 - [x] The evidence proves whether a screen can support `CompleteLoadout` or
       only `PartialLoadout`.
 - [x] Any category or direction not reliably visible remains unsupported.
@@ -115,6 +117,8 @@ optional direction, and partial/complete coverage.
 
 - [ ] `TargetLoadoutObservation` carries target ID, UTC observation time,
       evidence reference, coverage, and immutable observed skills.
+- [ ] Observation access distinguishes UI-visible sparring opponents from
+      hostile/story targets whose loadout page is unavailable.
 - [ ] Every observed skill has a stable non-negative ID and verified category.
 - [ ] Direction is optional and uses the existing `PracticeDirection` value.
 - [ ] Duplicate skills, duplicate slots where applicable, blank evidence,
@@ -275,6 +279,8 @@ Add a manual-first observation surface to the recommendation page.
 #### Acceptance criteria
 
 - [ ] The form starts disabled and explains when target observation is useful.
+- [ ] Hostile and story targets remain explicitly unavailable for manual
+      current-screen loadout observation; the form never requests hidden data.
 - [ ] Target identity and save freshness are visible before entry.
 - [ ] The player chooses partial or complete coverage with an explanation of
       omission semantics.
