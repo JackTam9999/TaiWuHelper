@@ -81,7 +81,8 @@ public sealed class TargetLoadoutObservation :
         TargetCharacterId = targetCharacterId;
         ObservationContext = observationContext;
         ObservedAtUtc = observedAt.ToUniversalTime();
-        EvidenceReference = evidenceReference.Trim();
+        EvidenceReference = SnapshotFieldSource.NormalizeEvidenceReference(
+            evidenceReference);
         Coverage = coverage;
         ObservedSkills = skillValues;
     }

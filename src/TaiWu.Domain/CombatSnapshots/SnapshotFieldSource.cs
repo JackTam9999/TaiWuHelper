@@ -2,6 +2,8 @@ namespace TaiWu.Domain.CombatSnapshots;
 
 public sealed record SnapshotFieldSource
 {
+    public const int MaximumEvidenceReferenceLength = 128;
+
     public SnapshotFieldSource(
         string fieldPath,
         SnapshotDataSource source,
@@ -23,19 +25,10 @@ public sealed record SnapshotFieldSource
                 "Unknown snapshot data source.");
         }
 
-        if (string.IsNullOrWhiteSpace(evidenceReference))
-        {
-            throw new ArgumentException(
-                "A snapshot field source requires an evidence reference.",
-                nameof(evidenceReference));
-        }
-
         FieldPath = ValidateFieldPath(fieldPath, nameof(fieldPath));
         Source = source;
         CapturedAtUtc = capturedAt.ToUniversalTime();
-        EvidenceReference = ValidateEvidenceReference(
-            evidenceReference,
-            nameof(evidenceReference));
+        EvidenceReference = NormalizeEvidenceReference(evidenceReference);
     }
 
     public string FieldPath { get; }
@@ -46,12 +39,25 @@ public sealed record SnapshotFieldSource
 
     public string EvidenceReference { get; }
 
+    public static string NormalizeEvidenceReference(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException(
+                "A snapshot evidence reference is required.",
+                nameof(value));
+        }
+
+        return ValidateEvidenceReference(value, nameof(value));
+    }
+
     private static string ValidateFieldPath(
         string value,
         string parameterName)
     {
         var normalized = value.Trim();
-        if (normalized.Any(char.IsWhiteSpace)
+        if (normalized.Length > MaximumEvidenceReferenceLength
+            || normalized.Any(char.IsWhiteSpace)
             || normalized.Contains('\\')
             || normalized.Contains('/')
             || normalized.Contains("..", StringComparison.Ordinal))
@@ -74,11 +80,13 @@ public sealed record SnapshotFieldSource
             || normalized.Contains('\\')
             || normalized.Contains('/')
             || normalized.Contains("..", StringComparison.Ordinal)
-            || normalized.Contains(':') && normalized.Length == 2)
+            || normalized.Length >= 2
+                && char.IsAsciiLetter(normalized[0])
+                && normalized[1] == ':')
         {
             throw new ArgumentException(
-                "A snapshot evidence reference must be opaque, not a path "
-                + "or exception detail.",
+                "A snapshot evidence reference must be short and opaque, "
+                + "not a path or exception detail.",
                 parameterName);
         }
 

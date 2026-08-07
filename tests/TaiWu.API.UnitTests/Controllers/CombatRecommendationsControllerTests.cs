@@ -45,6 +45,7 @@ public sealed class CombatRecommendationsControllerTests
         var ok = Assert.IsType<OkObjectResult>(action.Result);
         var response = Assert.IsType<CombatRecommendationResponse>(
             ok.Value);
+        Assert.Null(response.TargetObservation);
         Assert.Equal(
             RecommendationPolicy.Aggressive,
             response.RequestedStyle);

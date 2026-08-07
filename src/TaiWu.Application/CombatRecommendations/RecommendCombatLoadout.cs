@@ -15,6 +15,13 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        if (request.TargetObservation is not null)
+        {
+            throw new ArgumentException(
+                "A target observation requires the target-observation "
+                + "recommendation workflow.",
+                nameof(request));
+        }
 
         var snapshotRequest = new CombatSnapshotReadRequest(
             request.SaveFilePath,
@@ -26,6 +33,29 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
             cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 
+        return Build(
+            snapshot,
+            request.Policy,
+            targetObservation: null,
+            cancellationToken);
+    }
+
+    internal static CombatLoadoutRecommendation Build(
+        CombatSnapshot snapshot,
+        RecommendationPolicy requestedPolicy,
+        TargetObservationProcessingResult? targetObservation,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        if (!Enum.IsDefined(requestedPolicy))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(requestedPolicy),
+                requestedPolicy,
+                "Unknown recommendation policy.");
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
         var threatAnalysis = TargetThreatAnalyzer.Analyze(
             snapshot,
             VerifiedTargetThreatRuleSets.GoldenMagicSound);
@@ -58,8 +88,9 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
             snapshot,
             threatAnalysis,
             generation,
-            request.Policy,
-            styles);
+            requestedPolicy,
+            styles,
+            targetObservation);
     }
 
     private static CombatRecommendationStyleResult BuildStyle(

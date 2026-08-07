@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using TaiWu.Application.CombatRecommendations;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
@@ -22,6 +24,86 @@ public sealed class CombatRecommendationApiRequest
         get;
         init;
     }
+
+    public TargetObservationApiRequest? TargetObservation { get; init; }
+}
+
+public sealed class TargetObservationApiRequest
+{
+    public TargetObservationContext Context { get; init; } =
+        TargetObservationContext.Sparring;
+
+    public DateTimeOffset ObservedAt { get; init; }
+
+    [Required]
+    [StringLength(
+        SnapshotFieldSource.MaximumEvidenceReferenceLength,
+        MinimumLength = 1)]
+    public string EvidenceReference { get; init; } = string.Empty;
+
+    public TargetLoadoutCoverageKind Coverage { get; init; } =
+        TargetLoadoutCoverageKind.PartialLoadout;
+
+    [Required]
+    public IReadOnlyList<TargetObservedSkillApiRequest> SelectedSkills
+    {
+        get;
+        init;
+    } = [];
+
+    public bool ConfirmPrecedenceWhenSaveTimeUnavailable { get; init; }
+
+    internal TargetObservationRequest ToApplication()
+    {
+        if (ObservedAt == default)
+        {
+            throw new ArgumentException(
+                "Target observation observedAt is required.",
+                nameof(ObservedAt));
+        }
+
+        if (SelectedSkills is null)
+        {
+            throw new ArgumentException(
+                "Target observation selectedSkills is required.",
+                nameof(SelectedSkills));
+        }
+
+        return new TargetObservationRequest(
+            Context,
+            ObservedAt,
+            EvidenceReference,
+            Coverage,
+            SelectedSkills.Select(skill => skill?.ToApplication()
+                ?? throw new ArgumentException(
+                    "Target observation skills cannot contain null.")),
+            ConfirmPrecedenceWhenSaveTimeUnavailable);
+    }
+}
+
+public sealed class TargetObservedSkillApiRequest
+{
+    [Required]
+    [StringLength(CombatSkillSearchRequest.MaximumQueryLength,
+        MinimumLength = 1)]
+    public string VisibleName { get; init; } = string.Empty;
+
+    public SkillCategory Category { get; init; }
+
+    [Range(0, int.MaxValue)]
+    public int? ConfirmedSkillId { get; init; }
+
+    public PracticeDirection? Direction { get; init; }
+
+    [Range(0, int.MaxValue)]
+    public int? SlotIndex { get; init; }
+
+    internal TargetObservedSkillRequest ToApplication() => new(
+        VisibleName,
+        Category,
+        ConfirmedSkillId,
+        Direction,
+        SlotIndex);
 }
 
 public sealed class CurrentScreenLoadoutRequest

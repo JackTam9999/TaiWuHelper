@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.GameData;
 using TaiWu.Application.SaveGames;
@@ -12,6 +13,7 @@ using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
 using TaiWu.Infrastructure.SaveGames;
 using TaiWuAPI.Controllers;
+using TaiWuAPI.Contracts.CombatRecommendations;
 using TaiWuAPI.Presentation;
 using Xunit;
 
@@ -186,6 +188,68 @@ public sealed partial class ArchitectureBoundaryTests
             "The API must remain information-only:"
             + Environment.NewLine
             + string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void Target_observation_contract_is_typed_and_information_only()
+    {
+        var requestTypes = new[]
+        {
+            typeof(CombatRecommendationApiRequest),
+            typeof(TargetObservationApiRequest),
+            typeof(TargetObservedSkillApiRequest)
+        };
+        var forbiddenNameParts = new[]
+        {
+            "Path",
+            "Screenshot",
+            "Process",
+            "Command",
+            "Payload",
+            "GameData",
+            "Raw"
+        };
+        var propertyNames = requestTypes
+            .SelectMany(type => type.GetProperties())
+            .Select(property => property.Name)
+            .ToArray();
+        var signatureTypes = requestTypes
+            .SelectMany(GetPublicSignatureTypes)
+            .Distinct()
+            .ToArray();
+
+        Assert.DoesNotContain(
+            propertyNames,
+            name => forbiddenNameParts.Any(part => name.Contains(
+                part,
+                StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain(signatureTypes, IsGameDataType);
+        Assert.DoesNotContain(
+            signatureTypes,
+            type => type == typeof(FileInfo)
+                || type == typeof(DirectoryInfo)
+                || type == typeof(System.Diagnostics.Process));
+
+        var applicationTypes = new[]
+        {
+            typeof(TargetObservationRequest),
+            typeof(TargetObservedSkillRequest),
+            typeof(TargetObservationProcessingResult)
+        };
+        Assert.All(
+            applicationTypes.SelectMany(type => type.GetProperties()),
+            property => Assert.False(property.CanWrite));
+
+        var action = typeof(CombatRecommendationsController).GetMethod(
+            nameof(CombatRecommendationsController.Recommend));
+        Assert.NotNull(action);
+        Assert.Contains(
+            action!.GetParameters(),
+            parameter => parameter.ParameterType
+                == typeof(CancellationToken));
+        Assert.DoesNotContain(
+            action.GetParameters(),
+            parameter => parameter.ParameterType == typeof(string));
     }
 
     [Fact]

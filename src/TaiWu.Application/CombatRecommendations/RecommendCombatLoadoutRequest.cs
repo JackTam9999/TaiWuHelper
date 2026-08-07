@@ -11,7 +11,8 @@ public sealed record RecommendCombatLoadoutRequest
         int targetCharacterId,
         RecommendationPolicy policy,
         PlayerLoadoutObservation? currentLoadoutObservation = null,
-        TaiwuLanguage language = TaiwuLanguage.English)
+        TaiwuLanguage language = TaiwuLanguage.English,
+        TargetObservationRequest? targetObservation = null)
     {
         if (string.IsNullOrWhiteSpace(saveFilePath))
         {
@@ -49,6 +50,7 @@ public sealed record RecommendCombatLoadoutRequest
         Policy = policy;
         CurrentLoadoutObservation = currentLoadoutObservation;
         Language = language;
+        TargetObservation = targetObservation;
     }
 
     public string SaveFilePath { get; }
@@ -60,4 +62,6 @@ public sealed record RecommendCombatLoadoutRequest
     public PlayerLoadoutObservation? CurrentLoadoutObservation { get; }
 
     public TaiwuLanguage Language { get; }
+
+    public TargetObservationRequest? TargetObservation { get; }
 }

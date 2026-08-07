@@ -1,5 +1,7 @@
 using TaiWu.Application.CombatRecommendations;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatRecommendations;
+using TaiWu.Domain.CombatSnapshots;
 
 namespace TaiWuAPI.Contracts.CombatRecommendations;
 
@@ -35,8 +37,141 @@ public static class CombatRecommendationResponseMapper
             threats,
             styles,
             MapWarnings(recommendation),
-            MapInnerPowerState(recommendation.Snapshot.Player));
+            MapInnerPowerState(recommendation.Snapshot.Player),
+            MapTargetObservation(recommendation));
     }
+
+    private static TargetObservationResponse? MapTargetObservation(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var processing = recommendation.TargetObservation;
+        if (processing is null)
+        {
+            return null;
+        }
+
+        var merge = processing.Merge;
+        var observation = merge.Observation;
+        var sources = merge.LoadoutEvidence.Observations
+            .Select(value => new TargetObservationSourceResponse(
+                value.Source.FieldPath,
+                value.Source.Source,
+                value.Source.CapturedAtUtc,
+                value.Source.EvidenceReference,
+                merge.LoadoutEvidence.Status))
+            .Concat(merge.DirectionEvidence.SelectMany(value =>
+                value.Evidence.Observations.Select(observationValue =>
+                    new TargetObservationSourceResponse(
+                        observationValue.Source.FieldPath,
+                        observationValue.Source.Source,
+                        observationValue.Source.CapturedAtUtc,
+                        observationValue.Source.EvidenceReference,
+                        value.Evidence.Status))))
+            .Concat(merge.Snapshot.FieldSources
+                .Where(value => value.FieldPath
+                    == TargetLoadoutObservationMerger
+                        .TargetLoadoutObservationField)
+                .Select(value => new TargetObservationSourceResponse(
+                    value.FieldPath,
+                    value.Source,
+                    value.CapturedAtUtc,
+                    value.EvidenceReference,
+                    SnapshotEvidenceStatus.Available)))
+            .Distinct()
+            .OrderBy(value => value.CapturedAtUtc)
+            .ThenBy(value => value.Field, StringComparer.Ordinal)
+            .ThenBy(value => value.EvidenceReference, StringComparer.Ordinal)
+            .ToArray();
+
+        return new TargetObservationResponse(
+            observation.TargetCharacterId,
+            observation.ObservedAtUtc,
+            observation.EvidenceReference,
+            observation.Coverage.Kind,
+            merge.Status,
+            merge.LoadoutEvidence.Status,
+            [.. processing.ResolvedSkills.Select(value =>
+                new TargetObservedSkillResponse(
+                    value.Observation.SkillId,
+                    AvailableName(value.StaticFacts.DisplayName),
+                    value.Observation.Category,
+                    value.Observation.Direction,
+                    value.Observation.SlotIndex,
+                    value.SnapshotPresence))],
+            sources,
+            MapTargetObservationImpact(recommendation.Snapshot, merge));
+    }
+
+    private static TargetObservationImpactResponse MapTargetObservationImpact(
+        CombatSnapshot original,
+        TargetLoadoutObservationMergeResult merge)
+    {
+        if (merge.Status != TargetLoadoutMergeStatus.Applied)
+        {
+            return new TargetObservationImpactResponse(
+                Applied: false,
+                AddedTargetSkillIds: [],
+                AddedEquippedSkillIds: [],
+                RemovedEquippedSkillIds: [],
+                ChangedDirectionSkillIds: []);
+        }
+
+        var merged = merge.Snapshot;
+        var originalLearned = original.Target.LearnedSkills
+            .Select(value => value.SkillId)
+            .ToHashSet();
+        var originalEquipped = EquippedIds(original.Target.EquippedSkills);
+        var mergedEquipped = EquippedIds(merged.Target.EquippedSkills);
+        var originalDirections = original.Target.LearnedSkills
+            .ToDictionary(value => value.SkillId, value => value.Direction);
+        var changedDirections = merge.DirectionEvidence
+            .Select(value => value.SkillId)
+            .Where(skillId =>
+            {
+                var mergedSkill = merged.Target.LearnedSkills.Single(
+                    value => value.SkillId == skillId);
+                return mergedSkill.Direction.IsAvailable
+                    && (!originalDirections.TryGetValue(
+                            skillId,
+                            out var originalDirection)
+                        || !originalDirection.IsAvailable
+                        || originalDirection.Value
+                            != mergedSkill.Direction.Value);
+            })
+            .Order()
+            .ToArray();
+
+        return new TargetObservationImpactResponse(
+            Applied: true,
+            [.. merged.Target.LearnedSkills
+                .Select(value => value.SkillId)
+                .Where(skillId => !originalLearned.Contains(skillId))
+                .Order()],
+            [.. mergedEquipped.Except(originalEquipped).Order()],
+            [.. originalEquipped.Except(mergedEquipped).Order()],
+            changedDirections);
+    }
+
+    private static HashSet<int> EquippedIds(
+        SnapshotValue<CombatLoadoutSnapshot> loadout) =>
+        loadout.IsAvailable
+            ? Enum.GetValues<SkillCategory>()
+                .SelectMany(category => loadout.Value.Get(category))
+                .ToHashSet()
+            : [];
+
+    internal static string? AvailableName(CombatSkillDisplayName displayName) =>
+        displayName.Value.IsAvailable
+            ? displayName.Value.Value.Text
+            : null;
+
+    internal static TargetObservationProblemCandidateResponse MapCandidate(
+        TargetSkillResolutionCandidate candidate) => new(
+            candidate.SkillId,
+            AvailableName(candidate.DisplayName),
+            candidate.StaticFacts?.Category,
+            candidate.MatchKind,
+            candidate.SnapshotPresence);
 
     private static InnerPowerStateResponse? MapInnerPowerState(
         TaiWu.Domain.CombatSnapshots.PlayerCombatSnapshot player)

@@ -235,7 +235,7 @@ stable warnings.
 
 ### E3-005 — Add typed target-observation API contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -248,19 +248,19 @@ and expose sanitized resolution, provenance, and impact results.
 
 #### Acceptance criteria
 
-- [ ] Recommendation requests accept target ID, observed-at time, coverage,
+- [x] Recommendation requests accept target ID, observed-at time, coverage,
       evidence reference, and typed selected skills.
-- [ ] The contract accepts no save path, game path, screenshot path, process
+- [x] The contract accepts no save path, game path, screenshot path, process
       ID, raw GameData type, or command-like payload.
-- [ ] Invalid and ambiguous observations return stable HTTP 400 problem
+- [x] Invalid and ambiguous observations return stable HTTP 400 problem
       responses without local details.
-- [ ] Stale, conflicting, partial, and unsupported evidence remain successful
+- [x] Stale, conflicting, partial, and unsupported evidence remain successful
       typed result states where the request itself is valid.
-- [ ] Cancellation propagates through catalogue resolution and recommendation
+- [x] Cancellation propagates through catalogue resolution and recommendation
       generation.
-- [ ] Existing requests without a target observation are backward compatible.
-- [ ] JSON serialization never evaluates unavailable value getters.
-- [ ] Controller and architecture tests enforce the information-only boundary.
+- [x] Existing requests without a target observation are backward compatible.
+- [x] JSON serialization never evaluates unavailable value getters.
+- [x] Controller and architecture tests enforce the information-only boundary.
 
 ## Slice 4: Manual UI
 

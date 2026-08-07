@@ -1,3 +1,4 @@
+using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
@@ -13,7 +14,48 @@ public sealed record CombatRecommendationResponse(
     IReadOnlyList<CombatThreatResponse> Threats,
     IReadOnlyList<CombatRecommendationStyleResponse> Styles,
     IReadOnlyList<CombatRecommendationWarningResponse> Warnings,
-    InnerPowerStateResponse? InnerPowerState = null);
+    InnerPowerStateResponse? InnerPowerState = null,
+    TargetObservationResponse? TargetObservation = null);
+
+public sealed record TargetObservationResponse(
+    int TargetCharacterId,
+    DateTimeOffset ObservedAtUtc,
+    string EvidenceReference,
+    TargetLoadoutCoverageKind Coverage,
+    TargetLoadoutMergeStatus MergeStatus,
+    SnapshotEvidenceStatus LoadoutEvidenceStatus,
+    IReadOnlyList<TargetObservedSkillResponse> ResolvedSkills,
+    IReadOnlyList<TargetObservationSourceResponse> Sources,
+    TargetObservationImpactResponse Impact);
+
+public sealed record TargetObservedSkillResponse(
+    int SkillId,
+    string? Name,
+    SkillCategory Category,
+    PracticeDirection? Direction,
+    int? SlotIndex,
+    TargetSkillSnapshotPresence SnapshotPresence);
+
+public sealed record TargetObservationSourceResponse(
+    string Field,
+    SnapshotDataSource Source,
+    DateTimeOffset CapturedAtUtc,
+    string EvidenceReference,
+    SnapshotEvidenceStatus Status);
+
+public sealed record TargetObservationImpactResponse(
+    bool Applied,
+    IReadOnlyList<int> AddedTargetSkillIds,
+    IReadOnlyList<int> AddedEquippedSkillIds,
+    IReadOnlyList<int> RemovedEquippedSkillIds,
+    IReadOnlyList<int> ChangedDirectionSkillIds);
+
+public sealed record TargetObservationProblemCandidateResponse(
+    int SkillId,
+    string? Name,
+    SkillCategory? Category,
+    TargetSkillMatchKind Match,
+    TargetSkillSnapshotPresence SnapshotPresence);
 
 public sealed record InnerPowerStateResponse(
     string? Name,

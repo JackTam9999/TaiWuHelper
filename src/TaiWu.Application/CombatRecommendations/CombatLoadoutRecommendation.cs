@@ -12,7 +12,8 @@ public sealed record CombatLoadoutRecommendation
         TargetThreatAnalysis threatAnalysis,
         CombatLoadoutGenerationResult generation,
         RecommendationPolicy requestedPolicy,
-        IEnumerable<CombatRecommendationStyleResult> styles)
+        IEnumerable<CombatRecommendationStyleResult> styles,
+        TargetObservationProcessingResult? targetObservation = null)
     {
         Snapshot = snapshot;
         ThreatAnalysis = threatAnalysis;
@@ -21,6 +22,7 @@ public sealed record CombatLoadoutRecommendation
         Styles = [.. styles];
         SelectedStyle = Styles.Single(style =>
             style.Policy == requestedPolicy);
+        TargetObservation = targetObservation;
     }
 
     public CombatSnapshot Snapshot { get; }
@@ -37,6 +39,8 @@ public sealed record CombatLoadoutRecommendation
     public ImmutableArray<CombatRecommendationStyleResult> Styles { get; }
 
     public CombatRecommendationStyleResult SelectedStyle { get; }
+
+    public TargetObservationProcessingResult? TargetObservation { get; }
 
     public CombatRecommendationScoringResult Scoring =>
         SelectedStyle.Scoring;
