@@ -167,7 +167,7 @@ save and target-observation values can coexist without silent replacement.
 
 ### E3-003 — Resolve bilingual target skill selections
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -180,17 +180,17 @@ stable confirmation candidates.
 
 #### Acceptance criteria
 
-- [ ] Traditional Chinese and English input use the existing normalized search
+- [x] Traditional Chinese and English input use the existing normalized search
       behavior.
-- [ ] Exact matches rank before partial matches with deterministic ordering.
-- [ ] Ambiguous matches require explicit player confirmation.
-- [ ] Selected category agrees with the verified static definition.
-- [ ] A missing, stale, rebuilding, or unsupported catalogue produces an
+- [x] Exact matches rank before partial matches with deterministic ordering.
+- [x] Ambiguous matches require explicit player confirmation.
+- [x] Selected category agrees with the verified static definition.
+- [x] A missing, stale, rebuilding, or unsupported catalogue produces an
       explicit result and no guessed identity.
-- [ ] Observed skills absent from the target save remain representable with
+- [x] Observed skills absent from the target save remain representable with
       only the static facts required by analysis.
-- [ ] Raw descriptions never become typed mechanics during resolution.
-- [ ] Tests cover both languages, fallback, ambiguity, missing definitions,
+- [x] Raw descriptions never become typed mechanics during resolution.
+- [x] Tests cover both languages, fallback, ambiguity, missing definitions,
       stale catalogue, and target-snapshot absence.
 
 ### E3-004 — Merge target observations into immutable snapshots

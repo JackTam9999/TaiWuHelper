@@ -143,7 +143,7 @@ public sealed class SearchCombatSkillDefinitions(
                 normalizedQuery,
                 StringComparison.Ordinal));
 
-    private static bool IsExactMatch(
+    internal static bool IsExactMatch(
         CombatSkillDefinition definition,
         string? normalizedQuery) => normalizedQuery is not null
         && definition.Names.Values.Any(name => string.Equals(

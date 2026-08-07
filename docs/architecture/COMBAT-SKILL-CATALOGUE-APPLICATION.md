@@ -72,6 +72,12 @@ bounded union of definitions and progress. Full join, normalization, filter,
 cost, issue, and paging semantics are documented in
 [Combat-skill catalogue and character-atlas queries](COMBAT-SKILL-ATLAS-QUERIES.md).
 
+Epic 3's `ResolveTargetSkillSelection` composes the same current-catalogue
+search and bilingual normalization. It requires explicit stable-ID
+confirmation and projects only verified typed static facts, never raw
+descriptions. See
+[Target skill-selection resolution](TARGET-SKILL-SELECTION-RESOLUTION.md).
+
 ## Dependency and safety guarantees
 
 - Application references Domain only. It has no Infrastructure, SQLite,
