@@ -25,6 +25,9 @@ runtime memory, or in-game state.
 
 ### PI-001 — Verified target observations
 
+**Status:** Promoted to
+[EPIC-003](./epic-003/EPIC.md) on 2026-08-07.
+
 Allow the player to supplement an incomplete or stale save snapshot with
 information observed on the current game screen or during a battle.
 
@@ -49,6 +52,9 @@ screenshots, inject code, simulate input, or reload a save on the player's
 behalf.
 
 ### PI-002 — Evidence provenance and confidence
+
+**Status:** Promoted with PI-001 to
+[EPIC-003](./epic-003/EPIC.md) on 2026-08-07.
 
 Give every important input, threat, and recommendation an explicit provenance
 such as:
@@ -169,20 +175,22 @@ application content.
 
 This was the original suggested promotion order after Milestone 1. The product
 owner selected the catalogue and character skill atlas for Epic 2 on
-2026-08-02; the remaining ordering is retained as discovery context:
+2026-08-02, then selected target observations plus evidence provenance for
+Epic 3 on 2026-08-07. The ordering is retained as discovery context:
 
-1. Verified target observations and evidence provenance.
+1. Verified target observations and evidence provenance — promoted to
+   [EPIC-003](./epic-003/EPIC.md).
 2. Side-by-side loadout comparison.
 3. Bilingual martial-art catalogue — promoted to
    [EPIC-002](./epic-002/EPIC.md).
 4. Shareable recommendation card.
 5. Version-aware observation and result persistence.
 
-The first two ideas provide the most direct improvement to recommendation
-correctness. The remaining ideas primarily improve discovery, presentation,
-sharing, and repeat-use performance.
+The two evidence ideas promoted into Epic 3 provide the most direct improvement
+to recommendation correctness. The remaining ideas primarily improve
+discovery, presentation, sharing, and repeat-use performance.
 
-## Questions to resolve before promotion
+## Discovery questions
 
 - Which target details can be reliably observed in the current game UI?
 - Which observations require screenshots, and which are practical to enter
