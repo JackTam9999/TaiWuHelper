@@ -62,7 +62,7 @@ Every completed item must:
 
 ### E3-000 — Verify observable target-loadout fields
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -75,18 +75,18 @@ meaning and completeness of every field proposed for manual entry.
 
 #### Acceptance criteria
 
-- [ ] The evidence identifies the inspected game and language-resource
+- [x] The evidence identifies the inspected game and language-resource
       versions without committing proprietary assets.
-- [ ] Target identity, skill name, category, slot visibility, empty-slot
+- [x] Target identity, skill name, category, slot visibility, empty-slot
       behavior, paging, and direction visibility are evaluated separately.
-- [ ] The evidence proves whether a screen can support `CompleteLoadout` or
+- [x] The evidence proves whether a screen can support `CompleteLoadout` or
       only `PartialLoadout`.
-- [ ] Any category or direction not reliably visible remains unsupported.
-- [ ] At least one representative complete or partial target observation is
+- [x] Any category or direction not reliably visible remains unsupported.
+- [x] At least one representative complete or partial target observation is
       recorded with timestamp and opaque evidence reference.
-- [ ] Before/after fingerprints prove the inspected save and game sources are
+- [x] Before/after fingerprints prove the inspected save and game sources are
       unchanged.
-- [ ] A version change invalidates the completeness rule rather than silently
+- [x] A version change invalidates the completeness rule rather than silently
       reusing it.
 
 #### Evidence when complete
