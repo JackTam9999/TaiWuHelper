@@ -201,6 +201,68 @@ public sealed record TargetSkillStaticFacts
     public CatalogueField<CombatSkillEffectId> DirectEffect { get; }
 
     public CatalogueField<CombatSkillEffectId> ReverseEffect { get; }
+
+    public CombatSkillSnapshot CreateSnapshot(
+        ObservedTargetCombatSkill observation)
+    {
+        ArgumentNullException.ThrowIfNull(observation);
+        if (observation.SkillId != SkillId
+            || observation.Category != Category)
+        {
+            throw new ArgumentException(
+                "The observation must identify these resolved static facts.",
+                nameof(observation));
+        }
+
+        if (!SlotContribution.IsAvailable)
+        {
+            throw new InvalidOperationException(
+                "A resolved observed skill requires verified slot "
+                + "contribution facts.");
+        }
+
+        return new CombatSkillSnapshot(
+            SkillId,
+            MapDisplayName(DisplayName),
+            Category,
+            MapGridCost(BaseGridCost),
+            SnapshotValue<bool>.Unavailable(
+                "Mastery was not observed for this target skill."),
+            observation.Direction is null
+                ? SnapshotValue<PracticeDirection>.Unavailable(
+                    "Practice direction was not observed.")
+                : SnapshotValue<PracticeDirection>.Available(
+                    observation.Direction.Value),
+            SlotContribution.Value,
+            MapEffect(DirectEffect),
+            MapEffect(ReverseEffect),
+            element: MapElement(Element));
+    }
+
+    private static SnapshotValue<string> MapDisplayName(
+        CombatSkillDisplayName displayName) =>
+        displayName.Value.IsAvailable
+            ? SnapshotValue<string>.Available(displayName.Value.Value.Text)
+            : SnapshotValue<string>.Unavailable(
+                displayName.Value.Reason ?? "Display name is unavailable.");
+
+    private static SnapshotValue<int> MapGridCost(
+        CatalogueField<CombatSkillGridCost> value) => value.IsAvailable
+            ? SnapshotValue<int>.Available(value.Value.Value)
+            : SnapshotValue<int>.Unavailable(
+                value.Reason ?? "Grid cost is unavailable.");
+
+    private static SnapshotValue<int> MapEffect(
+        CatalogueField<CombatSkillEffectId> value) => value.IsAvailable
+            ? SnapshotValue<int>.Available(value.Value.Value)
+            : SnapshotValue<int>.Unavailable(
+                value.Reason ?? "Effect ID is unavailable.");
+
+    private static SnapshotValue<CombatSkillElement> MapElement(
+        CatalogueField<CombatSkillElement> value) => value.IsAvailable
+            ? SnapshotValue<CombatSkillElement>.Available(value.Value)
+            : SnapshotValue<CombatSkillElement>.Unavailable(
+                value.Reason ?? "Element is unavailable.");
 }
 
 public sealed record TargetSkillResolutionCandidate(

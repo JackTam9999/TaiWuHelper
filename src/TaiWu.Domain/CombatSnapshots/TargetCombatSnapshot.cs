@@ -11,7 +11,8 @@ public sealed record TargetCombatSnapshot
         IEnumerable<CharacterFeatureSnapshot> features,
         IEnumerable<CombatSkillSnapshot> learnedSkills,
         SnapshotValue<CombatLoadoutSnapshot> equippedSkills,
-        IEnumerable<EquipmentSnapshot> equipment)
+        IEnumerable<EquipmentSnapshot> equipment,
+        TargetLoadoutObservation? loadoutObservation = null)
     {
         if (characterId <= 0)
         {
@@ -96,6 +97,15 @@ public sealed record TargetCombatSnapshot
         LearnedSkills = skillValues;
         EquippedSkills = equippedSkills;
         Equipment = equipmentValues;
+        if (loadoutObservation is not null
+            && loadoutObservation.TargetCharacterId != characterId)
+        {
+            throw new ArgumentException(
+                "A target loadout observation must identify this target.",
+                nameof(loadoutObservation));
+        }
+
+        LoadoutObservation = loadoutObservation;
     }
 
     public int CharacterId { get; }
@@ -111,4 +121,6 @@ public sealed record TargetCombatSnapshot
     public SnapshotValue<CombatLoadoutSnapshot> EquippedSkills { get; }
 
     public ImmutableArray<EquipmentSnapshot> Equipment { get; }
+
+    public TargetLoadoutObservation? LoadoutObservation { get; }
 }

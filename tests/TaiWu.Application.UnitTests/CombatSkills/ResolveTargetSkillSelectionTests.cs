@@ -240,6 +240,13 @@ public sealed class ResolveTargetSkillSelectionTests
         Assert.Equal(TargetSkillSnapshotPresence.Absent, resolved.SnapshotPresence);
         Assert.Equal(1010, resolved.StaticFacts.DirectEffect.Value.Value);
         Assert.Equal(2010, resolved.StaticFacts.ReverseEffect.Value.Value);
+        var projected = resolved.StaticFacts.CreateSnapshot(
+            resolved.Observation);
+        Assert.Equal(10, projected.SkillId);
+        Assert.Equal(SkillCategory.Attack, projected.Category);
+        Assert.Equal(1010, projected.DirectEffectId.Value);
+        Assert.Equal(2010, projected.ReverseEffectId.Value);
+        Assert.False(projected.Mastered.IsAvailable);
         Assert.DoesNotContain(
             typeof(TargetSkillStaticFacts).GetProperties(),
             property => property.Name.Contains(

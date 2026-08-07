@@ -111,6 +111,7 @@ public sealed class ResolveTargetSkillSelection(
         var definition = item.Definition;
         var category = ResolveCategory(definition.EquipmentType);
         var facts = category is null
+                    || !definition.SlotContribution.IsAvailable
             ? null
             : new TargetSkillStaticFacts(
                 definition.SkillId,

@@ -195,7 +195,7 @@ stable confirmation candidates.
 
 ### E3-004 — Merge target observations into immutable snapshots
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -208,22 +208,22 @@ stable warnings.
 
 #### Acceptance criteria
 
-- [ ] Observation target ID must match the snapshot target ID.
-- [ ] A newer valid observation receives field-level precedence only for its
+- [x] Observation target ID must match the snapshot target ID.
+- [x] A newer valid observation receives field-level precedence only for its
       declared coverage.
-- [ ] An observation older than the save is retained as stale evidence but is
+- [x] An observation older than the save is retained as stale evidence but is
       not applied.
-- [ ] Save-time unavailability requires explicit precedence confirmation and
+- [x] Save-time unavailability requires explicit precedence confirmation and
       emits a warning.
-- [ ] A partial observation can confirm listed equipped skills but cannot
+- [x] A partial observation can confirm listed equipped skills but cannot
       remove or negate omitted skills.
-- [ ] A complete observation may replace equipped membership only when its
+- [x] A complete observation may replace equipped membership only when its
       versioned completeness evidence is valid.
-- [ ] Optional observed direction overrides no unrelated skill field.
-- [ ] Conflicting save values remain visible with both sources.
-- [ ] The original snapshot and observation remain unchanged.
-- [ ] Output ordering and warnings are deterministic.
-- [ ] Tests cover fresh, stale, partial, complete, conflicting, mismatched
+- [x] Optional observed direction overrides no unrelated skill field.
+- [x] Conflicting save values remain visible with both sources.
+- [x] The original snapshot and observation remain unchanged.
+- [x] Output ordering and warnings are deterministic.
+- [x] Tests cover fresh, stale, partial, complete, conflicting, mismatched
       target, unsupported version, and missing-save-time cases.
 
 #### Evidence when complete
