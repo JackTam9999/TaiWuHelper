@@ -102,7 +102,7 @@ meaning and completeness of every field proposed for manual entry.
 
 ### E3-001 — Define target observation and coverage models
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -115,21 +115,21 @@ optional direction, and partial/complete coverage.
 
 #### Acceptance criteria
 
-- [ ] `TargetLoadoutObservation` carries target ID, UTC observation time,
+- [x] `TargetLoadoutObservation` carries target ID, UTC observation time,
       evidence reference, coverage, and immutable observed skills.
-- [ ] Observation access distinguishes UI-visible sparring opponents from
+- [x] Observation access distinguishes UI-visible sparring opponents from
       hostile/story targets whose loadout page is unavailable.
-- [ ] Every observed skill has a stable non-negative ID and verified category.
-- [ ] Direction is optional and uses the existing `PracticeDirection` value.
-- [ ] Duplicate skills, duplicate slots where applicable, blank evidence,
+- [x] Every observed skill has a stable non-negative ID and verified category.
+- [x] Direction is optional and uses the existing `PracticeDirection` value.
+- [x] Duplicate skills, duplicate slots where applicable, blank evidence,
       invalid IDs, invalid categories, and unsupported direction values are
       rejected.
-- [ ] `PartialLoadout` cannot express absence for omitted skills.
-- [ ] `CompleteLoadout` is constructible only with E3-000 completeness
+- [x] `PartialLoadout` cannot express absence for omitted skills.
+- [x] `CompleteLoadout` is constructible only with E3-000 completeness
       provenance for the detected version.
-- [ ] No Domain type references GameData, ASP.NET Core, SQLite, files,
+- [x] No Domain type references GameData, ASP.NET Core, SQLite, files,
       screenshots, or processes.
-- [ ] Tests cover immutability, equality, validation, partial coverage,
+- [x] Tests cover immutability, equality, validation, partial coverage,
       complete coverage, and optional direction.
 
 #### Evidence when complete
