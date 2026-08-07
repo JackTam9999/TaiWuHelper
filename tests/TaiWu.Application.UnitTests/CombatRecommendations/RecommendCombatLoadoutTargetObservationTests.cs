@@ -116,9 +116,11 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 Arg.Any<CombatSnapshotReadRequest>(),
                 Arg.Any<CancellationToken>())
             .Returns(snapshot);
+        var catalogueSource = Source(definition);
+        var repository = Repository(definition);
         var resolver = new ResolveTargetSkillSelection(
-            Source(definition),
-            Repository(definition));
+            catalogueSource,
+            repository);
         var workflow = new TargetObservationRecommendationWorkflow(
             reader,
             resolver);
@@ -180,6 +182,20 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             DecisionFingerprint(first),
             DecisionFingerprint(second));
+        Assert.Equal(
+            FullResultFingerprint(first),
+            FullResultFingerprint(second));
+        await catalogueSource.Received(2).ReadAsync(
+            Arg.Any<CancellationToken>());
+        await repository.Received(2).ReadStateAsync(
+            Arg.Any<CancellationToken>());
+        await repository.Received(2).QueryAsync(
+            Arg.Any<CombatSkillCatalogueFilter>(),
+            Arg.Any<CancellationToken>());
+        Assert.DoesNotContain(
+            repository.ReceivedCalls(),
+            call => call.GetMethodInfo().Name
+                == nameof(ICombatSkillCatalogueRepository.ReplaceAsync));
         var impact = Assert.IsType<TargetObservationRecommendationImpact>(
             first.TargetObservationImpact);
         var threatImpact = Assert.Single(impact.Threats);
@@ -475,6 +491,67 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             [SnapshotDataSource.Save, SnapshotDataSource.CurrentScreenObservation],
             conflict.Sources.Select(source => source.Source));
+    }
+
+    [Fact]
+    public async Task Clearing_observation_reproduces_the_save_only_result()
+    {
+        var counter = PlayerSkill(
+            604,
+            SkillCategory.Attack,
+            PracticeDirection.Reverse,
+            directEffectId: 338,
+            reverseEffectId: 1064);
+        var target = TargetSkill(
+            719,
+            "Target Art",
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var snapshot = Snapshot(
+            targetSkills: [target],
+            playerSkills: [counter]);
+        var definition = Definition(
+            target.SkillId,
+            "Target Art",
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var saveOnly = new RecommendCombatLoadout(reader);
+        var saveOnlyRequest = new RecommendCombatLoadoutRequest(
+            snapshot.Metadata.SavePath,
+            snapshot.Target.CharacterId,
+            RecommendationPolicy.Balanced);
+        var initial = await saveOnly.ExecuteAsync(
+            saveOnlyRequest,
+            TestContext.Current.CancellationToken);
+        var observed = await new TargetObservationRecommendationWorkflow(
+                reader,
+                new ResolveTargetSkillSelection(
+                    Source(definition),
+                    Repository(definition)))
+            .ExecuteAsync(
+                ObservedRequest(
+                    snapshot,
+                    "Target Art",
+                    target.SkillId,
+                    PracticeDirection.Reverse),
+                TestContext.Current.CancellationToken);
+        var cleared = await saveOnly.ExecuteAsync(
+            saveOnlyRequest,
+            TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(
+            FullResultFingerprint(initial),
+            FullResultFingerprint(observed));
+        Assert.Null(cleared.TargetObservation);
+        Assert.Null(cleared.TargetObservationImpact);
+        Assert.Equal(
+            FullResultFingerprint(initial),
+            FullResultFingerprint(cleared));
     }
 
     [Fact]
@@ -784,6 +861,65 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             + string.Join(",", style.Scoring.RankedCandidates.Select(value =>
                 $"{value.Candidate.StableKey}/{value.TotalScore}")))
     ];
+
+    private static string FullResultFingerprint(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var snapshot = recommendation.Snapshot;
+        var targetLoadout = snapshot.Target.EquippedSkills.IsAvailable
+            ? string.Join(
+                ";",
+                Enum.GetValues<SkillCategory>().Select(category =>
+                    $"{category}="
+                    + string.Join(",", snapshot.Target.EquippedSkills
+                        .Value.Get(category))))
+            : $"unavailable:{snapshot.Target.EquippedSkills.UnavailableReason}";
+        var targetSkills = string.Join(
+            ";",
+            snapshot.Target.LearnedSkills.Select(skill =>
+                $"{skill.SkillId}/{skill.Category}/"
+                + (skill.Direction.IsAvailable
+                    ? skill.Direction.Value
+                    : $"unavailable:{skill.Direction.UnavailableReason}")));
+        var candidates = string.Join(
+            ";",
+            recommendation.Generation.Candidates.Select(candidate =>
+                $"{candidate.StableKey}:["
+                + string.Join(",", candidate.SelectedOptions.Select(option =>
+                    $"{option.Candidate.SkillId}/"
+                    + $"{option.Candidate.RequiredDirection}"))
+                + "]"));
+        var threats = string.Join(";", ThreatFingerprint(recommendation));
+        var decisions = string.Join(";", DecisionFingerprint(recommendation));
+        var impact = recommendation.TargetObservationImpact is null
+            ? "none"
+            : string.Join(
+                ";",
+                recommendation.TargetObservationImpact.Threats.Select(value =>
+                    $"threat:{value.ThreatCode}/{value.Kind}/"
+                    + string.Join(",", value.SourceKinds))
+                .Concat(recommendation.TargetObservationImpact
+                    .RecommendationChanges.Select(value =>
+                        $"recommendation:{value.Policy}/{value.Kind}/"
+                        + $"{value.Cause}/{value.SkillId}/"
+                        + $"{value.RequiredDirection}"))
+                .Concat(recommendation.TargetObservationImpact
+                    .UnsupportedEvidence.Select(value =>
+                        $"unsupported:{value.Code}/{value.SkillId}/"
+                        + $"{value.RawEffectId}/{value.WasPresentBefore}"))
+                .Concat(recommendation.TargetObservationImpact.Conflicts.Select(
+                    value => $"conflict:{value.Field}/{value.PrecedenceRule}/"
+                        + string.Join(",", value.Sources.Select(source =>
+                            $"{source.Source}/{source.CapturedAtUtc:O}")))));
+        return string.Join(
+            "\n",
+            $"snapshot:{snapshot.Metadata.SaveSha256}/{targetLoadout}",
+            $"target-skills:{targetSkills}",
+            $"threats:{threats}",
+            $"candidates:{candidates}",
+            $"decisions:{decisions}",
+            $"impact:{impact}");
+    }
 
     private static CombatSkillCatalogueSourceIdentity Identity { get; } = new(
         "1.0.0-current",

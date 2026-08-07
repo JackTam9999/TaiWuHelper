@@ -391,7 +391,7 @@ Present the difference between save-only and observation-enhanced analysis.
 
 ### E3-010 — Verify observation safety and determinism
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -403,19 +403,19 @@ Run the full cross-layer and local read-only verification matrix.
 
 #### Acceptance criteria
 
-- [ ] Domain, Application, Infrastructure, API, Presentation, integration, and
+- [x] Domain, Application, Infrastructure, API, Presentation, integration, and
       architecture tests pass.
-- [ ] Repeating the same save/catalogue/observation input produces equivalent
+- [x] Repeating the same save/catalogue/observation input produces equivalent
       snapshots, threats, recommendations, impacts, and ordering.
-- [ ] Clearing the observation reproduces the save-only result.
-- [ ] Current catalogue rebuild/cache behavior remains independent from
+- [x] Clearing the observation reproduces the save-only result.
+- [x] Current catalogue rebuild/cache behavior remains independent from
       session observation state.
-- [ ] Architecture tests reject file paths, screenshot capture, process access,
+- [x] Architecture tests reject file paths, screenshot capture, process access,
       game control, mutation APIs, and observation-history persistence.
-- [ ] Before/after SHA-256 fingerprints prove every inspected save and game
+- [x] Before/after SHA-256 fingerprints prove every inspected save and game
       source is unchanged.
-- [ ] Manual bilingual verification matches the E3-000 evidence scenario.
-- [ ] Test commands, results, expected opt-in skips, and source versions are
+- [x] Manual bilingual verification matches the E3-000 evidence scenario.
+- [x] Test commands, results, expected opt-in skips, and source versions are
       documented.
 
 #### Evidence when complete

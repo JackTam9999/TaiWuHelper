@@ -86,5 +86,19 @@ E2-016 current-save check.
 The latest commands, counts, coverage map, and non-proprietary local result are
 recorded in `docs/reviews/E2-016-automated-verification.md`.
 
+E3-010 adds a current-save target-observation vertical. It deterministically
+selects a valid target through the normal lookup, applies one controlled
+complete observation twice, clears back to save-only, compares all result
+signatures, and fingerprints every inspected source before and after:
+
+```powershell
+$env:TAIWU_INTEGRATION_SAVE_PATH = '<path-to-current-local.sav>'
+dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.IntegrationTests.csproj -c Release --no-restore -- --filter-class '*TargetObservationReadOnlyIntegrationTests*'
+```
+
+The test does not claim that the selected current-save target is the historical
+E3-000 sparring opponent. The E3-000 screen and bilingual workflow are verified
+separately; this test exercises the read-only current-save integration boundary.
+
 Build output can contain local runtime copies required by GameData. Those files
 remain ignored, are never publish items, and must never be committed.
