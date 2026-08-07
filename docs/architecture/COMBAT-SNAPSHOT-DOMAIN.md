@@ -84,11 +84,17 @@ contain its equipped skill loadout.
 
 ### Evidence source
 
-`SnapshotDataSource` distinguishes save data, local game configuration, and a
-current-screen observation. `LegendaryBookCostRule` requires an evidence
-reference and source. `LegendaryBookCostSlot` gives an owned effect a stable
-identity, while `LegendaryBookCostAssignment` separately records the current
-or proposed selected skill and its provenance.
+`SnapshotDataSource` distinguishes save data, installed game configuration, a
+current-screen observation, and a versioned verified rule.
+`LegendaryBookCostRule` requires an evidence reference and source.
+`LegendaryBookCostSlot` gives an owned effect a stable identity, while
+`LegendaryBookCostAssignment` separately records the current or proposed
+selected skill and its provenance.
+
+Epic 3 adds `SnapshotEvidenceField<T>` for source-aware available,
+unavailable, stale, and conflicting target evidence. Its observations retain
+UTC time and opaque evidence identity in deterministic order. See
+[Target-observation provenance and conflict results](./TARGET-OBSERVATION-PROVENANCE.md).
 
 ## Construction invariants
 

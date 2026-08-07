@@ -6,7 +6,8 @@ public enum SkillProgressSourceKind
 {
     SaveSnapshot = 0,
     CurrentScreenObservation = 1,
-    VerifiedRule = 2
+    VerifiedRule = 2,
+    InstalledConfiguration = 3
 }
 
 public sealed record SkillProgressSource

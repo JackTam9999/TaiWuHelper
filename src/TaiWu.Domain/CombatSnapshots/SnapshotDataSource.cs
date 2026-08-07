@@ -4,5 +4,6 @@ public enum SnapshotDataSource
 {
     Save,
     GameConfiguration,
-    CurrentScreenObservation
+    CurrentScreenObservation,
+    VerifiedRule
 }

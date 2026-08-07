@@ -139,7 +139,7 @@ optional direction, and partial/complete coverage.
 
 ### E3-002 — Define observation provenance and conflict results
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -152,16 +152,16 @@ save and target-observation values can coexist without silent replacement.
 
 #### Acceptance criteria
 
-- [ ] Save, current-screen observation, installed configuration, and verified
+- [x] Save, current-screen observation, installed configuration, and verified
       rule sources remain distinguishable.
-- [ ] A used observed field records observation time and evidence reference.
-- [ ] Conflicting values retain both observations in deterministic order.
-- [ ] Conflict and confidence statuses describe evidence, not win
+- [x] A used observed field records observation time and evidence reference.
+- [x] Conflicting values retain both observations in deterministic order.
+- [x] Conflict and confidence statuses describe evidence, not win
       probability.
-- [ ] Public provenance contains no local file path or sensitive exception
+- [x] Public provenance contains no local file path or sensitive exception
       text.
-- [ ] Existing player-loadout observation behavior remains compatible.
-- [ ] Tests cover available, unavailable, stale, and conflicting values.
+- [x] Existing player-loadout observation behavior remains compatible.
+- [x] Tests cover available, unavailable, stale, and conflicting values.
 
 ## Slice 2: Resolution and merge
 
