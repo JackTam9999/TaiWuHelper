@@ -4,8 +4,8 @@
 |---|---|
 | Status | Accepted |
 | Date | 2026-07-29 |
-| Epic | [EPIC-001](../roadmap/EPIC-001-combat-skill-recommendation.md) |
-| Backlog item | [M1-000](../roadmap/BACKLOG-milestone-1.md#m1-000--enforce-absolute-game-non-interference) |
+| Epic | [EPIC-001](../roadmap/epic-001/EPIC.md) |
+| Backlog item | [M1-000](../roadmap/epic-001/BACKLOG.md#m1-000--enforce-absolute-game-non-interference) |
 
 ## Context
 
@@ -144,5 +144,6 @@ is that the helper contains no game-data write or control path.
 - Recommendation correctness can be tested without authorizing game control.
 - Reading and hashing add some latency, accepted in favour of consistency.
 - Source reads are serialized around the current stateful `GameData` runtime.
-- SQLite, if later added, stores helper-owned information only and never
-  becomes a game-data write-back mechanism.
+- SQLite catalogue storage follows the narrow helper-owned boundary in
+  [ADR-0002](./ADR-0002-helper-owned-catalogue-storage.md) and never becomes a
+  game-data write-back mechanism.

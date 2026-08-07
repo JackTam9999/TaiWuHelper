@@ -1,7 +1,7 @@
 # Milestone 1 backlog: Combat-skill recommendation
 
 This backlog implements
-[EPIC-001](./EPIC-001-combat-skill-recommendation.md) and its
+[EPIC-001](./EPIC.md) and its
 [combat-recommendation UI specification](./UI-001-combat-recommendation-layout.md).
 
 ## Conventions
@@ -85,7 +85,7 @@ helper-owned snapshots, but it can never change or control the game.
 
 #### Evidence
 
-- [ADR-0001: Absolute game non-interference](../architecture/ADR-0001-absolute-game-non-interference.md).
+- [ADR-0001: Absolute game non-interference](../../architecture/ADR-0001-absolute-game-non-interference.md).
 - `IReadOnlyGameDataSource` marks query-only game-data ports.
 - Save reads capture read-only SHA-256 fingerprints before and after loading.
 - `TaiWu.Architecture.Tests` enforces the dependency, API, file-access, and
@@ -116,7 +116,7 @@ defeat.
 
 #### Current evidence
 
-- [Golden-target candidate assessment](../scenarios/M1-001-golden-target-selection.md).
+- [Golden-target candidate assessment](../../scenarios/M1-001-golden-target-selection.md).
 - The player confirmed character `16317` as the 52-year-old 樂器奇書.
 - The confirmed setup uses 刀 with a `Safe` objective: survive 失神 and
   心韻激盪, control 正練魔音, then defeat the target reliably.
@@ -151,8 +151,8 @@ committing the save or game binaries.
 
 #### Evidence
 
-- [Golden-save evidence metadata](../scenarios/M1-002-golden-save-evidence.md).
-- [Machine-readable metadata record](../scenarios/evidence/M1-002-golden-save-metadata.json).
+- [Golden-save evidence metadata](../../scenarios/M1-002-golden-save-evidence.md).
+- [Machine-readable metadata record](../../scenarios/evidence/M1-002-golden-save-metadata.json).
 - The save SHA-256 was identical before and after metadata capture.
 - `.gitignore` excludes `.sav` files and known proprietary game-runtime
   artifacts.
@@ -183,7 +183,7 @@ legendary-book modifiers.
 
 #### Evidence
 
-- [Combat snapshot Domain model](../architecture/COMBAT-SNAPSHOT-DOMAIN.md).
+- [Combat snapshot Domain model](../../architecture/COMBAT-SNAPSHOT-DOMAIN.md).
 - `TaiWu.Domain.CombatSnapshots` contains immutable metadata, player, target,
   learned-skill, equipment, slot-budget, generic-allocation, direction, and
   legendary-book modifier models.
@@ -1141,7 +1141,7 @@ Verify the adapter against the locally installed game and configured save.
   prerequisite-independent contract test and one opt-in local read test.
 - The local read test requires only `TAIWU_INTEGRATION_SAVE_PATH`. An absent or
   invalid value, or absent runtime dependencies, produces an explicit skip.
-- [Local integration instructions](../testing/LOCAL-GAMEDATA-INTEGRATION-TESTS.md)
+- [Local integration instructions](../../testing/LOCAL-GAMEDATA-INTEGRATION-TESTS.md)
   contain no machine-specific path, save hash, or proprietary fixture.
 - The test fingerprints the source save and every recognized GameData runtime
   dependency in the test process before reading, then compares length, SHA-256,
@@ -1806,6 +1806,9 @@ archetype.
 
 ### M2-005 — Build a local version-aware skill catalogue
 
+**Status:** Promoted to
+[EPIC-002](../epic-002/EPIC.md).
+
 **Priority:** P1
 
 **Estimate:** L
@@ -1813,9 +1816,10 @@ archetype.
 **Dependencies:** Milestone 1
 
 Build a helper-owned, rebuildable SQLite catalogue from the player's installed
-game configuration and Chinese/English language resources. This item promotes
-[PI-004 and PI-006](./FUTURE-PRODUCT-IDEAS.md#pi-004--bilingual-martial-art-catalogue)
-into an actionable backlog candidate without adding it to EPIC-001.
+game configuration and Chinese/English language resources. This item promoted
+[PI-004 and PI-006](../FUTURE-PRODUCT-IDEAS.md#pi-004--bilingual-martial-art-catalogue)
+into [EPIC-002](../epic-002/EPIC.md). Delivery work is tracked in the
+[Epic 2 backlog](../epic-002/BACKLOG.md).
 
 The catalogue covers static skill definitions and searchable localized names.
 The current save remains authoritative for learned skills, breakthrough

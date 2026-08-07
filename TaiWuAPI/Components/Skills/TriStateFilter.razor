@@ -1,0 +1,49 @@
+<label class="atlas-filter-field" for="@Id">
+    <span>@Label</span>
+    <select id="@Id" value="@SerializedValue" @onchange="ChangeAsync">
+        <option value="">@AllLabel</option>
+        <option value="true">@YesLabel</option>
+        <option value="false">@NoLabel</option>
+    </select>
+</label>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Id { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string AllLabel { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string YesLabel { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string NoLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<bool?> ValueChanged { get; set; }
+
+    private string SerializedValue => Value switch
+    {
+        true => "true",
+        false => "false",
+        null => string.Empty
+    };
+
+    private Task ChangeAsync(ChangeEventArgs eventArgs)
+    {
+        bool? value = eventArgs.Value?.ToString() switch
+        {
+            "true" => true,
+            "false" => false,
+            _ => null
+        };
+        return ValueChanged.InvokeAsync(value);
+    }
+}

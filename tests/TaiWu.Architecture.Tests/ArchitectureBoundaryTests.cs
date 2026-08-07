@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.GameData;
 using TaiWu.Application.SaveGames;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.SaveGames;
 using TaiWu.Infrastructure;
+using TaiWu.Infrastructure.Catalogue;
+using TaiWu.Infrastructure.SaveGames;
 using TaiWuAPI.Controllers;
 using TaiWuAPI.Presentation;
 using Xunit;
@@ -30,6 +34,7 @@ public sealed partial class ArchitectureBoundaryTests
         ("file write", FileWritePattern()),
         ("write-capable stream", WriteStreamPattern()),
         ("destructive file operation", DestructiveFilePattern()),
+        ("database persistence", SqlitePersistencePattern()),
         ("archive save", ArchiveSavePattern())
     ];
 
@@ -312,10 +317,11 @@ public sealed partial class ArchitectureBoundaryTests
             "architecture",
             "UI-PRESENTATION-GUIDELINES.md"));
         var combatLayout = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "docs",
-            "roadmap",
-            "UI-001-combat-recommendation-layout.md"));
+                repositoryRoot,
+                "docs",
+                "roadmap",
+                "epic-001",
+                "UI-001-combat-recommendation-layout.md"));
         var componentSources = Directory
             .EnumerateFiles(componentRoot, "*.razor", SearchOption.AllDirectories)
             .Select(path => new
@@ -556,7 +562,10 @@ public sealed partial class ArchitectureBoundaryTests
                 "src",
                 "TaiWu.Infrastructure",
                 "SaveGames"),
-            SaveAdapterForbiddenApis,
+            SaveAdapterForbiddenApis
+                .Where(rule => rule.Description is not "database persistence"
+                    and not "file write")
+                .ToArray(),
             violations,
             repositoryRoot);
 
@@ -576,6 +585,278 @@ public sealed partial class ArchitectureBoundaryTests
             "Forbidden save-write or game-control APIs were found:"
             + Environment.NewLine
             + string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void Catalogue_storage_boundary_is_infrastructure_owned()
+    {
+        var providerType = typeof(CatalogueStoragePathProvider);
+
+        Assert.Equal(typeof(DependencyInjection).Assembly, providerType.Assembly);
+        Assert.False(providerType.IsPublic);
+        Assert.Equal(
+            "TaiWu.Infrastructure.Catalogue",
+            providerType.Namespace);
+
+        var repositoryRoot = FindRepositoryRoot();
+        var contractRoots = new[]
+        {
+            Path.Combine(repositoryRoot, "src", "TaiWu.Domain"),
+            Path.Combine(repositoryRoot, "src", "TaiWu.Application"),
+            Path.Combine(repositoryRoot, "TaiWuAPI")
+        };
+        var contractSource = string.Join(
+            Environment.NewLine,
+            contractRoots.SelectMany(root =>
+                Directory
+                    .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                    .Where(path => !IsBuildOutput(path))
+                    .Select(File.ReadAllText)));
+
+        Assert.DoesNotMatch(CataloguePathContractPattern(), contractSource);
+    }
+
+    [Fact]
+    public void Catalogue_application_ports_are_path_free_and_inner_layer_only()
+    {
+        var ports = new[]
+        {
+            typeof(ICombatSkillDefinitionSource),
+            typeof(ICombatSkillCatalogueRepository),
+            typeof(ICharacterCombatSkillProgressReader),
+            typeof(ICharacterCombatSkillProgressCacheMaintenance)
+        };
+        var signatureTypes = ports
+            .SelectMany(port => port.GetMethods())
+            .SelectMany(method =>
+                method.GetParameters()
+                    .Select(parameter => parameter.ParameterType)
+                    .Append(method.ReturnType))
+            .SelectMany(FlattenType)
+            .Where(type => type.Assembly != typeof(object).Assembly)
+            .Distinct()
+            .ToArray();
+
+        Assert.True(
+            typeof(IReadOnlyGameDataSource).IsAssignableFrom(
+                typeof(ICombatSkillDefinitionSource)));
+        Assert.DoesNotContain(
+            ports.SelectMany(port => port.GetMethods())
+                .SelectMany(method => method.GetParameters()),
+            parameter => parameter.Name?.Contains(
+                "path",
+                StringComparison.OrdinalIgnoreCase) == true);
+        Assert.All(
+            signatureTypes,
+            type => Assert.Contains(
+                type.Assembly,
+                new[]
+                {
+                    typeof(ICombatSkillDefinitionSource).Assembly,
+                    typeof(CombatSkillSnapshot).Assembly
+                }));
+    }
+
+    [Fact]
+    public void Combat_skill_api_is_query_only_except_named_cache_maintenance()
+    {
+        var controllers = new[]
+        {
+            typeof(CombatSkillsController),
+            typeof(CharacterSkillAtlasController)
+        };
+        var actions = controllers
+            .SelectMany(controller => controller.GetMethods(
+                BindingFlags.Instance
+                | BindingFlags.Public
+                | BindingFlags.DeclaredOnly))
+            .Where(method =>
+                method.GetCustomAttributes<HttpMethodAttribute>().Any())
+            .ToArray();
+
+        Assert.DoesNotContain(
+            actions.SelectMany(action => action.GetParameters()),
+            parameter => parameter.Name?.Contains(
+                "path",
+                StringComparison.OrdinalIgnoreCase) == true
+                || parameter.GetCustomAttribute<FromBodyAttribute>() is not null);
+        Assert.DoesNotContain(
+            actions,
+            action => action.GetCustomAttribute<HttpPutAttribute>() is not null
+                || action.GetCustomAttribute<HttpPatchAttribute>() is not null
+                || action.GetCustomAttribute<HttpDeleteAttribute>() is not null);
+        Assert.Equal(
+            ["catalogue-cache/rebuild", "progress-cache/clear"],
+            actions
+                .Select(action => action.GetCustomAttribute<HttpPostAttribute>())
+                .Where(attribute => attribute is not null)
+                .Select(attribute => attribute!.Template!)
+                .Order(StringComparer.Ordinal)
+                .ToArray());
+
+        var repositoryRoot = FindRepositoryRoot();
+        var sources = controllers.Select(controller => File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Controllers",
+                $"{controller.Name}.cs")));
+        var combined = string.Join(Environment.NewLine, sources);
+        Assert.DoesNotContain("SaveGameOptions", combined);
+        Assert.DoesNotContain("DefaultSaveFilePath", combined);
+        Assert.DoesNotContain("File.", combined);
+        Assert.DoesNotContain("Directory.", combined);
+    }
+
+    [Fact]
+    public void Production_persistence_is_confined_to_named_helper_owned_stores()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var allowedStores = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase)
+        {
+            Path.Combine(
+                "src",
+                "TaiWu.Infrastructure",
+                "Catalogue",
+                "SqliteCombatSkillCatalogueStore.cs"),
+            Path.Combine(
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "SqliteCharacterCombatSkillProgressCache.cs")
+        };
+        var persistenceRules = SaveAdapterForbiddenApis
+            .Where(rule => rule.Description != "archive save")
+            .ToArray();
+        var violations = new List<string>();
+
+        foreach (var root in new[]
+                 {
+                     Path.Combine(repositoryRoot, "src"),
+                     Path.Combine(repositoryRoot, "TaiWuAPI")
+                 })
+        {
+            foreach (var file in Directory
+                         .EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
+                         .Where(path => !IsBuildOutput(path)))
+            {
+                var relativePath = Path.GetRelativePath(repositoryRoot, file);
+                var source = File.ReadAllText(file);
+                foreach (var (description, pattern) in persistenceRules)
+                {
+                    if (pattern.IsMatch(source)
+                        && !allowedStores.Contains(relativePath))
+                    {
+                        violations.Add($"{relativePath}: {description}");
+                    }
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            "Persistence APIs are allowed only in the named helper-owned "
+            + "stores:"
+            + Environment.NewLine
+            + string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void Named_catalogue_store_is_an_internal_path_safe_adapter()
+    {
+        var storeType = typeof(SqliteCombatSkillCatalogueStore);
+
+        Assert.Equal(typeof(DependencyInjection).Assembly, storeType.Assembly);
+        Assert.Equal("TaiWu.Infrastructure.Catalogue", storeType.Namespace);
+        Assert.False(storeType.IsPublic);
+        Assert.True(
+            typeof(ICombatSkillCatalogueRepository).IsAssignableFrom(storeType));
+        Assert.True(
+            typeof(ILegendaryBookEffectCatalogueRepository)
+                .IsAssignableFrom(storeType));
+
+        var constructors = storeType.GetConstructors(
+            BindingFlags.Instance
+            | BindingFlags.Public
+            | BindingFlags.NonPublic);
+        Assert.NotEmpty(constructors);
+        Assert.All(
+            constructors,
+            constructor =>
+            {
+                var parameters = constructor.GetParameters();
+                Assert.Contains(
+                    parameters,
+                    parameter => parameter.ParameterType
+                        == typeof(CatalogueStoragePathProvider));
+                Assert.DoesNotContain(
+                    parameters,
+                    parameter => parameter.ParameterType == typeof(string)
+                        || parameter.ParameterType == typeof(FileInfo)
+                        || parameter.ParameterType == typeof(DirectoryInfo));
+            });
+    }
+
+    [Fact]
+    public void Named_save_progress_cache_is_an_internal_path_safe_adapter()
+    {
+        var cacheType = typeof(SqliteCharacterCombatSkillProgressCache);
+
+        Assert.Equal(typeof(DependencyInjection).Assembly, cacheType.Assembly);
+        Assert.Equal("TaiWu.Infrastructure.SaveGames", cacheType.Namespace);
+        Assert.False(cacheType.IsPublic);
+        Assert.True(
+            typeof(ICharacterCombatSkillProgressCacheMaintenance)
+                .IsAssignableFrom(cacheType));
+        var constructors = cacheType.GetConstructors(
+            BindingFlags.Instance
+            | BindingFlags.Public
+            | BindingFlags.NonPublic);
+        Assert.NotEmpty(constructors);
+        Assert.All(
+            constructors,
+            constructor =>
+            {
+                var parameters = constructor.GetParameters();
+                Assert.Contains(
+                    parameters,
+                    parameter => parameter.ParameterType
+                        == typeof(SaveProgressCacheStoragePathProvider));
+                Assert.DoesNotContain(
+                    parameters,
+                    parameter => parameter.ParameterType == typeof(string)
+                        || parameter.ParameterType == typeof(FileInfo)
+                        || parameter.ParameterType == typeof(DirectoryInfo));
+            });
+    }
+
+    [Fact]
+    public void Catalogue_database_is_generated_and_uses_the_pinned_native_runtime()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var ignore = File.ReadAllText(
+            Path.Combine(repositoryRoot, ".gitignore"));
+        var infrastructureProject = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "TaiWu.Infrastructure.csproj"));
+
+        Assert.Contains("combat-skill-catalogue*.db", ignore);
+        Assert.Contains("combat-skill-catalogue*.db-*", ignore);
+        Assert.Contains("character-combat-skill-progress*.db", ignore);
+        Assert.Contains("character-combat-skill-progress*.db-*", ignore);
+        Assert.Contains(
+            "Microsoft.Data.Sqlite\" Version=\"10.0.10\"",
+            infrastructureProject);
+        Assert.Contains(
+            "SQLitePCLRaw.lib.e_sqlite3\" Version=\"2.1.12\"",
+            infrastructureProject);
+        Assert.DoesNotContain(
+            "$(TaiwuBackendDirectory)\\e_sqlite3.dll",
+            infrastructureProject);
     }
 
     [Fact]
@@ -628,6 +909,8 @@ public sealed partial class ArchitectureBoundaryTests
             .ToArray();
         var expectedHandlers = new[]
         {
+            "() => SelectFactionAsync(null)",
+            "() => SelectFactionAsync(option.FactionId)",
             "() => SelectTarget(target)",
             "() => SelectedReferenceChanged.InvokeAsync(null)",
             "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
@@ -636,9 +919,18 @@ public sealed partial class ArchitectureBoundaryTests
             "() => ShowStyle(style.Style)",
             "() => Toggle(item.Reference)",
             "() => ToggleObservationSkill(skill.SkillId)",
+            "ApplyFiltersAsync",
+            "ChangeAsync",
+            "ClearFiltersAsync",
+            "ClearProgressCacheAsync",
             "CopyAsync",
             "GetRecommendationAsync",
+            "LoadAsync",
+            "NextPageAsync",
+            "PreviousPageAsync",
             "PrintAsync",
+            "RebuildAsync",
+            "ReloadAsync",
             "RetryRead",
             "SearchTargetsAsync"
         }.Order(StringComparer.Ordinal);
@@ -661,6 +953,171 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("ISaveGameReader", page);
         Assert.DoesNotContain("using GameData", page);
         Assert.DoesNotContain("GameData.", page);
+
+        var atlasPage = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Pages",
+                "SkillCatalogue.razor"));
+        Assert.Contains("ReadCharacterCombatSkillAtlas(", atlasPage);
+        Assert.Contains("EnsureCombatSkillCatalogue(", atlasPage);
+        Assert.Contains("ClearCharacterCombatSkillProgressCache(", atlasPage);
+        Assert.Contains("_catalogue = _atlas!.Catalogue", atlasPage);
+        Assert.DoesNotContain("ReadCombatSkillCatalogueStatus(", atlasPage);
+        Assert.Contains("characterId: null", atlasPage);
+        Assert.DoesNotContain("ISaveGameReader", atlasPage);
+        Assert.DoesNotContain("DefaultSaveFilePath", atlasPage);
+        Assert.DoesNotContain("using GameData", atlasPage);
+        Assert.Contains("aria-live", atlasPage);
+        Assert.Contains("Candidate limit reached", atlasPage);
+        Assert.Contains("class=\"atlas-faction-picker\"", atlasPage);
+        Assert.Contains("data-faction-id", atlasPage);
+        Assert.Contains("ICombatSkillFactionProfileSource", atlasPage);
+        Assert.Contains("GroupBy(CategoryOf)", atlasPage);
+        Assert.Contains("OrderBy(GradeOf)", atlasPage);
+        Assert.Contains(
+            "CharacterCombatSkillAtlasSort.CategoryThenGrade",
+            atlasPage);
+        Assert.Contains("class=\"skill-status-legend\"", atlasPage);
+        Assert.Contains("data-grade-order=\"low-to-high\"", atlasPage);
+        Assert.True(
+            atlasPage.IndexOf("Id=\"atlas-learned\"", StringComparison.Ordinal)
+            < atlasPage.IndexOf(
+                "class=\"atlas-advanced-filters\"",
+                StringComparison.Ordinal));
+        Assert.Contains("LearnedCount(categoryEntries)", atlasPage);
+        Assert.Contains("FullyStudiedCount(categoryEntries)", atlasPage);
+
+        var atlasCard = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Skills",
+                "SkillAtlasCard.razor"));
+        Assert.Contains("<details>", atlasCard);
+        Assert.Contains("<summary aria-label=\"@SummaryAriaLabel\">", atlasCard);
+        Assert.Contains("role=\"list\"", atlasCard);
+        Assert.Contains("yield return T(\"Learned\")", atlasCard);
+        Assert.Contains("data-grade=\"@GradeValue\"", atlasCard);
+        Assert.Contains("data-learned-state=\"@LearnedStateKey\"", atlasCard);
+        Assert.Contains("data-breakthrough-state=\"@BreakthroughStateKey\"", atlasCard);
+        Assert.Contains("data-equipped=\"@IsEquipped", atlasCard);
+        Assert.Contains("data-study-complete=\"@StudyComplete", atlasCard);
+        Assert.Contains("@SkillInitial", atlasCard);
+        Assert.DoesNotContain("CategoryGlyph", atlasCard);
+        Assert.Contains("practice-marker", atlasCard);
+        Assert.Contains("skill-card-name", atlasCard);
+        Assert.Contains("skill-study-complete-marker", atlasCard);
+        Assert.Contains("ProgressDescriptionParts", atlasCard);
+        Assert.Contains(".Where(Breakthrough.Includes)", atlasCard);
+        Assert.DoesNotContain("skill-card-status", atlasCard);
+        Assert.DoesNotContain("progress-badge", atlasCard);
+        Assert.DoesNotContain(
+            "<svg",
+            atlasCard,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            "<img",
+            atlasCard,
+            StringComparison.OrdinalIgnoreCase);
+
+        var detailPage = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Pages",
+                "SkillDetail.razor"));
+        Assert.Contains("@page \"/skills/{SkillId:int}\"", detailPage);
+        Assert.Contains("@attribute [StreamRendering]", detailPage);
+        Assert.Contains("ReadCombatSkillDetails(", detailPage);
+        Assert.Contains("characterId: null", detailPage);
+        Assert.Contains("Reading skill detail and current Taiwu progress", detailPage);
+        Assert.Contains("Static definition", detailPage);
+        Assert.Contains("Current Taiwu state", detailPage);
+        Assert.Contains("Display-only raw text", detailPage);
+        Assert.Contains("SelectedDescriptions(definition)", detailPage);
+        Assert.DoesNotContain("Chinese and English names", detailPage);
+        Assert.Contains("SupplyParameterFromQuery(Name = \"context\")", detailPage);
+        Assert.Contains("Opened from a combat recommendation", detailPage);
+        Assert.DoesNotContain("ISaveGameReader", detailPage);
+        Assert.DoesNotContain("DefaultSaveFilePath", detailPage);
+        Assert.DoesNotContain("using GameData", detailPage);
+
+        var studyMap = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Skills",
+                "SkillStudyMap.razor"));
+        Assert.Contains("<ol>", studyMap);
+        Assert.Contains("role=\"list\"", studyMap);
+        Assert.Contains("Not studied", studyMap);
+        Assert.Contains("Unavailable", studyMap);
+        Assert.Contains("Source and availability", studyMap);
+        Assert.DoesNotContain("<svg", studyMap, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<img", studyMap, StringComparison.OrdinalIgnoreCase);
+
+        var recommendationSkillCard = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "SkillCard.razor"));
+        Assert.Contains(
+            "/skills/@Skill.SkillId?context=recommendation",
+            recommendationSkillCard);
+        Assert.DoesNotContain(
+            "ICombatSkillCatalogue",
+            recommendationSkillCard,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "RawCombatSkillDescription",
+            recommendationSkillCard,
+            StringComparison.Ordinal);
+
+        var recommendationLogic = string.Join(
+            Environment.NewLine,
+            Directory.EnumerateFiles(
+                    Path.Combine(repositoryRoot, "src", "TaiWu.Domain", "CombatRecommendations"),
+                    "*.cs",
+                    SearchOption.AllDirectories)
+                .Concat(Directory.EnumerateFiles(
+                    Path.Combine(repositoryRoot, "src", "TaiWu.Application", "CombatRecommendations"),
+                    "*.cs",
+                    SearchOption.AllDirectories))
+                .Select(File.ReadAllText));
+        Assert.DoesNotContain("RawCombatSkillDescription", recommendationLogic);
+        Assert.DoesNotContain("ICombatSkillCatalogue", recommendationLogic);
+
+        var style = File.ReadAllText(
+            Path.Combine(apiRoot, "wwwroot", "app.css"));
+        Assert.Contains("@media (max-width: 620px)", style);
+        Assert.Contains("@media (prefers-reduced-motion: reduce)", style);
+        Assert.Contains(".skill-card-grid", style);
+        Assert.Contains(
+            "grid-template-columns: repeat(auto-fit, minmax(148px, 1fr))",
+            style);
+        Assert.Contains("@media (min-width: 1100px)", style);
+        Assert.Contains(
+            "grid-template-columns: repeat(9, minmax(0, 1fr))",
+            style);
+        Assert.Contains(".skill-glyph::after", style);
+        Assert.Contains(".skill-atlas-card.grade-0", style);
+        Assert.Contains(".skill-atlas-card.grade-8", style);
+        Assert.Contains("--skill-grade-color", style);
+        Assert.Contains(".skill-category-list", style);
+        Assert.Contains(".atlas-faction-options", style);
+        Assert.Contains(
+            "grid-template-columns: repeat(auto-fit, minmax(86px, 1fr))",
+            style);
+        Assert.DoesNotContain("scroll-snap-type: x proximity", style);
+        Assert.Contains(".element-metal", style);
+        Assert.Contains(".alignment-just", style);
+        Assert.Contains(".alignment-unknown", style);
+        Assert.Contains("--alignment-color: #ffffff", style);
+        Assert.Contains(".study-map", style);
+        Assert.Contains(".study-node.status-not-studied", style);
+        Assert.Contains(".skill-status-legend", style);
+        Assert.Contains(".status-unlearned .skill-card-name", style);
+        Assert.Contains("[data-practice-state=\"available\"]", style);
+        Assert.Contains(".is-equipped .skill-card-name", style);
+        Assert.Contains(".skill-study-complete-marker", style);
 
         var checklist = File.ReadAllText(
             Path.Combine(
@@ -744,6 +1201,61 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Character_progress_adapter_uses_typed_archive_data_only()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var source = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "TaiwuCharacterCombatSkillProgressReader.cs"));
+        var mapping = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "CombatSkillProgressMapping.cs"));
+        var labels = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "Catalogue",
+                "CombatSkillStudyDetailLabelSource.cs"));
+
+        Assert.Contains("GetCharCombatSkills(characterId)", source);
+        Assert.Contains("TryGetElement_CombatSkillProficiencies", source);
+        Assert.Contains("GetReadingState()", source);
+        Assert.Contains("GetActivationState()", source);
+        Assert.Contains("typeof(DomainManager).Assembly.Location", source);
+        Assert.DoesNotContain(
+            "typeof(Config.CombatSkill).Assembly.Location",
+            source);
+        Assert.Contains("labelSource.ReadAsync", source);
+        Assert.Contains("request.PreferredLanguage", source);
+        Assert.Contains("CombatSkillStudyDetailDecoder.Decode", mapping);
+        Assert.Contains("studyDetails.Details", mapping);
+        Assert.Contains("normalReadDetails", mapping);
+        Assert.DoesNotContain("CountReadNormalPages", mapping);
+        Assert.Contains("before != after", labels);
+        Assert.Contains("TaiwuLanguageCatalog.ReadAsync", labels);
+        Assert.Contains("DomainManager.Taiwu.GetTaiwuCharId()", source);
+        Assert.DoesNotContain("GetCombatSkillDisplayDataOnce(", source);
+        Assert.DoesNotContain("GetPower()", source);
+        Assert.DoesNotContain("GetMaxPower()", source);
+        Assert.Contains("CombatSkillStateHelper.IsBrokenOut", mapping);
+        Assert.Contains("fingerprintProvider.CaptureAsync", labels);
+        Assert.DoesNotContain("File.Write", labels);
+        Assert.DoesNotContain("SaveGameReport", source);
+        Assert.DoesNotContain("LegacyReport", source);
+        Assert.DoesNotContain("SKILL|", source);
+        Assert.DoesNotContain("File.Write", source);
+    }
+
+    [Fact]
     public void Publishing_is_blocked_and_game_binaries_are_not_publish_items()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -790,6 +1302,33 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("capturedAtUtc", metadata);
         Assert.DoesNotContain("lastWriteTimeUtc", metadata);
         Assert.DoesNotContain("sha256", metadata);
+    }
+
+    [Fact]
+    public void Epic_2_golden_skill_atlas_metadata_is_sanitized()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var metadata = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "docs",
+                "scenarios",
+                "evidence",
+                "E2-001-golden-skill-atlas-metadata.json"));
+
+        using var document = JsonDocument.Parse(metadata);
+        var repository = document.RootElement.GetProperty("repository");
+
+        Assert.DoesNotContain(@"C:\", metadata, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AppData", metadata, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Program Files", metadata, StringComparison.OrdinalIgnoreCase);
+        Assert.False(repository.GetProperty("containsSaveContent").GetBoolean());
+        Assert.False(repository.GetProperty("containsSavePath").GetBoolean());
+        Assert.False(repository.GetProperty("containsGameBinaryContent").GetBoolean());
+        Assert.False(repository.GetProperty("containsGameBinaryHash").GetBoolean());
+        Assert.False(repository.GetProperty("containsCompleteLanguageResource").GetBoolean());
+        Assert.False(repository.GetProperty("containsScreenshot").GetBoolean());
+        Assert.False(repository.GetProperty("containsCharacterIdentifier").GetBoolean());
     }
 
     [Fact]
@@ -1100,7 +1639,7 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [GeneratedRegex(
-        @"\bFile\s*\.\s*(?:WriteAllBytes|WriteAllBytesAsync|WriteAllLines|WriteAllLinesAsync|WriteAllText|WriteAllTextAsync|AppendAllLines|AppendAllLinesAsync|AppendAllText|AppendAllTextAsync|OpenWrite)\b",
+        @"\bFile\s*\.\s*(?:WriteAllBytes|WriteAllBytesAsync|WriteAllLines|WriteAllLinesAsync|WriteAllText|WriteAllTextAsync|AppendAllLines|AppendAllLinesAsync|AppendAllText|AppendAllTextAsync|OpenWrite)\b|\bDirectory\s*\.\s*CreateDirectory\b",
         RegexOptions.IgnoreCase)]
     private static partial Regex FileWritePattern();
 
@@ -1113,6 +1652,11 @@ public sealed partial class ArchitectureBoundaryTests
         @"\bFile\s*\.\s*(?:Delete|Move|Replace|Copy)\b|\bDirectory\s*\.\s*(?:Delete|Move)\b",
         RegexOptions.IgnoreCase)]
     private static partial Regex DestructiveFilePattern();
+
+    [GeneratedRegex(
+        @"\b(?:SqliteConnection|SQLiteConnection|SqliteConnectionStringBuilder)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex SqlitePersistencePattern();
 
     [GeneratedRegex(
         @"\b(?:archive|localArchive)\s*\.\s*(?:Save|Write|Modify|Repair|Convert)\s*\(",
@@ -1153,6 +1697,11 @@ public sealed partial class ArchitectureBoundaryTests
         @"^(?:(?:Apply|Equip).*(?:Loadout|Skill)|(?:Write|Save|Modify|Update|Delete|Repair|Replace|Patch).*(?:Save|Game|Character|Skill|Loadout)|Inject|Hook|Automate|Control|SendInput|Trainer|Cheat)",
         RegexOptions.IgnoreCase)]
     private static partial Regex GameMutationActionPattern();
+
+    [GeneratedRegex(
+        @"\b(?:(?:Catalogue|Catalog)\w*(?:Path|Directory)|(?:Path|Directory)\w*(?:Catalogue|Catalog))\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex CataloguePathContractPattern();
 
     [GeneratedRegex(
         @"@on(?:click|change)\s*=\s*""([^""]+)""",

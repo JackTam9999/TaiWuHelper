@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Status | Proposed |
-| Epic | [EPIC-001](./EPIC-001-combat-skill-recommendation.md) |
+| Epic | [EPIC-001](./EPIC.md) |
 | Milestone | 1 |
 | Primary surface | Local browser |
 | Last updated | 2026-07-31 |
@@ -279,7 +279,7 @@ must consume presentation models rather than `GameData` types.
 ## Accessibility and terminology
 
 This layout inherits the project-wide
-[UI presentation guidelines](../architecture/UI-PRESENTATION-GUIDELINES.md),
+[UI presentation guidelines](../../architecture/UI-PRESENTATION-GUIDELINES.md),
 including absolute game non-interference and the requirement to use localized
 entity names instead of IDs or raw technical references.
 

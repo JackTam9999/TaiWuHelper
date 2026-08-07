@@ -1,0 +1,165 @@
+# Character combat-skill progress Domain model
+
+| Field | Value |
+|---|---|
+| Status | Implemented |
+| Backlog item | [E2-004](../roadmap/epic-002/BACKLOG.md#e2-004--define-character-skill-progress-and-study-detail-models) |
+| Verified semantics | [Combat-skill progress semantics](./COMBAT-SKILL-PROGRESS-SEMANTICS.md) |
+| Static definition boundary | [Combat-skill catalogue Domain model](./COMBAT-SKILL-CATALOGUE-DOMAIN.md) |
+
+## Boundary and identity
+
+`CharacterCombatSkillProgress` is an immutable save-snapshot overlay. Its
+identity is the tuple:
+
+`character ID` + `save SHA-256 and read time` + `combat-skill ID`.
+
+It never becomes part of the authoritative static catalogue. A later save read
+produces a different overlay even when the character and skill IDs match.
+`SaveSnapshotIdentity` validates and normalizes the SHA-256 without retaining a
+save path.
+
+## Per-field state and provenance
+
+Character facts use `SkillProgressField<T>`:
+
+| Status | Meaning |
+|---|---|
+| `Available` | One typed value from one source |
+| `Unavailable` | No trustworthy value; a reason is required |
+| `Conflicting` | At least two typed observations disagree; both values and sources are retained |
+
+`SkillProgressSource` identifies a save snapshot, current-screen observation,
+or verified rule using opaque IDs and a stable field identity. It rejects
+filesystem paths. Reading `Value` from unavailable or conflicting data throws,
+so callers cannot silently turn uncertainty into `false` or zero.
+
+## Independent progress facts
+
+The overlay exposes these independent properties:
+
+- `Learned`: the exact term verified from
+  `GetLearnedCombatSkillByType`; the model does not use “obtained” as a fact;
+- `Proficiency`: current persisted value and storage maximum;
+- `Power`: current final displayed power, requirements-layer maximum power,
+  and the calculation context;
+- `StudyDetails`: ordered read state and active state for each stable detail;
+- `Breakthrough`: the existing verified
+  `BreakthroughDirectionAvailability` value object;
+- `ActiveDirection`: the existing `PracticeDirection` value;
+- `AttainmentMastered`: the skill-list `已大成` fact;
+- `Simplified`: the separate `功法精解` / slot-reduction fact;
+- `Activated`: whether any verified page detail is active;
+- `Equipped`: current loadout membership.
+
+There is deliberately no single status enum. A skill may be learned, ready for
+breakthrough, activated, and unequipped at the same time. In the verified
+version, an available current-Taiwu attainment value must agree with the
+successful-breakthrough predicate, while simplification remains independent.
+
+## Proficiency
+
+`CombatSkillProficiencyProgress` validates the installed proficiency storage
+range `0..999999999`. A known maximum must be `1..999999999`, and current
+cannot exceed a known maximum.
+
+The E2-001 save has no persisted proficiency key. The model does not contain a
+proficiency percentage because the study-screen centre percentage is the
+separate final-power value.
+
+## Displayed power
+
+`CombatSkillPowerProgress` keeps current final power and maximum power as two
+fields plus an explicit calculation context. Current power must be
+non-negative and maximum power must be positive when available. It deliberately
+does not require current to be less than or equal to maximum: the latter caps
+the requirements-derived layer, while later fixed and percentage modifiers can
+raise the final value above it.
+
+The verified UI renders current `Power` directly with a percent sign. A value
+of `113` and maximum of `100` therefore displays as `113%`, not as 113 percent
+of a denominator. Both fields may be unavailable when the adapter does not
+have the live special-effect context needed for the installed calculation.
+
+## Study details and completeness
+
+`CombatSkillStudyDetailProgress` contains:
+
+- stable detail ID;
+- unique display order;
+- Outline, Direct, or Reverse group;
+- optional localized label with static catalogue provenance;
+- `Read` or `NotRead`, wrapped in a progress field so unavailable/conflicting
+  is representable;
+- independent active-selection boolean.
+
+The verified term is **read**, not the broader inferred term “studied.”
+Adapters map the fifteen installed bits defined by E2-002; the Domain model can
+also represent a different count from a future version without inventing
+missing entries.
+
+`CombatSkillStudySummary` is derived:
+
+- `AvailableCount` is `ReadCount + NotReadCount` and excludes unavailable or
+  conflicting detail states from the known denominator;
+- any known `NotRead` detail proves `IsComplete=false`;
+- if every known detail is `Read` but at least one detail is unavailable or
+  conflicting, completeness is unavailable, not false;
+- all details available and `Read` produces `IsComplete=true`;
+- zero details produces unavailable completeness.
+
+Unavailable details are counted separately and never added to the not-read
+count. `MissingStudyDetails` exposes the exact ordered known-`NotRead` details;
+`UnavailableStudyDetails` remains a separate ordered collection.
+
+## Verified combination rules
+
+The constructor rejects only combinations proven impossible by the versioned
+E2-002 and E2-F06 rules:
+
+- an available active direction must be Direct or Reverse;
+- an available active direction is impossible before completed breakthrough;
+- an available attainment value must equal the current successful-
+  breakthrough value;
+- when every detail activation is available, aggregate `Activated` must equal
+  whether any detail is active;
+- duplicate detail IDs and duplicate display orders are invalid.
+
+A completed breakthrough with an unavailable direction remains valid because
+an unsupported activation value must not be guessed. Unproven source
+disagreements use `Conflicting` and retain both observations.
+
+## Relationship to `CombatSkillSnapshot`
+
+The existing `CombatSkillSnapshot` remains the compact Epic 1 combat-planning
+projection. The atlas model reuses its authoritative
+`BreakthroughDirectionAvailability`, `PracticeDirection`, and element/grid
+value objects rather than creating contradictory alternatives.
+
+Static names, cost, element, and effect references belong to
+`CombatSkillDefinition`. Character-specific learned, detail, mastery,
+activation, and equipment facts belong to `CharacterCombatSkillProgress`.
+Infrastructure must map shared source values once and feed both projections;
+the atlas does not parse the legacy snapshot or diagnostic text.
+
+The older `CombatSkillSnapshot.Mastered` source corresponds to simplification,
+not `AttainmentMastered`. E2-004 gives the two concepts unambiguous names; a
+later adapter slice will populate them from their distinct verified sources.
+
+## Verification
+
+`CharacterCombatSkillProgressTests` cover:
+
+- snapshot-keyed equality;
+- learned terminology;
+- unavailable and bounded proficiency;
+- partial, complete, empty, and unknown detail sets;
+- aggregate completeness without false negatives;
+- duplicate and immutable detail collections;
+- Direct/Reverse breakthrough and unknown direction states;
+- the verified attainment/breakthrough relationship and independent
+  simplification, activation, and equipment;
+- current power above maximum power and unavailable live-calculated power;
+- impossible activation combinations;
+- conflicts retaining both source observations;
+- invalid save fingerprints.

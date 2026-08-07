@@ -1,0 +1,503 @@
+@using TaiWu.Application.CombatSkills
+@using TaiWu.Domain.CombatSkills
+@using TaiWu.Domain.CombatSnapshots
+
+<article class="skill-atlas-card @GradeClass @ProgressVisualClasses"
+         data-reference="@Entry.StableKey"
+         data-grade="@GradeValue"
+         data-learned-state="@LearnedStateKey"
+         data-breakthrough-state="@BreakthroughStateKey"
+         data-equipped="@IsEquipped.ToString().ToLowerInvariant()"
+         data-study-complete="@StudyComplete.ToString().ToLowerInvariant()">
+    <details>
+        <summary aria-label="@SummaryAriaLabel">
+            <span class="skill-glyph" aria-hidden="true">
+                <span>@SkillInitial</span>
+            </span>
+            <span class="skill-card-title" title="@ProgressTooltip">
+                <span class="skill-card-direction-line">
+                    @if (DirectionMarkers.Count > 0)
+                    {
+                        @foreach (var marker in DirectionMarkers)
+                        {
+                            <span class="practice-marker @DirectionClass(marker.Direction)"
+                                  data-practice-state="@marker.State"
+                                  role="img"
+                                  aria-label="@DirectionLabel(marker.Direction)">
+                                <span aria-hidden="true">@DirectionGlyph(marker.Direction)</span>
+                            </span>
+                        }
+                    }
+                    else if (ShowUnavailableMarker)
+                    {
+                        <span class="practice-marker unavailable"
+                              data-practice-state="unavailable"
+                              role="img"
+                              aria-label="@T("Status unavailable")">
+                            <span aria-hidden="true">?</span>
+                        </span>
+                    }
+                </span>
+                <span class="skill-card-name-line">
+                    <span class="skill-card-name">@DisplayName</span>
+                    @if (StudyComplete)
+                    {
+                        <span class="skill-study-complete-marker"
+                              role="img"
+                              aria-label="@T("All details studied")"
+                              title="@StudyText">
+                            <span aria-hidden="true">✓</span>
+                        </span>
+                    }
+                </span>
+            </span>
+        </summary>
+
+        <div class="skill-card-body">
+            <dl class="skill-card-facts">
+                <div class="skill-study-fact">
+                    <dt>@T("Study progress")</dt>
+                    @if (OrderedStudyDetails.Count > 0)
+                    {
+                        <dd class="skill-study-progress">
+                            <span class="skill-study-strip"
+                                  role="list"
+                                  aria-label="@StudyText">
+                                @foreach (var detail in OrderedStudyDetails)
+                                {
+                                    <span class="skill-study-glyph @StudyDetailStatusClass(detail) @StudyDetailPathClass(detail) @StudyDetailActiveClass(detail)"
+                                          data-study-detail="@detail.DetailId"
+                                          data-study-status="@StudyDetailStatusKey(detail)"
+                                          role="listitem"
+                                          aria-label="@StudyDetailAriaLabel(detail)"
+                                          title="@StudyDetailAriaLabel(detail)">
+                                        <span aria-hidden="true">@StudyDetailGlyph(detail)</span>
+                                    </span>
+                                }
+                            </span>
+                            <span class="skill-study-summary">@StudyText</span>
+                        </dd>
+                    }
+                    else
+                    {
+                        <dd>@StudyText</dd>
+                    }
+                </div>
+                <div>
+                    <dt>@T("Proficiency")</dt>
+                    <dd>@ProficiencyText</dd>
+                </div>
+                <div>
+                    <dt>@T("Power")</dt>
+                    <dd>@PowerText</dd>
+                </div>
+            </dl>
+
+            <dl class="skill-card-descriptions">
+                @foreach (var description in CardDescriptions)
+                {
+                    <div class="skill-card-description @description.CssClass"
+                         data-description-kind="@description.Kind">
+                        <dt>@description.Label</dt>
+                        <dd>@(description.Text ?? T("Unavailable"))</dd>
+                    </div>
+                }
+            </dl>
+
+            @if (Entry.Issues != CombatSkillQueryIssue.None)
+            {
+                <p class="skill-partial-note">
+                    @T("Some fields are unavailable or use a fallback. Open the detail view for provenance.")
+                </p>
+            }
+
+            <a class="skill-detail-link" href="/skills/@Entry.SkillId">
+                @T("Open full skill detail") <span aria-hidden="true">→</span>
+            </a>
+        </div>
+    </details>
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public CharacterCombatSkillAtlasEntry Entry { get; set; } = default!;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private CharacterCombatSkillProgress? Progress => Entry.Progress;
+
+    private BreakthroughDirectionAvailability? Breakthrough =>
+        Progress?.Breakthrough.IsAvailable == true
+            ? Progress.Breakthrough.Value
+            : null;
+
+    private PracticeDirection? ActiveDirection =>
+        Progress?.ActiveDirection.IsAvailable == true
+            ? Progress.ActiveDirection.Value
+            : null;
+
+    private PracticeDirection? ActiveMarkerDirection =>
+        Breakthrough?.IsBrokenOut == true
+        && ActiveDirection is PracticeDirection.Direct
+            or PracticeDirection.Reverse
+            ? ActiveDirection
+            : null;
+
+    private IReadOnlyList<PracticeDirection> ReadyDirections =>
+        Breakthrough?.CanBreakthroughNow == true
+            ? DirectionDisplayOrder
+                .Where(Breakthrough.Includes)
+                .ToArray()
+            : [];
+
+    private static readonly PracticeDirection[] DirectionDisplayOrder =
+    [
+        PracticeDirection.Direct,
+        PracticeDirection.Reverse
+    ];
+
+    private IReadOnlyList<DirectionMarker> DirectionMarkers =>
+        DirectionDisplayOrder
+            .Select(direction => new DirectionMarker(
+                direction,
+                DirectionMarkerState(direction)))
+            .Where(marker => marker.State is not null)
+            .Select(marker => marker with { State = marker.State! })
+            .ToArray();
+
+    private string? DirectionMarkerState(PracticeDirection direction)
+    {
+        if (Breakthrough?.IsBrokenOut == true
+            && ActiveMarkerDirection is null)
+        {
+            return null;
+        }
+
+        if (ActiveMarkerDirection == direction)
+        {
+            return "active";
+        }
+
+        if (Breakthrough?.HasCompleted(direction) == true)
+        {
+            return "completed";
+        }
+
+        if (Breakthrough?.IsBrokenOut == true
+            || Breakthrough?.Includes(direction) == true)
+        {
+            return "available";
+        }
+
+        return null;
+    }
+
+    private sealed record DirectionMarker(
+        PracticeDirection Direction,
+        string? State);
+
+    private string DisplayName => Entry.DisplayName.Value.IsAvailable
+        ? Entry.DisplayName.Value.Value.Text
+        : T("Unnamed skill");
+
+    private string SummaryAriaLabel => string.Join(
+        " · ",
+        new[]
+        {
+            DisplayName,
+            GradeText,
+            CategoryText,
+            FactionText,
+            ProgressDescription
+        }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private string FactionText =>
+        Entry.Definition?.Faction.IsAvailable == true
+            ? CombatSkillUiText.Faction(
+                Language,
+                Entry.Definition.Faction.Value)
+            : T("Unknown faction");
+
+    private string CategoryText =>
+        Entry.Definition?.Category.IsAvailable == true
+            ? CategoryLabel(Entry.Definition.Category.Value)
+            : T("Unknown category");
+
+    private string GradeText => Entry.Definition?.Grade.IsAvailable == true
+        ? $"{T("Grade")} {Entry.Definition.Grade.Value.Value}"
+        : T("Grade unavailable");
+
+    private string GradeClass => Entry.Definition?.Grade.IsAvailable == true
+        ? $"grade-{Entry.Definition.Grade.Value.Value}"
+        : "grade-unknown";
+
+    private string GradeValue => Entry.Definition?.Grade.IsAvailable == true
+        ? Entry.Definition.Grade.Value.Value.ToString()
+        : "unknown";
+
+    private bool IsEquipped => IsTrue(Progress?.Equipped);
+
+    private bool StudyComplete =>
+        Progress?.StudySummary is
+        {
+            TotalCount: 15,
+            ReadCount: 15,
+            NotReadCount: 0,
+            UnavailableCount: 0,
+            IsComplete.IsAvailable: true,
+            IsComplete.Value: true
+        };
+
+    private bool ShowUnavailableMarker =>
+        !Entry.Learned.IsAvailable
+        || IsTrue(Entry.Learned)
+        && (Progress is null
+            || !Progress.Breakthrough.IsAvailable
+            || Breakthrough?.IsBrokenOut == true
+            && ActiveMarkerDirection is null);
+
+    private string LearnedStateKey => !Entry.Learned.IsAvailable
+        ? "unavailable"
+        : Entry.Learned.Value
+            ? "learned"
+            : "not-learned";
+
+    private string BreakthroughStateKey => !IsTrue(Entry.Learned)
+        ? "not-applicable"
+        : Progress?.Breakthrough.IsAvailable != true
+            ? "unavailable"
+            : Breakthrough?.IsBrokenOut == true
+                ? "completed"
+                : Breakthrough?.CanBreakthroughNow == true
+                    ? "ready"
+                    : "not-ready";
+
+    private string ProgressVisualClasses => string.Join(
+        " ",
+        new[]
+        {
+            LearnedStateKey switch
+            {
+                "not-learned" => "status-unlearned",
+                "unavailable" => "status-unknown",
+                _ => "status-learned"
+            },
+            IsEquipped ? "is-equipped" : string.Empty,
+            StudyComplete ? "study-complete" : string.Empty
+        }.Where(value => value.Length > 0));
+
+    private string ProgressDescription => string.Join(
+        " · ",
+        ProgressDescriptionParts());
+
+    private string ProgressTooltip => string.Join(
+        " · ",
+        new[] { DisplayName, ProgressDescription }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private IEnumerable<string> ProgressDescriptionParts()
+    {
+        if (!Entry.Learned.IsAvailable)
+        {
+            yield return T("Status unavailable");
+            yield break;
+        }
+
+        if (!Entry.Learned.Value)
+        {
+            yield return T("Not learned");
+            yield break;
+        }
+
+        yield return T("Learned");
+        if (Progress?.Breakthrough.IsAvailable != true)
+        {
+            yield return T("Status unavailable");
+        }
+        else if (Breakthrough?.IsBrokenOut == true)
+        {
+            yield return T("Broken through");
+            yield return ActiveMarkerDirection is { } direction
+                ? DirectionLabel(direction)
+                : T("Status unavailable");
+        }
+        else if (Breakthrough?.CanBreakthroughNow == true)
+        {
+            yield return T("Ready to break through");
+            foreach (var direction in ReadyDirections)
+            {
+                yield return DirectionLabel(direction);
+            }
+        }
+        else
+        {
+            yield return T("Not ready to break through");
+        }
+
+        if (IsTrue(Progress?.Simplified))
+        {
+            yield return T("Simplified");
+        }
+        if (IsTrue(Progress?.Activated))
+        {
+            yield return T("Activated");
+        }
+        if (IsEquipped)
+        {
+            yield return T("Equipped");
+        }
+        if (Progress?.StudySummary.TotalCount > 0)
+        {
+            yield return StudyText;
+        }
+    }
+
+    private string SkillInitial => string.IsNullOrWhiteSpace(DisplayName)
+        ? "?"
+        : DisplayName.Trim()[0].ToString();
+
+    private string ProficiencyText =>
+        Progress?.Proficiency.Current.IsAvailable == true
+            ? Progress.Proficiency.Maximum.IsAvailable
+                ? $"{Progress.Proficiency.Current.Value} / {Progress.Proficiency.Maximum.Value}"
+                : Progress.Proficiency.Current.Value.ToString()
+            : T("Unavailable");
+
+    private string PowerText =>
+        Progress?.Power.Current.IsAvailable == true
+            ? Progress.Power.Maximum.IsAvailable
+                ? $"{Progress.Power.Current.Value}% ({T("Maximum power")} "
+                  + $"{Progress.Power.Maximum.Value}%)"
+                : $"{Progress.Power.Current.Value}%"
+            : T("Unavailable");
+
+    private CatalogueLanguage PreferredDescriptionLanguage =>
+        Language == TaiwuLanguage.Chinese
+            ? CatalogueLanguage.TraditionalChinese
+            : CatalogueLanguage.English;
+
+    private IReadOnlyList<CardDescription> CardDescriptions =>
+    [
+        Description(
+            RawCombatSkillDescriptionKind.Effect,
+            T("Original description"),
+            "description-original"),
+        Description(
+            RawCombatSkillDescriptionKind.DirectEffect,
+            T("Direct practice description"),
+            "description-direct"),
+        Description(
+            RawCombatSkillDescriptionKind.ReverseEffect,
+            T("Reverse practice description"),
+            "description-reverse")
+    ];
+
+    private CardDescription Description(
+        RawCombatSkillDescriptionKind kind,
+        string label,
+        string cssClass) => new(
+            kind,
+            label,
+            cssClass,
+            Entry.Definition?.RawDescriptions
+                .FirstOrDefault(description =>
+                    description.Kind == kind
+                    && description.Language == PreferredDescriptionLanguage)
+                ?.Text);
+
+    private sealed record CardDescription(
+        RawCombatSkillDescriptionKind Kind,
+        string Label,
+        string CssClass,
+        string? Text);
+
+    private string StudyText => Progress is null
+        ? Entry.Learned.IsAvailable && !Entry.Learned.Value
+            ? T("Not learned")
+            : T("Unavailable")
+        : Progress.StudySummary.TotalCount == 0
+            ? T("Unavailable")
+            : $"{Progress.StudySummary.ReadCount} / {Progress.StudySummary.TotalCount} {T("studied")}";
+
+    private IReadOnlyList<CombatSkillStudyDetailProgress> OrderedStudyDetails =>
+        Progress?.StudyDetails
+            .OrderBy(detail => detail.DisplayOrder)
+            .ToArray()
+        ?? [];
+
+    private string StudyDetailLabel(CombatSkillStudyDetailProgress detail) =>
+        detail.Label.IsAvailable
+            ? detail.Label.Value
+            : $"{T("Unnamed detail")} ({detail.DetailId})";
+
+    private string StudyDetailGlyph(CombatSkillStudyDetailProgress detail)
+    {
+        var label = StudyDetailLabel(detail).Trim();
+        return label.Length == 0 ? "?" : label[0].ToString();
+    }
+
+    private static string StudyDetailStatusKey(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.ReadState.IsAvailable
+            ? detail.ReadState.Value == CombatSkillStudyState.Read
+                ? "studied"
+                : "not-studied"
+            : "unavailable";
+
+    private static string StudyDetailStatusClass(
+        CombatSkillStudyDetailProgress detail) =>
+        $"status-{StudyDetailStatusKey(detail)}";
+
+    private static string StudyDetailActiveClass(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.IsActive.IsAvailable && detail.IsActive.Value
+            ? "is-active"
+            : string.Empty;
+
+    private string StudyDetailPathClass(
+        CombatSkillStudyDetailProgress detail) =>
+        StudyDetailGlyph(detail) switch
+        {
+            "用" or "奇" or "巧" or "化" or "絕" => "study-path-red",
+            "修" or "思" or "源" or "參" or "藏" => "study-path-blue",
+            _ => string.Empty
+        };
+
+    private string StudyDetailStatusLabel(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.ReadState.IsAvailable
+            ? detail.ReadState.Value == CombatSkillStudyState.Read
+                ? T("Studied")
+                : T("Not studied")
+            : T("Unavailable");
+
+    private string StudyDetailAriaLabel(
+        CombatSkillStudyDetailProgress detail) =>
+        detail.IsActive.IsAvailable && detail.IsActive.Value
+            ? $"{StudyDetailLabel(detail)} · {StudyDetailStatusLabel(detail)} · {T("Active detail")}"
+            : $"{StudyDetailLabel(detail)} · {StudyDetailStatusLabel(detail)}";
+
+    private static bool IsTrue(SkillProgressField<bool>? field) =>
+        field?.IsAvailable == true && field.Value;
+
+    private string DirectionLabel(PracticeDirection direction) =>
+        direction switch
+        {
+            PracticeDirection.Direct => T("Direct practice"),
+            PracticeDirection.Reverse => T("Reverse practice"),
+            _ => T("Unavailable")
+        };
+
+    private static string DirectionGlyph(PracticeDirection direction) =>
+        direction == PracticeDirection.Direct ? "正" : "逆";
+
+    private static string DirectionClass(PracticeDirection direction) =>
+        direction == PracticeDirection.Direct ? "direct" : "reverse";
+
+    private string CategoryLabel(CombatSkillDiscipline category) =>
+        CombatSkillUiText.Category(Language, category);
+
+    private string T(string english) => UiText.Get(Language, english);
+}

@@ -7,11 +7,15 @@ public sealed record BreakthroughDirectionAvailability
     public BreakthroughDirectionAvailability(
         bool isBrokenOut,
         bool canBreakthroughNow,
-        IEnumerable<PracticeDirection> availableDirections)
+        IEnumerable<PracticeDirection> availableDirections,
+        IEnumerable<PracticeDirection>? completedDirections = null)
     {
         ArgumentNullException.ThrowIfNull(availableDirections);
 
         var directions = availableDirections
+            .Distinct()
+            .ToImmutableArray();
+        var completed = (completedDirections ?? [])
             .Distinct()
             .ToImmutableArray();
         if (directions.Any(direction =>
@@ -21,6 +25,15 @@ public sealed record BreakthroughDirectionAvailability
             throw new ArgumentException(
                 "Breakthrough directions must be Direct or Reverse.",
                 nameof(availableDirections));
+        }
+
+        if (completed.Any(direction =>
+                direction is not PracticeDirection.Direct
+                    and not PracticeDirection.Reverse))
+        {
+            throw new ArgumentException(
+                "Completed breakthrough directions must be Direct or Reverse.",
+                nameof(completedDirections));
         }
 
         if (isBrokenOut && canBreakthroughNow)
@@ -49,6 +62,7 @@ public sealed record BreakthroughDirectionAvailability
         IsBrokenOut = isBrokenOut;
         CanBreakthroughNow = canBreakthroughNow;
         AvailableDirections = directions;
+        CompletedDirections = completed;
     }
 
     public bool IsBrokenOut { get; }
@@ -57,9 +71,14 @@ public sealed record BreakthroughDirectionAvailability
 
     public ImmutableArray<PracticeDirection> AvailableDirections { get; }
 
+    public ImmutableArray<PracticeDirection> CompletedDirections { get; }
+
     public bool Includes(PracticeDirection direction)
     {
         return CanBreakthroughNow
             && AvailableDirections.Contains(direction);
     }
+
+    public bool HasCompleted(PracticeDirection direction) =>
+        CompletedDirections.Contains(direction);
 }

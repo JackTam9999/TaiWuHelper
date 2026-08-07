@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
     <ProjectReference Include="..\TaiWu.Application\TaiWu.Application.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
@@ -28,11 +30,6 @@
     <None
       Include="$(TaiwuBackendDirectory)\0Harmony.dll"
       Link="0Harmony.dll"
-      CopyToOutputDirectory="PreserveNewest"
-      CopyToPublishDirectory="Never" />
-    <None
-      Include="$(TaiwuBackendDirectory)\e_sqlite3.dll"
-      Link="e_sqlite3.dll"
       CopyToOutputDirectory="PreserveNewest"
       CopyToPublishDirectory="Never" />
     <None
