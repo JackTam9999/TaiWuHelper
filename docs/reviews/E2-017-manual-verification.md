@@ -124,5 +124,6 @@ save, with reasons, because the live special-effect context is absent.
 
 ## Product-owner decision
 
-Pending: record the product-owner Epic 2 completion decision. E2-F06 no longer
-requires additional semantic evidence.
+Approved on 2026-08-07: Epic 2 is complete and authorized for merge to
+`master`. E2-F06 requires no additional semantic evidence, and the acceptance
+audit has no remaining unchecked items.

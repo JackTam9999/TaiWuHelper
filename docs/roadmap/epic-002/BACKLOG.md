@@ -1042,7 +1042,7 @@ API, UI, and non-interference behavior as one vertical slice.
 
 ### E2-017 — Validate the atlas against the game and close Epic 2
 
-**Status:** In progress
+**Status:** Complete
 
 **Priority:** P1
 
@@ -1072,7 +1072,7 @@ final completion decision.
 - [x] All Epic 2 milestone acceptance criteria are checked against evidence.
 - [x] Remaining unsupported semantics become explicit future backlog items and
       are not silently accepted as complete.
-- [ ] The product owner records the Epic 2 completion decision.
+- [x] The product owner records the Epic 2 completion decision.
 
 #### Evidence when complete
 
@@ -1097,9 +1097,10 @@ final completion decision.
 - Source/save freshness, transactional rebuild/recovery, recommendation
   independence, and all Epic 2 milestone criteria are mapped to automated or
   recorded evidence in the review.
-- The completion decision remains pending product-owner approval. E2-F06 now
-  captures the verified attainment and power-display semantics, including the
-  standalone live-calculation boundary.
+- Product-owner approval was recorded on 2026-08-07. Epic 2 is complete and
+  authorized for merge to `master`; E2-F06 captures the verified attainment
+  and power-display semantics, including the standalone live-calculation
+  boundary.
 
 ### E2-018 — Govern the derived current-progress cache
 

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress — awaiting product-owner completion decision |
+| Status | Complete — product-owner approved 2026-08-07 |
 | Milestone | 2 |
 | Target release | TBD |
 | Last updated | 2026-08-07 |
