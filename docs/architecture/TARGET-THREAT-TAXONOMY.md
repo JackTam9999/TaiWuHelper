@@ -104,17 +104,23 @@ the rule set.
 
 Candidate skills are traversed in this order:
 
-1. equipped skills in category and loadout order;
-2. remaining learned skills in ascending skill-ID order.
+1. current-screen observed equipped skills in category, visible-slot, and
+   stable-ID order;
+2. remaining save-equipped skills in category and loadout order;
+3. remaining learned-but-unconfirmed skills in ascending skill-ID order.
 
 Every finding retains all matching `TargetThreatSource` values and labels them
-as `Equipped` or `LearnedUnequipped`. Final findings are sorted by descending
-severity, source scope, and ordinal stable code. Reordering the rules therefore
-cannot change the result.
+as `ObservedEquipped`, `SaveEquipped`, or `LearnedUnconfirmed`, with an opaque
+membership evidence reference. The existing `Equipped` and
+`LearnedUnequipped` scopes remain available for ranking compatibility. Final
+findings are sorted by descending severity, source scope, and ordinal stable
+code. Reordering the rules therefore cannot change the result.
 
 An unavailable target loadout does not become an empty equipped loadout. The
 analyzer emits `TARGET_EQUIPPED_SKILLS_UNAVAILABLE` and may still report
-learned-skill evidence with the weaker `LearnedUnequipped` scope.
+learned-skill evidence with the weaker `LearnedUnequipped` scope. An applied
+partial sparring observation can confirm an equipped subset even while the
+full loadout remains unavailable; omitted skills remain learned-unconfirmed.
 
 The golden rules cover all 16 type-13 magic-sound skill IDs and their verified
 Direct effect IDs, plus Reverse 九色玉蝉法 (`287`, effect `911`). Assistance

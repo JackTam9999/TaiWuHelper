@@ -303,7 +303,7 @@ Add a manual-first observation surface to the recommendation page.
 
 ### E3-007 — Use confirmed target loadout evidence in threat analysis
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -316,18 +316,18 @@ without weakening rule verification.
 
 #### Acceptance criteria
 
-- [ ] Confirmed equipped skills are analyzed before learned-but-unconfirmed
+- [x] Confirmed equipped skills are analyzed before learned-but-unconfirmed
       skills.
-- [ ] A partial observation cannot suppress possible learned threats.
-- [ ] A valid complete observation can remove stale equipped membership from
+- [x] A partial observation cannot suppress possible learned threats.
+- [x] A valid complete observation can remove stale equipped membership from
       current analysis while preserving conflict evidence.
-- [ ] Observed direction affects a rule only when available and version-matched.
-- [ ] Unknown effects remain warnings and cannot acquire severity or score.
-- [ ] Every threat records whether its source is save, observed equipped,
+- [x] Observed direction affects a rule only when available and version-matched.
+- [x] Unknown effects remain warnings and cannot acquire severity or score.
+- [x] Every threat records whether its source is save, observed equipped,
       learned-unconfirmed, or verified rule evidence.
-- [ ] Recommendations without observations remain byte-for-byte equivalent at
+- [x] Recommendations without observations remain byte-for-byte equivalent at
       the contract level, excluding newly added empty metadata fields.
-- [ ] Deterministic tests cover added, removed, unchanged, and unsupported
+- [x] Deterministic tests cover added, removed, unchanged, and unsupported
       threats.
 
 ### E3-008 — Recalculate recommendations from observed threats

@@ -32,11 +32,216 @@ public sealed class TargetThreatAnalyzerTests
         Assert.Equal(
             TargetThreatSourceScope.Equipped,
             threat.Sources[0].Scope);
+        Assert.Equal(
+            TargetThreatSourceKind.SaveEquipped,
+            threat.Sources[0].Kind);
+        Assert.Equal(
+            $"save:{snapshot.Metadata.SaveSha256}",
+            threat.Sources[0].EvidenceReference);
         Assert.Equal(equipped.SkillId, threat.Sources[0].SkillId);
         Assert.Equal(
             TargetThreatSourceScope.LearnedUnequipped,
             threat.Sources[1].Scope);
+        Assert.Equal(
+            TargetThreatSourceKind.LearnedUnconfirmed,
+            threat.Sources[1].Kind);
         Assert.Equal(learned.SkillId, threat.Sources[1].SkillId);
+        Assert.All(
+            threat.Threat.Evidence,
+            evidence => Assert.Equal(
+                TargetThreatEvidenceConfidence.VerifiedRule,
+                evidence.Confidence));
+    }
+
+    [Fact]
+    public void Partial_observation_prioritizes_confirmed_equipped_membership()
+    {
+        var observed = CreateSkill(100, effectId: 1000);
+        var learned = CreateSkill(101, effectId: 1001);
+        var observation = Observation(
+            TargetLoadoutCoverage.PartialLoadout,
+            new ObservedTargetCombatSkill(
+                observed.SkillId,
+                observed.Category,
+                direction: null,
+                slotIndex: 0));
+        var snapshot = CreateSnapshot(
+            [learned, observed],
+            SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
+                "The disk save does not expose the active target loadout."),
+            observation: observation);
+
+        var result = TargetThreatAnalyzer.Analyze(
+            snapshot,
+            CreateRuleSet([Signature(observed), Signature(learned)]));
+
+        var sources = Assert.Single(result.Threats).Sources;
+        Assert.Equal([observed.SkillId, learned.SkillId],
+            sources.Select(source => source.SkillId));
+        Assert.Equal(
+            TargetThreatSourceKind.ObservedEquipped,
+            sources[0].Kind);
+        Assert.Equal(observation.EvidenceReference,
+            sources[0].EvidenceReference);
+        Assert.Equal(
+            TargetThreatSourceKind.LearnedUnconfirmed,
+            sources[1].Kind);
+    }
+
+    [Fact]
+    public void Complete_observation_demotes_stale_saved_membership_and_retains_conflict()
+    {
+        var saved = CreateSkill(100, effectId: 1000);
+        var observed = CreateSkill(101, effectId: 1001);
+        var snapshot = CreateSnapshot(
+            [saved, observed],
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                CreateLoadout(attack: [saved.SkillId])),
+            SnapshotValue<string>.Available(
+                TargetLoadoutCompletenessEvidence.E3000GameDataVersion));
+        var observation = Observation(
+            TargetLoadoutCoverage.CompleteCurrentLoadout(
+                TargetLoadoutCompletenessEvidence.FromE3000(
+                    TargetLoadoutCompletenessEvidence.E3000GameDataVersion)),
+            new ObservedTargetCombatSkill(
+                observed.SkillId,
+                observed.Category,
+                direction: null,
+                slotIndex: 0));
+
+        var merge = TargetLoadoutObservationMerger.Merge(
+            snapshot,
+            observation);
+        var result = TargetThreatAnalyzer.Analyze(
+            merge.Snapshot,
+            new TargetThreatRuleSet(
+                TargetLoadoutCompletenessEvidence.E3000GameDataVersion,
+                [saved.SkillId, observed.SkillId],
+                [Rule(CreateThreat(), Signature(saved), Signature(observed))]));
+
+        Assert.Equal(
+            SnapshotEvidenceStatus.Conflicting,
+            merge.LoadoutEvidence.Status);
+        Assert.Equal(
+            [SnapshotDataSource.Save, SnapshotDataSource.CurrentScreenObservation],
+            merge.LoadoutEvidence.Observations.Select(value =>
+                value.Source.Source));
+        var sources = Assert.Single(result.Threats).Sources;
+        Assert.Equal([observed.SkillId, saved.SkillId],
+            sources.Select(source => source.SkillId));
+        Assert.Equal(
+            TargetThreatSourceKind.ObservedEquipped,
+            sources[0].Kind);
+        Assert.Equal(
+            TargetThreatSourceKind.LearnedUnconfirmed,
+            sources[1].Kind);
+    }
+
+    [Fact]
+    public void Observed_direction_applies_only_when_available_and_version_matched()
+    {
+        var skill = CreateSkill(100, effectId: 1000);
+        var version = TargetLoadoutCompletenessEvidence.E3000GameDataVersion;
+        TargetThreatRule[] rules =
+        [
+            Rule(
+                CreateThreat("DIRECT_THREAT"),
+                new TargetThreatSkillSignature(
+                    skill.SkillId,
+                    PracticeDirection.Direct,
+                    1000)),
+            Rule(
+                CreateThreat("REVERSE_THREAT"),
+                new TargetThreatSkillSignature(
+                    skill.SkillId,
+                    PracticeDirection.Reverse,
+                    2000))
+        ];
+        var ruleSet = new TargetThreatRuleSet(
+            version,
+            [skill.SkillId],
+            rules);
+        var snapshot = CreateSnapshot(
+            [skill],
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                CreateLoadout(attack: [skill.SkillId])),
+            SnapshotValue<string>.Available(version));
+
+        var reversed = TargetLoadoutObservationMerger.Merge(
+            snapshot,
+            Observation(
+                TargetLoadoutCoverage.PartialLoadout,
+                new ObservedTargetCombatSkill(
+                    skill.SkillId,
+                    skill.Category,
+                    PracticeDirection.Reverse,
+                    slotIndex: 0)));
+        var directionOmitted = TargetLoadoutObservationMerger.Merge(
+            snapshot,
+            Observation(
+                TargetLoadoutCoverage.PartialLoadout,
+                new ObservedTargetCombatSkill(
+                    skill.SkillId,
+                    skill.Category,
+                    direction: null,
+                    slotIndex: 0)));
+
+        var reversedAnalysis = TargetThreatAnalyzer.Analyze(
+            reversed.Snapshot,
+            ruleSet);
+        var unchangedAnalysis = TargetThreatAnalyzer.Analyze(
+            directionOmitted.Snapshot,
+            ruleSet);
+        Assert.Equal(
+            ["REVERSE_THREAT"],
+            reversedAnalysis.Threats.Select(value => value.Threat.Code));
+        Assert.Equal(
+            ["DIRECT_THREAT"],
+            unchangedAnalysis.Threats.Select(value => value.Threat.Code));
+        Assert.Equal(
+            AnalysisFingerprint(reversedAnalysis),
+            AnalysisFingerprint(TargetThreatAnalyzer.Analyze(
+                reversed.Snapshot,
+                ruleSet)));
+        Assert.Equal(
+            AnalysisFingerprint(unchangedAnalysis),
+            AnalysisFingerprint(TargetThreatAnalyzer.Analyze(
+                directionOmitted.Snapshot,
+                ruleSet)));
+
+        var unsupportedSnapshot = CreateSnapshot(
+            [skill],
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                CreateLoadout(attack: [skill.SkillId])),
+            SnapshotValue<string>.Available(Version));
+        var unsupported = TargetLoadoutObservationMerger.Merge(
+            unsupportedSnapshot,
+            Observation(
+                TargetLoadoutCoverage.PartialLoadout,
+                new ObservedTargetCombatSkill(
+                    skill.SkillId,
+                    skill.Category,
+                    PracticeDirection.Reverse,
+                    slotIndex: 0)));
+        var unsupportedRuleSet = new TargetThreatRuleSet(
+            Version,
+            [skill.SkillId],
+            rules);
+
+        Assert.Equal(
+            TargetLoadoutMergeStatus.UnsupportedVersion,
+            unsupported.Status);
+        var unsupportedAnalysis = TargetThreatAnalyzer.Analyze(
+            unsupported.Snapshot,
+            unsupportedRuleSet);
+        Assert.Equal(
+            ["DIRECT_THREAT"],
+            unsupportedAnalysis.Threats.Select(value => value.Threat.Code));
+        Assert.Equal(
+            AnalysisFingerprint(unsupportedAnalysis),
+            AnalysisFingerprint(TargetThreatAnalyzer.Analyze(
+                unsupported.Snapshot,
+                unsupportedRuleSet)));
     }
 
     [Fact]
@@ -419,7 +624,8 @@ public sealed class TargetThreatAnalyzerTests
         CombatSkillSnapshot[] targetSkills,
         SnapshotValue<CombatLoadoutSnapshot>? equippedSkills = null,
         SnapshotValue<string>? gameDataVersion = null,
-        SnapshotWarning[]? warnings = null)
+        SnapshotWarning[]? warnings = null,
+        TargetLoadoutObservation? observation = null)
     {
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
@@ -440,9 +646,32 @@ public sealed class TargetThreatAnalyzerTests
                 equippedSkills
                     ?? SnapshotValue<CombatLoadoutSnapshot>.Available(
                         CreateLoadout()),
-                equipment: []),
+                equipment: [],
+                observation),
             warnings ?? []);
     }
+
+    private static TargetLoadoutObservation Observation(
+        TargetLoadoutCoverage coverage,
+        params ObservedTargetCombatSkill[] skills) => new(
+            targetCharacterId: 16317,
+            TargetObservationContext.Sparring,
+            DateTimeOffset.Parse("2026-07-30T12:30:00Z"),
+            "E3-000-CAP-002",
+            coverage,
+            skills);
+
+    private static string[] AnalysisFingerprint(
+        TargetThreatAnalysis analysis) =>
+    [
+        .. analysis.Threats.Select(finding =>
+            $"{finding.Threat.Code}:"
+            + string.Join(",", finding.Sources.Select(source =>
+                $"{source.SkillId}/{source.Kind}/{source.Direction}/"
+                + $"{source.RawEffectId}/{source.EvidenceReference}"))),
+        .. analysis.Warnings.Select(warning =>
+            $"warning:{warning.Code}/{warning.Mechanic.EvidenceReference}")
+    ];
 
     private static PlayerCombatSnapshot CreatePlayer()
     {

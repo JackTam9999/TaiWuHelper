@@ -158,10 +158,22 @@ public sealed record TargetObservedSkillRequest
 public sealed record TargetObservationProcessingResult
 {
     public TargetObservationProcessingResult(
+        CombatSnapshot originalSnapshot,
         TargetLoadoutObservationMergeResult merge,
         IEnumerable<ResolvedTargetSkillSelection> resolvedSkills)
     {
+        OriginalSnapshot = originalSnapshot
+            ?? throw new ArgumentNullException(nameof(originalSnapshot));
         Merge = merge ?? throw new ArgumentNullException(nameof(merge));
+        if (OriginalSnapshot.Target.CharacterId
+            != Merge.Observation.TargetCharacterId)
+        {
+            throw new ArgumentException(
+                "The original snapshot and target observation must identify "
+                + "the same target.",
+                nameof(originalSnapshot));
+        }
+
         ArgumentNullException.ThrowIfNull(resolvedSkills);
         var values = resolvedSkills.ToImmutableArray();
         if (values.Any(value => value is null))
@@ -173,6 +185,8 @@ public sealed record TargetObservationProcessingResult
 
         ResolvedSkills = values;
     }
+
+    public CombatSnapshot OriginalSnapshot { get; }
 
     public TargetLoadoutObservationMergeResult Merge { get; }
 

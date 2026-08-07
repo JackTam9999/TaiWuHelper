@@ -44,7 +44,7 @@ public static class TargetThreatAnalyzer
                 CombatSnapshotWarningCodes.TargetLoadoutNotPersisted,
                 StringComparison.Ordinal));
         var candidates = GetCandidates(
-            snapshot.Target,
+            snapshot,
             warnings,
             reportUnavailableLoadout: !loadoutAbsenceAlreadyReported);
         Dictionary<
@@ -107,14 +107,44 @@ public static class TargetThreatAnalyzer
     }
 
     private static List<Candidate> GetCandidates(
-        TargetCombatSnapshot target,
+        CombatSnapshot snapshot,
         List<TargetThreatWarning> warnings,
         bool reportUnavailableLoadout)
     {
+        var target = snapshot.Target;
         var learnedById = target.LearnedSkills.ToDictionary(
             skill => skill.SkillId);
         HashSet<int> equippedIds = [];
         List<Candidate> candidates = [];
+        var observation = target.LoadoutObservation;
+        if (observation is not null)
+        {
+            foreach (var observed in observation.ObservedSkills
+                         .OrderBy(skill => skill.Category)
+                         .ThenBy(skill => skill.SlotIndex ?? int.MaxValue)
+                         .ThenBy(skill => skill.SkillId))
+            {
+                equippedIds.Add(observed.SkillId);
+                if (learnedById.TryGetValue(observed.SkillId, out var skill))
+                {
+                    candidates.Add(new Candidate(
+                        skill,
+                        TargetThreatSourceScope.Equipped,
+                        TargetThreatSourceKind.ObservedEquipped,
+                        observation.EvidenceReference));
+                }
+                else
+                {
+                    AddEquippedSkillNotLearnedWarning(
+                        target.CharacterId,
+                        observed.SkillId,
+                        warnings);
+                }
+            }
+        }
+
+        var saveEvidenceReference =
+            $"save:{snapshot.Metadata.SaveSha256}";
         if (target.EquippedSkills.IsAvailable)
         {
             foreach (var category in Enum.GetValues<SkillCategory>())
@@ -122,24 +152,25 @@ public static class TargetThreatAnalyzer
                 foreach (var skillId in
                          target.EquippedSkills.Value.Get(category))
                 {
-                    equippedIds.Add(skillId);
+                    if (!equippedIds.Add(skillId))
+                    {
+                        continue;
+                    }
+
                     if (learnedById.TryGetValue(skillId, out var skill))
                     {
-                        candidates.Add(
-                            new Candidate(
-                                skill,
-                                TargetThreatSourceScope.Equipped));
+                        candidates.Add(new Candidate(
+                            skill,
+                            TargetThreatSourceScope.Equipped,
+                            TargetThreatSourceKind.SaveEquipped,
+                            saveEvidenceReference));
                     }
                     else
                     {
-                        warnings.Add(
-                            Warning(
-                                EquippedSkillNotLearnedWarningCode,
-                                $"Target equipped skill {skillId} is absent "
-                                + "from learned-skill evidence.",
-                                $"snapshot:target:{target.CharacterId}"
-                                + $":skill:{skillId}",
-                                sourceSkillId: skillId));
+                        AddEquippedSkillNotLearnedWarning(
+                            target.CharacterId,
+                            skillId,
+                            warnings);
                     }
                 }
             }
@@ -161,8 +192,24 @@ public static class TargetThreatAnalyzer
                 .OrderBy(skill => skill.SkillId)
                 .Select(skill => new Candidate(
                     skill,
-                    TargetThreatSourceScope.LearnedUnequipped)));
+                    TargetThreatSourceScope.LearnedUnequipped,
+                    TargetThreatSourceKind.LearnedUnconfirmed,
+                    saveEvidenceReference)));
         return candidates;
+    }
+
+    private static void AddEquippedSkillNotLearnedWarning(
+        int targetCharacterId,
+        int skillId,
+        List<TargetThreatWarning> warnings)
+    {
+        warnings.Add(
+            Warning(
+                EquippedSkillNotLearnedWarningCode,
+                $"Target equipped skill {skillId} is absent "
+                + "from learned-skill evidence.",
+                $"snapshot:target:{targetCharacterId}:skill:{skillId}",
+                sourceSkillId: skillId));
     }
 
     private static void AnalyzeCandidate(
@@ -186,7 +233,7 @@ public static class TargetThreatAnalyzer
                     SkillDirectionUnavailableWarningCode,
                     $"Target skill {skill.SkillId} has unavailable practice "
                     + $"direction: {skill.Direction.UnavailableReason}",
-                    SourceReference(skill.SkillId),
+                    candidate.EvidenceReference,
                     skill.SkillId));
             return;
         }
@@ -208,7 +255,7 @@ public static class TargetThreatAnalyzer
                     $"Target skill {skill.SkillId} has unavailable "
                     + $"{direction} effect ID: "
                     + effectId.UnavailableReason,
-                    SourceReference(skill.SkillId),
+                    candidate.EvidenceReference,
                     skill.SkillId));
             return;
         }
@@ -226,7 +273,7 @@ public static class TargetThreatAnalyzer
                     UnrecognizedEffectWarningCode,
                     $"Target skill {skill.SkillId} has unrecognized "
                     + $"{direction} effect {effectId.Value}.",
-                    SourceReference(skill.SkillId),
+                    candidate.EvidenceReference,
                     skill.SkillId,
                     effectId.Value));
             return;
@@ -236,7 +283,9 @@ public static class TargetThreatAnalyzer
             skill.SkillId,
             direction,
             effectId.Value,
-            candidate.Scope);
+            candidate.Scope,
+            candidate.Kind,
+            candidate.EvidenceReference);
         foreach (var rule in matches)
         {
             if (!findings.TryGetValue(
@@ -281,10 +330,9 @@ public static class TargetThreatAnalyzer
                 rawEffectId));
     }
 
-    private static string SourceReference(int skillId) =>
-        $"snapshot:target:skill:{skillId}";
-
     private sealed record Candidate(
         CombatSkillSnapshot Skill,
-        TargetThreatSourceScope Scope);
+        TargetThreatSourceScope Scope,
+        TargetThreatSourceKind Kind,
+        string EvidenceReference);
 }

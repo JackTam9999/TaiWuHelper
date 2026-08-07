@@ -40,10 +40,11 @@ public sealed class TargetObservationRecommendationWorkflow(
         cancellationToken.ThrowIfCancellationRequested();
 
         return RecommendCombatLoadout.Build(
-            snapshot,
+            processing.Merge.Snapshot,
             request.Policy,
             processing,
-            cancellationToken);
+            cancellationToken,
+            decisionSnapshot: snapshot);
     }
 
     private async Task<TargetObservationProcessingResult> ProcessAsync(
@@ -114,7 +115,10 @@ public sealed class TargetObservationRecommendationWorkflow(
             observation,
             staticSnapshots,
             request.ConfirmPrecedenceWhenSaveTimeUnavailable);
-        return new TargetObservationProcessingResult(merge, resolved);
+        return new TargetObservationProcessingResult(
+            snapshot,
+            merge,
+            resolved);
     }
 
     private static TargetLoadoutCoverage CreateCoverage(

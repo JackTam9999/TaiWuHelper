@@ -8,10 +8,11 @@ skill names through the current bilingual catalogue, runs the immutable
 E3-004 merge, and returns sanitized resolution, provenance, and snapshot-field
 impact metadata.
 
-This slice does not yet feed the merged target into threat analysis or scoring.
-E3-007 and E3-008 own those behavior changes. A recommendation returned by
-E3-005 therefore remains the save-only recommendation plus typed observation
-metadata.
+At the E3-005 boundary this slice did not yet feed the merged target into
+threat analysis or scoring. E3-007 now analyzes `Merge.Snapshot` while keeping
+recommendation decisions on `OriginalSnapshot`; E3-008 owns the later
+feasibility and scoring change. The typed E3-005 request, validation, and
+response contracts remain unchanged.
 
 ## Request contract
 

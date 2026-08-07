@@ -99,7 +99,7 @@ public static class CombatRecommendationResponseMapper
                     value.Observation.SlotIndex,
                     value.SnapshotPresence))],
             sources,
-            MapTargetObservationImpact(recommendation.Snapshot, merge));
+            MapTargetObservationImpact(processing.OriginalSnapshot, merge));
     }
 
     private static TargetObservationImpactResponse MapTargetObservationImpact(

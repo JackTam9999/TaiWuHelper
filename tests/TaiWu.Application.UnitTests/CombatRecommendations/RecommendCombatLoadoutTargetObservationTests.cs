@@ -6,6 +6,7 @@ using TaiWu.Application.TargetObservations;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.CombatThreats;
 using Xunit;
 
 namespace TaiWu.Application.UnitTests.CombatRecommendations;
@@ -64,11 +65,91 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             PracticeDirection.Direct,
             snapshot.Target.LearnedSkills.Single().Direction.Value);
-        Assert.Same(snapshot, result.Snapshot);
+        Assert.Same(processing.Merge.Snapshot, result.Snapshot);
+        Assert.NotSame(snapshot, result.Snapshot);
         Assert.Single(processing.ResolvedSkills);
         Assert.Equal(
             TargetSkillSnapshotPresence.Present,
             processing.ResolvedSkills[0].SnapshotPresence);
+        Assert.Empty(result.ThreatAnalysis.Threats);
+        var unsupportedEffect = Assert.Single(
+            result.ThreatAnalysis.Warnings,
+            warning => warning.Code
+                == TargetThreatAnalyzer.UnrecognizedEffectWarningCode);
+        Assert.Equal(
+            "E3-000-CAP-002",
+            unsupportedEffect.Mechanic.EvidenceReference);
+    }
+
+    [Fact]
+    public async Task Snapshot_absent_observed_skill_adds_verified_observed_threat_deterministically()
+    {
+        var snapshot = Snapshot(
+            targetSkills: [],
+            targetEquippedSkills:
+                SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
+                    "The target loadout is not persisted."));
+        var definition = Definition(
+            287,
+            "Nine-Colored Cicada Art",
+            directEffectId: 900,
+            reverseEffectId: 911);
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var resolver = new ResolveTargetSkillSelection(
+            Source(definition),
+            Repository(definition));
+        var workflow = new TargetObservationRecommendationWorkflow(
+            reader,
+            resolver);
+        var observedRequest = new RecommendCombatLoadoutRequest(
+            snapshot.Metadata.SavePath,
+            snapshot.Target.CharacterId,
+            RecommendationPolicy.Balanced,
+            targetObservation: new TargetObservationRequest(
+                TargetObservationContext.Sparring,
+                SaveTime.AddMinutes(1),
+                "E3-000-CAP-002",
+                TargetLoadoutCoverageKind.PartialLoadout,
+                [
+                    new TargetObservedSkillRequest(
+                        "Nine-Colored Cicada Art",
+                        SkillCategory.Attack,
+                        confirmedSkillId: 287,
+                        PracticeDirection.Reverse,
+                        slotIndex: 0)
+                ]));
+        var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
+
+        var first = await workflow.ExecuteAsync(
+            observedRequest,
+            TestContext.Current.CancellationToken);
+        var second = await workflow.ExecuteAsync(
+            observedRequest,
+            TestContext.Current.CancellationToken);
+
+        var finding = Assert.Single(first.ThreatAnalysis.Threats);
+        Assert.Equal("DEFEAT_MARK_RESET_LOOP", finding.Threat.Code);
+        var source = Assert.Single(finding.Sources);
+        Assert.Equal(TargetThreatSourceKind.ObservedEquipped, source.Kind);
+        Assert.Equal("E3-000-CAP-002", source.EvidenceReference);
+        Assert.Equal(
+            TargetThreatEvidenceConfidence.VerifiedRule,
+            Assert.Single(finding.Threat.Evidence).Confidence);
+        Assert.Equal(
+            ThreatFingerprint(first),
+            ThreatFingerprint(second));
+        Assert.Equal(
+            DecisionFingerprint(saveOnly),
+            DecisionFingerprint(first));
     }
 
     [Fact]
@@ -172,19 +253,11 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 [selection]));
     }
 
-    private static CombatSnapshot Snapshot()
+    private static CombatSnapshot Snapshot(
+        CombatSkillSnapshot[]? targetSkills = null,
+        SnapshotValue<CombatLoadoutSnapshot>? targetEquippedSkills = null)
     {
-        var targetSkill = new CombatSkillSnapshot(
-            719,
-            SnapshotValue<string>.Available("Target Art"),
-            SkillCategory.Attack,
-            SnapshotValue<int>.Available(2),
-            SnapshotValue<bool>.Available(true),
-            SnapshotValue<PracticeDirection>.Available(
-                PracticeDirection.Direct),
-            new SkillSlotContribution(2, 0, 0, 0, 1),
-            SnapshotValue<int>.Available(1719),
-            SnapshotValue<int>.Available(2719));
+        var skills = targetSkills ?? [TargetSkill(719, "Target Art")];
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
                 @"C:\Taiwu\local.sav",
@@ -210,17 +283,34 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 SnapshotValue<string>.Available("Target"),
                 SnapshotValue<int>.Available(52),
                 features: [],
-                [targetSkill],
-                SnapshotValue<CombatLoadoutSnapshot>.Available(
+                skills,
+                targetEquippedSkills
+                    ?? SnapshotValue<CombatLoadoutSnapshot>.Available(
                     new CombatLoadoutSnapshot(
                         [],
-                        [targetSkill.SkillId],
+                        skills.Select(skill => skill.SkillId),
                         [],
                         [],
                         [])),
                 equipment: []),
             warnings: []);
     }
+
+    private static CombatSkillSnapshot TargetSkill(
+        int skillId,
+        string name,
+        int? directEffectId = null,
+        int? reverseEffectId = null) => new(
+            skillId,
+            SnapshotValue<string>.Available(name),
+            SkillCategory.Attack,
+            SnapshotValue<int>.Available(2),
+            SnapshotValue<bool>.Available(true),
+            SnapshotValue<PracticeDirection>.Available(
+                PracticeDirection.Direct),
+            new SkillSlotContribution(2, 0, 0, 0, 1),
+            SnapshotValue<int>.Available(directEffectId ?? 1000 + skillId),
+            SnapshotValue<int>.Available(reverseEffectId ?? 2000 + skillId));
 
     private static ICombatSkillDefinitionSource Source(
         params CombatSkillDefinition[] definitions)
@@ -252,7 +342,9 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
 
     private static CombatSkillDefinition Definition(
         int skillId,
-        string englishName)
+        string englishName,
+        int? directEffectId = null,
+        int? reverseEffectId = null)
     {
         var source = new CatalogueSourceReference(
             CatalogueSourceKind.GameData,
@@ -298,15 +390,36 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 CatalogueField<int>.Available(100, source)),
             new CombatSkillEffectReferences(
                 CatalogueField<CombatSkillEffectId>.Available(
-                    new CombatSkillEffectId(1000 + skillId),
+                    new CombatSkillEffectId(
+                        directEffectId ?? 1000 + skillId),
                     source),
                 CatalogueField<CombatSkillEffectId>.Available(
-                    new CombatSkillEffectId(2000 + skillId),
+                    new CombatSkillEffectId(
+                        reverseEffectId ?? 2000 + skillId),
                     source),
                 CatalogueField<CombatSkillEffectId>.Unavailable("unused")),
             rawDescriptions: [],
             source);
     }
+
+    private static string[] ThreatFingerprint(
+        CombatLoadoutRecommendation recommendation) =>
+    [
+        .. recommendation.ThreatAnalysis.Threats.Select(finding =>
+            $"{finding.Threat.Code}:"
+            + string.Join(",", finding.Sources.Select(source =>
+                $"{source.SkillId}/{source.Kind}/{source.Direction}/"
+                + $"{source.RawEffectId}/{source.EvidenceReference}")))
+    ];
+
+    private static string[] DecisionFingerprint(
+        CombatLoadoutRecommendation recommendation) =>
+    [
+        .. recommendation.Styles.Select(style =>
+            $"{style.Policy}:"
+            + string.Join(",", style.Scoring.RankedCandidates.Select(value =>
+                $"{value.Candidate.StableKey}/{value.TotalScore}")))
+    ];
 
     private static CombatSkillCatalogueSourceIdentity Identity { get; } = new(
         "1.0.0-current",

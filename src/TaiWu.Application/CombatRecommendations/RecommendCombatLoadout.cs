@@ -44,9 +44,32 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
         CombatSnapshot snapshot,
         RecommendationPolicy requestedPolicy,
         TargetObservationProcessingResult? targetObservation,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        CombatSnapshot? decisionSnapshot = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        if (targetObservation is null && decisionSnapshot is not null)
+        {
+            throw new ArgumentException(
+                "A separate decision snapshot requires target-observation "
+                + "processing metadata.",
+                nameof(decisionSnapshot));
+        }
+
+        if (targetObservation is not null
+            && (!ReferenceEquals(
+                    snapshot,
+                    targetObservation.Merge.Snapshot)
+                || !ReferenceEquals(
+                    decisionSnapshot,
+                    targetObservation.OriginalSnapshot)))
+        {
+            throw new ArgumentException(
+                "Target-observation analysis requires its merged snapshot "
+                + "and original decision snapshot.",
+                nameof(targetObservation));
+        }
+
         if (!Enum.IsDefined(requestedPolicy))
         {
             throw new ArgumentOutOfRangeException(
@@ -59,7 +82,12 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
         var threatAnalysis = TargetThreatAnalyzer.Analyze(
             snapshot,
             VerifiedTargetThreatRuleSets.GoldenMagicSound);
-        var threats = threatAnalysis.Threats
+        var decisionThreatAnalysis = decisionSnapshot is null
+            ? threatAnalysis
+            : TargetThreatAnalyzer.Analyze(
+                decisionSnapshot,
+                VerifiedTargetThreatRuleSets.GoldenMagicSound);
+        var threats = decisionThreatAnalysis.Threats
             .Select(analysis => analysis.Threat)
             .ToArray();
         cancellationToken.ThrowIfCancellationRequested();
