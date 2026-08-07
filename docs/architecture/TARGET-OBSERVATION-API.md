@@ -9,10 +9,11 @@ E3-004 merge, and returns sanitized resolution, provenance, and snapshot-field
 impact metadata.
 
 At the E3-005 boundary this slice did not yet feed the merged target into
-threat analysis or scoring. E3-007 now analyzes `Merge.Snapshot` while keeping
-recommendation decisions on `OriginalSnapshot`; E3-008 owns the later
-feasibility and scoring change. The typed E3-005 request, validation, and
-response contracts remain unchanged.
+threat analysis or scoring. E3-007 added analysis of `Merge.Snapshot`, and
+E3-008 now runs feasibility, counter selection, scoring, and explanation
+against the resulting typed threats. `OriginalSnapshot` remains the impact
+comparison baseline. The typed E3-005 request, validation, and response
+contracts remain unchanged.
 
 ## Request contract
 

@@ -7,10 +7,11 @@ versioned `TargetThreatAnalyzer`. Hostile and story contexts still cannot
 construct an observation, so this integration cannot treat an inaccessible
 opponent loadout as empty.
 
-This slice changes threat analysis only. Recommendation feasibility, counter
-selection, scoring, and explanation continue to use the original save-only
-snapshot until E3-008. This keeps the two behavior changes independently
-testable.
+At the E3-007 boundary this slice changed threat analysis only, keeping
+recommendation decisions on the original save-only snapshot so the two
+behaviors were independently testable. E3-008 now runs feasibility, counter
+selection, scoring, and explanation against this observation-enhanced typed
+threat set.
 
 ## Candidate precedence
 
@@ -69,10 +70,10 @@ it never receives severity or score.
 
 `TargetObservationProcessingResult` retains both:
 
-- `OriginalSnapshot`, used as the stable before-state for impact comparison
-  and the temporary E3-007 recommendation-decision boundary; and
-- `Merge.Snapshot`, used for returned snapshot metadata and target threat
-  analysis.
+- `OriginalSnapshot`, used as the stable before-state for impact comparison;
+  and
+- `Merge.Snapshot`, used for returned snapshot metadata, target threat
+  analysis, and E3-008 recommendation decisions.
 
 This avoids reconstructing the save baseline from conflict evidence and keeps
 E3-005 added/removed impact calculations correct.

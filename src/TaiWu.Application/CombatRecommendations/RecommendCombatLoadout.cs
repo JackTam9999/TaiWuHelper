@@ -44,29 +44,17 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
         CombatSnapshot snapshot,
         RecommendationPolicy requestedPolicy,
         TargetObservationProcessingResult? targetObservation,
-        CancellationToken cancellationToken,
-        CombatSnapshot? decisionSnapshot = null)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        if (targetObservation is null && decisionSnapshot is not null)
-        {
-            throw new ArgumentException(
-                "A separate decision snapshot requires target-observation "
-                + "processing metadata.",
-                nameof(decisionSnapshot));
-        }
-
         if (targetObservation is not null
-            && (!ReferenceEquals(
-                    snapshot,
-                    targetObservation.Merge.Snapshot)
-                || !ReferenceEquals(
-                    decisionSnapshot,
-                    targetObservation.OriginalSnapshot)))
+            && !ReferenceEquals(
+                snapshot,
+                targetObservation.Merge.Snapshot))
         {
             throw new ArgumentException(
-                "Target-observation analysis requires its merged snapshot "
-                + "and original decision snapshot.",
+                "Target-observation recommendations require their merged "
+                + "snapshot.",
                 nameof(targetObservation));
         }
 
@@ -82,12 +70,7 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
         var threatAnalysis = TargetThreatAnalyzer.Analyze(
             snapshot,
             VerifiedTargetThreatRuleSets.GoldenMagicSound);
-        var decisionThreatAnalysis = decisionSnapshot is null
-            ? threatAnalysis
-            : TargetThreatAnalyzer.Analyze(
-                decisionSnapshot,
-                VerifiedTargetThreatRuleSets.GoldenMagicSound);
-        var threats = decisionThreatAnalysis.Threats
+        var threats = threatAnalysis.Threats
             .Select(analysis => analysis.Threat)
             .ToArray();
         cancellationToken.ThrowIfCancellationRequested();

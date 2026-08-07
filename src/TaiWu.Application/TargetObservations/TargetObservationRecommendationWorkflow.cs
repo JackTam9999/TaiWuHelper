@@ -43,8 +43,7 @@ public sealed class TargetObservationRecommendationWorkflow(
             processing.Merge.Snapshot,
             request.Policy,
             processing,
-            cancellationToken,
-            decisionSnapshot: snapshot);
+            cancellationToken);
     }
 
     private async Task<TargetObservationProcessingResult> ProcessAsync(

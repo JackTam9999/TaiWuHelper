@@ -47,6 +47,13 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                         slotIndex: 0)
                 ]));
 
+        var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
+
         var result = await new TargetObservationRecommendationWorkflow(
                 reader,
                 new ResolveTargetSkillSelection(source, repository))
@@ -79,16 +86,26 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             "E3-000-CAP-002",
             unsupportedEffect.Mechanic.EvidenceReference);
+        Assert.Equal(
+            DecisionFingerprint(saveOnly),
+            DecisionFingerprint(result));
     }
 
     [Fact]
     public async Task Snapshot_absent_observed_skill_adds_verified_observed_threat_deterministically()
     {
+        var qilun = PlayerSkill(
+            291,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 189,
+            reverseEffectId: 915);
         var snapshot = Snapshot(
             targetSkills: [],
             targetEquippedSkills:
                 SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
-                    "The target loadout is not persisted."));
+                    "The target loadout is not persisted."),
+            playerSkills: [qilun]);
         var definition = Definition(
             287,
             "Nine-Colored Cicada Art",
@@ -147,9 +164,208 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             ThreatFingerprint(first),
             ThreatFingerprint(second));
+        Assert.NotEqual(
+            string.Join("|", DecisionFingerprint(saveOnly)),
+            string.Join("|", DecisionFingerprint(first)));
+        Assert.All(
+            first.Styles,
+            style => Assert.Equal(
+                RecommendationPolicyWeights.For(style.Policy),
+                style.Scoring.Weights));
+        Assert.Contains(
+            first.SelectedStyle.Scoring.RankedCandidates
+                .SelectMany(value => value.Candidate.SelectedOptions),
+            option => option.Candidate.SkillId == qilun.SkillId
+                && option.ThreatCodes.Contains("DEFEAT_MARK_RESET_LOOP"));
+        Assert.Equal(
+            DecisionFingerprint(first),
+            DecisionFingerprint(second));
+    }
+
+    [Fact]
+    public async Task Observed_threat_cannot_make_unowned_counter_feasible()
+    {
+        var snapshot = Snapshot(
+            targetSkills: [],
+            targetEquippedSkills:
+                SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
+                    "The target loadout is not persisted."));
+        var definition = Definition(
+            287,
+            "Nine-Colored Cicada Art",
+            directEffectId: 900,
+            reverseEffectId: 911);
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+
+        var result = await new TargetObservationRecommendationWorkflow(
+                reader,
+                new ResolveTargetSkillSelection(
+                    Source(definition),
+                    Repository(definition)))
+            .ExecuteAsync(
+                ObservedRequest(
+                    snapshot,
+                    "Nine-Colored Cicada Art",
+                    skillId: 287,
+                    PracticeDirection.Reverse),
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            ["DEFEAT_MARK_RESET_LOOP"],
+            result.ThreatAnalysis.Threats.Select(value => value.Threat.Code));
+        Assert.Empty(result.Generation.Candidates);
+        Assert.Contains(
+            result.Generation.Diagnostics,
+            diagnostic => diagnostic.Code
+                    == CombatLoadoutGenerationDiagnosticCode.OptionRejected
+                && diagnostic.SkillId == 291);
+        Assert.All(
+            result.Styles,
+            style => Assert.Empty(style.Scoring.RankedCandidates));
+    }
+
+    [Fact]
+    public async Task Confirming_unchanged_verified_threat_preserves_all_policy_decisions()
+    {
+        var counter = PlayerSkill(
+            604,
+            SkillCategory.Attack,
+            PracticeDirection.Reverse,
+            directEffectId: 338,
+            reverseEffectId: 1064);
+        var target = TargetSkill(
+            719,
+            "Target Art",
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var snapshot = Snapshot(
+            targetSkills: [target],
+            playerSkills: [counter]);
+        var definition = Definition(
+            target.SkillId,
+            "Target Art",
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
+
+        var observed = await new TargetObservationRecommendationWorkflow(
+                reader,
+                new ResolveTargetSkillSelection(
+                    Source(definition),
+                    Repository(definition)))
+            .ExecuteAsync(
+                ObservedRequest(
+                    snapshot,
+                    "Target Art",
+                    target.SkillId,
+                    PracticeDirection.Direct),
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            saveOnly.ThreatAnalysis.Threats.Select(value => value.Threat.Code),
+            observed.ThreatAnalysis.Threats.Select(value => value.Threat.Code));
+        Assert.All(
+            observed.ThreatAnalysis.Threats.SelectMany(value => value.Sources),
+            source => Assert.Equal(
+                TargetThreatSourceKind.ObservedEquipped,
+                source.Kind));
         Assert.Equal(
             DecisionFingerprint(saveOnly),
-            DecisionFingerprint(first));
+            DecisionFingerprint(observed));
+        Assert.All(
+            observed.Styles,
+            style => Assert.Equal(
+                RecommendationPolicyWeights.For(style.Policy),
+                style.Scoring.Weights));
+    }
+
+    [Fact]
+    public async Task Observed_unrecognized_direction_removes_only_verified_counter_decisions()
+    {
+        var counter = PlayerSkill(
+            604,
+            SkillCategory.Attack,
+            PracticeDirection.Reverse,
+            directEffectId: 338,
+            reverseEffectId: 1064);
+        var target = TargetSkill(
+            719,
+            "Target Art",
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var snapshot = Snapshot(
+            targetSkills: [target],
+            playerSkills: [counter]);
+        var definition = Definition(
+            target.SkillId,
+            "Target Art",
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
+        var workflow = new TargetObservationRecommendationWorkflow(
+            reader,
+            new ResolveTargetSkillSelection(
+                Source(definition),
+                Repository(definition)));
+        var request = ObservedRequest(
+            snapshot,
+            "Target Art",
+            target.SkillId,
+            PracticeDirection.Reverse);
+
+        var first = await workflow.ExecuteAsync(
+            request,
+            TestContext.Current.CancellationToken);
+        var second = await workflow.ExecuteAsync(
+            request,
+            TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(saveOnly.Generation.Candidates);
+        Assert.Empty(first.ThreatAnalysis.Threats);
+        Assert.Empty(first.Generation.Candidates);
+        Assert.All(
+            first.Styles,
+            style => Assert.Empty(style.Scoring.RankedCandidates));
+        var unresolved = Assert.Single(
+            first.ThreatAnalysis.Warnings,
+            warning => warning.Code
+                == TargetThreatAnalyzer.UnrecognizedEffectWarningCode);
+        Assert.Equal(
+            "E3-000-CAP-002",
+            unresolved.Mechanic.EvidenceReference);
+        Assert.NotEqual(
+            string.Join("|", DecisionFingerprint(saveOnly)),
+            string.Join("|", DecisionFingerprint(first)));
+        Assert.Equal(
+            DecisionFingerprint(first),
+            DecisionFingerprint(second));
+        Assert.Equal(
+            ThreatFingerprint(first),
+            ThreatFingerprint(second));
     }
 
     [Fact]
@@ -253,9 +469,32 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 [selection]));
     }
 
+    private static RecommendCombatLoadoutRequest ObservedRequest(
+        CombatSnapshot snapshot,
+        string visibleName,
+        int skillId,
+        PracticeDirection direction) => new(
+            snapshot.Metadata.SavePath,
+            snapshot.Target.CharacterId,
+            RecommendationPolicy.Balanced,
+            targetObservation: new TargetObservationRequest(
+                TargetObservationContext.Sparring,
+                SaveTime.AddMinutes(1),
+                "E3-000-CAP-002",
+                TargetLoadoutCoverageKind.PartialLoadout,
+                [
+                    new TargetObservedSkillRequest(
+                        visibleName,
+                        SkillCategory.Attack,
+                        skillId,
+                        direction,
+                        slotIndex: 0)
+                ]));
+
     private static CombatSnapshot Snapshot(
         CombatSkillSnapshot[]? targetSkills = null,
-        SnapshotValue<CombatLoadoutSnapshot>? targetEquippedSkills = null)
+        SnapshotValue<CombatLoadoutSnapshot>? targetEquippedSkills = null,
+        CombatSkillSnapshot[]? playerSkills = null)
     {
         var skills = targetSkills ?? [TargetSkill(719, "Target Art")];
         return new CombatSnapshot(
@@ -270,7 +509,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             new PlayerCombatSnapshot(
                 1,
                 SnapshotValue<string>.Available("Taiwu"),
-                learnedSkills: [],
+                learnedSkills: playerSkills ?? [],
                 new CombatLoadoutSnapshot([], [], [], [], []),
                 equipment: [],
                 new SlotBudgetSet(Enum.GetValues<SkillCategory>().Select(
@@ -295,6 +534,22 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 equipment: []),
             warnings: []);
     }
+
+    private static CombatSkillSnapshot PlayerSkill(
+        int skillId,
+        SkillCategory category,
+        PracticeDirection direction,
+        int directEffectId,
+        int reverseEffectId) => new(
+            skillId,
+            SnapshotValue<string>.Available($"Player Skill {skillId}"),
+            category,
+            SnapshotValue<int>.Available(1),
+            SnapshotValue<bool>.Available(true),
+            SnapshotValue<PracticeDirection>.Available(direction),
+            SkillSlotContribution.None,
+            SnapshotValue<int>.Available(directEffectId),
+            SnapshotValue<int>.Available(reverseEffectId));
 
     private static CombatSkillSnapshot TargetSkill(
         int skillId,

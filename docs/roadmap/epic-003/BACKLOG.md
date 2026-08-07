@@ -332,7 +332,7 @@ without weakening rule verification.
 
 ### E3-008 — Recalculate recommendations from observed threats
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -345,14 +345,14 @@ observation-enhanced threat set.
 
 #### Acceptance criteria
 
-- [ ] Hard constraints are still evaluated before scoring.
-- [ ] Only typed verified threats and counters affect recommendation choice.
-- [ ] Added or removed recommendations are deterministic for the same evidence.
-- [ ] A target observation cannot make an unavailable player skill feasible.
-- [ ] All recommendation styles preserve their documented policy weights.
-- [ ] Unresolved target evidence remains visible and cannot be converted into
+- [x] Hard constraints are still evaluated before scoring.
+- [x] Only typed verified threats and counters affect recommendation choice.
+- [x] Added or removed recommendations are deterministic for the same evidence.
+- [x] A target observation cannot make an unavailable player skill feasible.
+- [x] All recommendation styles preserve their documented policy weights.
+- [x] Unresolved target evidence remains visible and cannot be converted into
       a favorable assumption.
-- [ ] Tests cover a recommendation that changes and one that correctly remains
+- [x] Tests cover a recommendation that changes and one that correctly remains
       unchanged.
 
 ## Slice 6: Impact explanation
