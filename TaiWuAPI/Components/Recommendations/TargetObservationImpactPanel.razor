@@ -1,0 +1,221 @@
+@using TaiWu.Application.CombatRecommendations
+@using TaiWu.Application.Localization
+@using TaiWu.Domain.CombatRecommendations
+@using TaiWu.Domain.CombatSnapshots
+@using TaiWu.Domain.CombatThreats
+@using TaiWuAPI.Localization
+@using TaiWuAPI.Presentation
+
+<section class="target-impact-panel"
+         aria-labelledby="target-impact-heading">
+    <div class="target-impact-heading">
+        <div>
+            <p class="eyebrow">@T("Observation impact")</p>
+            <h3 id="target-impact-heading">@T("Save-only compared with observed")</h3>
+        </div>
+        <span class="information-badge">@T("Evidence comparison")</span>
+    </div>
+
+    <p class="target-impact-confidence" role="note">
+        @T(Impact.ConfidenceNotice)
+    </p>
+
+    @if (Impact.PartialCoverageLeavesUnknown)
+    {
+        <div class="target-impact-warning" role="status">
+            <strong>@T("Partial observation")</strong>
+            <span>@T("Unlisted target skills remain possible and were not removed from analysis.")</span>
+        </div>
+    }
+
+    <div class="target-impact-grid">
+        <section aria-labelledby="target-impact-threats">
+            <h4 id="target-impact-threats">@T("Threat changes")</h4>
+            @if (Impact.Threats.Count == 0)
+            {
+                <p>@T("No typed threat changed.")</p>
+            }
+            else
+            {
+                <ul class="target-impact-list">
+                    @foreach (var threat in Impact.Threats)
+                    {
+                        <li>
+                            <strong>@T(threat.Title)</strong>
+                            <span>@ThreatKind(threat.Kind) · @Severity(threat.Severity)</span>
+                            <small>
+                                @string.Join(", ", threat.SourceKinds.Select(SourceKind))
+                                · @threat.EvidenceReferences.Count @T("evidence source(s)")
+                            </small>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section aria-labelledby="target-impact-feasibility">
+            <h4 id="target-impact-feasibility">@T("Feasibility changes")</h4>
+            @RecommendationChanges(Impact.FeasibilityChanges,
+                "No recommendation changed because of feasibility.")
+        </section>
+
+        <section aria-labelledby="target-impact-scoring">
+            <h4 id="target-impact-scoring">@T("Scoring changes")</h4>
+            @RecommendationChanges(Impact.ScoringChanges,
+                "No recommendation changed only because of scoring.")
+        </section>
+
+        <section aria-labelledby="target-impact-unsupported">
+            <h4 id="target-impact-unsupported">@T("Still unsupported")</h4>
+            @if (Impact.UnsupportedEvidence.Count == 0)
+            {
+                <p>@T("No unresolved target evidence remains.")</p>
+            }
+            else
+            {
+                <ul class="target-impact-list">
+                    @foreach (var item in Impact.UnsupportedEvidence)
+                    {
+                        <li>
+                            <strong>@UnsupportedTitle(item)</strong>
+                            <span>@(item.WasPresentBefore
+                                ? T("Still unsupported from the save-only result")
+                                : T("New unsupported observation evidence"))</span>
+                            <small>@T("No severity or score was assigned.")</small>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+
+    @if (Impact.Conflicts.Count > 0)
+    {
+        <section class="target-impact-conflicts"
+                 aria-labelledby="target-impact-conflicts-heading">
+            <h4 id="target-impact-conflicts-heading">@T("Source conflicts and precedence")</h4>
+            @foreach (var conflict in Impact.Conflicts)
+            {
+                <article>
+                    <strong>@ConflictField(conflict.Field)</strong>
+                    <p>@T("Both values are retained; the newer current screen has field-level precedence.")</p>
+                    <ul>
+                        @foreach (var source in conflict.Sources)
+                        {
+                            <li>
+                                <span>@Source(source.Source)</span>
+                                <time datetime="@source.CapturedAtUtc.ToString("O")">
+                                    @source.CapturedAtUtc.ToLocalTime().ToString("g")
+                                </time>
+                            </li>
+                        }
+                    </ul>
+                </article>
+            }
+        </section>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public TargetObservationImpactViewModel Impact { get; set; } = null!;
+
+    [Parameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private RenderFragment RecommendationChanges(
+        IReadOnlyList<TargetRecommendationImpactViewModel> changes,
+        string emptyText) => builder =>
+    {
+        if (changes.Count == 0)
+        {
+            builder.OpenElement(0, "p");
+            builder.AddContent(1, T(emptyText));
+            builder.CloseElement();
+            return;
+        }
+
+        builder.OpenElement(2, "ul");
+        builder.AddAttribute(3, "class", "target-impact-list");
+        var sequence = 4;
+        foreach (var change in changes)
+        {
+            builder.OpenElement(sequence++, "li");
+            builder.OpenElement(sequence++, "strong");
+            builder.AddContent(sequence++, change.SkillName);
+            builder.CloseElement();
+            builder.OpenElement(sequence++, "span");
+            builder.AddContent(
+                sequence++,
+                $"{RecommendationKind(change.Kind)} · {T(change.Policy.ToString())}");
+            builder.CloseElement();
+            builder.OpenElement(sequence++, "small");
+            builder.AddContent(sequence++, $"{T("Evidence chain")}: ");
+            builder.AddContent(sequence++, change.ThreatTitles.Count == 0
+                ? T("Selection feasibility")
+                : string.Join(" + ", change.ThreatTitles.Select(T)));
+            builder.AddContent(sequence++, $" → {change.SkillName}");
+            builder.AddContent(
+                sequence++,
+                $" · {change.EvidenceReferences.Count} {T("evidence source(s)")}");
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    };
+
+    private string ThreatKind(TargetThreatImpactKind kind) => kind switch
+    {
+        TargetThreatImpactKind.Added => T("Added threat"),
+        TargetThreatImpactKind.Confirmed => T("Confirmed threat"),
+        TargetThreatImpactKind.Demoted => T("Demoted to learned-unconfirmed"),
+        TargetThreatImpactKind.Removed => T("Removed typed threat"),
+        TargetThreatImpactKind.Unchanged => T("Unchanged threat"),
+        _ => kind.ToString()
+    };
+
+    private string RecommendationKind(TargetRecommendationImpactKind kind) =>
+        kind == TargetRecommendationImpactKind.Added
+            ? T("Added recommendation")
+            : T("Removed recommendation");
+
+    private string Severity(TargetThreatSeverity severity) => severity switch
+    {
+        TargetThreatSeverity.Critical => T("Critical"),
+        TargetThreatSeverity.High => T("High"),
+        TargetThreatSeverity.Moderate => T("Moderate"),
+        TargetThreatSeverity.Informational => T("Information only"),
+        _ => severity.ToString()
+    };
+
+    private string SourceKind(TargetThreatSourceKind kind) => kind switch
+    {
+        TargetThreatSourceKind.SaveEquipped => T("Save-equipped"),
+        TargetThreatSourceKind.ObservedEquipped => T("Observed equipped"),
+        TargetThreatSourceKind.LearnedUnconfirmed => T("Learned, not confirmed equipped"),
+        _ => kind.ToString()
+    };
+
+    private string UnsupportedTitle(TargetUnsupportedEvidenceViewModel item) =>
+        item.SkillName is null
+            ? T("Unresolved target evidence")
+            : $"{item.SkillName} · {T("unresolved effect")}";
+
+    private string ConflictField(string field) => field.Equals(
+            TargetLoadoutObservationMerger.TargetEquippedSkillsField,
+            StringComparison.Ordinal)
+        ? T("Equipped loadout")
+        : T("Practice direction");
+
+    private string Source(SnapshotDataSource source) => source switch
+    {
+        SnapshotDataSource.Save => T("Save snapshot"),
+        SnapshotDataSource.CurrentScreenObservation => T("Current screen observation"),
+        SnapshotDataSource.VerifiedRule => T("Verified rule"),
+        SnapshotDataSource.GameConfiguration => T("Game configuration"),
+        _ => source.ToString()
+    };
+
+    private string T(string english) => UiText.Get(Language, english);
+}

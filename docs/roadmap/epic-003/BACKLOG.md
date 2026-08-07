@@ -359,7 +359,7 @@ observation-enhanced threat set.
 
 ### E3-009 — Explain observation impact
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -371,17 +371,21 @@ Present the difference between save-only and observation-enhanced analysis.
 
 #### Acceptance criteria
 
-- [ ] The result lists threats confirmed, added, demoted, removed, unchanged,
+- [x] The result lists threats confirmed, added, demoted, removed, unchanged,
       and still unsupported.
-- [ ] It lists recommended skills/counters added or removed and explains the
+- [x] It lists recommended skills/counters added or removed and explains the
       evidence chain for each change.
-- [ ] Feasibility changes are separated from scoring changes.
-- [ ] Partial coverage displays an explicit remaining-unknown warning.
-- [ ] Conflicts show both sources, timestamps, and the applied precedence rule.
-- [ ] Evidence confidence is never phrased as win probability.
-- [ ] Save-only and observed results can be compared without raw diagnostic
+- [x] Feasibility changes are separated from scoring changes.
+- [x] Partial coverage displays an explicit remaining-unknown warning.
+- [x] Conflicts show both sources, timestamps, and the applied precedence rule.
+- [x] Evidence confidence is never phrased as win probability.
+- [x] Save-only and observed results can be compared without raw diagnostic
       text.
-- [ ] API and bilingual rendering tests cover all impact categories.
+- [x] API and bilingual rendering tests cover all impact categories.
+
+#### Evidence when complete
+
+- `docs/architecture/TARGET-OBSERVATION-IMPACT-EXPLANATION.md`.
 
 ## Slice 7: Verification and completion
 

@@ -1,3 +1,4 @@
+using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatRecommendations;
@@ -26,7 +27,8 @@ public sealed record TargetObservationResponse(
     SnapshotEvidenceStatus LoadoutEvidenceStatus,
     IReadOnlyList<TargetObservedSkillResponse> ResolvedSkills,
     IReadOnlyList<TargetObservationSourceResponse> Sources,
-    TargetObservationImpactResponse Impact);
+    TargetObservationImpactResponse Impact,
+    TargetObservationRecommendationImpactResponse? RecommendationImpact = null);
 
 public sealed record TargetObservedSkillResponse(
     int SkillId,
@@ -49,6 +51,52 @@ public sealed record TargetObservationImpactResponse(
     IReadOnlyList<int> AddedEquippedSkillIds,
     IReadOnlyList<int> RemovedEquippedSkillIds,
     IReadOnlyList<int> ChangedDirectionSkillIds);
+
+public sealed record TargetObservationRecommendationImpactResponse(
+    IReadOnlyList<TargetThreatImpactResponse> Threats,
+    IReadOnlyList<TargetRecommendationImpactResponse> FeasibilityChanges,
+    IReadOnlyList<TargetRecommendationImpactResponse> ScoringChanges,
+    IReadOnlyList<TargetUnresolvedEvidenceImpactResponse> UnsupportedEvidence,
+    bool PartialCoverageLeavesUnknown,
+    IReadOnlyList<TargetObservationConflictImpactResponse> Conflicts,
+    string ConfidenceNotice);
+
+public sealed record TargetThreatImpactResponse(
+    string ThreatCode,
+    string Title,
+    TargetThreatImpactKind Kind,
+    TargetThreatSeverity Severity,
+    IReadOnlyList<TargetThreatSourceKind> SourceKinds,
+    IReadOnlyList<string> EvidenceReferences);
+
+public sealed record TargetRecommendationImpactResponse(
+    RecommendationPolicy Policy,
+    TargetRecommendationImpactKind Kind,
+    TargetRecommendationChangeCause Cause,
+    int SkillId,
+    SkillCategory Category,
+    PracticeDirection? RequiredDirection,
+    IReadOnlyList<string> ThreatCodes,
+    IReadOnlyList<string> ThreatTitles,
+    IReadOnlyList<string> EvidenceReferences);
+
+public sealed record TargetUnresolvedEvidenceImpactResponse(
+    string Code,
+    bool WasPresentBefore,
+    string EvidenceReference,
+    int? SkillId,
+    int? RawEffectId);
+
+public sealed record TargetObservationConflictImpactResponse(
+    string Field,
+    string ReasonCode,
+    string PrecedenceRule,
+    IReadOnlyList<TargetObservationConflictSourceResponse> Sources);
+
+public sealed record TargetObservationConflictSourceResponse(
+    SnapshotDataSource Source,
+    DateTimeOffset CapturedAtUtc,
+    string EvidenceReference);
 
 public sealed record TargetObservationProblemCandidateResponse(
     int SkillId,

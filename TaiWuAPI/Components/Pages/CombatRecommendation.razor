@@ -171,6 +171,12 @@
                            ApplyRequested="ApplyTargetObservationAsync"
                            ClearRequested="ClearTargetObservationAsync" />
 
+    @if (_model?.TargetObservationImpact is not null)
+    {
+        <TargetObservationImpactPanel Impact="_model.TargetObservationImpact"
+                                      Language="Language" />
+    }
+
     <div class="request-row">
         <div>
             @if (_selectedTarget is not null)

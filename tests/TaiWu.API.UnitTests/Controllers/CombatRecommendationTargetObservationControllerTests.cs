@@ -56,6 +56,22 @@ public sealed class CombatRecommendationTargetObservationControllerTests
             TargetSkillSnapshotPresence.Present,
             skill.SnapshotPresence);
         Assert.True(observation.Impact.Applied);
+        var recommendationImpact = Assert.IsType<
+            TargetObservationRecommendationImpactResponse>(
+            observation.RecommendationImpact);
+        Assert.True(recommendationImpact.PartialCoverageLeavesUnknown);
+        Assert.Empty(recommendationImpact.Threats);
+        Assert.Empty(recommendationImpact.FeasibilityChanges);
+        Assert.Empty(recommendationImpact.ScoringChanges);
+        var unsupported = Assert.Single(
+            recommendationImpact.UnsupportedEvidence);
+        Assert.Equal(
+            "UNRECOGNIZED_TARGET_EFFECT",
+            unsupported.Code);
+        Assert.False(unsupported.WasPresentBefore);
+        Assert.Contains(
+            "not a win probability",
+            recommendationImpact.ConfidenceNotice);
         Assert.All(
             observation.Sources,
             source =>
@@ -183,6 +199,17 @@ public sealed class CombatRecommendationTargetObservationControllerTests
         Assert.Equal(
             [719],
             conflicting.TargetObservation.Impact.RemovedEquippedSkillIds);
+        var conflict = Assert.Single(
+            conflicting.TargetObservation.RecommendationImpact!.Conflicts);
+        Assert.Equal(
+            "target.equippedSkills",
+            conflict.Field);
+        Assert.Equal(
+            [SnapshotDataSource.Save, SnapshotDataSource.CurrentScreenObservation],
+            conflict.Sources.Select(source => source.Source));
+        Assert.All(
+            conflict.Sources,
+            source => Assert.NotEqual(default, source.CapturedAtUtc));
 
         _ = JsonSerializer.Serialize(stale);
         _ = JsonSerializer.Serialize(unsupported);

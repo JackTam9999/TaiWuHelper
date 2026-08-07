@@ -39,11 +39,23 @@ public sealed class TargetObservationRecommendationWorkflow(
             cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 
-        return RecommendCombatLoadout.Build(
+        var baseline = RecommendCombatLoadout.Build(
+            snapshot,
+            request.Policy,
+            targetObservation: null,
+            cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        var observed = RecommendCombatLoadout.Build(
             processing.Merge.Snapshot,
             request.Policy,
             processing,
             cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        var impact = TargetObservationRecommendationImpactAnalyzer.Compare(
+            baseline,
+            observed,
+            processing.Merge);
+        return observed.WithTargetObservationImpact(impact);
     }
 
     private async Task<TargetObservationProcessingResult> ProcessAsync(

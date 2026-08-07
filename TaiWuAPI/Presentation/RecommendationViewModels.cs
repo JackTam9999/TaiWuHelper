@@ -1,3 +1,4 @@
+using TaiWu.Application.CombatRecommendations;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
@@ -16,7 +17,55 @@ public sealed record CombatRecommendationViewModel(
     IReadOnlyList<ThreatViewModel> Threats,
     IReadOnlyList<RecommendationStyleViewModel> Styles,
     IReadOnlyList<RecommendationWarningViewModel> Warnings,
-    InnerPowerStateViewModel? InnerPowerState = null);
+    InnerPowerStateViewModel? InnerPowerState = null,
+    TargetObservationImpactViewModel? TargetObservationImpact = null);
+
+public sealed record TargetObservationImpactViewModel(
+    IReadOnlyList<TargetThreatImpactViewModel> Threats,
+    IReadOnlyList<TargetRecommendationImpactViewModel> FeasibilityChanges,
+    IReadOnlyList<TargetRecommendationImpactViewModel> ScoringChanges,
+    IReadOnlyList<TargetUnsupportedEvidenceViewModel> UnsupportedEvidence,
+    bool PartialCoverageLeavesUnknown,
+    IReadOnlyList<TargetObservationConflictViewModel> Conflicts,
+    string ConfidenceNotice);
+
+public sealed record TargetThreatImpactViewModel(
+    string ThreatCode,
+    string Title,
+    TargetThreatImpactKind Kind,
+    TargetThreatSeverity Severity,
+    IReadOnlyList<TargetThreatSourceKind> SourceKinds,
+    IReadOnlyList<string> EvidenceReferences);
+
+public sealed record TargetRecommendationImpactViewModel(
+    RecommendationPolicy Policy,
+    TargetRecommendationImpactKind Kind,
+    TargetRecommendationChangeCause Cause,
+    int SkillId,
+    string SkillName,
+    SkillCategory Category,
+    PracticeDirection? RequiredDirection,
+    IReadOnlyList<string> ThreatCodes,
+    IReadOnlyList<string> ThreatTitles,
+    IReadOnlyList<string> EvidenceReferences);
+
+public sealed record TargetUnsupportedEvidenceViewModel(
+    string Code,
+    bool WasPresentBefore,
+    string EvidenceReference,
+    int? SkillId,
+    string? SkillName);
+
+public sealed record TargetObservationConflictViewModel(
+    string Field,
+    string ReasonCode,
+    string PrecedenceRule,
+    IReadOnlyList<TargetObservationConflictSourceViewModel> Sources);
+
+public sealed record TargetObservationConflictSourceViewModel(
+    SnapshotDataSource Source,
+    DateTimeOffset CapturedAtUtc,
+    string EvidenceReference);
 
 public sealed record InnerPowerStateViewModel(
     string Name,

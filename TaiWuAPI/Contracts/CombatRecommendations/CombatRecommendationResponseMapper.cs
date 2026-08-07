@@ -99,8 +99,62 @@ public static class CombatRecommendationResponseMapper
                     value.Observation.SlotIndex,
                     value.SnapshotPresence))],
             sources,
-            MapTargetObservationImpact(processing.OriginalSnapshot, merge));
+            MapTargetObservationImpact(processing.OriginalSnapshot, merge),
+            MapTargetObservationRecommendationImpact(
+                recommendation.TargetObservationImpact));
     }
+
+    private static TargetObservationRecommendationImpactResponse?
+        MapTargetObservationRecommendationImpact(
+            TargetObservationRecommendationImpact? impact)
+    {
+        if (impact is null)
+        {
+            return null;
+        }
+
+        return new TargetObservationRecommendationImpactResponse(
+            [.. impact.Threats.Select(value => new TargetThreatImpactResponse(
+                value.ThreatCode,
+                value.Title,
+                value.Kind,
+                value.Severity,
+                value.SourceKinds,
+                value.EvidenceReferences))],
+            [.. impact.FeasibilityChanges.Select(MapRecommendationImpact)],
+            [.. impact.ScoringChanges.Select(MapRecommendationImpact)],
+            [.. impact.UnsupportedEvidence.Select(value =>
+                new TargetUnresolvedEvidenceImpactResponse(
+                    value.Code,
+                    value.WasPresentBefore,
+                    value.EvidenceReference,
+                    value.SkillId,
+                    value.RawEffectId))],
+            impact.PartialCoverageLeavesUnknown,
+            [.. impact.Conflicts.Select(value =>
+                new TargetObservationConflictImpactResponse(
+                    value.Field,
+                    value.ReasonCode,
+                    value.PrecedenceRule,
+                    [.. value.Sources.Select(source =>
+                        new TargetObservationConflictSourceResponse(
+                            source.Source,
+                            source.CapturedAtUtc,
+                            source.EvidenceReference))]))],
+            "Evidence provenance only; not a win probability.");
+    }
+
+    private static TargetRecommendationImpactResponse MapRecommendationImpact(
+        TargetRecommendationImpact value) => new(
+            value.Policy,
+            value.Kind,
+            value.Cause,
+            value.SkillId,
+            value.Category,
+            value.RequiredDirection,
+            value.ThreatCodes,
+            value.ThreatTitles,
+            value.EvidenceReferences);
 
     private static TargetObservationImpactResponse MapTargetObservationImpact(
         CombatSnapshot original,

@@ -6,12 +6,14 @@ using Microsoft.JSInterop;
 using NSubstitute;
 using System.Net;
 using System.Text.RegularExpressions;
+using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.Targets;
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.CombatThreats;
 using TaiWuAPI.Components.Layout;
 using TaiWuAPI.Components.Recommendations;
 using TaiWuAPI.Localization;
@@ -103,6 +105,71 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("role=\"status\"", html);
         Assert.DoesNotContain(">Apply<", html);
         Assert.DoesNotContain("screenshot", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Target_observation_impact_separates_changes_unknowns_and_conflicts()
+    {
+        var html = await RenderAsync<TargetObservationImpactPanel>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetObservationImpactPanel.Impact)] =
+                    TargetImpact()
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("Save-only compared with observed", text);
+        Assert.Contains("Unlisted target skills remain possible", text);
+        Assert.Contains("Added threat", text);
+        Assert.Contains("Confirmed threat", text);
+        Assert.Contains("Demoted to learned-unconfirmed", text);
+        Assert.Contains("Removed typed threat", text);
+        Assert.Contains("Unchanged threat", text);
+        Assert.Contains("Feasibility changes", text);
+        Assert.Contains("Reverse Qilun Life Support", text);
+        Assert.Contains("Evidence chain", text);
+        Assert.Contains("Repeatable defeat-mark reset", text);
+        Assert.Contains("Scoring changes", text);
+        Assert.Contains("Still unsupported", text);
+        Assert.Contains("No severity or score was assigned", text);
+        Assert.Contains("Source conflicts and precedence", text);
+        Assert.Contains("Save snapshot", text);
+        Assert.Contains("Current screen observation", text);
+        Assert.Contains("not a win probability", text);
+        Assert.Contains("role=\"status\"", html);
+        Assert.Contains("role=\"note\"", html);
+        Assert.DoesNotContain("UNRECOGNIZED_TARGET_EFFECT", text);
+        Assert.DoesNotContain("ui:target-observation", text);
+        Assert.DoesNotContain("SAVE_SCREEN_CONFLICT", text);
+    }
+
+    [Fact]
+    public async Task Target_observation_impact_renders_critical_chinese_status()
+    {
+        var html = await RenderAsync<TargetObservationImpactPanel>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetObservationImpactPanel.Impact)] =
+                    TargetImpact(),
+                [nameof(TargetObservationImpactPanel.Language)] =
+                    TaiwuLanguage.Chinese
+            },
+            TaiwuLanguage.Chinese);
+        var text = VisibleText(html);
+
+        Assert.Contains("只用存檔與觀察後結果比較", text);
+        Assert.Contains("部分觀察", text);
+        Assert.Contains("威脅變更", text);
+        Assert.Contains("新增威脅", text);
+        Assert.Contains("已確認威脅", text);
+        Assert.Contains("降為已學但未確認裝備", text);
+        Assert.Contains("移除已定型威脅", text);
+        Assert.Contains("未變威脅", text);
+        Assert.Contains("可行性變更", text);
+        Assert.Contains("證據鏈", text);
+        Assert.Contains("仍未支援", text);
+        Assert.Contains("來源衝突與優先順序", text);
+        Assert.Contains("並非勝率", text);
     }
 
     [Fact]
@@ -542,6 +609,97 @@ public sealed partial class RecommendationComponentRenderingTests
             return output.ToHtmlString();
         });
     }
+
+    private static TargetObservationImpactViewModel TargetImpact() => new(
+        [
+            new TargetThreatImpactViewModel(
+                "DEFEAT_MARK_RESET_LOOP",
+                "Repeatable defeat-mark reset",
+                TargetThreatImpactKind.Added,
+                TargetThreatSeverity.Critical,
+                [TargetThreatSourceKind.ObservedEquipped],
+                ["docs:verified-rule", "ui:target-observation"]),
+            new TargetThreatImpactViewModel(
+                "MIND_RESONANCE_CASCADE",
+                "Mind-resonance cascade",
+                TargetThreatImpactKind.Demoted,
+                TargetThreatSeverity.Critical,
+                [TargetThreatSourceKind.LearnedUnconfirmed],
+                ["docs:verified-rule"]),
+            new TargetThreatImpactViewModel(
+                "MAGIC_SOUND_MIND_DAMAGE",
+                "Positive-practice magic-sound mind damage",
+                TargetThreatImpactKind.Confirmed,
+                TargetThreatSeverity.High,
+                [TargetThreatSourceKind.ObservedEquipped],
+                ["docs:verified-rule"]),
+            new TargetThreatImpactViewModel(
+                "DIRECT_PRESSURE",
+                "Direct pressure",
+                TargetThreatImpactKind.Removed,
+                TargetThreatSeverity.Moderate,
+                [TargetThreatSourceKind.SaveEquipped],
+                ["save:test"]),
+            new TargetThreatImpactViewModel(
+                "KNOWN_BASELINE",
+                "Known baseline",
+                TargetThreatImpactKind.Unchanged,
+                TargetThreatSeverity.Informational,
+                [TargetThreatSourceKind.LearnedUnconfirmed],
+                ["docs:verified-rule"])
+        ],
+        [
+            new TargetRecommendationImpactViewModel(
+                RecommendationPolicy.Safe,
+                TargetRecommendationImpactKind.Added,
+                TargetRecommendationChangeCause.Feasibility,
+                291,
+                "Reverse Qilun Life Support",
+                SkillCategory.Assistance,
+                PracticeDirection.Reverse,
+                ["DEFEAT_MARK_RESET_LOOP"],
+                ["Repeatable defeat-mark reset"],
+                ["effect:915"])
+        ],
+        [
+            new TargetRecommendationImpactViewModel(
+                RecommendationPolicy.Aggressive,
+                TargetRecommendationImpactKind.Removed,
+                TargetRecommendationChangeCause.Scoring,
+                604,
+                "Reverse Jinni Suppression",
+                SkillCategory.Attack,
+                PracticeDirection.Reverse,
+                ["MIND_RESONANCE_CASCADE"],
+                ["Mind-resonance cascade"],
+                ["effect:1064"])
+        ],
+        [
+            new TargetUnsupportedEvidenceViewModel(
+                "UNRECOGNIZED_TARGET_EFFECT",
+                WasPresentBefore: false,
+                "ui:target-observation",
+                SkillId: 719,
+                SkillName: "Target Art")
+        ],
+        PartialCoverageLeavesUnknown: true,
+        [
+            new TargetObservationConflictViewModel(
+                "target.equippedSkills",
+                "SAVE_SCREEN_CONFLICT",
+                "NEWER_CURRENT_SCREEN_FIELD_PRECEDENCE",
+                [
+                    new TargetObservationConflictSourceViewModel(
+                        SnapshotDataSource.Save,
+                        DateTimeOffset.Parse("2026-08-07T20:00:00Z"),
+                        "save:test"),
+                    new TargetObservationConflictSourceViewModel(
+                        SnapshotDataSource.CurrentScreenObservation,
+                        DateTimeOffset.Parse("2026-08-07T20:01:00Z"),
+                        "ui:target-observation")
+                ])
+        ],
+        "Evidence confidence describes provenance, not a win probability.");
 
     private static Dictionary<string, object?> TargetObservationParameters(
         TargetObservationEditorState state) => new()

@@ -13,7 +13,8 @@ public sealed record CombatLoadoutRecommendation
         CombatLoadoutGenerationResult generation,
         RecommendationPolicy requestedPolicy,
         IEnumerable<CombatRecommendationStyleResult> styles,
-        TargetObservationProcessingResult? targetObservation = null)
+        TargetObservationProcessingResult? targetObservation = null,
+        TargetObservationRecommendationImpact? targetObservationImpact = null)
     {
         Snapshot = snapshot;
         ThreatAnalysis = threatAnalysis;
@@ -23,6 +24,7 @@ public sealed record CombatLoadoutRecommendation
         SelectedStyle = Styles.Single(style =>
             style.Policy == requestedPolicy);
         TargetObservation = targetObservation;
+        TargetObservationImpact = targetObservationImpact;
     }
 
     public CombatSnapshot Snapshot { get; }
@@ -41,6 +43,30 @@ public sealed record CombatLoadoutRecommendation
     public CombatRecommendationStyleResult SelectedStyle { get; }
 
     public TargetObservationProcessingResult? TargetObservation { get; }
+
+    public TargetObservationRecommendationImpact? TargetObservationImpact
+    {
+        get;
+    }
+
+    internal CombatLoadoutRecommendation WithTargetObservationImpact(
+        TargetObservationRecommendationImpact impact)
+    {
+        if (TargetObservation is null)
+        {
+            throw new InvalidOperationException(
+                "A save-only recommendation cannot receive target impact.");
+        }
+
+        return new CombatLoadoutRecommendation(
+            Snapshot,
+            ThreatAnalysis,
+            Generation,
+            RequestedPolicy,
+            Styles,
+            TargetObservation,
+            impact ?? throw new ArgumentNullException(nameof(impact)));
+    }
 
     public CombatRecommendationScoringResult Scoring =>
         SelectedStyle.Scoring;

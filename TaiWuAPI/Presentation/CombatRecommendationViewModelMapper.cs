@@ -23,6 +23,12 @@ public static class CombatRecommendationViewModelMapper
                 skill => skill.DisplayName.IsAvailable
                     ? skill.DisplayName.Value
                     : "Unnamed skill");
+        var targetSkillNames = recommendation.Snapshot.Target.LearnedSkills
+            .ToDictionary(
+                skill => skill.SkillId,
+                skill => skill.DisplayName.IsAvailable
+                    ? skill.DisplayName.Value
+                    : "Unnamed skill");
         var styles = recommendation.Styles
             .Select(style => MapStyle(
                 snapshotReference,
@@ -58,8 +64,79 @@ public static class CombatRecommendationViewModelMapper
                     [.. value.Threat.Evidence.Select(evidence => evidence.Reference)]))],
             styles,
             MapWarnings(recommendation, skillNames),
-            MapInnerPowerState(recommendation.Snapshot.Player));
+            MapInnerPowerState(recommendation.Snapshot.Player),
+            MapTargetObservationImpact(
+                recommendation,
+                skillNames,
+                targetSkillNames));
     }
+
+    private static TargetObservationImpactViewModel? MapTargetObservationImpact(
+        CombatLoadoutRecommendation recommendation,
+        IReadOnlyDictionary<int, string> skillNames,
+        IReadOnlyDictionary<int, string> targetSkillNames)
+    {
+        var impact = recommendation.TargetObservationImpact;
+        if (impact is null)
+        {
+            return null;
+        }
+
+        return new TargetObservationImpactViewModel(
+            [.. impact.Threats.Select(value =>
+                new TargetThreatImpactViewModel(
+                    value.ThreatCode,
+                    UiEntityText.UseNames(value.Title, skillNames),
+                    value.Kind,
+                    value.Severity,
+                    value.SourceKinds,
+                    value.EvidenceReferences))],
+            [.. impact.FeasibilityChanges.Select(value =>
+                MapRecommendationImpact(value, skillNames))],
+            [.. impact.ScoringChanges.Select(value =>
+                MapRecommendationImpact(value, skillNames))],
+            [.. impact.UnsupportedEvidence.Select(value =>
+                new TargetUnsupportedEvidenceViewModel(
+                    value.Code,
+                    value.WasPresentBefore,
+                    value.EvidenceReference,
+                    value.SkillId,
+                    value.SkillId.HasValue
+                        && targetSkillNames.TryGetValue(
+                            value.SkillId.Value,
+                            out var skillName)
+                            ? skillName
+                            : null))],
+            impact.PartialCoverageLeavesUnknown,
+            [.. impact.Conflicts.Select(value =>
+                new TargetObservationConflictViewModel(
+                    value.Field,
+                    value.ReasonCode,
+                    value.PrecedenceRule,
+                    [.. value.Sources.Select(source =>
+                        new TargetObservationConflictSourceViewModel(
+                            source.Source,
+                            source.CapturedAtUtc,
+                            source.EvidenceReference))]))],
+            "Evidence confidence describes provenance, not a win probability.");
+    }
+
+    private static TargetRecommendationImpactViewModel MapRecommendationImpact(
+        TargetRecommendationImpact value,
+        IReadOnlyDictionary<int, string> skillNames) => new(
+            value.Policy,
+            value.Kind,
+            value.Cause,
+            value.SkillId,
+            skillNames.TryGetValue(value.SkillId, out var name)
+                ? name
+                : "Unnamed skill",
+            value.Category,
+            value.RequiredDirection,
+            value.ThreatCodes,
+            [.. value.ThreatTitles.Select(title =>
+                UiEntityText.UseNames(title, skillNames))],
+            value.EvidenceReferences);
 
     private static InnerPowerStateViewModel? MapInnerPowerState(
         PlayerCombatSnapshot player)

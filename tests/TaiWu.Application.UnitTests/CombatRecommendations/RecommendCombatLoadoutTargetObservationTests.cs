@@ -180,6 +180,25 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             DecisionFingerprint(first),
             DecisionFingerprint(second));
+        var impact = Assert.IsType<TargetObservationRecommendationImpact>(
+            first.TargetObservationImpact);
+        var threatImpact = Assert.Single(impact.Threats);
+        Assert.Equal(TargetThreatImpactKind.Added, threatImpact.Kind);
+        Assert.Equal("DEFEAT_MARK_RESET_LOOP", threatImpact.ThreatCode);
+        Assert.True(impact.PartialCoverageLeavesUnknown);
+        Assert.NotEmpty(impact.FeasibilityChanges);
+        Assert.All(
+            impact.RecommendationChanges,
+            change =>
+            {
+                Assert.Equal(
+                    TargetRecommendationImpactKind.Added,
+                    change.Kind);
+                Assert.Equal(
+                    TargetRecommendationChangeCause.Feasibility,
+                    change.Cause);
+                Assert.Equal(qilun.SkillId, change.SkillId);
+            });
     }
 
     [Fact]
@@ -226,6 +245,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.All(
             result.Styles,
             style => Assert.Empty(style.Scoring.RankedCandidates));
+        Assert.Empty(result.TargetObservationImpact!.RecommendationChanges);
     }
 
     [Fact]
@@ -291,6 +311,13 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             style => Assert.Equal(
                 RecommendationPolicyWeights.For(style.Policy),
                 style.Scoring.Weights));
+        Assert.All(
+            observed.TargetObservationImpact!.Threats,
+            change => Assert.Equal(
+                TargetThreatImpactKind.Confirmed,
+                change.Kind));
+        Assert.Empty(
+            observed.TargetObservationImpact.RecommendationChanges);
     }
 
     [Fact]
@@ -366,6 +393,88 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             ThreatFingerprint(first),
             ThreatFingerprint(second));
+        var impact = first.TargetObservationImpact!;
+        Assert.All(
+            impact.Threats,
+            change => Assert.Equal(
+                TargetThreatImpactKind.Removed,
+                change.Kind));
+        Assert.All(
+            impact.RecommendationChanges,
+            change =>
+            {
+                Assert.Equal(
+                    TargetRecommendationImpactKind.Removed,
+                    change.Kind);
+                Assert.Equal(
+                    TargetRecommendationChangeCause.Feasibility,
+                    change.Cause);
+                Assert.Equal(counter.SkillId, change.SkillId);
+            });
+        var unsupported = Assert.Single(impact.UnsupportedEvidence);
+        Assert.False(unsupported.WasPresentBefore);
+        Assert.Equal(
+            TargetThreatAnalyzer.UnrecognizedEffectWarningCode,
+            unsupported.Code);
+    }
+
+    [Fact]
+    public async Task Complete_observation_demotes_threats_and_exposes_both_conflict_sources()
+    {
+        var counter = PlayerSkill(
+            604,
+            SkillCategory.Attack,
+            PracticeDirection.Reverse,
+            directEffectId: 338,
+            reverseEffectId: 1064);
+        var target = TargetSkill(
+            719,
+            "Target Art",
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var snapshot = Snapshot(
+            targetSkills: [target],
+            playerSkills: [counter]);
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var request = new RecommendCombatLoadoutRequest(
+            snapshot.Metadata.SavePath,
+            snapshot.Target.CharacterId,
+            RecommendationPolicy.Balanced,
+            targetObservation: new TargetObservationRequest(
+                TargetObservationContext.Sparring,
+                SaveTime.AddMinutes(1),
+                "E3-000-CAP-002",
+                TargetLoadoutCoverageKind.CompleteCurrentLoadout,
+                selectedSkills: []));
+
+        var result = await new TargetObservationRecommendationWorkflow(
+                reader,
+                new ResolveTargetSkillSelection(
+                    Source(),
+                    Repository()))
+            .ExecuteAsync(
+                request,
+                TestContext.Current.CancellationToken);
+
+        var impact = result.TargetObservationImpact!;
+        Assert.False(impact.PartialCoverageLeavesUnknown);
+        Assert.All(
+            impact.Threats,
+            change => Assert.Equal(
+                TargetThreatImpactKind.Demoted,
+                change.Kind));
+        var conflict = Assert.Single(impact.Conflicts);
+        Assert.Equal(
+            TargetLoadoutObservationMerger.TargetEquippedSkillsField,
+            conflict.Field);
+        Assert.Equal("SAVE_SCREEN_CONFLICT", conflict.ReasonCode);
+        Assert.Equal(
+            [SnapshotDataSource.Save, SnapshotDataSource.CurrentScreenObservation],
+            conflict.Sources.Select(source => source.Source));
     }
 
     [Fact]
