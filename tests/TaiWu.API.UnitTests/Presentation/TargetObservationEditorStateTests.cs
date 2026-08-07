@@ -87,6 +87,79 @@ public sealed class TargetObservationEditorStateTests
     }
 
     [Fact]
+    public void Complete_review_reproduces_the_E3000_sparring_loadout()
+    {
+        var capturedSkills = new[]
+        {
+            (89, SkillCategory.Neigong, "百邪體大法"),
+            (73, SkillCategory.Neigong, "九鼎功"),
+            (0, SkillCategory.Neigong, "沛然訣"),
+            (530, SkillCategory.Attack, "黃墳砂"),
+            (529, SkillCategory.Attack, "蝕骨爛腸砂"),
+            (473, SkillCategory.Attack, "分筋錯骨手"),
+            (533, SkillCategory.Attack, "血犼砂"),
+            (401, SkillCategory.Attack, "摧心掌"),
+            (206, SkillCategory.Agility, "遊魂詭步"),
+            (204, SkillCategory.Agility, "狸竄術"),
+            (207, SkillCategory.Agility, "鬼犼入地震天法"),
+            (205, SkillCategory.Agility, "墳頭遁"),
+            (320, SkillCategory.Defense, "爛泥絕技"),
+            (324, SkillCategory.Defense, "移魂大法"),
+            (322, SkillCategory.Defense, "鬼夜哭"),
+            (257, SkillCategory.Defense, "五鬼搬運法"),
+            (326, SkillCategory.Assistance, "十二血童大陣"),
+            (321, SkillCategory.Assistance, "亂氣殺")
+        };
+        var state = EditingState();
+
+        foreach (var category in capturedSkills.GroupBy(skill => skill.Item2))
+        {
+            var slotIndex = 0;
+            foreach (var (skillId, skillCategory, visibleName) in category)
+            {
+                state.AddResolved(new ResolvedTargetSkillSelection(
+                    new ObservedTargetCombatSkill(
+                        skillId,
+                        skillCategory,
+                        direction: null,
+                        slotIndex: slotIndex++),
+                    Facts(skillId, visibleName, skillCategory),
+                    TargetSkillSnapshotPresence.Unknown));
+            }
+        }
+
+        state.SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout);
+        Assert.True(state.BeginReview(ObservedAt));
+        var request = state.BuildRequest();
+
+        Assert.Equal(TargetObservationContext.Sparring, request.Context);
+        Assert.Equal(
+            TargetLoadoutCoverageKind.CompleteCurrentLoadout,
+            request.Coverage);
+        Assert.Equal(capturedSkills.Length, request.SelectedSkills.Length);
+        Assert.Equal(3, request.SelectedSkills.Count(
+            skill => skill.Category == SkillCategory.Neigong));
+        Assert.Equal(5, request.SelectedSkills.Count(
+            skill => skill.Category == SkillCategory.Attack));
+        Assert.Equal(4, request.SelectedSkills.Count(
+            skill => skill.Category == SkillCategory.Agility));
+        Assert.Equal(4, request.SelectedSkills.Count(
+            skill => skill.Category == SkillCategory.Defense));
+        Assert.Equal(2, request.SelectedSkills.Count(
+            skill => skill.Category == SkillCategory.Assistance));
+        Assert.All(request.SelectedSkills, skill => Assert.Null(skill.Direction));
+
+        var selectedById = request.SelectedSkills.ToDictionary(
+            skill => skill.ConfirmedSkillId!.Value);
+        foreach (var (skillId, category, visibleName) in capturedSkills)
+        {
+            var selected = selectedById[skillId];
+            Assert.Equal(category, selected.Category);
+            Assert.Equal(visibleName, selected.VisibleName);
+        }
+    }
+
+    [Fact]
     public void Complete_review_can_explicitly_confirm_an_empty_loadout()
     {
         var state = EditingState();
@@ -164,7 +237,10 @@ public sealed class TargetObservationEditorStateTests
             TargetSkillSnapshotPresence.Unknown,
             Facts(skillId, name));
 
-    private static TargetSkillStaticFacts Facts(int skillId, string name)
+    private static TargetSkillStaticFacts Facts(
+        int skillId,
+        string name,
+        SkillCategory category = SkillCategory.Attack)
     {
         var source = new CatalogueSourceReference(
             CatalogueSourceKind.GameData,
@@ -185,7 +261,7 @@ public sealed class TargetObservationEditorStateTests
                     localized,
                     localized.Source),
                 UsedFallback: false),
-            SkillCategory.Attack,
+            category,
             CatalogueField<CombatSkillGridCost>.Available(
                 new CombatSkillGridCost(2),
                 source),

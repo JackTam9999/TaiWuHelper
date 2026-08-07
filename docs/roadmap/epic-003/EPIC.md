@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Planned |
+| Status | Awaiting product-owner approval |
 | Milestone | 3 |
 | Target release | TBD |
 | Last updated | 2026-08-07 |
@@ -326,30 +326,30 @@ The workflow must present these states explicitly:
 
 ## Epic acceptance criteria
 
-- [ ] The supported target UI fields and completeness rules are documented
+- [x] The supported target UI fields and completeness rules are documented
       with versioned evidence.
-- [ ] Hostile/story targets remain explicitly unavailable for current-screen
+- [x] Hostile/story targets remain explicitly unavailable for current-screen
       loadout observation and never become empty-loadout claims.
-- [ ] Target observations use stable bilingual catalogue identities.
-- [ ] Partial and complete loadout coverage cannot be confused.
-- [ ] Observation time, evidence reference, and field provenance are retained.
-- [ ] Stale and conflicting observations remain visible and deterministic.
-- [ ] Only explicitly covered fields receive current-screen precedence.
-- [ ] An observed skill missing from a stale target snapshot is represented
+- [x] Target observations use stable bilingual catalogue identities.
+- [x] Partial and complete loadout coverage cannot be confused.
+- [x] Observation time, evidence reference, and field provenance are retained.
+- [x] Stale and conflicting observations remain visible and deterministic.
+- [x] Only explicitly covered fields receive current-screen precedence.
+- [x] An observed skill missing from a stale target snapshot is represented
       without fabricating unrelated progress.
-- [ ] Threat analysis distinguishes confirmed equipped sources from possible
+- [x] Threat analysis distinguishes confirmed equipped sources from possible
       learned sources.
-- [ ] Recommendation impact is explained in terms of changed evidence,
+- [x] Recommendation impact is explained in terms of changed evidence,
       threats, counters, feasibility, and unresolved risks.
-- [ ] Save-only behavior remains reproducible after clearing the observation.
-- [ ] Unknown raw effects cannot influence legality or scoring.
-- [ ] Observation state is session-bound and is not persisted as history.
-- [ ] No endpoint accepts a screenshot path, game path, process identifier, or
+- [x] Save-only behavior remains reproducible after clearing the observation.
+- [x] Unknown raw effects cannot influence legality or scoring.
+- [x] Observation state is session-bound and is not persisted as history.
+- [x] No endpoint accepts a screenshot path, game path, process identifier, or
       mutation-capable game type.
-- [ ] The UI is bilingual, accessible, and explicit about evidence status.
-- [ ] Automated tests cover valid, partial, complete, stale, conflicting,
+- [x] The UI is bilingual, accessible, and explicit about evidence status.
+- [x] Automated tests cover valid, partial, complete, stale, conflicting,
       ambiguous, unsupported, and cleared states.
-- [ ] Local vertical verification proves all inspected game and save sources
+- [x] Local vertical verification proves all inspected game and save sources
       are byte-for-byte unchanged.
 - [ ] The product owner records the Epic 3 completion decision.
 
