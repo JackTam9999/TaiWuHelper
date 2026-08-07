@@ -18,7 +18,7 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
     SaveProgressCacheStoragePathProvider pathProvider)
     : ICharacterCombatSkillProgressCacheMaintenance
 {
-    internal const int SchemaVersion = 3;
+    internal const int SchemaVersion = 4;
     internal const int MaximumCachedSavePaths = 8;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -123,6 +123,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     skill_id,
                     learned,
                     proficiency,
+                    power,
+                    maximum_power,
+                    power_unavailable_reason,
                     reading_state,
                     activation_state,
                     meets_breakthrough_requirement,
@@ -152,13 +155,20 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                         reader.GetInt32(0),
                         reader.GetBoolean(1),
                         reader.IsDBNull(2) ? null : reader.GetInt32(2),
-                        reader.GetInt32(3),
-                        reader.GetInt32(4),
-                        reader.GetBoolean(5),
-                        reader.GetBoolean(6),
-                        reader.GetBoolean(7),
+                        reader.GetInt32(6),
+                        reader.GetInt32(7),
                         reader.GetBoolean(8),
-                        reader.GetBoolean(9));
+                        reader.GetBoolean(9),
+                        reader.GetBoolean(10),
+                        reader.GetBoolean(11),
+                        reader.GetBoolean(12),
+                        Power: reader.IsDBNull(3) ? null : reader.GetInt32(3),
+                        MaximumPower: reader.IsDBNull(4)
+                            ? null
+                            : reader.GetInt32(4),
+                        PowerUnavailableReason: reader.IsDBNull(5)
+                            ? null
+                            : reader.GetString(5));
                     if (value.SkillId < 0)
                     {
                         throw new InvalidDataException(
@@ -379,6 +389,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     skill_id INTEGER NOT NULL,
                     learned INTEGER NOT NULL CHECK (learned IN (0, 1)),
                     proficiency INTEGER NULL,
+                    power INTEGER NULL,
+                    maximum_power INTEGER NULL,
+                    power_unavailable_reason TEXT NULL,
                     reading_state INTEGER NOT NULL,
                     activation_state INTEGER NOT NULL,
                     meets_breakthrough_requirement INTEGER NOT NULL
@@ -645,6 +658,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     skill_id,
                     learned,
                     proficiency,
+                    power,
+                    maximum_power,
+                    power_unavailable_reason,
                     reading_state,
                     activation_state,
                     meets_breakthrough_requirement,
@@ -658,6 +674,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                     $skill_id,
                     $learned,
                     $proficiency,
+                    $power,
+                    $maximum_power,
+                    $power_unavailable_reason,
                     $reading_state,
                     $activation_state,
                     $meets_breakthrough_requirement,
@@ -677,6 +696,15 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
             command.Parameters.AddWithValue(
                 "$proficiency",
                 progress.Proficiency ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$power",
+                progress.Power ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$maximum_power",
+                progress.MaximumPower ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue(
+                "$power_unavailable_reason",
+                progress.PowerUnavailableReason ?? (object)DBNull.Value);
             command.Parameters.AddWithValue(
                 "$reading_state",
                 progress.ReadingState);

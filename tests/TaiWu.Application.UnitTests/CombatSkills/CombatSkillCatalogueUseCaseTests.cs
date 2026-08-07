@@ -1544,8 +1544,11 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 proficiencyAvailable
                     ? SkillProgressField<int>.Available(50, progressSource)
                     : SkillProgressField<int>.Unavailable("test"),
+                SkillProgressField<int>.Available(100, progressSource)),
+            new CombatSkillPowerProgress(
+                SkillProgressField<int>.Available(113, progressSource),
                 SkillProgressField<int>.Available(100, progressSource),
-                SkillProgressField<decimal>.Available(50m, progressSource)),
+                CombatSkillPowerContext.OutOfCombat),
             details,
             actualBreakthrough,
             activeDirection is null

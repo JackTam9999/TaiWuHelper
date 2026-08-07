@@ -39,7 +39,8 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Current effective cost 2 Available", text);
         Assert.Contains("Current proficiency 70 Available", text);
         Assert.Contains("Maximum proficiency 100 Available", text);
-        Assert.Contains("Proficiency percentage 70% Available", text);
+        Assert.Contains("Current power 113% Available", text);
+        Assert.Contains("Maximum power 100% Available", text);
         Assert.Contains("Breakthrough completed Yes Available", text);
         Assert.Contains("Active direction Reverse practice Available", text);
         Assert.Contains("Attainment mastery Yes Available", text);
@@ -68,6 +69,28 @@ public sealed partial class SkillCatalogueRenderingTests
                 && request.CharacterId == null
                 && request.PreferredLanguage == CatalogueLanguage.English),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Skill_detail_explains_unavailable_live_power()
+    {
+        var definition = DetailedDefinition(includeEnglishName: true);
+        var progress = DetailedProgress(powerAvailable: false);
+        var (source, repository) = CurrentDetail(definition);
+
+        var text = VisibleText(await RenderDetailPageAsync(
+            source,
+            repository,
+            DetailedProgressReader(progress),
+            TaiwuLanguage.English));
+
+        Assert.Contains("Current power Unavailable Unavailable", text);
+        Assert.Contains("Maximum power Unavailable Unavailable", text);
+        Assert.Equal(
+            2,
+            System.Text.RegularExpressions.Regex.Matches(
+                text,
+                "Live calculation context is absent").Count);
     }
 
     [Fact]
@@ -387,7 +410,8 @@ public sealed partial class SkillCatalogueRenderingTests
             gameSource);
     }
 
-    private static CharacterCombatSkillProgress DetailedProgress()
+    private static CharacterCombatSkillProgress DetailedProgress(
+        bool powerAvailable = true)
     {
         var save = new SaveSnapshotIdentity(
             new string('D', 64),
@@ -440,8 +464,19 @@ public sealed partial class SkillCatalogueRenderingTests
             SkillProgressField<bool>.Available(true, source),
             new CombatSkillProficiencyProgress(
                 SkillProgressField<int>.Available(70, source),
-                SkillProgressField<int>.Available(100, source),
-                SkillProgressField<decimal>.Available(70m, source)),
+                SkillProgressField<int>.Available(100, source)),
+            new CombatSkillPowerProgress(
+                powerAvailable
+                    ? SkillProgressField<int>.Available(113, source)
+                    : SkillProgressField<int>.Unavailable(
+                        "Live calculation context is absent.",
+                        source),
+                powerAvailable
+                    ? SkillProgressField<int>.Available(100, source)
+                    : SkillProgressField<int>.Unavailable(
+                        "Live calculation context is absent.",
+                        source),
+                CombatSkillPowerContext.OutOfCombat),
             details,
             SkillProgressField<BreakthroughDirectionAvailability>.Available(
                 new BreakthroughDirectionAvailability(true, false, []),

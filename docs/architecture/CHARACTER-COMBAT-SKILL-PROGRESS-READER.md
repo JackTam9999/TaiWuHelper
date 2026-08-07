@@ -32,10 +32,10 @@ skill ID, the adapter maps these facts independently:
 | `Learned` | Membership in the verified learned combat-skill collection; every projected collection entry is `true`. Zero reading/activation state does not mean unlearned. |
 | Proficiency current | `ExtraDomain.TryGetElement_CombatSkillProficiencies(CombatSkillKey, out int)`; a missing key is unavailable and an out-of-range value becomes unavailable with a warning. |
 | Proficiency maximum | Verified GameData limit `999999999`, with E2-002 rule provenance. |
-| Proficiency percentage | Unavailable because the persisted-to-visible conversion remains unverified. |
+| Current/maximum power | Typed separately from proficiency. The centre display is `CombatSkillDisplayData.Power + "%"`, but both values remain unavailable because standalone archive loading cannot safely supply the live special-effect calculation context. |
 | Breakthrough | The E2-010 mapper combines the decoded detail collection, activation state, `CanBreakout`, completed breakthrough, achievable directions, and the Direct/Reverse directions completed in Taiwu's saved breakthrough presets. |
 | Active direction | Derived only from the currently selected supported activation state with completed breakthrough; it remains separate from completed inactive preset directions. |
-| Attainment mastery | Unavailable because the save rule for the player-facing `已大成` label remains unverified. |
+| Attainment mastery | For the current Taiwu and a supported activation state, `CombatSkillStateHelper.IsBrokenOut`, equivalent to `(ActivationState & 0x001F) != 0`. It is unavailable for an explicitly requested non-Taiwu character. |
 | Simplified | `ExtraDomain.IsCombatSkillMasteredByCharacter`; deliberately not labeled attainment mastery. |
 | Activated | Whether any supported activation-state page bit is active. |
 | Equipped | Membership in `CombatSkillEquipment.GetValidSkills`. |
@@ -54,8 +54,10 @@ Every progress entry must use that same snapshot identity and character ID.
 
 Missing configuration or file, unsupported GameData, and safe read failure are
 separate typed states. Failure messages omit the configured local path. Invalid
-proficiency, reading, or activation values become unavailable fields plus
-warnings rather than guessed defaults.
+proficiency, power, reading, or activation values become unavailable fields
+plus warnings rather than guessed defaults. The adapter does not call
+`CombatSkill.GetPower`, `GetMaxPower`, or the full display-data projector:
+those paths enter `SpecialEffectDomain.ModifyData` and need live-only state.
 
 ## Structured local cache
 
@@ -66,7 +68,8 @@ It uses normalized rows for snapshot metadata, characters, and combat-skill
 fields; it is not a serialized UI-result blob. The configured save path is
 represented only by an opaque SHA-256 path key.
 
-Each cached skill row stores the current activation mask separately from two
+Each cached skill row stores current and maximum power fields with an explicit
+unavailability reason, and the current activation mask separately from two
 boolean preset facts: completed Direct breakthrough and completed Reverse
 breakthrough. These facts are derived only from successful saved breakthrough
 plates; an incomplete preset containing five normal pages without an outline
@@ -106,8 +109,10 @@ cache hits directly distinguishable.
 ## Verification status
 
 Pure mapping tests cover independent facts, missing proficiency, zero-state
-learned skills, immediate Direct breakthrough, completed Reverse breakthrough,
-and invalid values. SQLite tests cover structured round trips, revision,
+learned skills, the current-Taiwu attainment predicate, power above its
+requirements-layer maximum, unavailable live power, immediate Direct
+breakthrough, completed Reverse breakthrough, and invalid values. SQLite tests
+cover structured round trips, revision,
 GameData and mapping-version misses, atomic snapshot replacement, multiple
 characters, bounded save-path retention, and complete derived-row clearing
 without source access. Architecture tests require typed GameData access,

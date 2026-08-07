@@ -87,6 +87,10 @@
                     <dt>@T("Proficiency")</dt>
                     <dd>@ProficiencyText</dd>
                 </div>
+                <div>
+                    <dt>@T("Power")</dt>
+                    <dd>@PowerText</dd>
+                </div>
             </dl>
 
             <dl class="skill-card-descriptions">
@@ -359,6 +363,14 @@
             ? Progress.Proficiency.Maximum.IsAvailable
                 ? $"{Progress.Proficiency.Current.Value} / {Progress.Proficiency.Maximum.Value}"
                 : Progress.Proficiency.Current.Value.ToString()
+            : T("Unavailable");
+
+    private string PowerText =>
+        Progress?.Power.Current.IsAvailable == true
+            ? Progress.Power.Maximum.IsAvailable
+                ? $"{Progress.Power.Current.Value}% ({T("Maximum power")} "
+                  + $"{Progress.Power.Maximum.Value}%)"
+                : $"{Progress.Power.Current.Value}%"
             : T("Unavailable");
 
     private CatalogueLanguage PreferredDescriptionLanguage =>

@@ -16,11 +16,14 @@ internal sealed record RawCharacterCombatSkillProgress(
     bool Simplified,
     bool Equipped,
     bool DirectBreakthroughCompleted = false,
-    bool ReverseBreakthroughCompleted = false);
+    bool ReverseBreakthroughCompleted = false,
+    int? Power = null,
+    int? MaximumPower = null,
+    string? PowerUnavailableReason = null);
 
 internal static class CombatSkillProgressMapping
 {
-    internal const int CacheMappingVersion = 2;
+    internal const int CacheMappingVersion = 3;
 
     internal static CharacterCombatSkillProgress Map(
         int characterId,
@@ -28,7 +31,8 @@ internal static class CombatSkillProgressMapping
         RawCharacterCombatSkillProgress raw,
         string gameDataVersion,
         CombatSkillStudyDetailLabelSet labels,
-        ICollection<CharacterCombatSkillProgressWarning> warnings)
+        ICollection<CharacterCombatSkillProgressWarning> warnings,
+        int? taiwuCharacterId = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(raw);
@@ -52,6 +56,7 @@ internal static class CombatSkillProgressMapping
             saveIdentity,
             raw,
             warnings);
+        var power = MapPower(saveIdentity, raw, warnings);
         var breakthrough = MapBreakthrough(
             saveIdentity,
             raw,
@@ -76,13 +81,16 @@ internal static class CombatSkillProgressMapping
             raw.SkillId,
             learned,
             proficiency,
+            power,
             studyDetails.Details,
             breakthrough,
             direction,
-            SkillProgressField<bool>.Unavailable(
-                "The save-derived attainment mastery rule is not verified "
-                + "for this version.",
-                VerifiedSource(raw.SkillId, "attainment-mastered")),
+            MapAttainmentMastery(
+                characterId,
+                taiwuCharacterId,
+                saveIdentity,
+                raw,
+                studyDetails),
             SkillProgressField<bool>.Available(
                 raw.Simplified,
                 SaveSource(saveIdentity, raw.SkillId, "simplified")),
@@ -127,11 +135,118 @@ internal static class CombatSkillProgressMapping
             current,
             SkillProgressField<int>.Available(
                 CombatSkillProficiencyProgress.MaximumSupportedValue,
-                VerifiedSource(raw.SkillId, "maximum-proficiency")),
-            SkillProgressField<decimal>.Unavailable(
-                "The conversion from persisted proficiency to the displayed "
-                + "percentage is not verified.",
-                VerifiedSource(raw.SkillId, "proficiency-percentage")));
+                VerifiedSource(raw.SkillId, "maximum-proficiency")));
+    }
+
+    private static CombatSkillPowerProgress MapPower(
+        string saveIdentity,
+        RawCharacterCombatSkillProgress raw,
+        ICollection<CharacterCombatSkillProgressWarning> warnings)
+    {
+        var reason = string.IsNullOrWhiteSpace(raw.PowerUnavailableReason)
+            ? "The out-of-combat GameData power calculation is unavailable."
+            : raw.PowerUnavailableReason.Trim();
+        var currentSource = raw.Power is null
+            ? VerifiedSource(raw.SkillId, "out-of-combat-power", "e2-f06")
+            : SaveSource(
+                saveIdentity,
+                raw.SkillId,
+                "out-of-combat-power");
+        var maximumSource = raw.MaximumPower is null
+            ? VerifiedSource(
+                raw.SkillId,
+                "out-of-combat-maximum-power",
+                "e2-f06")
+            : SaveSource(
+                saveIdentity,
+                raw.SkillId,
+                "out-of-combat-maximum-power");
+
+        SkillProgressField<int> current;
+        if (raw.Power is null)
+        {
+            current = SkillProgressField<int>.Unavailable(reason, currentSource);
+        }
+        else if (raw.Power < 0)
+        {
+            var invalidReason = $"Skill {raw.SkillId} has negative calculated "
+                + $"power {raw.Power}.";
+            warnings.Add(new CharacterCombatSkillProgressWarning(
+                "POWER_OUT_OF_RANGE",
+                invalidReason));
+            current = SkillProgressField<int>.Unavailable(
+                invalidReason,
+                currentSource);
+        }
+        else
+        {
+            current = SkillProgressField<int>.Available(
+                raw.Power.Value,
+                currentSource);
+        }
+
+        SkillProgressField<int> maximum;
+        if (raw.MaximumPower is null)
+        {
+            maximum = SkillProgressField<int>.Unavailable(
+                reason,
+                maximumSource);
+        }
+        else if (raw.MaximumPower <= 0)
+        {
+            var invalidReason = $"Skill {raw.SkillId} has non-positive "
+                + $"calculated maximum power {raw.MaximumPower}.";
+            warnings.Add(new CharacterCombatSkillProgressWarning(
+                "MAXIMUM_POWER_OUT_OF_RANGE",
+                invalidReason));
+            maximum = SkillProgressField<int>.Unavailable(
+                invalidReason,
+                maximumSource);
+        }
+        else
+        {
+            maximum = SkillProgressField<int>.Available(
+                raw.MaximumPower.Value,
+                maximumSource);
+        }
+
+        return new CombatSkillPowerProgress(
+            current,
+            maximum,
+            CombatSkillPowerContext.OutOfCombat);
+    }
+
+    private static SkillProgressField<bool> MapAttainmentMastery(
+        int characterId,
+        int? taiwuCharacterId,
+        string saveIdentity,
+        RawCharacterCombatSkillProgress raw,
+        CombatSkillStudyDetailDecodeResult studyDetails)
+    {
+        var source = SaveSource(
+            saveIdentity,
+            raw.SkillId,
+            "attainment-mastered");
+        if (taiwuCharacterId is null || characterId != taiwuCharacterId)
+        {
+            return SkillProgressField<bool>.Unavailable(
+                "The player-facing attainment label is defined only for the "
+                + "current Taiwu.",
+                source);
+        }
+
+        if (!studyDetails.IsVersionSupported
+            || !studyDetails.IsActivationStateSupported)
+        {
+            return SkillProgressField<bool>.Unavailable(
+                studyDetails.UnavailableReason
+                ?? "The activation state cannot prove attainment mastery.",
+                source);
+        }
+
+        return SkillProgressField<bool>.Available(
+            CombatSkillStateHelper.IsBrokenOut((ushort)raw.ActivationState),
+            source);
     }
 
     private static SkillProgressField<bool> MapActivation(
@@ -325,8 +440,9 @@ internal static class CombatSkillProgressMapping
 
     private static SkillProgressSource VerifiedSource(
         int skillId,
-        string field) => new(
+        string field,
+        string ruleId = "e2-002") => new(
             SkillProgressSourceKind.VerifiedRule,
-            "verified-rule:e2-002",
+            $"verified-rule:{ruleId}",
             $"combat-skill:{skillId}:{field}");
 }

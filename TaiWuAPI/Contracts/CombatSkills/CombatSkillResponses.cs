@@ -154,8 +154,12 @@ public sealed record CharacterProgressMetadataResponse(
 
 public sealed record CombatSkillProficiencyResponse(
     ProgressFieldResponse Current,
+    ProgressFieldResponse Maximum);
+
+public sealed record CombatSkillPowerResponse(
+    ProgressFieldResponse Current,
     ProgressFieldResponse Maximum,
-    ProgressFieldResponse Percentage);
+    CombatSkillPowerContext Context);
 
 public sealed record CombatSkillStudySummaryResponse(
     int TotalCount,
@@ -185,6 +189,7 @@ public sealed record CharacterCombatSkillProgressResponse(
     int SkillId,
     ProgressFieldResponse Learned,
     CombatSkillProficiencyResponse Proficiency,
+    CombatSkillPowerResponse Power,
     CombatSkillStudySummaryResponse StudySummary,
     IReadOnlyList<CombatSkillStudyDetailResponse> StudyDetails,
     ProgressFieldResponse Breakthrough,

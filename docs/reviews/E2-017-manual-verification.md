@@ -2,7 +2,7 @@
 
 **Evidence date:** 2026-08-02
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-07
 
 **Decision:** Awaiting product-owner approval
 
@@ -33,12 +33,12 @@ proprietary resource was added to the repository.
 |---|---|---|---|
 | Catalogue population | Installed configuration contains 946 combat skills | Import and vertical atlas both report 946 unique stable definitions | Match |
 | Bilingual identity | Golden IDs use installed Traditional Chinese labels | All six golden IDs resolve in both languages; skill `456` is `黑血蠱降` / `Corruptive Gu Infection` | Match |
-| Skill `40` | List shows Reverse and `已大成` | Historical save proves completed Reverse breakthrough and equipped; attainment remains a manual observation, not simplification | Match without false inference |
-| Skill `41` | List shows Direct and `已大成` | Historical save proves completed Direct breakthrough and equipped; attainment remains a manual observation | Match without false inference |
+| Skill `40` | List shows Reverse and `已大成` | Historical save has a supported activation state for which `IsBrokenOut` and attainment are both true; simplification remains false | Exact verified match |
+| Skill `41` | List shows Direct and `已大成` | Historical save has a supported activation state for which `IsBrokenOut` and attainment are both true | Exact verified match |
 | Skill `361` | List shows `已取得` | Learned-collection membership is present with sparse reading state | Match |
 | Skill `456` study wheel | Fifteen labels are visible; orange sectors are `用`, `奇`, `巧`, `化`, `絕`; centre shows `50%` | Reading mask contains all 15 pages; activation mask contains exactly those five Reverse pages | Exact detail/activation match |
 | Skill `456` completion | Orange sectors could be mistaken for the only studied pages | Decoder keeps reading and activation independent and reports 15/15 read; the five orange sectors are active, not unread/read status | Explained semantic distinction |
-| Skill `456` percentage | Newer screen visibly reports `50%` | Older standalone save has no verified persisted conversion, so percentage is unavailable instead of inferred | Explained source freshness |
+| Skill `456` percentage | Newer screen visibly reports `50%` | E2-F06 identifies this as final `Power`; the older standalone save lacks the live calculation context, so it remains unavailable instead of inferred | Explained source freshness and runtime boundary |
 | Skill `498` | No separate detail screenshot was required by E2-001 | Versioned golden read reports learned, 0/15 read, and the exact ordered 15-detail missing list | Verified decoder evidence; no visual claim invented |
 | Skill `686` | Prior verified evidence records incomplete breakthrough | Decoder reports immediate Direct readiness only | Match |
 
@@ -111,17 +111,18 @@ directories, runtime processes, and memory remain outside the write boundary.
 
 All 26 milestone criteria in EPIC-002 have implementation and evidence across
 E2-000 through E2-019. After the latest cache-governance and atlas UI work, the
-final automated run passed **675 total: 670 passed, 0 failed, 5 documented
-opt-in skips**. Installed-catalogue verification passed **675 total: 671
-passed, 0 failed, 4 save-dependent skips**, and the current-save vertical check
-passed **1 of 1**.
+final E2-F06 automated run passed **691 total: 686 passed, 0 failed, 5
+documented opt-in skips**. Installed-catalogue plus current-save verification
+passed **691 total: 688 passed, 0 failed, 3 stale historical-fingerprint
+skips**, including the current-save vertical check.
 
-Three standalone semantics remain unavailable because the inspected save does
-not prove them: the persisted rule for visible `已大成`, the conversion to the
-study-screen centre percentage, and calculated runtime power/maximum power.
-They remain visible as unavailable with reasons and are tracked by E2-F06.
+E2-F06 subsequently verified the remaining semantics. Current-Taiwu `已大成`
+is the same successful-breakthrough predicate already present in the save, and
+the centre percentage is final `Power`, not a proficiency conversion. Only the
+calculated current/maximum power values remain unavailable from a standalone
+save, with reasons, because the live special-effect context is absent.
 
 ## Product-owner decision
 
-Pending: approve Epic 2 as complete with E2-F06 deferred, or keep Epic 2 open
-and request additional fresh in-game evidence.
+Pending: record the product-owner Epic 2 completion decision. E2-F06 no longer
+requires additional semantic evidence.

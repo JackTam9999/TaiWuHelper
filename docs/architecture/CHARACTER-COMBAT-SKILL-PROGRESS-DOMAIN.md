@@ -40,7 +40,9 @@ The overlay exposes these independent properties:
 
 - `Learned`: the exact term verified from
   `GetLearnedCombatSkillByType`; the model does not use “obtained” as a fact;
-- `Proficiency`: current value, maximum value, and percentage as three fields;
+- `Proficiency`: current persisted value and storage maximum;
+- `Power`: current final displayed power, requirements-layer maximum power,
+  and the calculation context;
 - `StudyDetails`: ordered read state and active state for each stable detail;
 - `Breakthrough`: the existing verified
   `BreakthroughDirectionAvailability` value object;
@@ -51,20 +53,33 @@ The overlay exposes these independent properties:
 - `Equipped`: current loadout membership.
 
 There is deliberately no single status enum. A skill may be learned, ready for
-breakthrough, activated, unequipped, and have unavailable attainment mastery
-at the same time.
+breakthrough, activated, and unequipped at the same time. In the verified
+version, an available current-Taiwu attainment value must agree with the
+successful-breakthrough predicate, while simplification remains independent.
 
 ## Proficiency
 
 `CombatSkillProficiencyProgress` validates the installed proficiency storage
-range `0..999999999`. A known maximum must be `1..999999999`, current cannot
-exceed a known maximum, and an available percentage must be `0..100`.
+range `0..999999999`. A known maximum must be `1..999999999`, and current
+cannot exceed a known maximum.
 
-The E2-001 save has no persisted proficiency key and the visible percentage
-conversion is not verified. Those two fields therefore remain unavailable in
-the golden overlay. The model can hold a percentage when a future adapter has
-a verified source, but it never derives one merely because current and maximum
-values exist.
+The E2-001 save has no persisted proficiency key. The model does not contain a
+proficiency percentage because the study-screen centre percentage is the
+separate final-power value.
+
+## Displayed power
+
+`CombatSkillPowerProgress` keeps current final power and maximum power as two
+fields plus an explicit calculation context. Current power must be
+non-negative and maximum power must be positive when available. It deliberately
+does not require current to be less than or equal to maximum: the latter caps
+the requirements-derived layer, while later fixed and percentage modifiers can
+raise the final value above it.
+
+The verified UI renders current `Power` directly with a percent sign. A value
+of `113` and maximum of `100` therefore displays as `113%`, not as 113 percent
+of a denominator. Both fields may be unavailable when the adapter does not
+have the live special-effect context needed for the installed calculation.
 
 ## Study details and completeness
 
@@ -99,10 +114,13 @@ count. `MissingStudyDetails` exposes the exact ordered known-`NotRead` details;
 
 ## Verified combination rules
 
-The constructor rejects only combinations proven impossible by E2-002:
+The constructor rejects only combinations proven impossible by the versioned
+E2-002 and E2-F06 rules:
 
 - an available active direction must be Direct or Reverse;
 - an available active direction is impossible before completed breakthrough;
+- an available attainment value must equal the current successful-
+  breakthrough value;
 - when every detail activation is available, aggregate `Activated` must equal
   whether any detail is active;
 - duplicate detail IDs and duplicate display orders are invalid.
@@ -139,7 +157,9 @@ later adapter slice will populate them from their distinct verified sources.
 - aggregate completeness without false negatives;
 - duplicate and immutable detail collections;
 - Direct/Reverse breakthrough and unknown direction states;
-- independent attainment mastery, simplification, activation, and equipment;
+- the verified attainment/breakthrough relationship and independent
+  simplification, activation, and equipment;
+- current power above maximum power and unavailable live-calculated power;
 - impossible activation combinations;
 - conflicts retaining both source observations;
 - invalid save fingerprints.

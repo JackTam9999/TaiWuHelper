@@ -81,11 +81,11 @@ language packs by the same stable `Name_<skillId>` key.
 | Reverse broken-through/mastered | 40 is visibly Reverse and `已大成` |
 | Equipped or activated | 40 and 41 are equipped in the persisted snapshot; several skills have non-zero raw activation states |
 | Partial study details | 456 has five visually highlighted wheel sectors; their meaning remains a required E2-002 result |
-| Missing or unsupported | The save rule for `已大成`, the visible percentage conversion, and runtime power remain explicitly unavailable |
+| Missing or unsupported | Current and maximum power remain unavailable from the standalone save because the live special-effect context is absent |
 
 ## Resolved source distinctions
 
-E2-002 established that the apparent conflicts are separate measurements; see
+E2-002 and E2-F06 established the precise relationships; see
 [combat-skill progress semantics](../architecture/COMBAT-SKILL-PROGRESS-SEMANTICS.md).
 The diagnostic `mastered=False` value is membership in the martial-art
 simplification list (`功法精解`), not the `已大成` attainment label.
@@ -93,11 +93,12 @@ simplification list (`功法精解`), not the `已大成` attainment label.
 For 黑血蠱降, `read=32767` means all fifteen page details were read, while
 `active=31744` selects the five Reverse details. That activation mask exactly
 matches the five orange sectors `用`, `奇`, `巧`, `化`, and `絕` in the newer
-screen. The visible `50%` is a separate measurement whose persisted conversion
-is unavailable in this older disk snapshot.
+screen. The visible `50%` is the final `CombatSkillDisplayData.Power` value,
+not a reading ratio or persisted-proficiency conversion. Its historical value
+cannot be reconstructed from this older standalone disk snapshot.
 
-The eventual atlas must therefore preserve source freshness, keep the centre
-percentage separate from page state, and retain read and active bits
+The atlas must therefore preserve source freshness, keep current power
+separate from proficiency and page state, and retain read and active bits
 independently. Zero reading and activation values also do not mean
 `未取得`: the installed learned-skill API includes skill `498`.
 

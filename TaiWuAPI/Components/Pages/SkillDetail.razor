@@ -202,10 +202,8 @@
                         {
                             @ProgressFact(T("Maximum proficiency"), progress.Proficiency.Maximum, value => value.ToString())
                         }
-                        @if (progress.Proficiency.Percentage.IsAvailable)
-                        {
-                            @ProgressFact(T("Proficiency percentage"), progress.Proficiency.Percentage, value => $"{value:0.##}%")
-                        }
+                        @ProgressFact(T("Current power"), progress.Power.Current, value => $"{value}%")
+                        @ProgressFact(T("Maximum power"), progress.Power.Maximum, value => $"{value}%")
                         @ProgressFact(T("Breakthrough ready"), progress.Breakthrough, value => YesNo(value.CanBreakthroughNow))
                         @ProgressFact(T("Breakthrough completed"), progress.Breakthrough, value => YesNo(value.IsBrokenOut))
                         @ProgressFact(T("Active direction"), progress.ActiveDirection, DirectionLabel)

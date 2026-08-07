@@ -40,6 +40,7 @@ public sealed class CharacterCombatSkillProgress :
         int skillId,
         SkillProgressField<bool> learned,
         CombatSkillProficiencyProgress proficiency,
+        CombatSkillPowerProgress power,
         IEnumerable<CombatSkillStudyDetailProgress>? studyDetails,
         SkillProgressField<BreakthroughDirectionAvailability> breakthrough,
         SkillProgressField<PracticeDirection> activeDirection,
@@ -67,9 +68,11 @@ public sealed class CharacterCombatSkillProgress :
         ArgumentNullException.ThrowIfNull(saveSnapshot);
         ArgumentNullException.ThrowIfNull(learned);
         ArgumentNullException.ThrowIfNull(proficiency);
+        ArgumentNullException.ThrowIfNull(power);
         ArgumentNullException.ThrowIfNull(breakthrough);
         ValidateActiveDirection(activeDirection, breakthrough);
         ArgumentNullException.ThrowIfNull(attainmentMastered);
+        ValidateAttainmentMastery(attainmentMastered, breakthrough);
         ArgumentNullException.ThrowIfNull(simplified);
         ArgumentNullException.ThrowIfNull(activated);
         ArgumentNullException.ThrowIfNull(equipped);
@@ -94,6 +97,7 @@ public sealed class CharacterCombatSkillProgress :
         SkillId = skillId;
         Learned = learned;
         Proficiency = proficiency;
+        Power = power;
         StudyDetails = details;
         MissingStudyDetails = details
             .Where(detail =>
@@ -121,6 +125,8 @@ public sealed class CharacterCombatSkillProgress :
     public SkillProgressField<bool> Learned { get; }
 
     public CombatSkillProficiencyProgress Proficiency { get; }
+
+    public CombatSkillPowerProgress Power { get; }
 
     public ImmutableArray<CombatSkillStudyDetailProgress> StudyDetails { get; }
 
@@ -189,6 +195,21 @@ public sealed class CharacterCombatSkillProgress :
                 "A skill without completed breakthrough cannot have an "
                 + "active practice direction.",
                 nameof(activeDirection));
+        }
+    }
+
+    private static void ValidateAttainmentMastery(
+        SkillProgressField<bool> attainmentMastered,
+        SkillProgressField<BreakthroughDirectionAvailability> breakthrough)
+    {
+        if (attainmentMastered.IsAvailable
+            && breakthrough.IsAvailable
+            && attainmentMastered.Value != breakthrough.Value.IsBrokenOut)
+        {
+            throw new ArgumentException(
+                "Available attainment mastery must agree with the current "
+                + "successful breakthrough state.",
+                nameof(attainmentMastered));
         }
     }
 

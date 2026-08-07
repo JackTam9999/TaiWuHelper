@@ -14,7 +14,7 @@ public sealed class CharacterCombatSkillProgressTests
     {
         var first = CreateProgress();
         var same = CreateProgress(
-            attainmentMastered: Available(true, "attainment-mastered"));
+            power: Power(140, 120));
         var otherSkill = CreateProgress(skillId: 498);
         var otherCharacter = CreateProgress(characterId: 9);
         var otherSnapshot = CreateProgress(
@@ -46,24 +46,17 @@ public sealed class CharacterCombatSkillProgressTests
     }
 
     [Fact]
-    public void Missing_proficiency_and_percentage_remain_unavailable()
+    public void Missing_proficiency_remains_unavailable()
     {
         var proficiency = new CombatSkillProficiencyProgress(
             SkillProgressField<int>.Unavailable(
                 "The save contains no proficiency key."),
-            Available(CombatSkillProficiencyProgress.MaximumSupportedValue, "max"),
-            SkillProgressField<decimal>.Unavailable(
-                "The display conversion is not verified."));
+            Available(CombatSkillProficiencyProgress.MaximumSupportedValue, "max"));
         var progress = CreateProgress(proficiency: proficiency);
 
         Assert.Equal(
             SkillProgressFieldStatus.Unavailable,
             progress.Proficiency.Current.Status);
-        Assert.Equal(
-            SkillProgressFieldStatus.Unavailable,
-            progress.Proficiency.Percentage.Status);
-        Assert.Throws<InvalidOperationException>(
-            () => progress.Proficiency.Percentage.Value);
     }
 
     [Theory]
@@ -76,31 +69,32 @@ public sealed class CharacterCombatSkillProgressTests
                 Available(value, "current"),
                 Available(
                     CombatSkillProficiencyProgress.MaximumSupportedValue,
-                    "maximum"),
-                SkillProgressField<decimal>.Unavailable(
-                    "Conversion unavailable.")));
-    }
-
-    [Theory]
-    [InlineData(-0.01)]
-    [InlineData(100.01)]
-    public void Invalid_percentage_is_rejected(double value)
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => new CombatSkillProficiencyProgress(
-                Available(50, "current"),
-                Available(100, "maximum"),
-                Available((decimal)value, "percentage")));
+                    "maximum")));
     }
 
     [Fact]
-    public void Current_proficiency_cannot_exceed_known_maximum()
+    public void Runtime_power_can_exceed_its_requirements_cap()
     {
-        Assert.Throws<ArgumentException>(
-            () => new CombatSkillProficiencyProgress(
-                Available(101, "current"),
-                Available(100, "maximum"),
-                Available(100m, "percentage")));
+        var progress = CreateProgress(power: Power(140, 120));
+
+        Assert.Equal(140, progress.Power.Current.Value);
+        Assert.Equal(120, progress.Power.Maximum.Value);
+        Assert.Equal(CombatSkillPowerContext.OutOfCombat, progress.Power.Context);
+    }
+
+    [Theory]
+    [InlineData(-1, 100)]
+    [InlineData(100, 0)]
+    public void Invalid_runtime_power_is_rejected(int current, int maximum)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Power(current, maximum));
+    }
+
+    [Fact]
+    public void Available_attainment_must_match_current_breakthrough()
+    {
+        Assert.Throws<ArgumentException>(() => CreateProgress(
+            attainmentMastered: Available(true, "attainment-mastered")));
     }
 
     [Fact]
@@ -272,6 +266,12 @@ public sealed class CharacterCombatSkillProgressTests
     public void Mastery_simplification_activation_and_equipment_are_independent()
     {
         var progress = CreateProgress(
+            breakthrough: Available(
+                new BreakthroughDirectionAvailability(
+                    isBrokenOut: true,
+                    canBreakthroughNow: false,
+                    []),
+                "breakthrough"),
             attainmentMastered: Available(true, "attainment-mastered"),
             simplified: Available(false, "simplified"),
             activated: Available(true, "activated"),
@@ -338,6 +338,7 @@ public sealed class CharacterCombatSkillProgressTests
         int skillId = 456,
         SkillProgressField<bool>? learned = null,
         CombatSkillProficiencyProgress? proficiency = null,
+        CombatSkillPowerProgress? power = null,
         IEnumerable<CombatSkillStudyDetailProgress>? details = null,
         SkillProgressField<BreakthroughDirectionAvailability>? breakthrough = null,
         SkillProgressField<PracticeDirection>? activeDirection = null,
@@ -366,9 +367,8 @@ public sealed class CharacterCombatSkillProgressTests
                     "No persisted proficiency key."),
                 Available(
                     CombatSkillProficiencyProgress.MaximumSupportedValue,
-                    "maximum"),
-                SkillProgressField<decimal>.Unavailable(
-                    "Percentage conversion is unavailable.")),
+                    "maximum")),
+            power ?? Power(113, 100),
             actualDetails,
             breakthrough ?? Available(
                 new BreakthroughDirectionAvailability(
@@ -429,6 +429,12 @@ public sealed class CharacterCombatSkillProgressTests
 
     private static SkillProgressField<T> Available<T>(T value, string field) =>
         SkillProgressField<T>.Available(value, SaveSource(field));
+
+    private static CombatSkillPowerProgress Power(int current, int maximum) =>
+        new(
+            Available(current, "power"),
+            Available(maximum, "maximum-power"),
+            CombatSkillPowerContext.OutOfCombat);
 
     private static SkillProgressSource SaveSource(string field) =>
         new(

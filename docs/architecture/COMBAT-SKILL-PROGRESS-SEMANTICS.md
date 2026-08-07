@@ -10,10 +10,11 @@
 ## Decision
 
 The catalogue and character atlas must preserve learned membership,
-cultivation proficiency, runtime power, read pages, active pages,
-breakthrough readiness, completed breakthrough, practice direction,
-equipment, and simplification as separate facts. No one field is a safe proxy
-for another.
+cultivation proficiency, displayed power, read pages, active pages,
+breakthrough readiness, current successful breakthrough, practice direction,
+equipment, and simplification as explicitly named facts. For this version the
+player-facing `已大成` label is exactly the current-Taiwu successful-
+breakthrough predicate; it is not martial-art simplification.
 
 The mapping in this document applies only to the detected GameData product
 version. A different version must be re-inspected before these constants or
@@ -25,11 +26,12 @@ labels are reused.
 |---|---|---|
 | Learned | `CombatSkillDomain.GetLearnedCombatSkillByType` and membership in `GetCharCombatSkills` | Available |
 | Cultivation proficiency | `ExtraDomain.TryGetElement_CombatSkillProficiencies(CombatSkillKey, out int)` | Available only when the key exists |
-| Runtime power / maximum power | `CombatSkill.GetPower()` / `GetMaxPower()` | Unavailable: calculation requires the live special-effect context |
+| Centre percentage / current power | `CombatSkillDisplayData.Power`; the UI appends `"%"` directly | Typed, but unavailable from a standalone save because calculation requires the live special-effect context |
+| Requirements-layer power cap | `CombatSkillDisplayData.MaxPower` / `CombatSkill.GetMaxPower()` | Typed, but unavailable from a standalone save for the same reason |
 | Pages read | `CombatSkill.GetReadingState()` plus `CombatSkillStateHelper.IsPageRead` | Available |
 | Pages active | `CombatSkill.GetActivationState()` plus `CombatSkillStateHelper.IsPageActive` | Available |
 | Reading prerequisite | `CombatSkill.CanBreakout()` / `IsReadNormalPagesMeetConditionOfBreakout` | Available |
-| Completed breakthrough | `CombatSkillStateHelper.IsBrokenOut(activationState)`; agrees with `CombatSkillDomain.GetBreakSuccess` | Available |
+| Completed breakthrough and current-Taiwu `已大成` | `CombatSkillStateHelper.IsBrokenOut(activationState)`, equivalent to `(activationState & 0x001F) != 0`; agrees with `CombatSkillDomain.GetBreakSuccess` | Available |
 | Active direction | `GetCombatSkillDirection(activationState)`, only after completed breakthrough | Available when the activation bitfield is supported |
 | Completed preset directions | For Taiwu, `TaiwuDomain.GetCombatSkillBreakPreset(skillId).Presets`; only successful `BreakPlate.SelectedPages` values that satisfy `IsBrokenOut` contribute Direct or Reverse | Available independently of the active preset |
 | Equipped | `CombatSkillEquipment` membership | Available and independent of activation pages |
@@ -41,9 +43,11 @@ snapshot, its type lists contain the same 484 IDs as `GetCharCombatSkills`.
 All six golden IDs are learned, including skill `498`, whose reading and
 activation bitfields are both zero.
 
-## Proficiency and power
+## Proficiency and displayed power
 
-Cultivation proficiency and runtime power are different measurements.
+Cultivation proficiency and displayed power are different measurements. The
+centre percentage is not a proficiency percentage and is not calculated as
+current divided by maximum.
 
 - Cultivation proficiency is a keyed `Int32`. The installed
   `ChangeCombatSkillProficiency` path clamps changes to the inclusive range
@@ -51,19 +55,35 @@ Cultivation proficiency and runtime power are different measurements.
 - A missing proficiency key is **unavailable**, not zero. The E2-001 disk
   snapshot contains no proficiency key for the golden skills, while the newer
   game screen visibly reports `50%` for skill `456`.
-- The exact conversion from persisted cultivation proficiency to that visible
-  percentage could not be verified from the standalone archive and must remain
-  unavailable. The atlas must not divide, clamp, or infer it.
-- `Power` and `MaxPower` are runtime-derived `Int16` display values, with a
-  technical representation range of `-32768..32767`. A narrower player-valid
-  range, the installed live calculation, and any version-dependent upper bound
-  are unavailable to the helper.
+- The study-screen UI renders `CombatSkillDisplayData.Power + "%"` without a
+  division. A visible `120%` means current final power `120`.
+- `Power` and `MaxPower` are runtime-derived `Int16` display values. `MaxPower`
+  limits the requirements-derived layer; later fixed and percentage modifiers
+  can make final `Power` exceed it. The Domain therefore deliberately permits
+  values such as current `113` and maximum `100`.
+- The requirements layer applies the adjusted requirement multiplier to each
+  required attribute with integer truncation, caps each result at `MaxPower`,
+  optionally replaces the lowest result with combat-practice performance, and
+  averages the resulting values using integer division.
+- Final power then applies fixed power additions, general percentage changes,
+  and final increase/decrease multipliers in order. The normal result is
+  clamped to the game's final bounds; a combat-sealed skill can instead display
+  zero, and verified special effects can substitute another skill's power.
+- Simplification changes the requirements multiplier: an original two-slot
+  skill adds `150%` (normally `100%` to `250%`), while an original three-slot
+  skill adds `100%` (normally `100%` to `200%`). Legendary-book placement adds
+  `50%`. These are power inputs, not attainment conditions.
 - The private `_power` and `_maxPower` fields are lazy caches. Their observed
   zero values before calculation are not player progress and must not be
   exposed as facts.
+- Both installed calculation entry points enter
+  `SpecialEffectDomain.ModifyData`. The standalone archive does not reconstruct
+  that live context, so the reader exposes current and maximum power as typed
+  unavailable values instead of invoking the methods or reproducing a partial
+  formula.
 
-Consequently, neither power nor reading-page counts determine learned status,
-cultivation percentage, `已大成`, or simplification.
+Consequently, power does not determine learned status, `已大成`, or
+simplification.
 
 ## The fifteen page details
 
@@ -158,17 +178,30 @@ Golden examples:
 ## `已大成`, breakthrough, and simplification
 
 The newer skill-list screen uses `已大成`, whose English localization is
-“Mastered.” It must not be mapped to either of these unrelated facts:
+“Mastered.” For the current Taiwu, its precise installed condition is:
 
-- completed breakthrough (`BreakSuccess` / `IsBrokenOut`);
-- `GetCharacterMasteredCombatSkills`, whose own UI describes martial-art
-  simplification (`功法精解`) and a one-slot cost reduction.
+`has skill data && (activationState & 0x001F) != 0`.
 
-The exact persisted rule that changes the attainment label from `已取得` to
-`已大成` is unavailable in the E2-001 disk snapshot. Until a live-safe source
-is verified, the atlas may show the manually observed label with provenance,
-but a save-derived attainment stage must remain unavailable. E2-004 must name
-the simplification field explicitly rather than reusing `Mastered`.
+The low five bits are the five alternative outline/玄關 positions.
+`CombatSkillStateHelper.IsBrokenOut` implements the same predicate. In normal
+play this means a successful breakthrough selection containing one outline and
+five normal pages has been saved. It does not require all fifteen pages,
+100-percent cultivation, maximum power, simplification, equipment, or every
+breakthrough bonus. Clearing the outline selection returns the label to the
+non-mastered state, and a mastered skill may be broken through again.
+
+The atlas retains `AttainmentMastered` as a named presentation fact, but for
+this version its available value must equal current
+`Breakthrough.IsBrokenOut`. For an explicitly requested non-Taiwu character it
+remains unavailable because this player-facing predicate is scoped to the
+current Taiwu.
+
+`GetCharacterMasteredCombatSkills` / `IsCombatSkillMasteredByCharacter` is the
+separate martial-art simplification (`功法精解`) list. Simplification reduces a
+two-slot skill to one slot or a three-slot skill to two, while substantially
+raising its performance requirements. It is reversible, preset-specific, and
+does not require `已大成`. The two flags must never be substituted for one
+another.
 
 ## Failure behavior
 
@@ -178,8 +211,11 @@ the simplification field explicitly rather than reusing `Mastered`.
 - An unknown direction value remains unavailable.
 - A claimed reading prerequisite that disagrees with the five-page rule is an
   unavailable inconsistent observation.
-- Runtime power, maximum power, the visible percentage conversion, and the
-  `已大成` save rule remain unavailable in standalone mode.
+- Current-Taiwu `已大成` is available only when the activation state is
+  supported; it is unavailable for another character or unsupported state.
+- Current and maximum power remain unavailable in standalone mode because the
+  verified calculation needs live special-effect state. No proficiency
+  percentage is exposed: the visible centre percentage is current power.
 - Source version or fingerprint changes never reuse golden expectations.
 
 ## Verification
@@ -188,6 +224,9 @@ the simplification field explicitly rather than reusing `Mastered`.
   wheel order, independent read/active values, unknown states, the five-page
   prerequisite, Direct/Reverse availability, and completed-breakthrough
   precedence.
+- `CombatSkillProgressMappingTests` prove that current-Taiwu attainment agrees
+  with `IsBrokenOut`, remains distinct from simplification, permits final power
+  above `MaxPower`, and preserves unavailable live-derived power.
 - The E2-001 opt-in integration assertion is guarded by both
   `TAIWU_INTEGRATION_SAVE_PATH` and the recorded save SHA-256. A newer save is
   skipped rather than compared with stale raw values.

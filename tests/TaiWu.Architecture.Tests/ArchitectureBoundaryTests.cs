@@ -1243,6 +1243,10 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("before != after", labels);
         Assert.Contains("TaiwuLanguageCatalog.ReadAsync", labels);
         Assert.Contains("DomainManager.Taiwu.GetTaiwuCharId()", source);
+        Assert.DoesNotContain("GetCombatSkillDisplayDataOnce(", source);
+        Assert.DoesNotContain("GetPower()", source);
+        Assert.DoesNotContain("GetMaxPower()", source);
+        Assert.Contains("CombatSkillStateHelper.IsBrokenOut", mapping);
         Assert.Contains("fingerprintProvider.CaptureAsync", labels);
         Assert.DoesNotContain("File.Write", labels);
         Assert.DoesNotContain("SaveGameReport", source);

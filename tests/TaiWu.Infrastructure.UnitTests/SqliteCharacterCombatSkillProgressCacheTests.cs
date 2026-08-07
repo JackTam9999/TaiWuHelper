@@ -292,7 +292,9 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
                 true,
                 true,
                 DirectBreakthroughCompleted: true,
-                ReverseBreakthroughCompleted: true),
+                ReverseBreakthroughCompleted: true,
+                Power: 113,
+                MaximumPower: 100),
             new RawCharacterCombatSkillProgress(
                 687,
                 true,
@@ -301,7 +303,9 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
                 44,
                 false,
                 false,
-                false)));
+                false,
+                PowerUnavailableReason:
+                    "The standalone power context is unavailable.")));
 
     private sealed class Fixture : IDisposable
     {

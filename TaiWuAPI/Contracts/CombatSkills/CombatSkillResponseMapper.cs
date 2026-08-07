@@ -97,8 +97,11 @@ public static class CombatSkillResponseMapper
         Map(progress.Learned, value => value),
         new CombatSkillProficiencyResponse(
             Map(progress.Proficiency.Current, value => value),
-            Map(progress.Proficiency.Maximum, value => value),
-            Map(progress.Proficiency.Percentage, value => value)),
+            Map(progress.Proficiency.Maximum, value => value)),
+        new CombatSkillPowerResponse(
+            Map(progress.Power.Current, value => value),
+            Map(progress.Power.Maximum, value => value),
+            progress.Power.Context),
         new CombatSkillStudySummaryResponse(
             progress.StudySummary.TotalCount,
             progress.StudySummary.AvailableCount,

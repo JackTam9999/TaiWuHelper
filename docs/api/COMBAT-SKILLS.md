@@ -109,6 +109,18 @@ proficiency field rather than a numeric zero.
 The response includes catalogue status, save SHA-256/read time, GameData
 version, warnings, paging metadata, issue flags, diagnostics, and stable entry
 keys. Base grid cost and current character-effective grid cost are distinct.
+`proficiency` contains only the persisted current value and storage maximum.
+The separate `power` object contains current final power, maximum power, and
+its calculation context. Current power is the game's centre percentage value,
+not a current/maximum ratio, so clients must permit current power above maximum
+power. In standalone-save responses both power fields are unavailable with a
+reason because the live special-effect calculation context is absent.
+
+For the current Taiwu, `attainmentMastered` is available and equals the
+successful-breakthrough predicate for the current activation state.
+`simplified` is the independent `功法精解` flag. For another explicitly selected
+character the player-facing attainment field is unavailable rather than
+guessed.
 
 ## Helper catalogue maintenance
 

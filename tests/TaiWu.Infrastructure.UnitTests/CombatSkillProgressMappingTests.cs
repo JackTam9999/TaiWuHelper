@@ -25,21 +25,26 @@ public sealed class CombatSkillProgressMappingTests
                 ActivationState: 14881,
                 MeetsBreakthroughReadingRequirement: true,
                 Simplified: false,
-                Equipped: true),
+                Equipped: true,
+                Power: 113,
+                MaximumPower: 100),
             CombatSkillStudyDetailDecoder.SupportedGameDataVersion,
             Labels,
-            warnings);
+            warnings,
+            taiwuCharacterId: 7);
 
         Assert.True(progress.Learned.Value);
         Assert.Equal(125, progress.Proficiency.Current.Value);
         Assert.Equal(
             CombatSkillProficiencyProgress.MaximumSupportedValue,
             progress.Proficiency.Maximum.Value);
-        Assert.False(progress.Proficiency.Percentage.IsAvailable);
+        Assert.Equal(113, progress.Power.Current.Value);
+        Assert.Equal(100, progress.Power.Maximum.Value);
+        Assert.Equal(CombatSkillPowerContext.OutOfCombat, progress.Power.Context);
         Assert.True(progress.Breakthrough.Value.IsBrokenOut);
         Assert.False(progress.Breakthrough.Value.CanBreakthroughNow);
         Assert.Equal(PracticeDirection.Reverse, progress.ActiveDirection.Value);
-        Assert.False(progress.AttainmentMastered.IsAvailable);
+        Assert.True(progress.AttainmentMastered.Value);
         Assert.False(progress.Simplified.Value);
         Assert.True(progress.Activated.Value);
         Assert.True(progress.Equipped.Value);
@@ -72,12 +77,20 @@ public sealed class CombatSkillProgressMappingTests
                 Equipped: false),
             CombatSkillStudyDetailDecoder.SupportedGameDataVersion,
             Labels,
-            warnings);
+            warnings,
+            taiwuCharacterId: 7);
 
         Assert.False(progress.Proficiency.Current.IsAvailable);
+        Assert.False(progress.Power.Current.IsAvailable);
+        Assert.False(progress.Power.Maximum.IsAvailable);
+        Assert.Contains(
+            "GameData power calculation is unavailable",
+            progress.Power.Current.Reason,
+            StringComparison.Ordinal);
         Assert.False(progress.ActiveDirection.IsAvailable);
         Assert.False(progress.Breakthrough.Value.IsBrokenOut);
         Assert.False(progress.Breakthrough.Value.CanBreakthroughNow);
+        Assert.False(progress.AttainmentMastered.Value);
         Assert.False(progress.Activated.Value);
         Assert.True(progress.Simplified.Value);
         Assert.False(progress.Equipped.Value);
@@ -86,6 +99,43 @@ public sealed class CombatSkillProgressMappingTests
         Assert.Equal(15, progress.StudySummary.NotReadCount);
         Assert.False(progress.StudySummary.IsComplete.Value);
         Assert.Empty(warnings);
+    }
+
+    [Theory]
+    [InlineData(0x0000, false)]
+    [InlineData(0x0001, true)]
+    [InlineData(0x0002, true)]
+    [InlineData(0x0004, true)]
+    [InlineData(0x0008, true)]
+    [InlineData(0x0010, true)]
+    [InlineData(0x0020, false)]
+    public void Current_taiwu_attainment_uses_the_low_five_activation_bits(
+        int activationState,
+        bool expected)
+    {
+        List<CharacterCombatSkillProgressWarning> warnings = [];
+
+        var progress = CombatSkillProgressMapping.Map(
+            characterId: 7,
+            Snapshot,
+            new RawCharacterCombatSkillProgress(
+                SkillId: 100,
+                Learned: true,
+                Proficiency: 0,
+                ReadingState: 32767,
+                ActivationState: activationState,
+                MeetsBreakthroughReadingRequirement: false,
+                Simplified: false,
+                Equipped: false),
+            CombatSkillStudyDetailDecoder.SupportedGameDataVersion,
+            Labels,
+            warnings,
+            taiwuCharacterId: 7);
+
+        Assert.Equal(expected, progress.AttainmentMastered.Value);
+        Assert.Equal(
+            progress.Breakthrough.Value.IsBrokenOut,
+            progress.AttainmentMastered.Value);
     }
 
     [Theory]

@@ -298,8 +298,8 @@ independent and carries provenance or an unavailability reason.
 
 - [x] Progress is keyed by character ID, save-snapshot identity, and skill ID.
 - [x] Obtained or learned state uses the exact terminology verified by E2-002.
-- [x] Current proficiency, maximum proficiency, and percentage validate their
-      ranges and handle unavailable values.
+- [x] Current and maximum proficiency validate their ranges; displayed power
+      is a separate typed value and is never inferred as a proficiency ratio.
 - [x] Study details have stable ID, display order, group, label, and a state of
       studied, not studied, or unavailable.
 - [x] Aggregate study completeness is derived from detail state and does not
@@ -885,7 +885,8 @@ assistive technology.
 - [x] Static category, grade, faction, element, equipment type, costs,
       requirements, and effect references are separated from character state.
 - [x] Base cost and current effective cost have distinct labels and provenance.
-- [x] Proficiency current, maximum, and percentage appear only when valid.
+- [x] Proficiency current and maximum appear only when valid; current and
+      maximum power use separate labels and preserve unavailable reasons.
 - [x] Every study detail is identified as studied, not studied, or unavailable.
 - [x] Exact missing verified details are listed in text.
 - [x] Any wheel/map visualization has equivalent ordered semantic markup and
@@ -1086,18 +1087,19 @@ final completion decision.
   matches both original in-game captures by SHA-256 and compares every visible
   list/detail observation with the versioned decoder and helper UI.
 - The current-save vertical check passed with 946 joined definitions and
-  unchanged source fingerprints. After product-owner UI revisions and
-  E2-018/E2-019 cache governance and atlas discoverability work, the default
-  solution suite passed 675 tests: 670 passed, 0 failed, and 5 documented
-  opt-in checks skipped.
-- Installed-catalogue verification passed 675 tests: 671 passed, 0 failed, and
-  4 save-dependent skips. It verified deterministic faction profiles without
+  unchanged source fingerprints. After E2-F06, the default solution suite
+  passed 691 tests: 686 passed, 0 failed, and 5 documented opt-in checks
+  skipped.
+- Installed-catalogue plus current-save verification passed 691 tests: 688
+  passed, 0 failed, and 3 stale historical-fingerprint skips. It verified
+  deterministic faction profiles and the corrected progress semantics without
   changing any inspected source.
 - Source/save freshness, transactional rebuild/recovery, recommendation
   independence, and all Epic 2 milestone criteria are mapped to automated or
   recorded evidence in the review.
-- The completion decision remains pending product-owner approval. Unsupported
-  attainment, percentage, and runtime-power semantics are captured by E2-F06.
+- The completion decision remains pending product-owner approval. E2-F06 now
+  captures the verified attainment and power-display semantics, including the
+  standalone live-calculation boundary.
 
 ### E2-018 — Govern the derived current-progress cache
 
@@ -1222,8 +1224,44 @@ one mechanic at a time, with recommendation integration reviewed separately.
 
 ### E2-F06 — Verify attainment, displayed percentage, and runtime power
 
+**Status:** Complete
+
 Identify the version-specific source for the visible `已大成` attainment label,
-the study-screen centre percentage, and calculated runtime power/maximum power.
-Keep these independent from completed breakthrough, page reading, page
-activation, and martial-art simplification. Do not expose save-derived values
-until a live-safe or persisted source is verified with controlled evidence.
+the study-screen centre percentage, and calculated current/maximum power.
+Preserve the exact verified relationship to breakthrough while keeping
+proficiency, page reading, equipment, and martial-art simplification distinct.
+Do not expose calculated values from a standalone save when the live context is
+absent.
+
+#### Acceptance criteria
+
+- [x] For the current Taiwu, `已大成` is mapped from
+      `CombatSkillStateHelper.IsBrokenOut`, equivalent to
+      `(ActivationState & 0x001F) != 0` for the supported version.
+- [x] `功法精解` remains the separate simplification flag and is not used as an
+      attainment proxy.
+- [x] The centre percentage is identified as
+      `CombatSkillDisplayData.Power + "%"`, not proficiency and not
+      `Power / MaxPower`.
+- [x] Current and maximum power have separate Domain and API fields; current
+      may validly exceed maximum because later modifiers apply after the
+      requirements-layer cap.
+- [x] The standalone reader does not invoke live-only power calculations and
+      returns both values as typed unavailable fields with a stable reason.
+- [x] The helper-owned cache, bilingual UI, API mapper, and automated tests
+      preserve the new fields and semantics.
+
+#### Evidence
+
+- [Combat-skill progress semantics](../../architecture/COMBAT-SKILL-PROGRESS-SEMANTICS.md)
+  records the inspected API, bit predicate, calculation layers, and
+  simplification distinction for the supported GameData version.
+- The current-save vertical test proves attainment agrees with current
+  breakthrough state and that power is unavailable without invoking
+  `SpecialEffectDomain.ModifyData`.
+- Domain and mapper tests cover a displayed current power of `113%` with a
+  requirements-layer maximum of `100%`, and a zero-state simplified skill that
+  is not `已大成`.
+- Final verification: default suite 691 total / 686 passed / 5 documented
+  opt-in skips; installed-catalogue plus current-save suite 691 total / 688
+  passed / 3 stale historical-fingerprint skips; zero failures in both runs.

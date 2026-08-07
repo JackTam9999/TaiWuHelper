@@ -5,7 +5,7 @@
 | Status | In progress — awaiting product-owner completion decision |
 | Milestone | 2 |
 | Target release | TBD |
-| Last updated | 2026-08-04 |
+| Last updated | 2026-08-07 |
 
 ## Summary
 
@@ -126,7 +126,9 @@ progress into a single linear enum. Obtained, proficiency, study completion,
 breakthrough readiness, completed breakthrough, practice direction, mastery,
 activation, and equipment can overlap and must remain independently testable.
 
-For example, `已大成` and `已突破` are separate facts. A skill's direction is
+For example, `已大成` and `已突破` remain separately named presentation facts,
+but the supported version proves they use the same current successful-
+breakthrough predicate for the current Taiwu. A skill's direction is
 not active merely because some study details are complete. The exact
 relationships must follow verified game behavior.
 
@@ -235,7 +237,8 @@ badges:
 |---|---|---|
 | Definition exists | Listed in catalogue | Installed GameData |
 | Obtained or learned | `已取得` | Verified save collection semantics |
-| Proficiency | Current, maximum, percentage | Save skill state |
+| Proficiency | Persisted current and storage maximum | Save skill state |
+| Displayed power | Current final power and requirements-layer maximum | Live GameData display calculation; unavailable in standalone mode |
 | Study details | Complete and missing detail list | Verified reading-state mapping |
 | Breakthrough readiness | `可突破` | Save state plus verified rule |
 | Breakthrough completed | `已突破` | Save activation/breakthrough state |
@@ -254,9 +257,9 @@ No unavailable boolean may default to `false`.
 Create versioned evidence for the exact semantics used by the atlas, including:
 
 - Meaning of membership in the character combat-skill collection.
-- Meaning and valid range of proficiency power and maximum power.
-- Relationship between the skill screen's displayed percentage and saved
-  proficiency values.
+- Meaning and valid range of proficiency, current power, and maximum power.
+- The fact that the skill screen's displayed percentage is final power rather
+  than a percentage derived from saved proficiency.
 - Complete reading-state bit or field mapping for every study detail.
 - Stable identity and grouping of common, direct, and reverse study details.
 - Relationship between studied details and available breakthrough directions.
@@ -293,7 +296,9 @@ Read the current configured save through the existing read-only archive
 session and produce typed progress for every learned or obtained combat skill:
 
 - Character and save-snapshot identity.
-- Proficiency current value, maximum value, and derived percentage when valid.
+- Proficiency current value and maximum value.
+- Current final power and maximum power as distinct typed fields, unavailable
+  when the live calculation context is absent.
 - Individual study-detail states and aggregate completeness.
 - Breakthrough readiness and available directions.
 - Completed breakthrough and active practice direction.
@@ -515,7 +520,7 @@ non-interference guarantees.
 | Risk | Mitigation |
 |---|---|
 | Reading-state bits are misunderstood | Begin with controlled evidence and preserve unknown values |
-| `已大成` and `已突破` are conflated | Model mastery and breakthrough as independent facts |
+| `已大成` is confused with `功法精解` | Preserve named attainment and breakthrough fields with their verified equality, and keep simplification independent |
 | Game updates change configuration shape | Record source identity and fail or rebuild explicitly |
 | Character progress becomes stale | Read it from the active save snapshot and show read time/hash |
 | SQLite creates a broad file-write exception | Use one path-guarded Infrastructure adapter and architecture tests |
@@ -533,10 +538,12 @@ raw-text boundary, and source-identity rules used by the atlas. Those decisions
 are recorded in the linked architecture and review evidence rather than
 inferred at runtime.
 
-Three standalone semantics remain deliberately unavailable: visible `已大成`
-attainment, the study-screen centre percentage, and calculated runtime
-power/maximum power. They are deferred to E2-F06 and do not block honest
-catalogue or progress states.
+E2-F06 verified the remaining display semantics. For the current Taiwu,
+`已大成` is the successful-breakthrough predicate
+`(ActivationState & 0x001F) != 0`; it is not `功法精解`. The study-screen centre
+percentage is current final `Power`, not proficiency or a current/maximum
+ratio. Current and maximum power remain typed unavailable in standalone-save
+reads because their installed calculation requires live special-effect state.
 
 ## Delivery reference
 

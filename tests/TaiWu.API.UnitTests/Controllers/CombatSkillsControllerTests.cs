@@ -134,6 +134,17 @@ public sealed class CombatSkillsControllerTests
         Assert.NotNull(response.ProgressMetadata);
         Assert.Equal(42, response.CharacterState!.Progress!.CharacterId);
         Assert.Equal(15, response.CharacterState.Progress.StudySummary.TotalCount);
+        Assert.Equal(
+            113,
+            Assert.IsType<int>(
+                response.CharacterState.Progress.Power.Current.Value));
+        Assert.Equal(
+            100,
+            Assert.IsType<int>(
+                response.CharacterState.Progress.Power.Maximum.Value));
+        Assert.Equal(
+            CombatSkillPowerContext.OutOfCombat,
+            response.CharacterState.Progress.Power.Context);
         Assert.Contains(
             CombatSkillQueryIssue.UnsupportedStudyMapping,
             response.Issues);
@@ -527,8 +538,11 @@ public sealed class CombatSkillsControllerTests
             SkillProgressField<bool>.Available(true, source),
             new CombatSkillProficiencyProgress(
                 SkillProgressField<int>.Available(50, source),
+                SkillProgressField<int>.Available(100, source)),
+            new CombatSkillPowerProgress(
+                SkillProgressField<int>.Available(113, source),
                 SkillProgressField<int>.Available(100, source),
-                SkillProgressField<decimal>.Available(50m, source)),
+                CombatSkillPowerContext.OutOfCombat),
             details,
             SkillProgressField<BreakthroughDirectionAvailability>.Available(
                 new BreakthroughDirectionAvailability(false, false, []),

@@ -344,6 +344,11 @@ public sealed class LocalGameDataIntegrationTests
             var second = await useCase.ExecuteAsync(
                 request,
                 TestContext.Current.CancellationToken);
+            var projectedProgress = await progressReader.ReadAsync(
+                new CharacterCombatSkillProgressReadRequest(
+                    characterId: null,
+                    CatalogueLanguage.TraditionalChinese),
+                TestContext.Current.CancellationToken);
 
             Assert.Equal(CombatSkillCatalogueStatus.Current, first.Catalogue.Status);
             Assert.Equal(CharacterProgressReadStatus.Available, first.ProgressStatus);
@@ -351,6 +356,25 @@ public sealed class LocalGameDataIntegrationTests
             Assert.Equal(CharacterProgressReadStatus.Available, second.ProgressStatus);
             Assert.NotNull(first.ProgressMetadata);
             Assert.NotNull(second.ProgressMetadata);
+            Assert.Equal(
+                CharacterProgressReadStatus.Available,
+                projectedProgress.Status);
+            Assert.NotEmpty(projectedProgress.Progress);
+            Assert.All(
+                projectedProgress.Progress,
+                progress =>
+                {
+                    Assert.False(progress.Power.Current.IsAvailable);
+                    Assert.False(progress.Power.Maximum.IsAvailable);
+                    Assert.Contains(
+                        "live GameData special-effect context",
+                        progress.Power.Current.Reason,
+                        StringComparison.Ordinal);
+                    Assert.True(progress.AttainmentMastered.IsAvailable);
+                    Assert.Equal(
+                        progress.Breakthrough.Value.IsBrokenOut,
+                        progress.AttainmentMastered.Value);
+                });
             Assert.True(
                 string.Equals(
                     before[savePath].Sha256,
@@ -882,10 +906,10 @@ public sealed class LocalGameDataIntegrationTests
         Assert.Equal(
             result.Progress.Select(progress => progress.SkillId).Order(),
             result.Progress.Select(progress => progress.SkillId));
-        Assert.Contains(
+        Assert.DoesNotContain(
             result.Metadata.Warnings,
             warning => warning.Code == "ATTAINMENT_MASTERY_UNAVAILABLE");
-        Assert.Contains(
+        Assert.DoesNotContain(
             result.Metadata.Warnings,
             warning => warning.Code == "PROFICIENCY_PERCENTAGE_UNAVAILABLE");
         Assert.DoesNotContain(
@@ -899,6 +923,9 @@ public sealed class LocalGameDataIntegrationTests
             progress => progress.SkillId == 40);
         Assert.True(reverse.Learned.Value);
         Assert.True(reverse.Breakthrough.Value.IsBrokenOut);
+        Assert.True(reverse.AttainmentMastered.Value);
+        Assert.False(reverse.Power.Current.IsAvailable);
+        Assert.False(reverse.Power.Maximum.IsAvailable);
         Assert.Equal(
             PracticeDirection.Reverse,
             reverse.ActiveDirection.Value);
@@ -909,6 +936,7 @@ public sealed class LocalGameDataIntegrationTests
             result.Progress,
             progress => progress.SkillId == 41);
         Assert.True(direct.Breakthrough.Value.IsBrokenOut);
+        Assert.True(direct.AttainmentMastered.Value);
         Assert.Equal(PracticeDirection.Direct, direct.ActiveDirection.Value);
         Assert.True(direct.Equipped.Value);
 
@@ -918,6 +946,7 @@ public sealed class LocalGameDataIntegrationTests
         Assert.True(zeroState.Learned.Value);
         Assert.False(zeroState.Activated.Value);
         Assert.False(zeroState.Breakthrough.Value.IsBrokenOut);
+        Assert.False(zeroState.AttainmentMastered.Value);
         Assert.Equal(15, zeroState.StudyDetails.Length);
         Assert.Equal(15, zeroState.MissingStudyDetails.Length);
         Assert.Equal(15, zeroState.StudySummary.AvailableCount);
@@ -978,7 +1007,8 @@ public sealed class LocalGameDataIntegrationTests
             FieldSignature(progress.Learned),
             FieldSignature(progress.Proficiency.Current),
             FieldSignature(progress.Proficiency.Maximum),
-            FieldSignature(progress.Proficiency.Percentage),
+            FieldSignature(progress.Power.Current),
+            FieldSignature(progress.Power.Maximum),
             FieldSignature(progress.Breakthrough),
             FieldSignature(progress.ActiveDirection),
             FieldSignature(progress.AttainmentMastered),

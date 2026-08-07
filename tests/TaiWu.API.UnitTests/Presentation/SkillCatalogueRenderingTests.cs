@@ -138,7 +138,7 @@ public sealed partial class SkillCatalogueRenderingTests
                 definition.SkillId,
                 new BreakthroughDirectionAvailability(true, false, []),
                 PracticeDirection.Direct,
-                mastered: false,
+                mastered: true,
                 simplified: false,
                 activated: false,
                 equipped: false,
@@ -399,7 +399,7 @@ public sealed partial class SkillCatalogueRenderingTests
             686,
             new BreakthroughDirectionAvailability(true, false, []),
             PracticeDirection.Reverse,
-            mastered: false,
+            mastered: true,
             simplified: false,
             activated: false,
             equipped: false);
@@ -429,7 +429,7 @@ public sealed partial class SkillCatalogueRenderingTests
                 [],
                 [PracticeDirection.Direct]),
             PracticeDirection.Direct,
-            mastered: false,
+            mastered: true,
             simplified: false,
             activated: true,
             equipped: true);
@@ -470,7 +470,7 @@ public sealed partial class SkillCatalogueRenderingTests
                 [],
                 [PracticeDirection.Direct, PracticeDirection.Reverse]),
             PracticeDirection.Direct,
-            mastered: false,
+            mastered: true,
             simplified: false,
             activated: true,
             equipped: true);
@@ -592,7 +592,7 @@ public sealed partial class SkillCatalogueRenderingTests
             686,
             new BreakthroughDirectionAvailability(true, false, []),
             PracticeDirection.Direct,
-            mastered: false,
+            mastered: true,
             simplified: false,
             activated: false,
             equipped: true);
@@ -936,8 +936,11 @@ public sealed partial class SkillCatalogueRenderingTests
             SkillProgressField<bool>.Available(true, source),
             new CombatSkillProficiencyProgress(
                 SkillProgressField<int>.Available(50, source),
+                SkillProgressField<int>.Available(100, source)),
+            new CombatSkillPowerProgress(
+                SkillProgressField<int>.Available(113, source),
                 SkillProgressField<int>.Available(100, source),
-                SkillProgressField<decimal>.Available(50m, source)),
+                CombatSkillPowerContext.OutOfCombat),
             details,
             SkillProgressField<BreakthroughDirectionAvailability>.Available(
                 breakthrough,

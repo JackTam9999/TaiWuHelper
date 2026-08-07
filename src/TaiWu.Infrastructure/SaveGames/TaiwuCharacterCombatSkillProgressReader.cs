@@ -205,7 +205,11 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
                     skillId),
                 equippedSkillIds.Contains(skillId),
                 completedDirections.Direct,
-                completedDirections.Reverse));
+                completedDirections.Reverse,
+                PowerUnavailableReason:
+                    "Current and maximum power require the live GameData "
+                    + "special-effect context and cannot be calculated from "
+                    + "the standalone save archive."));
         }
 
         return new RawCharacterCombatSkillSnapshot(
@@ -260,11 +264,11 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
 
         return CombatSkillStateHelper.GetCombatSkillDirection(activationState)
             switch
-            {
-                0 => (true, completed.Reverse),
-                1 => (completed.Direct, true),
-                _ => completed
-            };
+        {
+            0 => (true, completed.Reverse),
+            1 => (completed.Direct, true),
+            _ => completed
+        };
     }
 
     private static CharacterCombatSkillProgressReadResult Map(
@@ -285,13 +289,6 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
                 + "boundary while loading read-only progress."));
         }
 
-        warnings.Add(new CharacterCombatSkillProgressWarning(
-            "ATTAINMENT_MASTERY_UNAVAILABLE",
-            "The persisted rule for the player-facing attainment mastery "
-            + "label is not verified for this version."));
-        warnings.Add(new CharacterCombatSkillProgressWarning(
-            "PROFICIENCY_PERCENTAGE_UNAVAILABLE",
-            "The displayed proficiency percentage conversion is not verified."));
         var progress = rawSnapshot.Progress.Select(raw =>
             CombatSkillProgressMapping.Map(
                 rawSnapshot.CharacterId,
@@ -299,7 +296,8 @@ internal sealed class TaiwuCharacterCombatSkillProgressReader(
                 raw,
                 gameDataVersion,
                 labels,
-                warnings))
+                warnings,
+                rawSnapshot.TaiwuCharacterId))
             .ToArray();
         return CharacterCombatSkillProgressReadResult.Available(
             new CharacterCombatSkillProgressMetadata(
