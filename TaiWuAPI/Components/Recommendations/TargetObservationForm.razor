@@ -1,0 +1,543 @@
+@implements IAsyncDisposable
+@using TaiWu.Application.CombatRecommendations
+@using TaiWu.Application.CombatSkills
+@using TaiWu.Application.Localization
+@using TaiWu.Application.Targets
+@using TaiWu.Domain.CombatSnapshots
+@using TaiWuAPI.Localization
+@using TaiWuAPI.Presentation
+@inject IResolveTargetSkillSelection Resolver
+
+<section class="target-observation-panel"
+         aria-labelledby="target-observation-heading"
+         aria-busy="@(State.Status == TargetObservationEditorStatus.Searching || State.Status == TargetObservationEditorStatus.Applying ? "true" : "false")">
+    <div class="target-observation-heading">
+        <div>
+            <p class="eyebrow">@T("Optional target observation")</p>
+            <h3 id="target-observation-heading">@T("Report a visible sparring loadout")</h3>
+        </div>
+        <span class="information-badge">@T("Manual input only")</span>
+    </div>
+
+    <p>
+        @T("Use this only after opening the opponent's loadout during a martial-arts spar. Hostile and story characters do not expose this screen.")
+    </p>
+
+    <label class="check-control" for="target-observation-enabled">
+        <input id="target-observation-enabled"
+               type="checkbox"
+               checked="@State.IsEnabled"
+               @onchange="ToggleEnabled"
+               disabled="@(Target is null || Recommendation is null || Busy)" />
+        @T("Add a current sparring-opponent observation")
+    </label>
+
+    @if (Recommendation is null)
+    {
+        <p class="field-help" id="target-observation-prerequisite">
+            @T("Get a save-only recommendation first so target identity and save freshness can be reviewed before entry.")
+        </p>
+    }
+
+    @if (!State.IsEnabled && State.Status == TargetObservationEditorStatus.Cleared)
+    {
+        <p class="target-observation-status" role="status">
+            @StatusText()
+        </p>
+    }
+
+    @if (State.IsEnabled && Target is not null && Recommendation is not null)
+    {
+        <div class="target-observation-context" role="note">
+            <div>
+                <span>@T("Observed target")</span>
+                <strong>@Target.DisplayName</strong>
+                <small>@Target.Age @T("years")</small>
+            </div>
+            <div>
+                <span>@T("Save snapshot read")</span>
+                <strong>@Recommendation.CapturedAtUtc.ToLocalTime().ToString("g")</strong>
+                <small>@SaveFreshness()</small>
+            </div>
+        </div>
+
+        <fieldset class="target-observation-context-picker">
+            <legend>@T("Where can you inspect this opponent?")</legend>
+            @foreach (var context in Enum.GetValues<TargetObservationContext>())
+            {
+                <label>
+                    <input type="radio"
+                           name="target-observation-context"
+                           value="@context"
+                           checked="@(State.Context == context)"
+                           @onchange="() => SelectContext(context)" />
+                    @ContextLabel(context)
+                </label>
+            }
+        </fieldset>
+
+        @if (State.Status == TargetObservationEditorStatus.Unavailable)
+        {
+            <div class="target-observation-unavailable" role="status">
+                <strong>@T("Opponent loadout unavailable")</strong>
+                <p>@T("The supported game UI does not expose the opponent's loadout for hostile or story characters. No hidden loadout input will be requested.")</p>
+            </div>
+        }
+        else if (State.Context == TargetObservationContext.Sparring)
+        {
+            <fieldset class="target-observation-coverage">
+                <legend>@T("How much of the current loadout did you inspect?")</legend>
+                <label>
+                    <input type="radio"
+                           name="target-observation-coverage"
+                           checked="@(State.Coverage == TargetLoadoutCoverageKind.PartialLoadout)"
+                           @onchange="() => SetCoverage(TargetLoadoutCoverageKind.PartialLoadout)" />
+                    <span>
+                        <strong>@T("Partial loadout")</strong>
+                        <small>@T("Only listed skills are confirmed; omitted skills remain unknown.")</small>
+                    </span>
+                </label>
+                <label>
+                    <input type="radio"
+                           name="target-observation-coverage"
+                           checked="@(State.Coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout)"
+                           @onchange="() => SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout)" />
+                    <span>
+                        <strong>@T("Complete current loadout")</strong>
+                        <small>@T("Every visible category and empty slot on this one displayed preset was inspected.")</small>
+                    </span>
+                </label>
+            </fieldset>
+
+            <div class="target-skill-search">
+                <label for="target-skill-query">@T("Visible combat-skill name")</label>
+                <div class="inline-control">
+                    <input id="target-skill-query"
+                           value="@State.Query"
+                           @oninput="UpdateQuery"
+                           aria-describedby="target-skill-help target-skill-error"
+                           autocomplete="off"
+                           disabled="@(!State.CanEdit || Busy)" />
+                    <button type="button"
+                            class="secondary-button"
+                            @onclick="SearchAsync"
+                            disabled="@(!State.CanEdit || Busy || string.IsNullOrWhiteSpace(State.Query))">
+                        @(State.Status == TargetObservationEditorStatus.Searching
+                            ? T("Searching…")
+                            : T("Find skill"))
+                    </button>
+                </div>
+                <small id="target-skill-help">
+                    @T("Search the exact name visible in the active game language. Category is verified from the catalogue, not typed manually.")
+                </small>
+                @if (State.ValidationCode is not null)
+                {
+                    <p id="target-skill-error" class="field-error" role="alert">
+                        @ValidationText(State.ValidationCode)
+                    </p>
+                }
+            </div>
+
+            @if (State.Candidates.Count > 0)
+            {
+                <div class="target-skill-candidates"
+                     role="list"
+                     aria-label="@T("Catalogue matches")">
+                    @foreach (var candidate in State.Candidates)
+                    {
+                        <button type="button"
+                                role="listitem"
+                                @onclick="() => ConfirmCandidateAsync(candidate)"
+                                disabled="@Busy">
+                            <strong>@candidate.Name</strong>
+                            <span>@CategoryLabel(candidate.Category)</span>
+                            <small>
+                                @T("Verified catalogue match")
+                                @if (candidate.BaseGridCost.HasValue)
+                                {
+                                    <span> · @candidate.BaseGridCost @T("base slots")</span>
+                                }
+                                · @MatchLabel(candidate.Match)
+                            </small>
+                        </button>
+                    }
+                </div>
+            }
+
+            <div class="target-selected-skills" aria-live="polite">
+                <h4>@T("Confirmed visible skills")</h4>
+                @if (State.SelectedSkills.Count == 0)
+                {
+                    <p>@T("No target skill has been confirmed yet.")</p>
+                }
+                else
+                {
+                    <ul>
+                        @foreach (var skill in State.SelectedSkills)
+                        {
+                            <li>
+                                <div>
+                                    <strong>@skill.Name</strong>
+                                    <span>@CategoryLabel(skill.Category) · @T("Verified catalogue identity")</span>
+                                </div>
+                                <label>
+                                    @T("Visible direction")
+                                    <select value="@DirectionValue(skill.Direction)"
+                                            @onchange="args => ChangeDirection(skill.SkillId, args)">
+                                        <option value="">@T("Not observed")</option>
+                                        <option value="Direct">@T("Direct")</option>
+                                        <option value="Reverse">@T("Reverse")</option>
+                                    </select>
+                                </label>
+                                <button type="button"
+                                        class="text-button"
+                                        @onclick="() => State.RemoveSkill(skill.SkillId)">
+                                    @T("Remove")
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            @if (!Recommendation.SaveLastWriteTimeUtc.HasValue)
+            {
+                <label class="check-control">
+                    <input type="checkbox"
+                           @bind="State.ConfirmPrecedenceWhenSaveTimeUnavailable" />
+                    @T("I confirm this visible screen is newer than the configured save snapshot.")
+                </label>
+            }
+
+            <div class="target-observation-actions">
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="Review"
+                        disabled="@(!State.CanReview || Busy)">
+                    @T("Review observation")
+                </button>
+                <button type="button"
+                        class="text-button"
+                        @onclick="ClearAsync"
+                        disabled="@Busy">
+                    @T("Clear observation")
+                </button>
+            </div>
+
+            @if (ShowReview)
+            {
+                <section class="target-observation-review"
+                         aria-labelledby="target-observation-review-heading">
+                    <h4 id="target-observation-review-heading">@T("Observation review")</h4>
+                    <dl>
+                        <div>
+                            <dt>@T("Target")</dt>
+                            <dd>@Target.DisplayName</dd>
+                        </div>
+                        <div>
+                            <dt>@T("Coverage")</dt>
+                            <dd>@CoverageLabel(State.Coverage)</dd>
+                        </div>
+                        <div>
+                            <dt>@T("Observed at")</dt>
+                            <dd>@State.ObservedAtUtc?.ToLocalTime().ToString("g")</dd>
+                        </div>
+                        <div>
+                            <dt>@T("Evidence status")</dt>
+                            <dd>@StatusText()</dd>
+                        </div>
+                    </dl>
+                    <p>
+                        @T("Only the confirmed fields above will receive current-screen precedence. This does not control or modify the game.")
+                    </p>
+                    @if (State.Status == TargetObservationEditorStatus.Review)
+                    {
+                        <button type="button"
+                                class="primary-button"
+                                @onclick="ApplyAsync"
+                                disabled="@(!State.CanApply || Busy)">
+                            @T("Use observation for recommendation")
+                        </button>
+                    }
+                </section>
+            }
+
+            <p class="target-observation-status"
+               role="@(State.Status is TargetObservationEditorStatus.Error ? "alert" : "status")">
+                @StatusText()
+            </p>
+        }
+    }
+</section>
+
+@code {
+    private CancellationTokenSource? _searchCancellation;
+
+    [Parameter, EditorRequired]
+    public TargetObservationEditorState State { get; set; } = null!;
+
+    [Parameter]
+    public TargetLookupEntry? Target { get; set; }
+
+    [Parameter]
+    public CombatRecommendationViewModel? Recommendation { get; set; }
+
+    [Parameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public EventCallback<TargetObservationRequest> ApplyRequested { get; set; }
+
+    [Parameter]
+    public EventCallback ClearRequested { get; set; }
+
+    private bool ShowReview => State.Status is
+        TargetObservationEditorStatus.Review
+        or TargetObservationEditorStatus.Applying
+        or TargetObservationEditorStatus.Applied
+        or TargetObservationEditorStatus.Stale
+        or TargetObservationEditorStatus.Conflicting
+        or TargetObservationEditorStatus.Unsupported
+        or TargetObservationEditorStatus.PrecedenceConfirmationRequired;
+
+    private void ToggleEnabled(ChangeEventArgs args)
+    {
+        State.SetEnabled(args.Value is true, Recommendation is not null);
+    }
+
+    private void SelectContext(TargetObservationContext context) =>
+        State.SetContext(context);
+
+    private void SetCoverage(TargetLoadoutCoverageKind coverage)
+    {
+        State.SetCoverage(coverage);
+    }
+
+    private void UpdateQuery(ChangeEventArgs args)
+    {
+        State.Query = args.Value?.ToString() ?? string.Empty;
+    }
+
+    private async Task SearchAsync()
+    {
+        if (!State.BeginSearch())
+        {
+            return;
+        }
+
+        var cancellation = ReplaceSearchCancellation();
+        try
+        {
+            var result = await Resolver.ExecuteAsync(
+                SelectionRequest(
+                    State.Query,
+                    SkillCategory.Attack,
+                    confirmedSkillId: null,
+                    direction: null,
+                    slotIndex: null),
+                cancellation.Token);
+            State.SetSearchResult(result);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException or InvalidDataException)
+        {
+            State.MarkError("CATALOGUE_UNAVAILABLE");
+        }
+    }
+
+    private async Task ConfirmCandidateAsync(
+        TargetObservationCandidateViewModel candidate)
+    {
+        var cancellation = ReplaceSearchCancellation();
+        try
+        {
+            var result = await Resolver.ExecuteAsync(
+                SelectionRequest(
+                    State.Query,
+                    candidate.Category,
+                    candidate.SkillId,
+                    direction: null,
+                    slotIndex: NextSlot(candidate.Category)),
+                cancellation.Token);
+            if (result.ResolvedSelection is null)
+            {
+                State.SetSearchResult(result);
+                return;
+            }
+
+            State.AddResolved(result.ResolvedSelection);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException or InvalidDataException)
+        {
+            State.MarkError("SKILL_SELECTION_INVALID");
+        }
+    }
+
+    private TargetSkillSelectionRequest SelectionRequest(
+        string query,
+        SkillCategory category,
+        int? confirmedSkillId,
+        PracticeDirection? direction,
+        int? slotIndex) => new(
+            TargetObservationContext.Sparring,
+            Language == TaiwuLanguage.Chinese
+                ? TaiWu.Domain.CombatSkills.CatalogueLanguage.TraditionalChinese
+                : TaiWu.Domain.CombatSkills.CatalogueLanguage.English,
+            query,
+            category,
+            confirmedSkillId,
+            direction,
+            slotIndex,
+            targetSnapshotSkillIds: null);
+
+    private int NextSlot(SkillCategory category) => State.SelectedSkills
+        .Count(skill => skill.Category == category);
+
+    private void ChangeDirection(int skillId, ChangeEventArgs args)
+    {
+        var direction = args.Value?.ToString() switch
+        {
+            "Direct" => PracticeDirection.Direct,
+            "Reverse" => PracticeDirection.Reverse,
+            _ => (PracticeDirection?)null
+        };
+        State.SetDirection(skillId, direction);
+    }
+
+    private void Review()
+    {
+        State.BeginReview(DateTimeOffset.UtcNow);
+    }
+
+    private async Task ApplyAsync()
+    {
+        var request = State.BuildRequest();
+        State.MarkApplying();
+        await ApplyRequested.InvokeAsync(request);
+    }
+
+    private async Task ClearAsync()
+    {
+        State.Clear();
+        await ClearRequested.InvokeAsync();
+    }
+
+    private string SaveFreshness()
+    {
+        if (!Recommendation!.SaveLastWriteTimeUtc.HasValue)
+        {
+            return T("Save timestamp unavailable; explicit precedence confirmation is required.");
+        }
+
+        return T("Save timestamp available for freshness comparison.");
+    }
+
+    private string StatusText() => State.Status switch
+    {
+        TargetObservationEditorStatus.Initial =>
+            T("Target observation is off."),
+        TargetObservationEditorStatus.Editing =>
+            T("Editing a session-only target observation."),
+        TargetObservationEditorStatus.Searching => T("Searching catalogue…"),
+        TargetObservationEditorStatus.Ambiguous =>
+            T("More than one catalogue skill matched. Confirm the correct one."),
+        TargetObservationEditorStatus.Review =>
+            T("Review the confirmed evidence before using it."),
+        TargetObservationEditorStatus.Applying =>
+            T("Applying observation to a new helper snapshot…"),
+        TargetObservationEditorStatus.Applied =>
+            T("Observation applied to the helper snapshot."),
+        TargetObservationEditorStatus.Stale =>
+            T("Observation is not newer than the configured save and was not applied."),
+        TargetObservationEditorStatus.Conflicting =>
+            T("Observation applied with a saved-value conflict; both sources are retained."),
+        TargetObservationEditorStatus.Unsupported =>
+            T("Observation is unsupported for this GameData version and was not applied."),
+        TargetObservationEditorStatus.PrecedenceConfirmationRequired =>
+            T("Confirm that the visible screen is newer because the save timestamp is unavailable."),
+        TargetObservationEditorStatus.Unavailable =>
+            T("Opponent loadout observation is unavailable in this encounter context."),
+        TargetObservationEditorStatus.Error =>
+            ValidationText(State.ValidationCode ?? "OBSERVATION_INVALID"),
+        TargetObservationEditorStatus.Cleared =>
+            T("Observation cleared; the recommendation is save-only."),
+        _ => T("Target observation state unavailable.")
+    };
+
+    private string ValidationText(string code) => code switch
+    {
+        "INITIAL_RECOMMENDATION_REQUIRED" =>
+            T("Get a save-only recommendation before entering target evidence."),
+        "SPARRING_CONTEXT_REQUIRED" =>
+            T("Confirm a martial-arts spar before searching target skills."),
+        "VISIBLE_SKILL_NAME_REQUIRED" =>
+            T("Enter the combat-skill name visible in the game."),
+        "AMBIGUOUS_SKILL" =>
+            T("Multiple skills matched; choose the verified catalogue entry."),
+        "SKILL_DEFINITION_MISSING" =>
+            T("No verified catalogue skill matched that visible name."),
+        "CATALOGUE_MISSING" or "CATALOGUE_STALE" or
+        "CATALOGUE_REBUILDING" or "CATALOGUE_UNSUPPORTED" or
+        "CATALOGUE_UNAVAILABLE" =>
+            T("The current catalogue cannot resolve this target skill."),
+        "PARTIAL_SKILL_REQUIRED" =>
+            T("A partial observation must confirm at least one visible skill."),
+        "SKILL_SELECTION_INVALID" =>
+            T("The selected skill could not be confirmed from the current catalogue."),
+        "OBSERVATION_APPLY_FAILED" =>
+            T("The observation request could not be completed. Review the fields and try again."),
+        _ => T("The target observation is not ready.")
+    };
+
+    private string ContextLabel(TargetObservationContext context) => context switch
+    {
+        TargetObservationContext.Sparring => T("Martial-arts spar"),
+        TargetObservationContext.Hostile => T("Hostile encounter"),
+        TargetObservationContext.Story => T("Story encounter"),
+        _ => T("Unavailable")
+    };
+
+    private string CoverageLabel(TargetLoadoutCoverageKind coverage) =>
+        coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout
+            ? T("Complete current loadout")
+            : T("Partial loadout");
+
+    private string CategoryLabel(SkillCategory category) => T(category.ToString());
+
+    private string MatchLabel(TargetSkillMatchKind match) => match switch
+    {
+        TargetSkillMatchKind.Exact => T("Exact name"),
+        TargetSkillMatchKind.Partial => T("Partial name"),
+        _ => T("Unavailable")
+    };
+
+    private static string DirectionValue(PracticeDirection? direction) =>
+        direction?.ToString() ?? string.Empty;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private CancellationTokenSource ReplaceSearchCancellation()
+    {
+        _searchCancellation?.Cancel();
+        _searchCancellation?.Dispose();
+        _searchCancellation = new CancellationTokenSource();
+        return _searchCancellation;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _searchCancellation?.Cancel();
+        _searchCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

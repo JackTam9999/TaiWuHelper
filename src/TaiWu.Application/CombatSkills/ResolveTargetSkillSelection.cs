@@ -7,6 +7,7 @@ namespace TaiWu.Application.CombatSkills;
 public sealed class ResolveTargetSkillSelection(
     ICombatSkillDefinitionSource definitionSource,
     ICombatSkillCatalogueRepository repository)
+    : IResolveTargetSkillSelection
 {
     public async Task<TargetSkillSelectionResult> ExecuteAsync(
         TargetSkillSelectionRequest request,

@@ -329,6 +329,107 @@ public static class UiText
             ["Use selected equipped-skill names"] = "使用所選的已裝備功法名稱",
             ["Get an initial recommendation to load available skill names."] =
                 "請先取得一次推薦，以載入可用的功法名稱。",
+            ["Optional target observation"] = "可選：目標觀察",
+            ["Report a visible sparring loadout"] = "回報可見的切磋運功配置",
+            ["Manual input only"] = "僅限手動輸入",
+            ["Use this only after opening the opponent's loadout during a martial-arts spar. Hostile and story characters do not expose this screen."] =
+                "僅在切磋武功中已打開對手運功畫面時使用。敵對及劇情人物不會顯示此畫面。",
+            ["Add a current sparring-opponent observation"] =
+                "加入目前切磋對手的觀察",
+            ["Get a save-only recommendation first so target identity and save freshness can be reviewed before entry."] =
+                "請先取得只使用存檔的推薦，以便輸入前核對目標身分與存檔新鮮度。",
+            ["Observed target"] = "觀察目標",
+            ["Save snapshot read"] = "存檔快照讀取時間",
+            ["Where can you inspect this opponent?"] = "你在哪種情境查看此對手？",
+            ["Martial-arts spar"] = "切磋武功",
+            ["Hostile encounter"] = "敵對戰鬥",
+            ["Story encounter"] = "劇情情境",
+            ["Opponent loadout unavailable"] = "無法查看對手運功",
+            ["The supported game UI does not expose the opponent's loadout for hostile or story characters. No hidden loadout input will be requested."] =
+                "目前支援的遊戲介面不會顯示敵對或劇情人物的運功配置，因此不會要求輸入任何隱藏資料。",
+            ["How much of the current loadout did you inspect?"] =
+                "你查看了目前運功配置的多少內容？",
+            ["Partial loadout"] = "部分運功配置",
+            ["Only listed skills are confirmed; omitted skills remain unknown."] =
+                "只確認列出的功法；未列出的功法仍屬未知。",
+            ["Complete current loadout"] = "完整的目前運功配置",
+            ["Every visible category and empty slot on this one displayed preset was inspected."] =
+                "已查看這一套目前顯示預設中的所有可見分類及空格。",
+            ["Visible combat-skill name"] = "畫面可見的功法名稱",
+            ["Find skill"] = "尋找功法",
+            ["Searching…"] = "搜尋中……",
+            ["Search the exact name visible in the active game language. Category is verified from the catalogue, not typed manually."] =
+                "請依目前遊戲語言搜尋畫面上的確切名稱；分類由目錄驗證，不需手動填寫。",
+            ["Catalogue matches"] = "目錄相符項目",
+            ["Verified catalogue match"] = "已驗證目錄相符項目",
+            ["base slots"] = "基礎格數",
+            ["Exact name"] = "名稱完全相符",
+            ["Partial name"] = "名稱部分相符",
+            ["Confirmed visible skills"] = "已確認的可見功法",
+            ["No target skill has been confirmed yet."] = "尚未確認任何目標功法。",
+            ["Verified catalogue identity"] = "已驗證目錄身分",
+            ["Visible direction"] = "畫面可見的正逆練",
+            ["Not observed"] = "未觀察",
+            ["I confirm this visible screen is newer than the configured save snapshot."] =
+                "我確認此可見畫面比已設定的存檔快照更新。",
+            ["Review observation"] = "檢查觀察內容",
+            ["Clear observation"] = "清除觀察",
+            ["Observation review"] = "觀察內容檢查",
+            ["Target"] = "目標",
+            ["Coverage"] = "涵蓋範圍",
+            ["Observed at"] = "觀察時間",
+            ["Evidence status"] = "證據狀態",
+            ["Only the confirmed fields above will receive current-screen precedence. This does not control or modify the game."] =
+                "只有上方已確認欄位會採用目前畫面的優先順序；此操作不會控制或修改遊戲。",
+            ["Use observation for recommendation"] = "使用觀察內容建立推薦",
+            ["Save timestamp unavailable; explicit precedence confirmation is required."] =
+                "無法取得存檔時間戳記；必須明確確認來源優先順序。",
+            ["Save timestamp available for freshness comparison."] =
+                "可使用存檔時間戳記比較新鮮度。",
+            ["Target observation is off."] = "目標觀察目前已關閉。",
+            ["Editing a session-only target observation."] =
+                "正在編輯只限本次工作階段的目標觀察。",
+            ["Searching catalogue…"] = "正在搜尋目錄……",
+            ["More than one catalogue skill matched. Confirm the correct one."] =
+                "有多門目錄功法相符，請確認正確項目。",
+            ["Review the confirmed evidence before using it."] =
+                "使用前請先檢查已確認的證據。",
+            ["Applying observation to a new helper snapshot…"] =
+                "正在把觀察套用至新的助手快照……",
+            ["Observation applied to the helper snapshot."] =
+                "觀察已套用至助手快照。",
+            ["Observation is not newer than the configured save and was not applied."] =
+                "觀察並不比已設定存檔更新，因此未被套用。",
+            ["Observation applied with a saved-value conflict; both sources are retained."] =
+                "觀察已套用，但與存檔值衝突；兩個來源均已保留。",
+            ["Observation is unsupported for this GameData version and was not applied."] =
+                "此 GameData 版本不支援該觀察，因此未被套用。",
+            ["Confirm that the visible screen is newer because the save timestamp is unavailable."] =
+                "由於無法取得存檔時間戳記，請確認可見畫面較新。",
+            ["Opponent loadout observation is unavailable in this encounter context."] =
+                "此遭遇情境無法觀察對手運功。",
+            ["Observation cleared; the recommendation is save-only."] =
+                "觀察已清除；推薦現在只使用存檔。",
+            ["Target observation state unavailable."] = "無法取得目標觀察狀態。",
+            ["Get a save-only recommendation before entering target evidence."] =
+                "輸入目標證據前，請先取得只使用存檔的推薦。",
+            ["Confirm a martial-arts spar before searching target skills."] =
+                "搜尋目標功法前，請先確認情境為切磋武功。",
+            ["Enter the combat-skill name visible in the game."] =
+                "請輸入遊戲畫面可見的功法名稱。",
+            ["Multiple skills matched; choose the verified catalogue entry."] =
+                "有多門功法相符；請選擇已驗證的目錄項目。",
+            ["No verified catalogue skill matched that visible name."] =
+                "沒有已驗證目錄功法符合該可見名稱。",
+            ["The current catalogue cannot resolve this target skill."] =
+                "目前目錄無法解析此目標功法。",
+            ["A partial observation must confirm at least one visible skill."] =
+                "部分觀察必須確認至少一門可見功法。",
+            ["The selected skill could not be confirmed from the current catalogue."] =
+                "無法從目前目錄確認所選功法。",
+            ["The observation request could not be completed. Review the fields and try again."] =
+                "無法完成觀察要求；請檢查各欄位後重試。",
+            ["The target observation is not ready."] = "目標觀察尚未準備完成。",
             ["total"] = "總數",
             ["Selected"] = "已選擇",
             ["Safe"] = "穩健",

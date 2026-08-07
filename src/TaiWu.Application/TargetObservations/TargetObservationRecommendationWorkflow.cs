@@ -9,8 +9,7 @@ namespace TaiWu.Application.TargetObservations;
 
 public sealed class TargetObservationRecommendationWorkflow(
     ICombatSnapshotReader reader,
-    ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository repository)
+    IResolveTargetSkillSelection resolver)
     : ITargetObservationRecommendationWorkflow
 {
     public async Task<CombatLoadoutRecommendation> ExecuteAsync(
@@ -53,9 +52,6 @@ public sealed class TargetObservationRecommendationWorkflow(
         TaiwuLanguage language,
         CancellationToken cancellationToken)
     {
-        var resolver = new ResolveTargetSkillSelection(
-            definitionSource,
-            repository);
         var targetSkillIds = snapshot.Target.LearnedSkills
             .Select(skill => skill.SkillId)
             .ToArray();

@@ -262,8 +262,9 @@ public sealed class CombatRecommendationTargetObservationControllerTests
             }),
             new TargetObservationRecommendationWorkflow(
                 reader,
-                Source(definitions),
-                Repository(definitions)));
+                new ResolveTargetSkillSelection(
+                    Source(definitions),
+                    Repository(definitions))));
     }
 
     private static CombatSnapshot Snapshot(

@@ -479,6 +479,193 @@ select {
     gap: 6px;
 }
 
+.target-observation-panel {
+    display: grid;
+    gap: 16px;
+    margin-top: 18px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: rgba(17, 31, 30, 0.76);
+}
+
+.target-observation-heading,
+.target-observation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.target-observation-heading h3,
+.target-selected-skills h4,
+.target-observation-review h4 {
+    margin: 0;
+}
+
+.target-observation-panel > p,
+.field-help,
+.target-skill-search small,
+.target-observation-status {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.target-observation-context {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--line);
+}
+
+.target-observation-context > div {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+}
+
+.target-observation-context > div + div {
+    border-left: 1px solid var(--line);
+}
+
+.target-observation-context span,
+.target-observation-review dt {
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.target-observation-context-picker,
+.target-observation-coverage {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 14px;
+    border: 1px solid var(--line);
+}
+
+.target-observation-context-picker legend,
+.target-observation-coverage legend {
+    padding-inline: 5px;
+    color: var(--gold);
+    font-weight: 800;
+}
+
+.target-observation-context-picker label,
+.target-observation-coverage label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.target-observation-coverage label span {
+    display: grid;
+    gap: 3px;
+}
+
+.target-observation-coverage small {
+    color: var(--muted);
+}
+
+.target-observation-unavailable,
+.target-observation-review {
+    padding: 16px;
+    border: 1px solid rgba(218, 172, 91, 0.5);
+    background: rgba(71, 48, 25, 0.22);
+}
+
+.target-observation-unavailable p {
+    margin-bottom: 0;
+    color: var(--muted);
+}
+
+.target-skill-search {
+    display: grid;
+    gap: 7px;
+}
+
+.field-error {
+    margin: 0;
+    color: #ffb6a4;
+}
+
+.target-skill-candidates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+}
+
+.target-skill-candidates button {
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    text-align: left;
+    background: rgba(5, 17, 17, 0.62);
+}
+
+.target-skill-candidates button:hover,
+.target-skill-candidates button:focus-visible {
+    border-color: var(--gold);
+}
+
+.target-skill-candidates span,
+.target-skill-candidates small,
+.target-selected-skills span {
+    color: var(--muted);
+}
+
+.target-selected-skills {
+    display: grid;
+    gap: 10px;
+}
+
+.target-selected-skills ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.target-selected-skills li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 220px) auto;
+    align-items: end;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+}
+
+.target-selected-skills li > div,
+.target-selected-skills label {
+    display: grid;
+    gap: 5px;
+}
+
+.target-observation-review {
+    display: grid;
+    gap: 12px;
+}
+
+.target-observation-review dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.target-observation-review dl > div {
+    display: grid;
+    gap: 4px;
+}
+
+.target-observation-review dd {
+    margin: 0;
+}
+
 .request-row {
     margin-top: 26px;
     padding-top: 24px;
@@ -2935,6 +3122,15 @@ select {
         grid-template-columns: repeat(2, 1fr);
     }
 
+    .target-selected-skills li {
+        grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
+    }
+
+    .target-selected-skills li .text-button {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
+
     .snapshot-strip,
     .result-summary {
         grid-template-columns: repeat(2, 1fr);
@@ -3030,10 +3226,24 @@ select {
     .inline-control,
     .observation-grid,
     .generic-grid,
+    .target-observation-context,
+    .target-observation-review dl,
+    .target-selected-skills li,
     .snapshot-strip,
     .result-summary,
     .skill-list {
         grid-template-columns: 1fr;
+    }
+
+    .target-observation-context > div + div {
+        border-top: 1px solid var(--line);
+        border-left: 0;
+    }
+
+    .target-observation-heading,
+    .target-observation-actions {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .atlas-metadata,

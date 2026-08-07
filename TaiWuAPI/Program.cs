@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using System.Text.Json.Serialization;
 using TaiWu.Application.CombatRecommendations;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.TargetObservations;
 using TaiWu.Application.Targets;
@@ -37,6 +38,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ITargetObservationRecommendationWorkflow,
     TargetObservationRecommendationWorkflow>();
+builder.Services.AddScoped<
+    IResolveTargetSkillSelection,
+    ResolveTargetSkillSelection>();
 builder.Services.AddScoped<IFindTargets, FindTargets>();
 builder.Services.AddScoped<TaiwuLanguageState>();
 builder.Services.AddTaiwuInfrastructure();

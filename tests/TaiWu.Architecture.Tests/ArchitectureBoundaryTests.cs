@@ -973,18 +973,26 @@ public sealed partial class ArchitectureBoundaryTests
             .ToArray();
         var expectedHandlers = new[]
         {
+            "() => ConfirmCandidateAsync(candidate)",
+            "() => SelectContext(context)",
             "() => SelectFactionAsync(null)",
             "() => SelectFactionAsync(option.FactionId)",
             "() => SelectTarget(target)",
             "() => SelectedReferenceChanged.InvokeAsync(null)",
             "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
+            "() => SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout)",
+            "() => SetCoverage(TargetLoadoutCoverageKind.PartialLoadout)",
             "() => SetLanguage(TaiwuLanguage.Chinese)",
             "() => SetLanguage(TaiwuLanguage.English)",
             "() => ShowStyle(style.Style)",
+            "() => State.RemoveSkill(skill.SkillId)",
             "() => Toggle(item.Reference)",
             "() => ToggleObservationSkill(skill.SkillId)",
+            "ApplyAsync",
             "ApplyFiltersAsync",
+            "args => ChangeDirection(skill.SkillId, args)",
             "ChangeAsync",
+            "ClearAsync",
             "ClearFiltersAsync",
             "ClearProgressCacheAsync",
             "CopyAsync",
@@ -996,7 +1004,10 @@ public sealed partial class ArchitectureBoundaryTests
             "RebuildAsync",
             "ReloadAsync",
             "RetryRead",
-            "SearchTargetsAsync"
+            "Review",
+            "SearchAsync",
+            "SearchTargetsAsync",
+            "ToggleEnabled"
         }.Order(StringComparer.Ordinal);
 
         Assert.Equal(expectedHandlers, eventHandlers);
@@ -1008,6 +1019,7 @@ public sealed partial class ArchitectureBoundaryTests
                 "CombatRecommendation.razor"));
         Assert.Contains("FindTargets.ExecuteAsync(", page);
         Assert.Contains("RecommendCombatLoadout.ExecuteAsync(", page);
+        Assert.Contains("TargetObservationWorkflow.ExecuteAsync(", page);
         Assert.Contains(
             "PageReadOperation.TargetSearch => SearchTargetsAsync()",
             page);
@@ -1017,6 +1029,20 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("ISaveGameReader", page);
         Assert.DoesNotContain("using GameData", page);
         Assert.DoesNotContain("GameData.", page);
+
+        var targetObservationForm = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "TargetObservationForm.razor"));
+        Assert.Contains("Hostile and story characters do not expose", targetObservationForm);
+        Assert.Contains(
+            "State.Context == TargetObservationContext.Sparring",
+            targetObservationForm);
+        Assert.Contains("Opponent loadout unavailable", targetObservationForm);
+        Assert.Contains("No hidden loadout input will be requested", targetObservationForm);
+        Assert.DoesNotContain("type=\"file\"", targetObservationForm);
+        Assert.DoesNotContain("ISaveGameReader", targetObservationForm);
 
         var atlasPage = File.ReadAllText(
             Path.Combine(

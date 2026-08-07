@@ -6,6 +6,7 @@ using Microsoft.JSInterop;
 using NSubstitute;
 using System.Net;
 using System.Text.RegularExpressions;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.Targets;
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatCounters;
@@ -21,6 +22,89 @@ namespace TaiWu.API.UnitTests.Presentation;
 
 public sealed partial class RecommendationComponentRenderingTests
 {
+    [Fact]
+    public async Task Target_observation_starts_disabled_with_bilingual_guidance()
+    {
+        var state = new TargetObservationEditorState();
+        var target = new TargetLookupEntry(
+            16317,
+            "霍劍嬋",
+            age: 52,
+            areaId: 1,
+            blockId: 2);
+
+        var english = await RenderAsync<TargetObservationForm>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetObservationForm.State)] = state,
+                [nameof(TargetObservationForm.Target)] = target
+            });
+        var chinese = await RenderAsync<TargetObservationForm>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetObservationForm.State)] =
+                    new TargetObservationEditorState(),
+                [nameof(TargetObservationForm.Target)] = target,
+                [nameof(TargetObservationForm.Language)] =
+                    TaiwuLanguage.Chinese
+            },
+            TaiwuLanguage.Chinese);
+
+        Assert.Contains("Report a visible sparring loadout", VisibleText(english));
+        Assert.Contains("disabled", english);
+        Assert.Contains("Get a save-only recommendation first", VisibleText(english));
+        Assert.DoesNotContain("id=\"target-skill-query\"", english);
+        Assert.Contains("回報可見的切磋運功配置", VisibleText(chinese));
+        Assert.Contains("敵對及劇情人物不會顯示此畫面", VisibleText(chinese));
+    }
+
+    [Theory]
+    [InlineData(TargetObservationContext.Hostile)]
+    [InlineData(TargetObservationContext.Story)]
+    public async Task Hidden_encounter_renders_unavailable_without_skill_input(
+        TargetObservationContext context)
+    {
+        var state = new TargetObservationEditorState();
+        state.SetEnabled(enabled: true, hasInitialRecommendation: true);
+        state.SetContext(context);
+
+        var html = await RenderAsync<TargetObservationForm>(
+            TargetObservationParameters(state));
+        var text = VisibleText(html);
+
+        Assert.Contains("Opponent loadout unavailable", text);
+        Assert.Contains("No hidden loadout input will be requested", text);
+        Assert.Contains("role=\"status\"", html);
+        Assert.DoesNotContain("id=\"target-skill-query\"", html);
+        Assert.DoesNotContain("Use observation for recommendation", text);
+    }
+
+    [Fact]
+    public async Task Sparring_editor_has_semantic_keyboard_controls_and_status_text()
+    {
+        var state = new TargetObservationEditorState();
+        state.SetEnabled(enabled: true, hasInitialRecommendation: true);
+        state.SetContext(TargetObservationContext.Sparring);
+
+        var html = await RenderAsync<TargetObservationForm>(
+            TargetObservationParameters(state));
+        var text = VisibleText(html);
+
+        Assert.Contains("霍劍嬋", text);
+        Assert.Contains("Save timestamp available", text);
+        Assert.Contains("Partial loadout", text);
+        Assert.Contains("Complete current loadout", text);
+        Assert.Contains("Category is verified from the catalogue", text);
+        Assert.Contains("Editing a session-only target observation", text);
+        Assert.Contains("<fieldset", html);
+        Assert.Contains("type=\"radio\"", html);
+        Assert.Contains("id=\"target-skill-query\"", html);
+        Assert.Contains("aria-describedby=", html);
+        Assert.Contains("role=\"status\"", html);
+        Assert.DoesNotContain(">Apply<", html);
+        Assert.DoesNotContain("screenshot", text, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public async Task Loadout_renders_capacity_direction_cost_timing_conditions_and_change()
     {
@@ -441,6 +525,8 @@ public sealed partial class RecommendationComponentRenderingTests
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddLogging();
         serviceCollection.AddSingleton(Substitute.For<IJSRuntime>());
+        serviceCollection.AddSingleton(
+            Substitute.For<IResolveTargetSkillSelection>());
         var languageState = new TaiwuLanguageState();
         languageState.Set(language);
         serviceCollection.AddSingleton(languageState);
@@ -456,6 +542,30 @@ public sealed partial class RecommendationComponentRenderingTests
             return output.ToHtmlString();
         });
     }
+
+    private static Dictionary<string, object?> TargetObservationParameters(
+        TargetObservationEditorState state) => new()
+        {
+            [nameof(TargetObservationForm.State)] = state,
+            [nameof(TargetObservationForm.Target)] = new TargetLookupEntry(
+                16317,
+                "霍劍嬋",
+                age: 52,
+                areaId: 1,
+                blockId: 2),
+            [nameof(TargetObservationForm.Recommendation)] =
+                new CombatRecommendationViewModel(
+                    "snapshot:test",
+                    DateTimeOffset.Parse("2026-08-07T21:00:00Z"),
+                    DateTimeOffset.Parse("2026-08-07T20:00:00Z"),
+                    "1.0.0-test",
+                    RecommendationPolicy.Balanced,
+                    "style:balanced",
+                    "Information only",
+                    Threats: [],
+                    Styles: [],
+                    Warnings: [])
+        };
 
     private static string VisibleText(string html)
     {

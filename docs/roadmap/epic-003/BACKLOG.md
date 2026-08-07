@@ -266,7 +266,7 @@ and expose sanitized resolution, provenance, and impact results.
 
 ### E3-006 — Build the bilingual target-observation form
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -278,25 +278,25 @@ Add a manual-first observation surface to the recommendation page.
 
 #### Acceptance criteria
 
-- [ ] The form starts disabled and explains when target observation is useful.
-- [ ] Hostile and story targets remain explicitly unavailable for manual
+- [x] The form starts disabled and explains when target observation is useful.
+- [x] Hostile and story targets remain explicitly unavailable for manual
       current-screen loadout observation; the form never requests hidden data.
-- [ ] Target identity and save freshness are visible before entry.
-- [ ] The player chooses partial or complete coverage with an explanation of
+- [x] Target identity and save freshness are visible before entry.
+- [x] The player chooses partial or complete coverage with an explanation of
       omission semantics.
-- [ ] Skill search follows the active Traditional Chinese or English language.
-- [ ] Ambiguous candidates show enough static detail for confirmation.
-- [ ] Category is verified rather than freely typed.
-- [ ] Direction can be omitted and appears only where E3-000 supports it.
-- [ ] The review step shows resolved stable identities, coverage, time, and
+- [x] Skill search follows the active Traditional Chinese or English language.
+- [x] Ambiguous candidates show enough static detail for confirmation.
+- [x] Category is verified rather than freely typed.
+- [x] Direction can be omitted and appears only where E3-000 supports it.
+- [x] The review step shows resolved stable identities, coverage, time, and
       evidence status.
-- [ ] Validation errors are field-specific and keyboard accessible.
-- [ ] Applying an observation creates a new recommendation request; it does
+- [x] Validation errors are field-specific and keyboard accessible.
+- [x] Applying an observation creates a new recommendation request; it does
       not control the game.
-- [ ] Clearing returns to the save-only form and result.
-- [ ] Initial, editing, ambiguous, stale, conflicting, unsupported, loading,
+- [x] Clearing returns to the save-only form and result.
+- [x] Initial, editing, ambiguous, stale, conflicting, unsupported, loading,
       applied, and cleared states work in both languages.
-- [ ] Rendering tests cover semantic labels, focusable controls, status text,
+- [x] Rendering tests cover semantic labels, focusable controls, status text,
       and no color-only meaning.
 
 ## Slice 5: Recommendation integration

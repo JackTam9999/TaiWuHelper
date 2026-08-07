@@ -2,6 +2,7 @@
 @implements IAsyncDisposable
 @using Microsoft.Extensions.Options
 @using TaiWu.Application.CombatRecommendations
+@using TaiWu.Application.TargetObservations
 @using TaiWu.Application.Targets
 @using TaiWu.Domain.CombatRecommendations
 @using TaiWu.Domain.CombatSnapshots
@@ -9,6 +10,7 @@
 @using TaiWuAPI.Presentation
 @inject IFindTargets FindTargets
 @inject IRecommendCombatLoadout RecommendCombatLoadout
+@inject ITargetObservationRecommendationWorkflow TargetObservationWorkflow
 @inject IOptions<SaveGameOptions> SaveOptions
 @inject ILogger<CombatRecommendation> Logger
 
@@ -160,6 +162,14 @@
             </div>
         }
     </details>
+
+    <TargetObservationForm State="_targetObservation"
+                           Target="_selectedTarget"
+                           Recommendation="_model"
+                           Language="Language"
+                           Busy="IsBusy"
+                           ApplyRequested="ApplyTargetObservationAsync"
+                           ClearRequested="ClearTargetObservationAsync" />
 
     <div class="request-row">
         <div>
@@ -329,6 +339,7 @@
     private readonly List<TargetLookupEntry> _targetMatches = [];
     private readonly List<ObservationSkillOption> _observationSkills = [];
     private readonly RecommendationSelectionState _selection = new();
+    private readonly TargetObservationEditorState _targetObservation = new();
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _recommendationCancellation;
     private string _targetQuery = string.Empty;
@@ -420,6 +431,7 @@
         _targetMatches.Clear();
         _model = null;
         ResetObservation();
+        _targetObservation.ResetForTarget();
         _selection.Clear();
         _pageState = RecommendationPageState.Loading(
             "Searching the configured save");
@@ -477,13 +489,18 @@
         _targetQuery = target.DisplayName;
         _model = null;
         ResetObservation();
+        _targetObservation.ResetForTarget();
         _selection.Clear();
         _lastReadOperation = PageReadOperation.None;
         _pageState = RecommendationPageState.TargetReady(
             target.DisplayName);
     }
 
-    private async Task GetRecommendationAsync()
+    private Task GetRecommendationAsync() => GetRecommendationAsync(
+        preserveClearedTargetObservation: false);
+
+    private async Task GetRecommendationAsync(
+        bool preserveClearedTargetObservation)
     {
         if (!_configurationValid || _selectedTarget is null)
         {
@@ -495,6 +512,10 @@
             ref _recommendationCancellation);
         _lastReadOperation = PageReadOperation.Recommendation;
         _isRecommending = true;
+        if (!preserveClearedTargetObservation)
+        {
+            _targetObservation.ResetForTarget();
+        }
         _model = null;
         _selection.Clear();
         _pageState = RecommendationPageState.Loading(
@@ -553,6 +574,88 @@
             }
         }
     }
+
+    private async Task ApplyTargetObservationAsync(
+        TargetObservationRequest observation)
+    {
+        if (!_configurationValid || _selectedTarget is null || _model is null)
+        {
+            _targetObservation.MarkError("OBSERVATION_APPLY_FAILED");
+            return;
+        }
+
+        var version = ++_recommendationVersion;
+        var cancellation = ReplaceCancellation(
+            ref _recommendationCancellation);
+        _lastReadOperation = PageReadOperation.Recommendation;
+        _isRecommending = true;
+        _selection.Clear();
+        _pageState = RecommendationPageState.Loading(
+            "Building the combat recommendation");
+
+        try
+        {
+            var recommendation = await TargetObservationWorkflow.ExecuteAsync(
+                new RecommendCombatLoadoutRequest(
+                    _saveFilePath,
+                    _selectedTarget.CharacterId,
+                    _form.Policy,
+                    CreateObservation(),
+                    Language,
+                    observation),
+                cancellation.Token);
+            if (version != _recommendationVersion)
+            {
+                return;
+            }
+
+            var processing = recommendation.TargetObservation
+                ?? throw new InvalidDataException(
+                    "Target observation result is unavailable.");
+            _targetObservation.MarkResult(processing.Merge);
+            _model = CombatRecommendationViewModelMapper.Map(recommendation);
+            PopulateObservationSkills(_model);
+            _selection.Load(_model, _form.Policy);
+            _pageState = RecommendationPageState.ForRecommendation(_model);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException
+                or FileNotFoundException
+                or InvalidDataException
+                or TargetObservationResolutionException)
+        {
+            _targetObservation.MarkError("OBSERVATION_APPLY_FAILED");
+            _pageState = RecommendationPageState.Failure(
+                "The recommendation could not be built from the available "
+                + "save data.");
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unexpected target-observation recommendation failure.");
+            _targetObservation.MarkError("OBSERVATION_APPLY_FAILED");
+            _pageState = RecommendationPageState.Failure(
+                "An unexpected recommendation read or calculation failure "
+                + "occurred.");
+        }
+        finally
+        {
+            if (version == _recommendationVersion)
+            {
+                _isRecommending = false;
+            }
+        }
+    }
+
+    private Task ClearTargetObservationAsync() =>
+        _selectedTarget is null || _model is null
+            ? Task.CompletedTask
+            : GetRecommendationAsync(
+                preserveClearedTargetObservation: true);
 
     private Task RetryLastReadAsync() => _lastReadOperation switch
     {

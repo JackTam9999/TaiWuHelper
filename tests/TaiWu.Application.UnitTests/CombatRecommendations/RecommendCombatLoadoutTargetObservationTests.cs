@@ -48,8 +48,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
 
         var result = await new TargetObservationRecommendationWorkflow(
                 reader,
-                source,
-                repository)
+                new ResolveTargetSkillSelection(source, repository))
             .ExecuteAsync(request, TestContext.Current.CancellationToken);
 
         var processing = Assert.IsType<TargetObservationProcessingResult>(
@@ -91,8 +90,9 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             TargetObservationResolutionException>(
             () => new TargetObservationRecommendationWorkflow(
                     reader,
-                    Source(first, second),
-                    Repository(first, second))
+                    new ResolveTargetSkillSelection(
+                        Source(first, second),
+                        Repository(first, second)))
                 .ExecuteAsync(
                     request,
                     TestContext.Current.CancellationToken));
@@ -126,8 +126,9 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => new TargetObservationRecommendationWorkflow(
                     reader,
-                    Source(definition),
-                    repository)
+                    new ResolveTargetSkillSelection(
+                        Source(definition),
+                        repository))
                 .ExecuteAsync(
                     Request(new TargetObservedSkillRequest(
                         "Target Art",
