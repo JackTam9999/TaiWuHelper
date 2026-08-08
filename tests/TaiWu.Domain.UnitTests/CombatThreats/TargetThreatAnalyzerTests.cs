@@ -88,6 +88,63 @@ public sealed class TargetThreatAnalyzerTests
             sources[1].Kind);
     }
 
+    [Theory]
+    [InlineData(TargetObservationContext.Hostile)]
+    [InlineData(TargetObservationContext.Story)]
+    public void Battle_visible_effect_is_confirmed_without_equipped_claim_or_power_scoring(
+        TargetObservationContext context)
+    {
+        var skill = CreateSkill(
+            274,
+            effectId: 898,
+            PracticeDirection.Reverse);
+        var firstObservation = Observation(
+            TargetLoadoutCoverage.PartialLoadout,
+            context,
+            new ObservedTargetCombatSkill(
+                skill.SkillId,
+                skill.Category,
+                PracticeDirection.Reverse,
+                visiblePowerPercent: 142));
+        var secondObservation = Observation(
+            TargetLoadoutCoverage.PartialLoadout,
+            context,
+            new ObservedTargetCombatSkill(
+                skill.SkillId,
+                skill.Category,
+                PracticeDirection.Reverse,
+                visiblePowerPercent: 204));
+        var ruleSet = CreateRuleSet([Signature(skill)]);
+
+        var first = TargetThreatAnalyzer.Analyze(
+            CreateSnapshot(
+                [skill],
+                SnapshotValue<CombatLoadoutSnapshot>.Available(
+                    CreateLoadout()),
+                observation: firstObservation),
+            ruleSet);
+        var second = TargetThreatAnalyzer.Analyze(
+            CreateSnapshot(
+                [skill],
+                SnapshotValue<CombatLoadoutSnapshot>.Available(
+                    CreateLoadout()),
+                observation: secondObservation),
+            ruleSet);
+
+        var source = Assert.Single(Assert.Single(first.Threats).Sources);
+        Assert.Equal(
+            TargetThreatSourceKind.ObservedActiveEffect,
+            source.Kind);
+        Assert.Equal(
+            TargetThreatSourceScope.BattleVisibleActiveEffect,
+            source.Scope);
+        Assert.Equal(firstObservation.EvidenceReference,
+            source.EvidenceReference);
+        Assert.Equal(
+            AnalysisFingerprint(first),
+            AnalysisFingerprint(second));
+    }
+
     [Fact]
     public void Complete_observation_demotes_stale_saved_membership_and_retains_conflict()
     {
@@ -658,6 +715,17 @@ public sealed class TargetThreatAnalyzerTests
             TargetObservationContext.Sparring,
             DateTimeOffset.Parse("2026-07-30T12:30:00Z"),
             "E3-000-CAP-002",
+            coverage,
+            skills);
+
+    private static TargetLoadoutObservation Observation(
+        TargetLoadoutCoverage coverage,
+        TargetObservationContext context,
+        params ObservedTargetCombatSkill[] skills) => new(
+            targetCharacterId: 16317,
+            context,
+            DateTimeOffset.Parse("2026-07-30T12:30:00Z"),
+            "E3-012-CAP-001",
             coverage,
             skills);
 

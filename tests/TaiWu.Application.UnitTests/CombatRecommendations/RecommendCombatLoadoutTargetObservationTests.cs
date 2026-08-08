@@ -264,6 +264,76 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Empty(result.TargetObservationImpact!.RecommendationChanges);
     }
 
+    [Theory]
+    [InlineData(TargetObservationContext.Hostile)]
+    [InlineData(TargetObservationContext.Story)]
+    public async Task Battle_visible_effect_is_resolved_without_claiming_equipped_membership(
+        TargetObservationContext context)
+    {
+        var snapshot = Snapshot(
+            targetSkills: [],
+            targetEquippedSkills:
+                SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
+                    "The target loadout is not persisted."));
+        var definition = Definition(
+            287,
+            "Nine-Colored Cicada Art",
+            directEffectId: 900,
+            reverseEffectId: 911);
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var request = new RecommendCombatLoadoutRequest(
+            snapshot.Metadata.SavePath,
+            snapshot.Target.CharacterId,
+            RecommendationPolicy.Balanced,
+            targetObservation: new TargetObservationRequest(
+                context,
+                SaveTime.AddMinutes(1),
+                "E3-012-CAP-001",
+                TargetLoadoutCoverageKind.PartialLoadout,
+                [
+                    new TargetObservedSkillRequest(
+                        "Nine-Colored Cicada Art",
+                        SkillCategory.Attack,
+                        confirmedSkillId: 287,
+                        PracticeDirection.Reverse,
+                        visiblePowerPercent: 142)
+                ]));
+
+        var result = await new TargetObservationRecommendationWorkflow(
+                reader,
+                new ResolveTargetSkillSelection(
+                    Source(definition),
+                    Repository(definition)))
+            .ExecuteAsync(request, TestContext.Current.CancellationToken);
+
+        var processing = Assert.IsType<TargetObservationProcessingResult>(
+            result.TargetObservation);
+        Assert.False(processing.Merge.Snapshot.Target.EquippedSkills.IsAvailable);
+        Assert.Equal(
+            142,
+            Assert.Single(processing.ResolvedSkills)
+                .Observation.VisiblePowerPercent);
+        var source = Assert.Single(
+            Assert.Single(result.ThreatAnalysis.Threats).Sources);
+        Assert.Equal(
+            TargetThreatSourceKind.ObservedActiveEffect,
+            source.Kind);
+        Assert.Equal(
+            TargetThreatSourceScope.BattleVisibleActiveEffect,
+            source.Scope);
+        var impact = Assert.IsType<TargetObservationRecommendationImpact>(
+            result.TargetObservationImpact);
+        var threatImpact = Assert.Single(impact.Threats);
+        Assert.Equal(TargetThreatImpactKind.Added, threatImpact.Kind);
+        Assert.Contains(
+            TargetThreatSourceKind.ObservedActiveEffect,
+            threatImpact.SourceKinds);
+    }
+
     [Fact]
     public async Task Confirming_unchanged_verified_threat_preserves_all_policy_decisions()
     {
@@ -623,13 +693,29 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
     }
 
     [Fact]
-    public void Observation_contract_rejects_hidden_context_and_local_path()
+    public void Observation_contract_accepts_partial_battle_context_and_rejects_invalid_evidence()
     {
+        var story = new TargetObservationRequest(
+            TargetObservationContext.Story,
+            SaveTime,
+            "E3-012-CAP-001",
+            TargetLoadoutCoverageKind.PartialLoadout,
+            [
+                new TargetObservedSkillRequest(
+                    "Target Art",
+                    SkillCategory.Attack,
+                    visiblePowerPercent: 146)
+            ]);
+
+        Assert.Equal(TargetObservationContext.Story, story.Context);
+        Assert.Equal(
+            146,
+            Assert.Single(story.SelectedSkills).VisiblePowerPercent);
         Assert.Throws<ArgumentException>(() => new TargetObservationRequest(
             TargetObservationContext.Story,
             SaveTime,
-            "E3-000-CAP-001",
-            TargetLoadoutCoverageKind.PartialLoadout,
+            "E3-012-CAP-001",
+            TargetLoadoutCoverageKind.CompleteCurrentLoadout,
             []));
         Assert.Throws<ArgumentException>(() => new TargetObservationRequest(
             TargetObservationContext.Sparring,
@@ -637,6 +723,11 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             @"C:\captures\target.png",
             TargetLoadoutCoverageKind.PartialLoadout,
             []));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new TargetObservedSkillRequest(
+                "Target Art",
+                SkillCategory.Attack,
+                visiblePowerPercent: -1));
     }
 
     private static RecommendCombatLoadoutRequest Request(

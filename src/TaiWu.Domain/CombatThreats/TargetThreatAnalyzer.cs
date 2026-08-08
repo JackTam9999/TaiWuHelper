@@ -62,7 +62,7 @@ public static class TargetThreatAnalyzer
                 finding.Threat,
                 finding.Sources))
             .OrderByDescending(finding => finding.Threat.Severity)
-            .ThenBy(finding => finding.Sources[0].Scope)
+            .ThenBy(finding => SourcePriority(finding.Sources[0].Kind))
             .ThenBy(
                 finding => finding.Threat.Code,
                 StringComparer.Ordinal)
@@ -119,6 +119,8 @@ public static class TargetThreatAnalyzer
         var observation = target.LoadoutObservation;
         if (observation is not null)
         {
+            var battleVisible = observation.ObservationContext
+                != TargetObservationContext.Sparring;
             foreach (var observed in observation.ObservedSkills
                          .OrderBy(skill => skill.Category)
                          .ThenBy(skill => skill.SlotIndex ?? int.MaxValue)
@@ -129,8 +131,13 @@ public static class TargetThreatAnalyzer
                 {
                     candidates.Add(new Candidate(
                         skill,
-                        TargetThreatSourceScope.Equipped,
-                        TargetThreatSourceKind.ObservedEquipped,
+                        battleVisible
+                            ? TargetThreatSourceScope
+                                .BattleVisibleActiveEffect
+                            : TargetThreatSourceScope.Equipped,
+                        battleVisible
+                            ? TargetThreatSourceKind.ObservedActiveEffect
+                            : TargetThreatSourceKind.ObservedEquipped,
                         observation.EvidenceReference));
                 }
                 else
@@ -197,6 +204,15 @@ public static class TargetThreatAnalyzer
                     saveEvidenceReference)));
         return candidates;
     }
+
+    private static int SourcePriority(TargetThreatSourceKind kind) => kind switch
+    {
+        TargetThreatSourceKind.ObservedActiveEffect => 0,
+        TargetThreatSourceKind.ObservedEquipped => 1,
+        TargetThreatSourceKind.SaveEquipped => 2,
+        TargetThreatSourceKind.LearnedUnconfirmed => 3,
+        _ => int.MaxValue
+    };
 
     private static void AddEquippedSkillNotLearnedWarning(
         int targetCharacterId,

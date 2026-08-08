@@ -39,6 +39,18 @@ Examples of valid public references include:
 - `E3-000-CAP-002`
 - `rule:E3-000`
 
+The target merger uses separate logical paths for separate evidence claims:
+
+| Field path | Claim |
+|---|---|
+| `target.equippedSkills` | A sparring `運功` screen reported equipped membership |
+| `target.visibleActiveEffects` | A hostile/story combat panel reported only the listed active effects |
+| `target.loadoutObservation` | The session observation and its coverage/context |
+
+`target.visibleActiveEffects` never replaces or unions into
+`target.equippedSkills`. Its coverage is always partial, so an omitted skill
+remains unknown and cannot become an absence claim.
+
 The source contains no `Exception`, file, process, GameData, persistence, or
 ASP.NET Core type.
 
@@ -85,6 +97,11 @@ The existing `SnapshotValue<T>`, `SkillProgressField<T>`,
 unchanged. The new richer field is additive and will be consumed by target
 observation merge work in E3-004. Existing player current-screen behavior is
 covered by both its original tests and the E3-002 compatibility test.
+
+E3-012 adds an optional visible-power percentage to an observed target skill.
+It is retained as current-screen evidence but is deliberately absent from
+threat signatures, feasibility, and scoring. Unlabelled combat indicators are
+not represented at all.
 
 ## Verification
 

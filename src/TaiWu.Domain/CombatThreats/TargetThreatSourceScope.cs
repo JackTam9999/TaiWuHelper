@@ -3,5 +3,6 @@ namespace TaiWu.Domain.CombatThreats;
 public enum TargetThreatSourceScope
 {
     Equipped = 0,
-    LearnedUnequipped = 1
+    LearnedUnequipped = 1,
+    BattleVisibleActiveEffect = 2
 }

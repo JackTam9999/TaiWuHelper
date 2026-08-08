@@ -2,8 +2,10 @@
 
 ## Purpose
 
-E3-005 adds an optional manually confirmed sparring-target observation to the
-existing `POST /api/combat-recommendations` request. The API resolves visible
+E3-005 adds an optional manually confirmed target observation to the existing
+`POST /api/combat-recommendations` request. E3-012 separates complete
+sparring-loadout evidence from partial hostile/story combat-panel evidence.
+The API resolves visible
 skill names through the current bilingual catalogue, runs the immutable
 E3-004 merge, and returns sanitized resolution, provenance, and snapshot-field
 impact metadata.
@@ -20,12 +22,13 @@ contracts remain unchanged.
 `CombatRecommendationApiRequest.TargetObservation` is optional. When present,
 it carries:
 
-- `Context`, which must be `Sparring`;
+- `Context`: `Sparring`, `Hostile`, or `Story`;
 - `ObservedAt` and an opaque `EvidenceReference`;
 - `PartialLoadout` or `CompleteCurrentLoadout` coverage;
 - explicit save-time precedence confirmation when required;
 - selected visible skills with name, verified category, optional confirmed
-  catalogue ID, optional visible direction, and optional slot index.
+  catalogue ID, optional visible direction, optional sparring slot index, and
+  optional non-negative visible-power percentage.
 
 The top-level request already supplies the target character ID. It does not
 accept a save path; the server continues to use its configured read-only save.
@@ -34,9 +37,11 @@ identifier, raw GameData value, raw mechanic description, or executable
 command. Evidence references reject whitespace, directory separators,
 traversal syntax, and drive-qualified identities.
 
-Hostile and story contexts fail before any target observation is constructed.
-The API therefore cannot turn an inaccessible `秘而不宣` view into an empty
-loadout claim.
+`CompleteCurrentLoadout` is accepted only for `Sparring`. `Hostile` and
+`Story` are forced to partial coverage and therefore cannot turn an
+inaccessible `秘而不宣` view into an empty-loadout or omitted-skill claim.
+Their skill entries mean only battle-visible active effects. Visible power is
+returned as evidence but has no legality or scoring rule.
 
 ## Workflow boundary
 
@@ -79,10 +84,11 @@ Evidence states produced after valid resolution are not HTTP errors. `Stale`,
 `CombatRecommendationResponse.TargetObservation` is null for existing
 save-only requests. For observation requests it contains:
 
-- target identity, UTC observation time, opaque evidence, and coverage;
+- target identity, encounter context, UTC observation time, opaque evidence,
+  and coverage;
 - merge status and loadout evidence status;
 - resolved skill identity, safe display name, category, optional direction,
-  slot, and snapshot presence;
+  slot, visible power, and snapshot presence;
 - sanitized field provenance with source kind, time, and opaque reference;
 - added target skills, added/removed equipped membership, and changed
   directions when the merge was applied.

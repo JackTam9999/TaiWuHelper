@@ -22,6 +22,8 @@ typed comparison:
 - recommendation changes are separated into `Feasibility` and `Scoring`;
 - unrecognized target effects remain unsupported rather than receiving a
   severity or score;
+- hostile/story confirmations use the distinct `ObservedActiveEffect` source
+  instead of being relabelled as equipped membership;
 - partial observations retain an explicit remaining-unknown flag; and
 - conflicting save and current-screen fields retain both source timestamps
   while identifying current-screen field precedence.

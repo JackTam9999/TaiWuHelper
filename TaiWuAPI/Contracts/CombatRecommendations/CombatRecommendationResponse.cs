@@ -20,6 +20,7 @@ public sealed record CombatRecommendationResponse(
 
 public sealed record TargetObservationResponse(
     int TargetCharacterId,
+    TargetObservationContext Context,
     DateTimeOffset ObservedAtUtc,
     string EvidenceReference,
     TargetLoadoutCoverageKind Coverage,
@@ -36,6 +37,7 @@ public sealed record TargetObservedSkillResponse(
     SkillCategory Category,
     PracticeDirection? Direction,
     int? SlotIndex,
+    int? VisiblePowerPercent,
     TargetSkillSnapshotPresence SnapshotPresence);
 
 public sealed record TargetObservationSourceResponse(

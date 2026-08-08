@@ -106,6 +106,23 @@ public sealed class TargetLoadoutObservationTests
                 1,
                 SkillCategory.Attack,
                 slotIndex: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new ObservedTargetCombatSkill(
+                1,
+                SkillCategory.Attack,
+                visiblePowerPercent: -1));
+    }
+
+    [Fact]
+    public void Visible_power_is_optional_evidence_on_the_observed_skill()
+    {
+        var skill = new ObservedTargetCombatSkill(
+            71,
+            SkillCategory.Neigong,
+            PracticeDirection.Reverse,
+            visiblePowerPercent: 146);
+
+        Assert.Equal(146, skill.VisiblePowerPercent);
     }
 
     [Fact]
@@ -231,16 +248,34 @@ public sealed class TargetLoadoutObservationTests
     [Theory]
     [InlineData(TargetObservationContext.Hostile)]
     [InlineData(TargetObservationContext.Story)]
-    public void Hostile_and_story_contexts_cannot_create_observations(
+    public void Hostile_and_story_contexts_accept_only_partial_evidence(
         TargetObservationContext context)
     {
-        var exception = Assert.Throws<ArgumentException>(
+        var observation = CreateObservation(
+            TargetLoadoutCoverage.PartialLoadout,
+            [
+                new ObservedTargetCombatSkill(
+                    71,
+                    SkillCategory.Neigong,
+                    PracticeDirection.Reverse,
+                    visiblePowerPercent: 146)
+            ],
+            observationContext: context);
+
+        Assert.Equal(context, observation.ObservationContext);
+        Assert.False(observation.Coverage.CanEstablishAbsence);
+        Assert.False(observation.EstablishesAbsenceOf(72));
+        Assert.Equal(146, Assert.Single(observation.ObservedSkills)
+            .VisiblePowerPercent);
+
+        Assert.Throws<ArgumentException>(
             () => CreateObservation(
-                TargetLoadoutCoverage.PartialLoadout,
+                TargetLoadoutCoverage.CompleteCurrentLoadout(
+                    TargetLoadoutCompletenessEvidence.FromE3000(
+                        TargetLoadoutCompletenessEvidence
+                            .E3000GameDataVersion)),
                 [],
                 observationContext: context));
-
-        Assert.Contains("unavailable", exception.Message);
     }
 
     [Fact]

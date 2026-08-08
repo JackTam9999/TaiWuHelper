@@ -56,8 +56,11 @@ public sealed class TargetObservationEditorState
         SelectedSkills => _selectedSkills;
 
     public bool CanEdit => IsEnabled
-        && Context == TargetObservationContext.Sparring
+        && Context is not null
         && Status is not TargetObservationEditorStatus.Applying;
+
+    public bool IsBattleVisiblePartial => Context is
+        TargetObservationContext.Hostile or TargetObservationContext.Story;
 
     public bool CanReview => CanEdit
         && (Coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout
@@ -100,17 +103,12 @@ public sealed class TargetObservationEditorState
 
         Context = context;
         _candidates.Clear();
+        _selectedSkills.Clear();
         Query = string.Empty;
+        Coverage = TargetLoadoutCoverageKind.PartialLoadout;
         ValidationCode = null;
         ObservedAtUtc = null;
-        if (context == TargetObservationContext.Sparring)
-        {
-            Status = TargetObservationEditorStatus.Editing;
-            return;
-        }
-
-        _selectedSkills.Clear();
-        Status = TargetObservationEditorStatus.Unavailable;
+        Status = TargetObservationEditorStatus.Editing;
     }
 
     public void SetCoverage(TargetLoadoutCoverageKind coverage)
@@ -123,10 +121,18 @@ public sealed class TargetObservationEditorState
                 "Unknown target-observation coverage.");
         }
 
+        if (Context != TargetObservationContext.Sparring
+            && coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout)
+        {
+            throw new ArgumentException(
+                "Hostile and story observations must remain partial.",
+                nameof(coverage));
+        }
+
         Coverage = coverage;
         ObservedAtUtc = null;
         ValidationCode = null;
-        if (Context == TargetObservationContext.Sparring)
+        if (Context is not null)
         {
             Status = TargetObservationEditorStatus.Editing;
         }
@@ -136,7 +142,7 @@ public sealed class TargetObservationEditorState
     {
         if (!CanEdit)
         {
-            ValidationCode = "SPARRING_CONTEXT_REQUIRED";
+            ValidationCode = "TARGET_CONTEXT_REQUIRED";
             return false;
         }
 
@@ -203,6 +209,7 @@ public sealed class TargetObservationEditorState
             selection.Observation.Category,
             selection.Observation.Direction,
             selection.Observation.SlotIndex,
+            selection.Observation.VisiblePowerPercent,
             selection.SnapshotPresence));
         _selectedSkills.Sort((left, right) =>
         {
@@ -253,6 +260,33 @@ public sealed class TargetObservationEditorState
         Status = TargetObservationEditorStatus.Editing;
     }
 
+    public void SetVisiblePower(int skillId, int? visiblePowerPercent)
+    {
+        if (visiblePowerPercent < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(visiblePowerPercent),
+                visiblePowerPercent,
+                "A visible target-skill power percentage cannot be negative.");
+        }
+
+        var index = _selectedSkills.FindIndex(skill =>
+            skill.SkillId == skillId);
+        if (index < 0)
+        {
+            throw new ArgumentException(
+                "The selected target skill was not found.",
+                nameof(skillId));
+        }
+
+        _selectedSkills[index] = _selectedSkills[index] with
+        {
+            VisiblePowerPercent = visiblePowerPercent
+        };
+        ObservedAtUtc = null;
+        Status = TargetObservationEditorStatus.Editing;
+    }
+
     public bool BeginReview(DateTimeOffset observedAt)
     {
         if (!CanReview)
@@ -289,7 +323,8 @@ public sealed class TargetObservationEditorState
                 skill.Category,
                 skill.SkillId,
                 skill.Direction,
-                skill.SlotIndex)),
+                skill.SlotIndex,
+                skill.VisiblePowerPercent)),
             ConfirmPrecedenceWhenSaveTimeUnavailable);
     }
 
@@ -397,4 +432,5 @@ public sealed record TargetObservationSelectedSkillViewModel(
     SkillCategory Category,
     PracticeDirection? Direction,
     int? SlotIndex,
+    int? VisiblePowerPercent,
     TargetSkillSnapshotPresence SnapshotPresence);

@@ -81,6 +81,61 @@ public sealed class CombatRecommendationTargetObservationControllerTests
             });
     }
 
+    [Theory]
+    [InlineData(TargetObservationContext.Hostile)]
+    [InlineData(TargetObservationContext.Story)]
+    public async Task Battle_visible_request_retains_context_and_power_as_partial_evidence(
+        TargetObservationContext context)
+    {
+        var action = await Controller(Snapshot()).Recommend(
+            Request(
+                TargetLoadoutCoverageKind.PartialLoadout,
+                SaveTime.AddMinutes(1),
+                [SkillRequest(
+                    confirmedSkillId: 719,
+                    visiblePowerPercent: 146,
+                    slotIndex: null)],
+                context: context,
+                evidenceReference: "E3-012-CAP-001"),
+            TestContext.Current.CancellationToken);
+
+        var observation = Assert.IsType<TargetObservationResponse>(
+            Response(action).TargetObservation);
+        Assert.Equal(context, observation.Context);
+        var skill = Assert.Single(observation.ResolvedSkills);
+        Assert.Equal(146, skill.VisiblePowerPercent);
+        Assert.Null(skill.SlotIndex);
+        Assert.Empty(observation.Impact.AddedEquippedSkillIds);
+        Assert.Contains(
+            observation.Sources,
+            source => source.Field
+                == TargetLoadoutObservationMerger
+                    .TargetVisibleActiveEffectsField);
+        Assert.DoesNotContain(
+            observation.Sources,
+            source => source.Field
+                    == TargetLoadoutObservationMerger.TargetEquippedSkillsField
+                && source.Source
+                    == SnapshotDataSource.CurrentScreenObservation);
+    }
+
+    [Fact]
+    public async Task Battle_visible_request_rejects_complete_loadout_claim()
+    {
+        var action = await Controller(Snapshot()).Recommend(
+            Request(
+                TargetLoadoutCoverageKind.CompleteCurrentLoadout,
+                SaveTime.AddMinutes(1),
+                [SkillRequest(confirmedSkillId: 719)],
+                context: TargetObservationContext.Story,
+                evidenceReference: "E3-012-CAP-001"),
+            TestContext.Current.CancellationToken);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(action.Result);
+        var problem = Assert.IsType<ProblemDetails>(badRequest.Value);
+        Assert.Equal("InvalidObservation", problem.Extensions["code"]);
+    }
+
     [Fact]
     public async Task Ambiguous_selection_returns_stable_problem_candidates()
     {
@@ -236,28 +291,33 @@ public sealed class CombatRecommendationTargetObservationControllerTests
         TargetLoadoutCoverageKind coverage,
         DateTimeOffset observedAt,
         IReadOnlyList<TargetObservedSkillApiRequest> selectedSkills,
-        string evidenceReference = "E3-000-CAP-002") => new()
-        {
-            TargetCharacterId = 16317,
-            Objective = RecommendationPolicy.Balanced,
-            TargetObservation = new TargetObservationApiRequest
+        string evidenceReference = "E3-000-CAP-002",
+        TargetObservationContext context =
+            TargetObservationContext.Sparring) => new()
             {
-                Context = TargetObservationContext.Sparring,
-                ObservedAt = observedAt,
-                EvidenceReference = evidenceReference,
-                Coverage = coverage,
-                SelectedSkills = selectedSkills
-            }
-        };
+                TargetCharacterId = 16317,
+                Objective = RecommendationPolicy.Balanced,
+                TargetObservation = new TargetObservationApiRequest
+                {
+                    Context = context,
+                    ObservedAt = observedAt,
+                    EvidenceReference = evidenceReference,
+                    Coverage = coverage,
+                    SelectedSkills = selectedSkills
+                }
+            };
 
     private static TargetObservedSkillApiRequest SkillRequest(
-        int? confirmedSkillId) => new()
+        int? confirmedSkillId,
+        int? visiblePowerPercent = null,
+        int? slotIndex = 0) => new()
         {
             VisibleName = "Target Art",
             Category = SkillCategory.Attack,
             ConfirmedSkillId = confirmedSkillId,
             Direction = PracticeDirection.Reverse,
-            SlotIndex = 0
+            SlotIndex = slotIndex,
+            VisiblePowerPercent = visiblePowerPercent
         };
 
     private static CombatRecommendationsController Controller(

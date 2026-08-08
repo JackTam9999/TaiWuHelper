@@ -376,11 +376,16 @@ public static class UiText
                 "請先取得一次推薦，以載入可用的功法名稱。",
             ["Optional target observation"] = "可選：目標觀察",
             ["Report a visible sparring loadout"] = "回報可見的切磋運功配置",
+            ["Report visible target combat information"] =
+                "回報畫面可見的目標戰鬥資訊",
             ["Manual input only"] = "僅限手動輸入",
             ["Use this only after opening the opponent's loadout during a martial-arts spar. Hostile and story characters do not expose this screen."] =
                 "僅在切磋武功中已打開對手運功畫面時使用。敵對及劇情人物不會顯示此畫面。",
+            ["A sparring loadout may support complete coverage. Hostile and story encounters support only partial skill effects visibly exposed by the combat UI."] =
+                "切磋運功畫面可以支援完整涵蓋；敵對及劇情情境只能回報戰鬥介面實際顯示的部分功法效果。",
             ["Add a current sparring-opponent observation"] =
                 "加入目前切磋對手的觀察",
+            ["Add a current target observation"] = "加入目前目標的觀察",
             ["Get a save-only recommendation first so target identity and save freshness can be reviewed before entry."] =
                 "請先取得只使用存檔的推薦，以便輸入前核對目標身分與存檔新鮮度。",
             ["Observed target"] = "觀察目標",
@@ -392,6 +397,9 @@ public static class UiText
             ["Opponent loadout unavailable"] = "無法查看對手運功",
             ["The supported game UI does not expose the opponent's loadout for hostile or story characters. No hidden loadout input will be requested."] =
                 "目前支援的遊戲介面不會顯示敵對或劇情人物的運功配置，因此不會要求輸入任何隱藏資料。",
+            ["Full opponent loadout unavailable"] = "無法查看完整對手運功",
+            ["Hostile and story encounters can expose partial skill-effect panels during combat. Report only names, direction, and power actually visible there; omitted skills remain unknown."] =
+                "敵對及劇情戰鬥仍可能顯示部分功法效果面板；只回報當中實際可見的名稱、正逆練及威力，未列出的功法仍屬未知。",
             ["How much of the current loadout did you inspect?"] =
                 "你查看了目前運功配置的多少內容？",
             ["Partial loadout"] = "部分運功配置",
@@ -400,6 +408,9 @@ public static class UiText
             ["Complete current loadout"] = "完整的目前運功配置",
             ["Every visible category and empty slot on this one displayed preset was inspected."] =
                 "已查看這一套目前顯示預設中的所有可見分類及空格。",
+            ["Partial battle-visible effects"] = "部分戰鬥可見效果",
+            ["This evidence confirms only the listed active effects. It cannot establish equipment slots, omitted skills, or a complete loadout."] =
+                "此證據只確認列出的生效效果，不能證明裝備欄位、未列出功法或完整運功配置。",
             ["Visible combat-skill name"] = "畫面可見的功法名稱",
             ["Find skill"] = "尋找功法",
             ["Searching…"] = "搜尋中……",
@@ -414,6 +425,9 @@ public static class UiText
             ["No target skill has been confirmed yet."] = "尚未確認任何目標功法。",
             ["Verified catalogue identity"] = "已驗證目錄身分",
             ["Visible direction"] = "畫面可見的正逆練",
+            ["Visible power percent"] = "畫面可見威力百分比",
+            ["Evidence only; visible power does not change legality or scoring."] =
+                "僅作證據；畫面威力不會改變可行性或評分。",
             ["Not observed"] = "未觀察",
             ["I confirm this visible screen is newer than the configured save snapshot."] =
                 "我確認此可見畫面比已設定的存檔快照更新。",
@@ -434,6 +448,8 @@ public static class UiText
             ["Target observation is off."] = "目標觀察目前已關閉。",
             ["Editing a session-only target observation."] =
                 "正在編輯只限本次工作階段的目標觀察。",
+            ["Editing partial battle-visible target effects."] =
+                "正在編輯部分戰鬥可見的目標效果。",
             ["Searching catalogue…"] = "正在搜尋目錄……",
             ["More than one catalogue skill matched. Confirm the correct one."] =
                 "有多門目錄功法相符，請確認正確項目。",
@@ -460,6 +476,9 @@ public static class UiText
                 "輸入目標證據前，請先取得只使用存檔的推薦。",
             ["Confirm a martial-arts spar before searching target skills."] =
                 "搜尋目標功法前，請先確認情境為切磋武功。",
+            ["Choose where the target information is visible before searching target skills."] =
+                "搜尋目標功法前，請先選擇可查看目標資訊的情境。",
+            ["Battle-visible active effect"] = "戰鬥可見的生效效果",
             ["Enter the combat-skill name visible in the game."] =
                 "請輸入遊戲畫面可見的功法名稱。",
             ["Multiple skills matched; choose the verified catalogue entry."] =

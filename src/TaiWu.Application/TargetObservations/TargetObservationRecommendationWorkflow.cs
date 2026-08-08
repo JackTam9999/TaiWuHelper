@@ -83,7 +83,8 @@ public sealed class TargetObservationRecommendationWorkflow(
                     selection.ConfirmedSkillId,
                     selection.Direction,
                     selection.SlotIndex,
-                    targetSkillIds),
+                    targetSkillIds,
+                    selection.VisiblePowerPercent),
                 cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
             if (result.Status != TargetSkillSelectionStatus.Resolved)

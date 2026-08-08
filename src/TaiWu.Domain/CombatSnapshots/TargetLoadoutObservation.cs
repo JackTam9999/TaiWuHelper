@@ -29,14 +29,6 @@ public sealed class TargetLoadoutObservation :
                 "Unknown target-observation context.");
         }
 
-        if (observationContext != TargetObservationContext.Sparring)
-        {
-            throw new ArgumentException(
-                "The supported UI exposes target loadouts only during "
-                + "sparring; hostile and story targets are unavailable.",
-                nameof(observationContext));
-        }
-
         if (string.IsNullOrWhiteSpace(evidenceReference))
         {
             throw new ArgumentException(
@@ -46,6 +38,14 @@ public sealed class TargetLoadoutObservation :
 
         ArgumentNullException.ThrowIfNull(coverage);
         ArgumentNullException.ThrowIfNull(observedSkills);
+        if (observationContext != TargetObservationContext.Sparring
+            && coverage.CanEstablishAbsence)
+        {
+            throw new ArgumentException(
+                "Hostile and story observations are partial battle-visible "
+                + "evidence and cannot establish a complete loadout.",
+                nameof(coverage));
+        }
 
         var skillValues = observedSkills.ToImmutableArray();
         if (skillValues.Any(skill => skill is null))

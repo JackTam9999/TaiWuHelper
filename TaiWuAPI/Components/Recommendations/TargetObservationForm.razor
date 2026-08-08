@@ -14,13 +14,13 @@
     <div class="target-observation-heading">
         <div>
             <p class="eyebrow">@T("Optional target observation")</p>
-            <h3 id="target-observation-heading">@T("Report a visible sparring loadout")</h3>
+            <h3 id="target-observation-heading">@T("Report visible target combat information")</h3>
         </div>
         <span class="information-badge">@T("Manual input only")</span>
     </div>
 
     <p>
-        @T("Use this only after opening the opponent's loadout during a martial-arts spar. Hostile and story characters do not expose this screen.")
+        @T("A sparring loadout may support complete coverage. Hostile and story encounters support only partial skill effects visibly exposed by the combat UI.")
     </p>
 
     <label class="check-control" for="target-observation-enabled">
@@ -29,7 +29,7 @@
                checked="@State.IsEnabled"
                @onchange="ToggleEnabled"
                disabled="@(Target is null || Recommendation is null || Busy)" />
-        @T("Add a current sparring-opponent observation")
+        @T("Add a current target observation")
     </label>
 
     @if (Recommendation is null)
@@ -76,38 +76,48 @@
             }
         </fieldset>
 
-        @if (State.Status == TargetObservationEditorStatus.Unavailable)
+        @if (State.IsBattleVisiblePartial)
         {
             <div class="target-observation-unavailable" role="status">
-                <strong>@T("Opponent loadout unavailable")</strong>
-                <p>@T("The supported game UI does not expose the opponent's loadout for hostile or story characters. No hidden loadout input will be requested.")</p>
+                <strong>@T("Full opponent loadout unavailable")</strong>
+                <p>@T("Hostile and story encounters can expose partial skill-effect panels during combat. Report only names, direction, and power actually visible there; omitted skills remain unknown.")</p>
             </div>
         }
-        else if (State.Context == TargetObservationContext.Sparring)
+        @if (State.Context is not null)
         {
-            <fieldset class="target-observation-coverage">
-                <legend>@T("How much of the current loadout did you inspect?")</legend>
-                <label>
-                    <input type="radio"
-                           name="target-observation-coverage"
-                           checked="@(State.Coverage == TargetLoadoutCoverageKind.PartialLoadout)"
-                           @onchange="() => SetCoverage(TargetLoadoutCoverageKind.PartialLoadout)" />
-                    <span>
-                        <strong>@T("Partial loadout")</strong>
-                        <small>@T("Only listed skills are confirmed; omitted skills remain unknown.")</small>
-                    </span>
-                </label>
-                <label>
-                    <input type="radio"
-                           name="target-observation-coverage"
-                           checked="@(State.Coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout)"
-                           @onchange="() => SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout)" />
-                    <span>
-                        <strong>@T("Complete current loadout")</strong>
-                        <small>@T("Every visible category and empty slot on this one displayed preset was inspected.")</small>
-                    </span>
-                </label>
-            </fieldset>
+            @if (State.Context == TargetObservationContext.Sparring)
+            {
+                <fieldset class="target-observation-coverage">
+                    <legend>@T("How much of the current loadout did you inspect?")</legend>
+                    <label>
+                        <input type="radio"
+                               name="target-observation-coverage"
+                               checked="@(State.Coverage == TargetLoadoutCoverageKind.PartialLoadout)"
+                               @onchange="() => SetCoverage(TargetLoadoutCoverageKind.PartialLoadout)" />
+                        <span>
+                            <strong>@T("Partial loadout")</strong>
+                            <small>@T("Only listed skills are confirmed; omitted skills remain unknown.")</small>
+                        </span>
+                    </label>
+                    <label>
+                        <input type="radio"
+                               name="target-observation-coverage"
+                               checked="@(State.Coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout)"
+                               @onchange="() => SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout)" />
+                        <span>
+                            <strong>@T("Complete current loadout")</strong>
+                            <small>@T("Every visible category and empty slot on this one displayed preset was inspected.")</small>
+                        </span>
+                    </label>
+                </fieldset>
+            }
+            else
+            {
+                <div class="target-observation-coverage" role="status">
+                    <strong>@T("Partial battle-visible effects")</strong>
+                    <small>@T("This evidence confirms only the listed active effects. It cannot establish equipment slots, omitted skills, or a complete loadout.")</small>
+                </div>
+            }
 
             <div class="target-skill-search">
                 <label for="target-skill-query">@T("Visible combat-skill name")</label>
@@ -188,6 +198,14 @@
                                         <option value="Direct">@T("Direct")</option>
                                         <option value="Reverse">@T("Reverse")</option>
                                     </select>
+                                </label>
+                                <label>
+                                    @T("Visible power percent")
+                                    <input type="number"
+                                           min="0"
+                                           value="@skill.VisiblePowerPercent"
+                                           @onchange="args => ChangeVisiblePower(skill.SkillId, args)" />
+                                    <small>@T("Evidence only; visible power does not change legality or scoring.")</small>
                                 </label>
                                 <button type="button"
                                         class="text-button"
@@ -363,7 +381,9 @@
                     candidate.Category,
                     candidate.SkillId,
                     direction: null,
-                    slotIndex: NextSlot(candidate.Category)),
+                    slotIndex: State.IsBattleVisiblePartial
+                        ? null
+                        : NextSlot(candidate.Category)),
                 cancellation.Token);
             if (result.ResolvedSelection is null)
             {
@@ -389,7 +409,8 @@
         int? confirmedSkillId,
         PracticeDirection? direction,
         int? slotIndex) => new(
-            TargetObservationContext.Sparring,
+            State.Context ?? throw new InvalidOperationException(
+                "A target-observation context is required."),
             Language == TaiwuLanguage.Chinese
                 ? TaiWu.Domain.CombatSkills.CatalogueLanguage.TraditionalChinese
                 : TaiWu.Domain.CombatSkills.CatalogueLanguage.English,
@@ -398,7 +419,8 @@
             confirmedSkillId,
             direction,
             slotIndex,
-            targetSnapshotSkillIds: null);
+            targetSnapshotSkillIds: null,
+            visiblePowerPercent: null);
 
     private int NextSlot(SkillCategory category) => State.SelectedSkills
         .Count(skill => skill.Category == category);
@@ -412,6 +434,18 @@
             _ => (PracticeDirection?)null
         };
         State.SetDirection(skillId, direction);
+    }
+
+    private void ChangeVisiblePower(int skillId, ChangeEventArgs args)
+    {
+        var raw = args.Value?.ToString();
+        var power = string.IsNullOrWhiteSpace(raw)
+            ? (int?)null
+            : int.TryParse(raw, out var parsed) && parsed >= 0
+                ? parsed
+                : throw new ArgumentException(
+                    "Visible power must be a non-negative integer.");
+        State.SetVisiblePower(skillId, power);
     }
 
     private void Review()
@@ -447,7 +481,9 @@
         TargetObservationEditorStatus.Initial =>
             T("Target observation is off."),
         TargetObservationEditorStatus.Editing =>
-            T("Editing a session-only target observation."),
+            State.IsBattleVisiblePartial
+                ? T("Editing partial battle-visible target effects.")
+                : T("Editing a session-only target observation."),
         TargetObservationEditorStatus.Searching => T("Searching catalogue…"),
         TargetObservationEditorStatus.Ambiguous =>
             T("More than one catalogue skill matched. Confirm the correct one."),
@@ -478,8 +514,8 @@
     {
         "INITIAL_RECOMMENDATION_REQUIRED" =>
             T("Get a save-only recommendation before entering target evidence."),
-        "SPARRING_CONTEXT_REQUIRED" =>
-            T("Confirm a martial-arts spar before searching target skills."),
+        "TARGET_CONTEXT_REQUIRED" =>
+            T("Choose where the target information is visible before searching target skills."),
         "VISIBLE_SKILL_NAME_REQUIRED" =>
             T("Enter the combat-skill name visible in the game."),
         "AMBIGUOUS_SKILL" =>
@@ -508,7 +544,9 @@
     };
 
     private string CoverageLabel(TargetLoadoutCoverageKind coverage) =>
-        coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout
+        State.IsBattleVisiblePartial
+            ? T("Partial battle-visible effects")
+            : coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout
             ? T("Complete current loadout")
             : T("Partial loadout");
 

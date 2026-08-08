@@ -52,18 +52,18 @@ public sealed partial class RecommendationComponentRenderingTests
             },
             TaiwuLanguage.Chinese);
 
-        Assert.Contains("Report a visible sparring loadout", VisibleText(english));
+        Assert.Contains("Report visible target combat information", VisibleText(english));
         Assert.Contains("disabled", english);
         Assert.Contains("Get a save-only recommendation first", VisibleText(english));
         Assert.DoesNotContain("id=\"target-skill-query\"", english);
-        Assert.Contains("回報可見的切磋運功配置", VisibleText(chinese));
-        Assert.Contains("敵對及劇情人物不會顯示此畫面", VisibleText(chinese));
+        Assert.Contains("回報畫面可見的目標戰鬥資訊", VisibleText(chinese));
+        Assert.Contains("敵對及劇情情境只能回報戰鬥介面實際顯示的部分功法效果", VisibleText(chinese));
     }
 
     [Theory]
     [InlineData(TargetObservationContext.Hostile)]
     [InlineData(TargetObservationContext.Story)]
-    public async Task Hidden_encounter_renders_unavailable_without_skill_input(
+    public async Task Battle_encounter_renders_editable_partial_effect_input(
         TargetObservationContext context)
     {
         var state = new TargetObservationEditorState();
@@ -73,12 +73,25 @@ public sealed partial class RecommendationComponentRenderingTests
         var html = await RenderAsync<TargetObservationForm>(
             TargetObservationParameters(state));
         var text = VisibleText(html);
+        var chineseParameters = TargetObservationParameters(state);
+        chineseParameters[nameof(TargetObservationForm.Language)] =
+            TaiwuLanguage.Chinese;
+        var chinese = await RenderAsync<TargetObservationForm>(
+            chineseParameters,
+            TaiwuLanguage.Chinese);
+        var chineseText = VisibleText(chinese);
 
-        Assert.Contains("Opponent loadout unavailable", text);
-        Assert.Contains("No hidden loadout input will be requested", text);
+        Assert.Contains("Full opponent loadout unavailable", text);
+        Assert.Contains("Report only names, direction, and power actually visible", text);
+        Assert.Contains("Partial battle-visible effects", text);
+        Assert.Contains("omitted skills remain unknown", text);
         Assert.Contains("role=\"status\"", html);
-        Assert.DoesNotContain("id=\"target-skill-query\"", html);
+        Assert.Contains("id=\"target-skill-query\"", html);
         Assert.DoesNotContain("Use observation for recommendation", text);
+        Assert.DoesNotContain("Complete current loadout", text);
+        Assert.Contains("無法查看完整對手運功", chineseText);
+        Assert.Contains("部分戰鬥可見效果", chineseText);
+        Assert.Contains("未列出的功法仍屬未知", chineseText);
     }
 
     [Fact]
@@ -129,6 +142,7 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("Reverse Qilun Life Support", text);
         Assert.Contains("Evidence chain", text);
         Assert.Contains("Repeatable defeat-mark reset", text);
+        Assert.Contains("Battle-visible active effect", text);
         Assert.Contains("Scoring changes", text);
         Assert.Contains("Still unsupported", text);
         Assert.Contains("No severity or score was assigned", text);
@@ -167,6 +181,7 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("未變威脅", text);
         Assert.Contains("可行性變更", text);
         Assert.Contains("證據鏈", text);
+        Assert.Contains("戰鬥可見的生效效果", text);
         Assert.Contains("仍未支援", text);
         Assert.Contains("來源衝突與優先順序", text);
         Assert.Contains("並非勝率", text);
@@ -631,7 +646,7 @@ public sealed partial class RecommendationComponentRenderingTests
                 "Repeatable defeat-mark reset",
                 TargetThreatImpactKind.Added,
                 TargetThreatSeverity.Critical,
-                [TargetThreatSourceKind.ObservedEquipped],
+                [TargetThreatSourceKind.ObservedActiveEffect],
                 ["docs:verified-rule", "ui:target-observation"]),
             new TargetThreatImpactViewModel(
                 "MIND_RESONANCE_CASCADE",

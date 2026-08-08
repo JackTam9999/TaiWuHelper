@@ -280,11 +280,13 @@ For hostile/story combat-tooltip evidence:
 
 ## Current E3-000 status
 
-E3-000 is reopened. `E3-000-CAP-001` still proves that the `少林` story
+E3-000 is complete after the E3-012 scope correction. `E3-000-CAP-001` still proves that the `少林` story
 encounter's full `運功` page is unavailable and must never become an empty
 loadout. `E3-000-CAP-002` continues to support complete-current-loadout
 coverage for sparring. New captures `E3-000-CAP-003` and `E3-000-CAP-004`
 prove that hostile/story combat can expose useful partial skill-effect
 evidence, while `E3-000-CAP-005` records additional visible but unlabeled
-indicators. The existing hostile/story rejection model is therefore too broad
-and must be revised before Epic 3 can close.
+indicators. E3-012 now implements the corrected boundary: complete coverage
+remains sparring-only, labelled battle effects use separate partial
+provenance, visible power is evidence-only, and the unlabelled indicators are
+not represented.

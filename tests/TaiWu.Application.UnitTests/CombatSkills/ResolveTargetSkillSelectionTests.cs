@@ -44,13 +44,18 @@ public sealed class ResolveTargetSkillSelectionTests
                 "Corruptive Gu Infection",
                 SkillCategory.Attack,
                 CatalogueLanguage.TraditionalChinese,
-                confirmedSkillId: candidate.SkillId),
+                confirmedSkillId: candidate.SkillId,
+                observationContext: TargetObservationContext.Story,
+                visiblePowerPercent: 142),
             CancellationToken);
 
         Assert.Equal(TargetSkillSelectionStatus.Resolved, resolved.Status);
         Assert.Equal(
             candidate.SkillId,
             resolved.ResolvedSelection!.Observation.SkillId);
+        Assert.Equal(
+            142,
+            resolved.ResolvedSelection.Observation.VisiblePowerPercent);
     }
 
     [Fact]
@@ -351,13 +356,22 @@ public sealed class ResolveTargetSkillSelectionTests
     }
 
     [Fact]
-    public void Request_rejects_hidden_or_invalid_observation_values()
+    public void Request_accepts_battle_context_and_rejects_invalid_values()
     {
-        Assert.Throws<ArgumentException>(
+        var hostile = Request(
+            "Strike",
+            SkillCategory.Attack,
+            observationContext: TargetObservationContext.Hostile,
+            visiblePowerPercent: 146);
+
+        Assert.Equal(TargetObservationContext.Hostile,
+            hostile.ObservationContext);
+        Assert.Equal(146, hostile.VisiblePowerPercent);
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => Request(
                 "Strike",
                 SkillCategory.Attack,
-                observationContext: TargetObservationContext.Hostile));
+                observationContext: (TargetObservationContext)99));
         Assert.Throws<ArgumentException>(
             () => Request(" ", SkillCategory.Attack));
         Assert.Throws<ArgumentOutOfRangeException>(
@@ -381,6 +395,11 @@ public sealed class ResolveTargetSkillSelectionTests
             () => Request(
                 "Strike",
                 SkillCategory.Attack,
+                visiblePowerPercent: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => Request(
+                "Strike",
+                SkillCategory.Attack,
                 targetSnapshotSkillIds: [-1]));
         Assert.Throws<ArgumentException>(
             () => Request(
@@ -398,7 +417,8 @@ public sealed class ResolveTargetSkillSelectionTests
         int? slotIndex = null,
         IEnumerable<int>? targetSnapshotSkillIds = null,
         TargetObservationContext observationContext =
-            TargetObservationContext.Sparring) => new(
+            TargetObservationContext.Sparring,
+        int? visiblePowerPercent = null) => new(
                 observationContext,
                 language,
                 query,
@@ -406,7 +426,8 @@ public sealed class ResolveTargetSkillSelectionTests
                 confirmedSkillId,
                 direction,
                 slotIndex,
-                targetSnapshotSkillIds);
+                targetSnapshotSkillIds,
+                visiblePowerPercent);
 
     private static ResolveTargetSkillSelection UseCase(
         IReadOnlyList<CombatSkillDefinition> definitions,

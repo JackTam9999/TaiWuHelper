@@ -76,7 +76,8 @@ internal static class TargetObservationRecommendationImpactAnalyzer
         }
 
         if (before.Sources.Any(source =>
-                source.Scope == TargetThreatSourceScope.Equipped)
+                source.Scope is TargetThreatSourceScope.Equipped
+                    or TargetThreatSourceScope.BattleVisibleActiveEffect)
             && after.Sources.All(source =>
                 source.Scope == TargetThreatSourceScope.LearnedUnequipped))
         {
@@ -84,9 +85,11 @@ internal static class TargetObservationRecommendationImpactAnalyzer
         }
 
         if (after.Sources.Any(source =>
-                source.Kind == TargetThreatSourceKind.ObservedEquipped)
+                source.Kind is TargetThreatSourceKind.ObservedEquipped
+                    or TargetThreatSourceKind.ObservedActiveEffect)
             && before.Sources.All(source =>
-                source.Kind != TargetThreatSourceKind.ObservedEquipped))
+                source.Kind is not TargetThreatSourceKind.ObservedEquipped
+                    and not TargetThreatSourceKind.ObservedActiveEffect))
         {
             return TargetThreatImpactKind.Confirmed;
         }

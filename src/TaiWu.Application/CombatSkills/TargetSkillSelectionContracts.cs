@@ -14,14 +14,15 @@ public sealed record TargetSkillSelectionRequest
         int? confirmedSkillId = null,
         PracticeDirection? direction = null,
         int? slotIndex = null,
-        IEnumerable<int>? targetSnapshotSkillIds = null)
+        IEnumerable<int>? targetSnapshotSkillIds = null,
+        int? visiblePowerPercent = null)
     {
-        if (observationContext != TargetObservationContext.Sparring)
+        if (!Enum.IsDefined(observationContext))
         {
-            throw new ArgumentException(
-                "Target skill selection is available only for a visible "
-                + "sparring-opponent loadout.",
-                nameof(observationContext));
+            throw new ArgumentOutOfRangeException(
+                nameof(observationContext),
+                observationContext,
+                "Unknown target-observation context.");
         }
 
         if (!Enum.IsDefined(preferredLanguage))
@@ -82,6 +83,14 @@ public sealed record TargetSkillSelectionRequest
                 "A reported slot index cannot be negative.");
         }
 
+        if (visiblePowerPercent < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(visiblePowerPercent),
+                visiblePowerPercent,
+                "A visible target-skill power percentage cannot be negative.");
+        }
+
         ImmutableHashSet<int>? snapshotIds = null;
         if (targetSnapshotSkillIds is not null)
         {
@@ -111,6 +120,7 @@ public sealed record TargetSkillSelectionRequest
         Direction = direction;
         SlotIndex = slotIndex;
         TargetSnapshotSkillIds = snapshotIds;
+        VisiblePowerPercent = visiblePowerPercent;
     }
 
     public TargetObservationContext ObservationContext { get; }
@@ -128,6 +138,8 @@ public sealed record TargetSkillSelectionRequest
     public int? SlotIndex { get; }
 
     public ImmutableHashSet<int>? TargetSnapshotSkillIds { get; }
+
+    public int? VisiblePowerPercent { get; }
 }
 
 public enum TargetSkillMatchKind

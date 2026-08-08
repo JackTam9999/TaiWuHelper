@@ -359,6 +359,55 @@ public sealed class TargetLoadoutObservationMergerTests
             second.DirectionEvidence.Select(value => value.SkillId));
     }
 
+    [Theory]
+    [InlineData(TargetObservationContext.Hostile)]
+    [InlineData(TargetObservationContext.Story)]
+    public void Battle_visible_effects_do_not_change_equipped_membership(
+        TargetObservationContext context)
+    {
+        var snapshot = CreateSnapshot(
+            [Skill(100, SkillCategory.Attack, PracticeDirection.Direct)],
+            equipped: Loadout((SkillCategory.Attack, 100)));
+        var observation = Observation(
+            TargetLoadoutCoverage.PartialLoadout,
+            [
+                Observed(
+                    101,
+                    SkillCategory.Defense,
+                    PracticeDirection.Reverse,
+                    visiblePowerPercent: 142)
+            ],
+            observationContext: context,
+            evidenceReference: "E3-012-CAP-001");
+
+        var result = TargetLoadoutObservationMerger.Merge(
+            snapshot,
+            observation,
+            [Skill(101, SkillCategory.Defense)]);
+
+        Assert.Equal(TargetLoadoutMergeStatus.Applied, result.Status);
+        Assert.Equal(
+            [100],
+            result.Snapshot.Target.EquippedSkills.Value.AttackSkillIds);
+        Assert.Empty(
+            result.Snapshot.Target.EquippedSkills.Value.DefenseSkillIds);
+        Assert.Contains(
+            result.Snapshot.Target.LearnedSkills,
+            skill => skill.SkillId == 101);
+        Assert.Contains(
+            result.Snapshot.FieldSources,
+            source => source.FieldPath
+                == TargetLoadoutObservationMerger
+                    .TargetVisibleActiveEffectsField);
+        Assert.DoesNotContain(
+            result.Snapshot.FieldSources,
+            source => source.FieldPath
+                == TargetLoadoutObservationMerger.TargetEquippedSkillsField
+                && source.Source
+                    == SnapshotDataSource.CurrentScreenObservation);
+        Assert.False(observation.EstablishesAbsenceOf(999));
+    }
+
     private static TargetLoadoutCoverage CompleteCoverage() =>
         TargetLoadoutCoverage.CompleteCurrentLoadout(
             TargetLoadoutCompletenessEvidence.FromE3000(
@@ -368,11 +417,14 @@ public sealed class TargetLoadoutObservationMergerTests
         TargetLoadoutCoverage coverage,
         IEnumerable<ObservedTargetCombatSkill> skills,
         int targetId = 16317,
-        DateTimeOffset? observedAt = null) => new(
-            targetId,
+        DateTimeOffset? observedAt = null,
+        TargetObservationContext observationContext =
             TargetObservationContext.Sparring,
+        string evidenceReference = "E3-000-CAP-002") => new(
+            targetId,
+            observationContext,
             observedAt ?? SaveTime.AddMinutes(1),
-            "E3-000-CAP-002",
+            evidenceReference,
             coverage,
             skills);
 
@@ -380,11 +432,13 @@ public sealed class TargetLoadoutObservationMergerTests
         int skillId,
         SkillCategory category,
         PracticeDirection? direction = null,
-        int? slotIndex = null) => new(
+        int? slotIndex = null,
+        int? visiblePowerPercent = null) => new(
             skillId,
             category,
             direction,
-            slotIndex);
+            slotIndex,
+            visiblePowerPercent);
 
     private static CombatSnapshot CreateSnapshot(
         IEnumerable<CombatSkillSnapshot> learnedSkills,

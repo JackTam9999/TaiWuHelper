@@ -2,10 +2,10 @@
 
 ## Purpose
 
-E3-007 feeds a successfully merged sparring-target observation into the
-versioned `TargetThreatAnalyzer`. Hostile and story contexts still cannot
-construct an observation, so this integration cannot treat an inaccessible
-opponent loadout as empty.
+E3-007 feeds a successfully merged target observation into the versioned
+`TargetThreatAnalyzer`. E3-012 permits hostile/story observations only for
+skill effects visible in the combat UI. Those observations remain partial and
+never treat an inaccessible opponent loadout as empty or known.
 
 At the E3-007 boundary this slice changed threat analysis only, keeping
 recommendation decisions on the original save-only snapshot so the two
@@ -18,14 +18,15 @@ threat set.
 The analyzer reads target skills in this order:
 
 1. skills explicitly confirmed in the applied current-screen observation,
-   ordered by category, visible slot, and stable skill ID;
+   ordered by category, visible slot where applicable, and stable skill ID;
 2. remaining equipped skills supplied by the save snapshot, ordered by the
    existing category and loadout order;
 3. remaining learned skills, ordered by stable skill ID.
 
 This order works even when the save does not expose any equipped target
-loadout. A partial observation can therefore confirm an equipped subset
-without claiming that omitted skills are absent.
+loadout. A sparring partial observation can confirm an equipped subset. A
+hostile/story partial observation confirms only a currently visible active
+effect. Neither can claim that omitted skills are absent.
 
 Each matched `TargetThreatSource` records a `TargetThreatSourceKind` and opaque
 evidence reference:
@@ -33,6 +34,7 @@ evidence reference:
 | Kind | Meaning | Evidence reference |
 |---|---|---|
 | `ObservedEquipped` | Current sparring screen confirmed equipped membership | Observation reference |
+| `ObservedActiveEffect` | Hostile/story combat panel confirmed a listed active effect, not equipped membership | Observation reference |
 | `SaveEquipped` | Save snapshot reported equipped membership | Save hash reference |
 | `LearnedUnconfirmed` | Skill is learned but current equipped membership is not confirmed | Save hash reference |
 
@@ -42,9 +44,12 @@ the versioned rule evidence that permits severity and downstream handling.
 
 ## Coverage behavior
 
-Partial coverage adds observed equipped membership. It never removes saved
-equipped membership or learned possibilities. An unavailable full loadout
-remains unavailable, while the confirmed subset is still analyzed first.
+Sparring partial coverage adds observed equipped membership. Hostile/story
+partial coverage leaves saved equipped membership byte-for-byte unchanged and
+adds a separate `BattleVisibleActiveEffect` analysis source. Neither removes
+saved membership or learned possibilities. An unavailable full loadout
+remains unavailable, while the confirmed visible effects are still analyzed
+first.
 
 Complete coverage replaces only current equipped membership. A previously
 saved equipped skill omitted by the complete observation remains a learned,
@@ -65,6 +70,11 @@ version. A relevant skill with an unknown direction, unavailable effect ID,
 or unrecognized effect produces a warning and no typed threat. For an
 observed skill, that warning carries the current-screen evidence reference;
 it never receives severity or score.
+
+Visible power is not part of a threat signature. Replacing 142% with 204% on
+otherwise identical evidence produces the same threats, feasibility, and
+ranking. Raw panel effect prose also cannot enter the analyzer: the selected
+catalogue identity and verified direction supply the versioned effect ID.
 
 ## Original and merged snapshots
 

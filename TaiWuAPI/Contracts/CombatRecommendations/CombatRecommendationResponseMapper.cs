@@ -85,6 +85,7 @@ public static class CombatRecommendationResponseMapper
 
         return new TargetObservationResponse(
             observation.TargetCharacterId,
+            observation.ObservationContext,
             observation.ObservedAtUtc,
             observation.EvidenceReference,
             observation.Coverage.Kind,
@@ -97,6 +98,7 @@ public static class CombatRecommendationResponseMapper
                     value.Observation.Category,
                     value.Observation.Direction,
                     value.Observation.SlotIndex,
+                    value.Observation.VisiblePowerPercent,
                     value.SnapshotPresence))],
             sources,
             MapTargetObservationImpact(processing.OriginalSnapshot, merge),

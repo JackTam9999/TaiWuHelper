@@ -69,14 +69,15 @@ does not make that evidence observable.
 - As a player, I can clear the observation and reproduce the original
   save-only recommendation.
 - As a player facing a hostile or story target, I am told that current-screen
-  loadout observation is unavailable instead of being asked for hidden data.
+  full-loadout observation is unavailable, while I may report only labelled
+  skill effects that the combat UI actually exposes.
 
 ## Goals
 
 1. Define exactly which target fields can be reliably observed in the current
    supported game UI.
-2. Restrict current-screen loadout observations to UI-visible sparring
-   opponents and preserve an unavailable state for hostile/story targets.
+2. Restrict complete-loadout observations to UI-visible sparring opponents;
+   hostile/story observations remain partial active-effect evidence only.
 3. Capture target observations through explicit manual user input.
 4. Resolve observed skill names to stable catalogue identities with visible
    confirmation for ambiguous matches.
@@ -138,11 +139,11 @@ versioned completeness rules established by E3-000.
 ### Observation access depends on encounter context
 
 E3-000 establishes that the supported UI exposes an opponent's `運功` page in
-`切磋武功`, but not for hostile or story targets. Complete and partial
-current-screen observations are therefore valid only for a confirmed sparring
-context. An inaccessible target produces an unavailable state, never an empty
-or partial loadout, and the helper must not prompt the player to reconstruct
-hidden data.
+`切磋武功`, but not for hostile or story targets. Complete-loadout evidence is
+therefore valid only for a confirmed sparring context. Hostile/story combat
+may separately expose labelled active skill effects; those entries are always
+partial, never establish slots or absence, and must not prompt the player to
+reconstruct hidden data.
 
 ### Manual first
 
@@ -210,13 +211,14 @@ Unsupported fields remain unavailable and are not added to the input form.
 The Domain model should include immutable equivalents of:
 
 - target character identity;
-- observation access context, distinguishing visible sparring evidence from
-  unavailable hostile/story targets;
+- observation access context, distinguishing sparring equipped-membership
+  evidence from hostile/story battle-visible active-effect evidence;
 - UTC observation time;
 - a short opaque evidence reference;
 - observation coverage (`CompleteLoadout` or `PartialLoadout`);
 - observed equipped skills grouped by verified category;
-- optional observed practice direction per skill;
+- optional observed practice direction and evidence-only visible power per
+  skill;
 - stable field sources and any conflicting observations.
 
 Collections are copied into immutable values. Duplicate skills, invalid IDs,
@@ -251,10 +253,12 @@ combat snapshot. It must:
 
 ### 5. Recommendation integration
 
-Threat analysis prioritizes confirmed equipped target skills over
-learned-but-unconfirmed skills. A complete observation may remove saved
-equipped membership from the current analysis; a partial observation may only
-add confirmed equipped evidence and cannot prove absence.
+Threat analysis prioritizes confirmed current-screen evidence over
+learned-but-unconfirmed skills. A complete sparring observation may remove
+saved equipped membership from the current analysis. A sparring partial
+observation may add equipped evidence; a hostile/story partial observation
+adds only a battle-visible active-effect source. Neither partial mode can
+prove absence.
 
 Only existing typed, version-matched threat and counter rules can change
 recommendation feasibility or scoring. A reported skill with an unrecognized
@@ -279,10 +283,12 @@ interpreting raw diagnostics.
 The recommendation page provides a target-observation workflow:
 
 1. Confirm encounter context, target identity, and source freshness.
-2. Stop with an explicit unavailable state for hostile or story targets;
-   otherwise select complete or partial coverage for a sparring opponent.
+2. For a sparring opponent, select complete or partial coverage. For a
+   hostile/story target, keep the full loadout unavailable and use fixed
+   partial battle-visible-effect coverage.
 3. Search and add skills in the active UI language.
-4. Confirm category and optional visible direction.
+4. Confirm category, optional visible direction, and optional evidence-only
+   visible power.
 5. Review resolved stable identities and evidence status.
 6. Apply the observation to a new recommendation request.
 7. Inspect impact and warnings.
@@ -331,31 +337,31 @@ The workflow must present these states explicitly:
 
 - [x] The supported target UI fields and completeness rules are documented
       with versioned evidence.
-- [ ] Hostile/story complete loadouts remain explicitly unavailable while
+- [x] Hostile/story complete loadouts remain explicitly unavailable while
       separately visible battle-effect evidence is accepted only as partial
       and never becomes an empty-loadout claim.
 - [x] Target observations use stable bilingual catalogue identities.
-- [ ] Partial battle-visible effects and complete sparring loadout coverage
+- [x] Partial battle-visible effects and complete sparring loadout coverage
       cannot be confused.
 - [x] Observation time, evidence reference, and field provenance are retained.
 - [x] Stale and conflicting observations remain visible and deterministic.
 - [x] Only explicitly covered fields receive current-screen precedence.
 - [x] An observed skill missing from a stale target snapshot is represented
       without fabricating unrelated progress.
-- [ ] Threat analysis distinguishes battle-visible active effects, confirmed
+- [x] Threat analysis distinguishes battle-visible active effects, confirmed
       equipped sources, and possible learned sources.
-- [ ] Recommendation impact is explained in terms of changed evidence,
+- [x] Recommendation impact is explained in terms of changed evidence,
       threats, counters, feasibility, and unresolved risks.
 - [x] Save-only behavior remains reproducible after clearing the observation.
 - [x] Unknown raw effects cannot influence legality or scoring.
 - [x] Observation state is session-bound and is not persisted as history.
 - [x] No endpoint accepts a screenshot path, game path, process identifier, or
       mutation-capable game type.
-- [ ] The UI is bilingual, accessible, and explicit about full-loadout
+- [x] The UI is bilingual, accessible, and explicit about full-loadout
       unavailability versus partial battle-visible evidence.
-- [ ] Automated tests cover valid, battle-visible partial, complete, stale,
+- [x] Automated tests cover valid, battle-visible partial, complete, stale,
       conflicting, ambiguous, unsupported, and cleared states.
-- [ ] Local vertical verification proves all inspected game and save sources
+- [x] Local vertical verification proves all inspected game and save sources
       are byte-for-byte unchanged.
 - [ ] The product owner records the Epic 3 completion decision.
 
@@ -378,7 +384,7 @@ The workflow must present these states explicitly:
 | Risk | Mitigation |
 |---|---|
 | A partial screen is mistaken for a complete loadout | Require explicit coverage and verify completeness in E3-000 |
-| Sparring evidence is applied to an unobservable hostile/story target | Require encounter context, reject current-screen observation for hostile/story targets, and retain save-only uncertainty |
+| Sparring membership evidence is applied to a hostile/story target | Require encounter context, reject complete coverage outside sparring, and use a distinct active-effect source that never changes equipped membership |
 | Similar bilingual names resolve to the wrong skill | Show stable match details and require confirmation on ambiguity |
 | Observation silently overwrites fresher save data | Apply timestamp rules, retain both sources, and emit conflicts |
 | An observed skill is absent from a stale target snapshot | Join only required static facts and leave unrelated progress unavailable |

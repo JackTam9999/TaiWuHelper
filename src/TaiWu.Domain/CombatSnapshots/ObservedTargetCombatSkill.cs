@@ -6,7 +6,8 @@ public sealed record ObservedTargetCombatSkill
         int skillId,
         SkillCategory category,
         PracticeDirection? direction = null,
-        int? slotIndex = null)
+        int? slotIndex = null,
+        int? visiblePowerPercent = null)
     {
         if (skillId < 0)
         {
@@ -43,10 +44,19 @@ public sealed record ObservedTargetCombatSkill
                 "An observed slot index cannot be negative.");
         }
 
+        if (visiblePowerPercent < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(visiblePowerPercent),
+                visiblePowerPercent,
+                "A visible target-skill power percentage cannot be negative.");
+        }
+
         SkillId = skillId;
         Category = category;
         Direction = direction;
         SlotIndex = slotIndex;
+        VisiblePowerPercent = visiblePowerPercent;
     }
 
     public int SkillId { get; }
@@ -56,4 +66,6 @@ public sealed record ObservedTargetCombatSkill
     public PracticeDirection? Direction { get; }
 
     public int? SlotIndex { get; }
+
+    public int? VisiblePowerPercent { get; }
 }

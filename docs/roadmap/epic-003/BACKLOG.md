@@ -63,7 +63,7 @@ Every completed item must:
 
 ### E3-000 — Verify observable target-loadout fields
 
-**Status:** In progress
+**Status:** Complete
 
 **Priority:** P0
 
@@ -120,8 +120,9 @@ optional direction, and partial/complete coverage.
 
 - [x] `TargetLoadoutObservation` carries target ID, UTC observation time,
       evidence reference, coverage, and immutable observed skills.
-- [x] Observation access distinguishes UI-visible sparring opponents from
-      hostile/story targets whose loadout page is unavailable.
+- [x] Observation access distinguishes a UI-visible sparring loadout from
+      hostile/story targets whose full loadout page is unavailable but whose
+      battle UI may expose partial active effects.
 - [x] Every observed skill has a stable non-negative ID and verified category.
 - [x] Direction is optional and uses the existing `PracticeDirection` value.
 - [x] Duplicate skills, duplicate slots where applicable, blank evidence,
@@ -218,8 +219,9 @@ stable warnings.
       not applied.
 - [x] Save-time unavailability requires explicit precedence confirmation and
       emits a warning.
-- [x] A partial observation can confirm listed equipped skills but cannot
-      remove or negate omitted skills.
+- [x] A sparring partial observation can confirm listed equipped skills; a
+      hostile/story partial observation confirms only listed active effects;
+      neither can remove or negate omitted skills.
 - [x] A complete observation may replace equipped membership only when its
       versioned completeness evidence is valid.
 - [x] Optional observed direction overrides no unrelated skill field.
@@ -282,8 +284,9 @@ Add a manual-first observation surface to the recommendation page.
 #### Acceptance criteria
 
 - [x] The form starts disabled and explains when target observation is useful.
-- [x] Hostile and story targets remain explicitly unavailable for manual
-      current-screen loadout observation; the form never requests hidden data.
+- [x] Hostile and story full loadouts remain explicitly unavailable; the form
+      accepts only labelled partial effects exposed by the combat UI and never
+      requests hidden data.
 - [x] Target identity and save freshness are visible before entry.
 - [x] The player chooses partial or complete coverage with an explanation of
       omission semantics.
@@ -327,7 +330,8 @@ without weakening rule verification.
 - [x] Observed direction affects a rule only when available and version-matched.
 - [x] Unknown effects remain warnings and cannot acquire severity or score.
 - [x] Every threat records whether its source is save, observed equipped,
-      learned-unconfirmed, or verified rule evidence.
+      battle-visible active effect, learned-unconfirmed, or verified rule
+      evidence.
 - [x] Recommendations without observations remain byte-for-byte equivalent at
       the contract level, excluding newly added empty metadata fields.
 - [x] Deterministic tests cover added, removed, unchanged, and unsupported
@@ -461,7 +465,7 @@ criterion, and record the product-owner decision.
 
 ### E3-012 — Support hostile/story battle-visible observations
 
-**Status:** In progress
+**Status:** Complete
 
 **Priority:** P0
 
@@ -477,29 +481,29 @@ without claiming that the hidden `運功` page or full equipped loadout is known
 
 - [x] Versioned evidence records the visible panel heading, skill name, power,
       effect text, stable bilingual identity, and unresolved indicators.
-- [ ] Observation provenance distinguishes a complete sparring `運功` screen
+- [x] Observation provenance distinguishes a complete sparring `運功` screen
       from a hostile/story battle-visible active-effect panel.
-- [ ] Hostile/story observations are always partial and can never establish
+- [x] Hostile/story observations are always partial and can never establish
       omitted-skill absence or complete loadout coverage.
-- [ ] Visible names resolve through the guarded catalogue; exact versioned
+- [x] Visible names resolve through the guarded catalogue; exact versioned
       effect text may confirm direction/effect ID without accepting a free-form
       mechanic claim.
-- [ ] Current power may be retained as evidence but cannot influence legality
+- [x] Current power may be retained as evidence but cannot influence legality
       or scoring until a separate typed power rule exists.
-- [ ] Unlabeled colored values and status icons remain explicitly unsupported.
-- [ ] Threat analysis can use a verified visible active effect without
+- [x] Unlabeled colored values and status icons remain explicitly unsupported.
+- [x] Threat analysis can use a verified visible active effect without
       silently relabeling it as complete equipped membership.
-- [ ] The bilingual UI explains that the full loadout is unavailable while
+- [x] The bilingual UI explains that the full loadout is unavailable while
       allowing only the partial facts actually visible in combat.
-- [ ] Applying and clearing the observation remain deterministic,
+- [x] Applying and clearing the observation remain deterministic,
       session-bound, and information-only.
-- [ ] Domain, API, Presentation, architecture, and local read-only tests pass.
+- [x] Domain, API, Presentation, architecture, and local read-only tests pass.
 
 #### Evidence when complete
 
 - Revised [E3-000 evidence](../../scenarios/E3-000-target-observation-evidence.md).
 - Updated target-observation provenance, API, threat-analysis, and UI design.
-- E3-012 automated and local read-only verification summary.
+- `docs/reviews/E3-012-automated-verification.md`.
 
 ## Future work outside Epic 3
 

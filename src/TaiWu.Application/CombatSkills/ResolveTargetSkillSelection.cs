@@ -93,7 +93,8 @@ public sealed class ResolveTargetSkillSelection(
             selected.SkillId,
             selected.StaticFacts.Category,
             request.Direction,
-            request.SlotIndex);
+            request.SlotIndex,
+            request.VisiblePowerPercent);
         return new TargetSkillSelectionResult(
             TargetSkillSelectionStatus.Resolved,
             search.Catalogue,

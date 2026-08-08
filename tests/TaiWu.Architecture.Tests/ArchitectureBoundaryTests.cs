@@ -995,6 +995,7 @@ public sealed partial class ArchitectureBoundaryTests
             "ApplyAsync",
             "ApplyFiltersAsync",
             "args => ChangeDirection(skill.SkillId, args)",
+            "args => ChangeVisiblePower(skill.SkillId, args)",
             "ChangeAsync",
             "ClearAsync",
             "ClearFiltersAsync",
@@ -1039,12 +1040,15 @@ public sealed partial class ArchitectureBoundaryTests
                 componentRoot,
                 "Recommendations",
                 "TargetObservationForm.razor"));
-        Assert.Contains("Hostile and story characters do not expose", targetObservationForm);
+        Assert.Contains(
+            "Hostile and story encounters support only partial skill effects",
+            targetObservationForm);
         Assert.Contains(
             "State.Context == TargetObservationContext.Sparring",
             targetObservationForm);
-        Assert.Contains("Opponent loadout unavailable", targetObservationForm);
-        Assert.Contains("No hidden loadout input will be requested", targetObservationForm);
+        Assert.Contains("Full opponent loadout unavailable", targetObservationForm);
+        Assert.Contains("omitted skills remain unknown", targetObservationForm);
+        Assert.Contains("Evidence only; visible power does not change legality or scoring", targetObservationForm);
         Assert.DoesNotContain("type=\"file\"", targetObservationForm);
         Assert.DoesNotContain("ISaveGameReader", targetObservationForm);
 

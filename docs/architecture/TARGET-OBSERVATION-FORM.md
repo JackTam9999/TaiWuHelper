@@ -3,8 +3,9 @@
 ## Purpose
 
 E3-006 adds a bilingual, manual-first target-observation form to the combat
-recommendation page. It lets the player report only an opponent loadout that
-the supported game UI currently exposes during `切磋武功`.
+recommendation page. E3-012 extends it to accept only the labelled skill
+effects visibly exposed during hostile/story combat while keeping the full
+opponent loadout unavailable.
 
 This form is helper input. It does not read a screenshot, inspect process
 memory, automate input, control the game, modify a save, or persist the
@@ -17,12 +18,14 @@ The encounter choice is part of the evidence claim:
 | Encounter | Form behavior | Evidence meaning |
 |---|---|---|
 | `Sparring` | Skill entry is available | Current displayed opponent loadout may be reported |
-| `Hostile` | Explicit unavailable state; no skill entry | The game does not expose the opponent loadout page |
-| `Story` | Explicit unavailable state; no skill entry | The game does not expose the opponent loadout page |
+| `Hostile` | Full loadout unavailable; partial effect entry is available | Only labelled battle-visible active effects are confirmed |
+| `Story` | Full loadout unavailable; partial effect entry is available | Only labelled battle-visible active effects are confirmed |
 
 Hostile and story contexts are never converted into an empty or partial
-loadout. `秘而不宣` therefore remains unavailable evidence. Switching from a
-sparring context to either hidden context clears any selected skills.
+equipped loadout. `秘而不宣` therefore keeps the full loadout unavailable.
+The separately listed active effects are always partial evidence; omitted
+skills and equipment slots remain unknown. Switching contexts clears any
+selected skills so claims cannot cross evidence modes.
 
 ## Form flow
 
@@ -30,7 +33,8 @@ sparring context to either hidden context clears any selected skills.
 2. Target name, age, snapshot read time, and save-timestamp availability are
    shown before observation entry.
 3. The player confirms `Sparring`, `Hostile`, or `Story`.
-4. Only `Sparring` exposes coverage and skill controls.
+4. `Sparring` exposes partial/complete coverage. `Hostile` and `Story` expose
+   skill controls with coverage fixed to partial battle-visible effects.
 5. Partial coverage confirms listed skills while omissions remain unknown.
 6. Complete coverage means every category and empty slot on the one displayed
    preset was inspected; it does not cover another preset.
@@ -39,6 +43,8 @@ sparring context to either hidden context clears any selected skills.
    category, base slot cost, and match kind.
 8. Category is catalogue-derived. Direction is optional and limited to
    visible `Direct` or `Reverse`; unsupported neutral direction is not offered.
+   Visible power may be recorded as a non-negative percentage, labelled as
+   evidence-only, and does not affect legality or scoring.
 9. Review freezes the UTC observation time and shows target, coverage, time,
    resolved skill identity, and evidence state before apply.
 10. Apply creates a new recommendation request. Clear re-runs the save-only
@@ -70,11 +76,11 @@ observation state.
 
 Verification is provided by:
 
-- editor-state unit tests for prerequisites, hidden contexts, resolution,
+- editor-state unit tests for prerequisites, hostile/story partial contexts, resolution,
   typed request construction, merge-result states, and clearing;
 - component rendering tests for bilingual guidance, both hostile and story
-  unavailable states, semantic controls, status text, and absence of hidden
-  skill inputs;
+  full-loadout-unavailable states, partial skill input, semantic controls, and
+  status text;
 - localization tests covering every target-observation state in both
   languages;
 - architecture checks reviewing all UI event handlers and enforcing the

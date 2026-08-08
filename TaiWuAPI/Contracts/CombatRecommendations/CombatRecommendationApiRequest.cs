@@ -98,12 +98,16 @@ public sealed class TargetObservedSkillApiRequest
     [Range(0, int.MaxValue)]
     public int? SlotIndex { get; init; }
 
+    [Range(0, int.MaxValue)]
+    public int? VisiblePowerPercent { get; init; }
+
     internal TargetObservedSkillRequest ToApplication() => new(
         VisibleName,
         Category,
         ConfirmedSkillId,
         Direction,
-        SlotIndex);
+        SlotIndex,
+        VisiblePowerPercent);
 }
 
 public sealed class CurrentScreenLoadoutRequest

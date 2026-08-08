@@ -10,6 +10,9 @@ public static class TargetLoadoutObservationMerger
     public const string TargetLoadoutObservationField =
         "target.loadoutObservation";
 
+    public const string TargetVisibleActiveEffectsField =
+        "target.visibleActiveEffects";
+
     public static TargetLoadoutObservationMergeResult Merge(
         CombatSnapshot snapshot,
         TargetLoadoutObservation observation,
@@ -70,7 +73,7 @@ public static class TargetLoadoutObservationMerger
         var equippedSkills = MergeEquippedSkills(
             snapshot.Target.EquippedSkills,
             observedLoadout,
-            observation.Coverage);
+            observation);
         var target = new TargetCombatSnapshot(
             snapshot.Target.CharacterId,
             snapshot.Target.DisplayName,
@@ -93,8 +96,13 @@ public static class TargetLoadoutObservationMerger
             AddWarning(
                 warningValues,
                 CombatSnapshotWarningCodes.TargetObservationPartial,
-                "The target observation is partial; omitted skills remain "
-                + "unknown.");
+                observation.ObservationContext
+                    == TargetObservationContext.Sparring
+                    ? "The target observation is partial; omitted skills "
+                        + "remain unknown."
+                    : "The target's full loadout is unavailable; only the "
+                        + "reported battle-visible active effects are known, "
+                        + "and omitted skills remain unknown.");
         }
 
         if (!snapshot.Metadata.SaveLastWriteTimeUtc.IsAvailable)
@@ -263,9 +271,15 @@ public static class TargetLoadoutObservationMerger
     private static SnapshotValue<CombatLoadoutSnapshot> MergeEquippedSkills(
         SnapshotValue<CombatLoadoutSnapshot> saved,
         CombatLoadoutSnapshot observed,
-        TargetLoadoutCoverage coverage)
+        TargetLoadoutObservation observation)
     {
-        if (coverage.Kind
+        if (observation.ObservationContext
+            != TargetObservationContext.Sparring)
+        {
+            return saved;
+        }
+
+        if (observation.Coverage.Kind
             == TargetLoadoutCoverageKind.CompleteCurrentLoadout)
         {
             return SnapshotValue<CombatLoadoutSnapshot>.Available(observed);
@@ -328,6 +342,11 @@ public static class TargetLoadoutObservationMerger
         {
             replacedPaths.Add(TargetEquippedSkillsField);
         }
+        else if (observation.ObservationContext
+            != TargetObservationContext.Sparring)
+        {
+            replacedPaths.Add(TargetVisibleActiveEffectsField);
+        }
 
         var retained = snapshot.FieldSources
             .Where(source => !replacedPaths.Contains(source.FieldPath));
@@ -341,11 +360,15 @@ public static class TargetLoadoutObservationMerger
             CombatSnapshot snapshot,
             TargetLoadoutObservation observation,
             CombatLoadoutSnapshot observedLoadout,
-            bool conflict)
+        bool conflict)
     {
+        var observedField = observation.ObservationContext
+            == TargetObservationContext.Sparring
+            ? TargetEquippedSkillsField
+            : TargetVisibleActiveEffectsField;
         var screen = new SnapshotFieldObservation<CombatLoadoutSnapshot>(
             observedLoadout,
-            ScreenSource(TargetEquippedSkillsField, observation));
+            ScreenSource(observedField, observation));
         if (!conflict)
         {
             return SnapshotEvidenceField<CombatLoadoutSnapshot>.Available(
@@ -416,11 +439,15 @@ public static class TargetLoadoutObservationMerger
             "The target observation was not applied because it is not newer "
             + "than the disk save.");
         var copied = CopyWithWarning(snapshot, warning);
+        var observedField = observation.ObservationContext
+            == TargetObservationContext.Sparring
+            ? TargetEquippedSkillsField
+            : TargetVisibleActiveEffectsField;
         List<SnapshotFieldObservation<CombatLoadoutSnapshot>> observations =
         [
             new(
                 observedLoadout,
-                ScreenSource(TargetEquippedSkillsField, observation))
+                ScreenSource(observedField, observation))
         ];
         if (snapshot.Target.EquippedSkills.IsAvailable)
         {

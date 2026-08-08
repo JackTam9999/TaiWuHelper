@@ -12,7 +12,7 @@ public sealed class TargetObservationEditorStateTests
         "2026-08-07T21:00:00Z");
 
     [Fact]
-    public void Editor_starts_disabled_and_hidden_context_is_unavailable()
+    public void Editor_starts_disabled_and_story_context_is_partial_and_editable()
     {
         var state = new TargetObservationEditorState();
 
@@ -28,9 +28,35 @@ public sealed class TargetObservationEditorStateTests
         state.SetContext(TargetObservationContext.Story);
 
         Assert.True(state.IsEnabled);
-        Assert.Equal(TargetObservationEditorStatus.Unavailable, state.Status);
-        Assert.False(state.CanEdit);
+        Assert.Equal(TargetObservationEditorStatus.Editing, state.Status);
+        Assert.True(state.CanEdit);
+        Assert.True(state.IsBattleVisiblePartial);
+        Assert.Equal(
+            TargetLoadoutCoverageKind.PartialLoadout,
+            state.Coverage);
         Assert.Empty(state.SelectedSkills);
+        Assert.Throws<ArgumentException>(() => state.SetCoverage(
+            TargetLoadoutCoverageKind.CompleteCurrentLoadout));
+
+        state.AddResolved(new ResolvedTargetSkillSelection(
+            new ObservedTargetCombatSkill(
+                71,
+                SkillCategory.Neigong,
+                PracticeDirection.Reverse,
+                visiblePowerPercent: 146),
+            Facts(71, "Mt. Chai's Geomancy", SkillCategory.Neigong),
+            TargetSkillSnapshotPresence.Unknown));
+        state.SetVisiblePower(71, 146);
+
+        Assert.True(state.BeginReview(ObservedAt));
+        var request = state.BuildRequest();
+        Assert.Equal(TargetObservationContext.Story, request.Context);
+        Assert.Equal(
+            TargetLoadoutCoverageKind.PartialLoadout,
+            request.Coverage);
+        var skill = Assert.Single(request.SelectedSkills);
+        Assert.Equal(146, skill.VisiblePowerPercent);
+        Assert.Null(skill.SlotIndex);
     }
 
     [Fact]
@@ -84,6 +110,7 @@ public sealed class TargetObservationEditorStateTests
         Assert.Equal(719, selected.ConfirmedSkillId);
         Assert.Equal(PracticeDirection.Reverse, selected.Direction);
         Assert.Equal(SkillCategory.Attack, selected.Category);
+        Assert.Null(selected.VisiblePowerPercent);
     }
 
     [Fact]

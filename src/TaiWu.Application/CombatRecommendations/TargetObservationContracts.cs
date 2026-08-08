@@ -22,12 +22,13 @@ public sealed record TargetObservationRequest
                 "Unknown target-observation context.");
         }
 
-        if (context != TargetObservationContext.Sparring)
+        if (context != TargetObservationContext.Sparring
+            && coverage == TargetLoadoutCoverageKind.CompleteCurrentLoadout)
         {
             throw new ArgumentException(
-                "Current-screen target observations are available only "
-                + "for sparring opponents.",
-                nameof(context));
+                "Hostile and story observations cannot report a complete "
+                + "target loadout.",
+                nameof(coverage));
         }
 
         if (observedAt == default)
@@ -84,7 +85,8 @@ public sealed record TargetObservedSkillRequest
         SkillCategory category,
         int? confirmedSkillId = null,
         PracticeDirection? direction = null,
-        int? slotIndex = null)
+        int? slotIndex = null,
+        int? visiblePowerPercent = null)
     {
         if (string.IsNullOrWhiteSpace(visibleName))
         {
@@ -137,11 +139,20 @@ public sealed record TargetObservedSkillRequest
                 "A selected target-skill slot cannot be negative.");
         }
 
+        if (visiblePowerPercent < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(visiblePowerPercent),
+                visiblePowerPercent,
+                "A visible target-skill power percentage cannot be negative.");
+        }
+
         VisibleName = normalizedName;
         Category = category;
         ConfirmedSkillId = confirmedSkillId;
         Direction = direction;
         SlotIndex = slotIndex;
+        VisiblePowerPercent = visiblePowerPercent;
     }
 
     public string VisibleName { get; }
@@ -153,6 +164,8 @@ public sealed record TargetObservedSkillRequest
     public PracticeDirection? Direction { get; }
 
     public int? SlotIndex { get; }
+
+    public int? VisiblePowerPercent { get; }
 }
 
 public sealed record TargetObservationProcessingResult
