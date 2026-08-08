@@ -7,6 +7,7 @@
 @inject ICombatSkillDefinitionSource DefinitionSource
 @inject ICombatSkillCatalogueRepository CatalogueRepository
 @inject ICharacterCombatSkillProgressReader ProgressReader
+@inject ICombatSkillPageSourceReader PageSourceReader
 @inject ILogger<SkillDetail> Logger
 
 <PageTitle>TaiWu Helper · @(_result?.DisplayName?.Value.IsAvailable == true
@@ -218,6 +219,16 @@
 
         <SkillStudyMap Progress="@progress" />
 
+        @if (progress is not null && progress.StudyDetails.Length > 0)
+        {
+            <SkillPageSourcePanel MissingDetails="@progress.MissingStudyDetails"
+                                  Result="@_pageSourceResult"
+                                  Loading="@_pageSourceLoading"
+                                  Failure="@_pageSourceFailure"
+                                  @bind-SelectedDetailId="_selectedPageSourceDetailId"
+                                  OnFindDetail="FindPageSourcesAsync" />
+        }
+
         <section class="skill-detail-section raw-description-panel"
                  aria-labelledby="raw-description-heading">
             <div class="section-heading compact-heading">
@@ -265,9 +276,14 @@
 @code {
     private CombatSkillDetailsResult? _result;
     private CancellationTokenSource? _readCancellation;
+    private CancellationTokenSource? _pageSourceCancellation;
     private (int SkillId, TaiwuLanguage Language)? _lastRequest;
+    private CombatSkillPageSourceReadResult? _pageSourceResult;
+    private string? _selectedPageSourceDetailId;
     private string? _failure;
+    private string? _pageSourceFailure;
     private bool _loading;
+    private bool _pageSourceLoading;
 
     [Parameter]
     public int SkillId { get; set; }
@@ -293,6 +309,7 @@
 
     private async Task LoadAsync()
     {
+        ResetPageSourceSearch();
         var cancellation = ReplaceCancellation();
         _loading = true;
         _failure = null;
@@ -324,6 +341,57 @@
             if (!cancellation.IsCancellationRequested)
             {
                 _loading = false;
+            }
+        }
+    }
+
+    private async Task FindPageSourcesAsync(string detailId)
+    {
+        var missingDetails = _result?.CharacterState?.Progress
+            ?.MissingStudyDetails ?? [];
+        if (!missingDetails.Any(detail => string.Equals(
+                detail.DetailId,
+                detailId,
+                StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        _pageSourceCancellation?.Cancel();
+        _pageSourceCancellation?.Dispose();
+        _pageSourceCancellation = new CancellationTokenSource();
+        var cancellation = _pageSourceCancellation;
+        _pageSourceLoading = true;
+        _pageSourceFailure = null;
+        _pageSourceResult = null;
+        try
+        {
+            _pageSourceResult = await new FindCombatSkillPageSources(
+                    PageSourceReader)
+                .ExecuteAsync(
+                    new CombatSkillPageSourceReadRequest(
+                        SkillId,
+                        [detailId],
+                        PreferredLanguage),
+                    cancellation.Token);
+        }
+        catch (OperationCanceledException)
+            when (cancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogWarning(
+                exception,
+                "The local skill-page source search failed.");
+            _pageSourceFailure =
+                "The configured save could not be searched safely.";
+        }
+        finally
+        {
+            if (!cancellation.IsCancellationRequested)
+            {
+                _pageSourceLoading = false;
             }
         }
     }
@@ -503,12 +571,25 @@
         return _readCancellation;
     }
 
+    private void ResetPageSourceSearch()
+    {
+        _pageSourceCancellation?.Cancel();
+        _pageSourceCancellation?.Dispose();
+        _pageSourceCancellation = null;
+        _pageSourceResult = null;
+        _selectedPageSourceDetailId = null;
+        _pageSourceFailure = null;
+        _pageSourceLoading = false;
+    }
+
     private string T(string english) => UiText.Get(Language, english);
 
     public ValueTask DisposeAsync()
     {
         _readCancellation?.Cancel();
         _readCancellation?.Dispose();
+        _pageSourceCancellation?.Cancel();
+        _pageSourceCancellation?.Dispose();
         return ValueTask.CompletedTask;
     }
 

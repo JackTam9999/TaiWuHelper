@@ -640,6 +640,76 @@ public sealed class LocalGameDataIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Combat_skill_page_source_search_is_typed_and_read_only()
+    {
+        var savePath = RequireSavePath();
+        var guardedPaths = DiscoverGameOwnedReadDependencies(savePath);
+        var before = await CaptureAsync(guardedPaths);
+
+        try
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [ConfiguredTaiwuSaveFilePathProvider.ConfigurationKey] =
+                        savePath
+                })
+                .Build();
+            await using var provider = new ServiceCollection()
+                .AddSingleton<IConfiguration>(configuration)
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var reader = provider.GetRequiredService<
+                ICombatSkillPageSourceReader>();
+
+            var result = await reader.ReadAsync(
+                new CombatSkillPageSourceReadRequest(
+                    606,
+                    ["outline-0"],
+                    CatalogueLanguage.TraditionalChinese),
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(
+                CombatSkillPageSourceReadStatus.Available,
+                result.Status);
+            Assert.NotNull(result.Metadata);
+            Assert.Equal(
+                before[savePath].Sha256,
+                result.Metadata.SaveSnapshot.Sha256,
+                ignoreCase: true);
+            Assert.Equal(["outline-0"], result.RequestedDetailIds);
+            Assert.All(result.Candidates, candidate =>
+            {
+                Assert.Contains("outline-0", candidate.DetailIds);
+                Assert.True(candidate.Quantity > 0);
+                if (candidate.IsActionable
+                    && candidate.Availability
+                        == CombatSkillPageSourceAvailability.Locatable)
+                {
+                    Assert.False(string.IsNullOrWhiteSpace(
+                        candidate.CharacterName));
+                    Assert.False(string.IsNullOrWhiteSpace(
+                        candidate.LocationName));
+                }
+            });
+            Assert.Equal(
+                result.Candidates.Length,
+                result.Candidates
+                    .Select(candidate => (
+                        candidate.Kind,
+                        candidate.CharacterId,
+                        candidate.BookItemId))
+                    .Distinct()
+                    .Count());
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            AssertUnchanged(before, after);
+        }
+    }
+
     private static void AssertStory(
         RegionStoryProgressSnapshot snapshot,
         int organizationId,

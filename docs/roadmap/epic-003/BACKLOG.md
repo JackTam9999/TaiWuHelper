@@ -448,12 +448,12 @@ criterion, and record the product-owner decision.
 
 - [x] The manual form can reproduce the representative E3-000 observation.
 - [x] Resolved bilingual skill identities match the recorded target UI.
-- [ ] Partial/complete semantics agree with the expanded verified screen
+- [x] Partial/complete semantics agree with the expanded verified screen
       behavior, including hostile/story combat tooltips.
-- [ ] Threat and recommendation changes from battle-visible active effects are
+- [x] Threat and recommendation changes from battle-visible active effects are
       evidence-backed and explainable.
 - [x] Clearing returns to the expected save-only result.
-- [ ] All Epic 3 acceptance criteria have linked implementation or evidence.
+- [x] All Epic 3 acceptance criteria have linked implementation or evidence.
 - [x] Deferred screenshot assistance and observation history remain explicit
       future work rather than hidden partial implementations.
 - [ ] The product owner records the Epic 3 completion decision.

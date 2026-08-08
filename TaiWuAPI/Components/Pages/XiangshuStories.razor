@@ -1,0 +1,120 @@
+@page "/xiangshu-stories"
+@using TaiWuAPI.Presentation
+
+<PageTitle>TaiWu Helper · @T("Xiangshu stories")</PageTitle>
+
+<section class="story-hero xiangshu-hero">
+    <div>
+        <p class="eyebrow">@T("Xiangshu recollections")</p>
+        <h1>@T("Xiangshu story choices and outcomes")</h1>
+        <p class="hero-copy">
+            @T("Match each final choice with its Resolution or Calamity ending across all nine Xiangshu incarnations.")
+        </p>
+    </div>
+    <div class="boundary-card" role="note">
+        <strong>@T("Verified against the installed event choices")</strong>
+        <span>@T("In the installed event data, choice [2] leads to Resolution and choice [1] to Calamity. Match the wording too in case a game update changes the order.")</span>
+    </div>
+</section>
+
+<section class="story-shell xiangshu-story-shell"
+         aria-labelledby="xiangshu-story-heading">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">@T("Nine incarnation stories")</p>
+            <h2 id="xiangshu-story-heading">@T("Choice and consequence reference")</h2>
+        </div>
+        <span class="information-badge">@Stories.Count</span>
+    </div>
+
+    <nav class="xiangshu-story-index"
+         aria-label="@T("Jump to a story")">
+        @foreach (var story in Stories)
+        {
+            <a href="@StoryHref(story)">@story.IncarnationName</a>
+        }
+    </nav>
+
+    <div class="xiangshu-story-list">
+        @foreach (var story in Stories)
+        {
+            <article id="@StoryAnchor(story)"
+                     class="xiangshu-story-card"
+                     data-xiangshu-story="@story.StoryIndex"
+                     data-resolution-note="@story.ResolutionNoteId"
+                     data-calamity-note="@story.CalamityNoteId">
+                <header class="xiangshu-story-heading">
+                    <span class="xiangshu-story-number" aria-hidden="true">
+                        @story.StoryIndex.ToString("00")
+                    </span>
+                    <div>
+                        <span>@story.SwordName</span>
+                        <h3>@story.IncarnationName</h3>
+                    </div>
+                    <p>
+                        <span>@T("Story subject")</span>
+                        <strong>@story.StorySubject</strong>
+                    </p>
+                </header>
+
+                <section class="xiangshu-question">
+                    <span>@T("Question")</span>
+                    <blockquote>@story.Question</blockquote>
+                </section>
+
+                <div class="xiangshu-outcome-grid">
+                    <section class="xiangshu-outcome resolution">
+                        <header>
+                            <span>@T("Resolution chapter")</span>
+                            <strong>@T("Resolution")</strong>
+                        </header>
+                        <div>
+                            <span>@T("Choice") [2]</span>
+                            <blockquote>@story.ResolutionChoice</blockquote>
+                        </div>
+                        <div>
+                            <span>@T("Consequence")</span>
+                            <p>@story.ResolutionConsequence</p>
+                        </div>
+                    </section>
+                    <section class="xiangshu-outcome calamity">
+                        <header>
+                            <span>@T("Calamity chapter")</span>
+                            <strong>@T("Calamity")</strong>
+                        </header>
+                        <div>
+                            <span>@T("Choice") [1]</span>
+                            <blockquote>@story.CalamityChoice</blockquote>
+                        </div>
+                        <div>
+                            <span>@T("Consequence")</span>
+                            <p>@story.CalamityConsequence</p>
+                        </div>
+                    </section>
+                </div>
+            </article>
+        }
+    </div>
+
+    <p class="story-source-note">
+        @T("Questions and choices use the installed SwordGrave_Mie event wording. Consequences use the installed StoryScroll narrative results; no unverified stat or reward effect is inferred.")
+    </p>
+</section>
+
+@code {
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<XiangshuStoryDisplayDefinition> Stories =>
+        XiangshuStoryCatalogue.For(Language);
+
+    private static string StoryAnchor(
+        XiangshuStoryDisplayDefinition story) =>
+        $"xiangshu-story-{story.StoryIndex}";
+
+    private static string StoryHref(
+        XiangshuStoryDisplayDefinition story) =>
+        $"#{StoryAnchor(story)}";
+
+    private string T(string english) => UiText.Get(Language, english);
+}

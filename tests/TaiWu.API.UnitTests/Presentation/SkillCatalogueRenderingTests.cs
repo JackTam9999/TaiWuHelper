@@ -636,6 +636,35 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.DoesNotContain("skill-study-complete-marker", html);
     }
 
+    [Fact]
+    public async Task Expanded_skill_card_embeds_on_demand_missing_page_sources()
+    {
+        var pageSourceReader =
+            Substitute.For<ICombatSkillPageSourceReader>();
+        var progress = Progress(
+            42,
+            686,
+            new BreakthroughDirectionAvailability(false, false, []),
+            activeDirection: null,
+            mastered: false,
+            simplified: false,
+            activated: false,
+            equipped: false,
+            notReadIndexes: new HashSet<int> { 0 });
+
+        var html = await RenderCardAsync(
+            Entry(Definition(686, "Cloud Formula"), progress),
+            TaiwuLanguage.Chinese,
+            pageSourceReader);
+
+        Assert.Contains("compact-page-source-panel", html);
+        Assert.Contains("查找缺少篇章", VisibleText(html));
+        Assert.DoesNotContain("查找目前來源", VisibleText(html));
+        Assert.Contains("data-missing-detail-id=\"outline-0\"", html);
+        Assert.Contains("開啟完整功法詳情", VisibleText(html));
+        Assert.Empty(pageSourceReader.ReceivedCalls());
+    }
+
     private static async Task<string> RenderPageAsync(
         ICombatSkillDefinitionSource source,
         ICombatSkillCatalogueRepository repository,
@@ -647,6 +676,8 @@ public sealed partial class SkillCatalogueRenderingTests
         services.AddSingleton(source);
         services.AddSingleton(repository);
         services.AddSingleton(progressReader);
+        services.AddSingleton(
+            Substitute.For<ICombatSkillPageSourceReader>());
         services.AddSingleton(
             Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
         var factionProfiles = Substitute.For<
@@ -686,10 +717,14 @@ public sealed partial class SkillCatalogueRenderingTests
 
     private static async Task<string> RenderCardAsync(
         CharacterCombatSkillAtlasEntry entry,
-        TaiwuLanguage language)
+        TaiwuLanguage language,
+        ICombatSkillPageSourceReader? pageSourceReader = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton(
+            pageSourceReader
+            ?? Substitute.For<ICombatSkillPageSourceReader>());
         using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(
             provider,
@@ -901,7 +936,8 @@ public sealed partial class SkillCatalogueRenderingTests
         bool simplified,
         bool activated,
         bool equipped,
-        IReadOnlyList<string>? studyLabels = null)
+        IReadOnlyList<string>? studyLabels = null,
+        IReadOnlySet<int>? notReadIndexes = null)
     {
         var source = new SkillProgressSource(
             SkillProgressSourceKind.SaveSnapshot,
@@ -923,7 +959,9 @@ public sealed partial class SkillCatalogueRenderingTests
                         "language-en:test",
                         $"detail:{index}")),
                 SkillProgressField<CombatSkillStudyState>.Available(
-                    CombatSkillStudyState.Read,
+                    notReadIndexes?.Contains(index) == true
+                        ? CombatSkillStudyState.NotRead
+                        : CombatSkillStudyState.Read,
                     source),
                 SkillProgressField<bool>.Available(activated, source)))
             .ToArray();

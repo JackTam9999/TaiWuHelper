@@ -5,7 +5,7 @@ namespace TaiWuAPI.Localization;
 public sealed class TaiwuLanguageState
 {
     public TaiwuLanguage Current { get; private set; } =
-        TaiwuLanguage.English;
+        TaiwuLanguage.Chinese;
 
     public void Set(TaiwuLanguage language)
     {

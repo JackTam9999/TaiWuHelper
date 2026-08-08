@@ -1,6 +1,9 @@
 @using TaiWu.Application.CombatSkills
 @using TaiWu.Domain.CombatSkills
 @using TaiWu.Domain.CombatSnapshots
+@implements IAsyncDisposable
+@inject ICombatSkillPageSourceReader PageSourceReader
+@inject ILogger<SkillAtlasCard> Logger
 
 <article class="skill-atlas-card @GradeClass @ProgressVisualClasses"
          data-reference="@Entry.StableKey"
@@ -104,6 +107,18 @@
                 }
             </dl>
 
+            @if (MissingStudyDetails.Count > 0)
+            {
+                <SkillPageSourcePanel MissingDetails="@MissingStudyDetails"
+                                      Result="@_pageSourceResult"
+                                      Loading="@_pageSourceLoading"
+                                      Failure="@_pageSourceFailure"
+                                      Compact="true"
+                                      HeadingId="@PageSourceHeadingId"
+                                      @bind-SelectedDetailId="_selectedPageSourceDetailId"
+                                      OnFindDetail="FindPageSourcesAsync" />
+            }
+
             @if (Entry.Issues != CombatSkillQueryIssue.None)
             {
                 <p class="skill-partial-note">
@@ -119,11 +134,36 @@
 </article>
 
 @code {
+    private CancellationTokenSource? _pageSourceCancellation;
+    private CombatSkillPageSourceReadResult? _pageSourceResult;
+    private string? _pageSourceFailure;
+    private string? _selectedPageSourceDetailId;
+    private string? _pageSourceContextKey;
+    private bool _pageSourceLoading;
+
     [Parameter, EditorRequired]
     public CharacterCombatSkillAtlasEntry Entry { get; set; } = default!;
 
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    protected override void OnParametersSet()
+    {
+        var contextKey = string.Join(
+            "|",
+            Entry.StableKey,
+            Language,
+            string.Join(",", MissingStudyDetails.Select(
+                detail => detail.DetailId)));
+        if (!string.Equals(
+                _pageSourceContextKey,
+                contextKey,
+                StringComparison.Ordinal))
+        {
+            _pageSourceContextKey = contextKey;
+            ResetPageSourceSearch();
+        }
+    }
 
     private CharacterCombatSkillProgress? Progress => Entry.Progress;
 
@@ -427,6 +467,73 @@
             .ToArray()
         ?? [];
 
+    private IReadOnlyList<CombatSkillStudyDetailProgress> MissingStudyDetails =>
+        Progress?.MissingStudyDetails ?? [];
+
+    private string PageSourceHeadingId =>
+        $"page-source-heading-{Entry.SkillId}";
+
+    private async Task FindPageSourcesAsync(string detailId)
+    {
+        if (!MissingStudyDetails.Any(detail => string.Equals(
+                detail.DetailId,
+                detailId,
+                StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        _pageSourceCancellation?.Cancel();
+        _pageSourceCancellation?.Dispose();
+        _pageSourceCancellation = new CancellationTokenSource();
+        var cancellation = _pageSourceCancellation;
+        _pageSourceLoading = true;
+        _pageSourceFailure = null;
+        _pageSourceResult = null;
+        try
+        {
+            _pageSourceResult = await new FindCombatSkillPageSources(
+                    PageSourceReader)
+                .ExecuteAsync(
+                    new CombatSkillPageSourceReadRequest(
+                        Entry.SkillId,
+                        [detailId],
+                        PreferredDescriptionLanguage),
+                    cancellation.Token);
+        }
+        catch (OperationCanceledException)
+            when (cancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogWarning(
+                exception,
+                "The atlas-card skill-page source search failed for {SkillId}.",
+                Entry.SkillId);
+            _pageSourceFailure =
+                "The configured save could not be searched safely.";
+        }
+        finally
+        {
+            if (!cancellation.IsCancellationRequested)
+            {
+                _pageSourceLoading = false;
+            }
+        }
+    }
+
+    private void ResetPageSourceSearch()
+    {
+        _pageSourceCancellation?.Cancel();
+        _pageSourceCancellation?.Dispose();
+        _pageSourceCancellation = null;
+        _pageSourceResult = null;
+        _pageSourceFailure = null;
+        _selectedPageSourceDetailId = null;
+        _pageSourceLoading = false;
+    }
+
     private string StudyDetailLabel(CombatSkillStudyDetailProgress detail) =>
         detail.Label.IsAvailable
             ? detail.Label.Value
@@ -500,4 +607,11 @@
         CombatSkillUiText.Category(Language, category);
 
     private string T(string english) => UiText.Get(Language, english);
+
+    public ValueTask DisposeAsync()
+    {
+        _pageSourceCancellation?.Cancel();
+        _pageSourceCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
 }

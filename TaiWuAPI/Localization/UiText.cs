@@ -20,14 +20,37 @@ public static class UiText
             ["Recommendations"] = "戰鬥推薦",
             ["Skill atlas"] = "功法圖鑑",
             ["Regional stories"] = "地區故事",
+            ["Xiangshu stories"] = "相樞故事",
+            ["Xiangshu recollections"] = "相樞念影",
+            ["Xiangshu story choices and outcomes"] =
+                "相樞故事選擇與後果",
+            ["Match each final choice with its Resolution or Calamity ending across all nine Xiangshu incarnations."] =
+                "整理九位相樞化身念影的最終選擇，以及各自通往的解篇或劫篇。",
+            ["Verified against the installed event choices"] =
+                "已核對目前安裝版本的事件選項",
+            ["In the installed event data, choice [2] leads to Resolution and choice [1] to Calamity. Match the wording too in case a game update changes the order."] =
+                "目前事件資料中，選項 [2] 導向解之篇，選項 [1] 導向劫之篇；若遊戲更新改動順序，仍請一併核對文字。",
+            ["Nine incarnation stories"] = "九段化身故事",
+            ["Choice and consequence reference"] = "選擇與後果速查",
+            ["Jump to a story"] = "跳至指定故事",
+            ["Story subject"] = "故事主角",
+            ["Question"] = "題目",
+            ["Resolution chapter"] = "解之篇",
+            ["Calamity chapter"] = "劫之篇",
+            ["Choice"] = "選擇",
+            ["Consequence"] = "後果",
+            ["Resolution"] = "正解",
+            ["Calamity"] = "成劫",
+            ["Questions and choices use the installed SwordGrave_Mie event wording. Consequences use the installed StoryScroll narrative results; no unverified stat or reward effect is inferred."] =
+                "本頁題目與選項採用目前安裝版本 SwordGrave_Mie 的事件原文；後果以 StoryScroll 記錄的敘事分支為準，不推測未經資料驗證的數值或獎勵效果。",
             ["Read-only story progress"] = "唯讀故事進度",
             ["Your regional stories, rewards, and next steps."] =
                 "你的地區故事、獎勵與下一步。",
             ["Compare every sect's main-story reward and post-story upgrade with progress from the configured save."] =
                 "把十五派的主線獎勵、後傳強化與設定存檔中的進度放在一起比較。",
             ["Save remains read only"] = "存檔維持唯讀",
-            ["Statuses are derived from ending dates and active world task chains. No story or save value is changed."] =
-                "狀態依結局日期及進行中的世界任務鏈判定；不會改動任何故事或存檔數值。",
+            ["Statuses are derived from ending dates, unlocked sect functions, and active world task chains. No story or save value is changed."] =
+                "狀態依結局日期、已解鎖的門派功能及進行中的世界任務鏈判定；不會改動任何故事或存檔數值。",
             ["Fifteen sect stories"] = "十五派地區故事",
             ["Story progress and bonuses"] = "故事進度與獎勵",
             ["Reading story progress…"] = "正在讀取故事進度……",
@@ -53,17 +76,23 @@ public static class UiText
                 "完成地區故事可取得門派寶物，提高該門派所有功法威力；完成後傳後，寶物會升級為玄字裝備，並強化下列門派特有功能。",
             ["Some story fields were unavailable"] = "部分故事欄位不可用",
             ["Prosperous ending"] = "昌盛結局",
-            ["Failing ending"] = "衰落結局",
+            ["Failing ending"] = "衰敗結局",
+            ["Completed — ending unrecorded"] = "已完成（結局未記錄）",
             ["Not completed"] = "未完成",
             ["Ending recorded"] = "結局記錄",
+            ["Completion verified"] = "完成狀態已驗證",
+            ["Sect function unlocked; ending date missing"] =
+                "門派功能已解鎖；存檔缺少結局日期",
             ["Current task"] = "當前任務",
             ["Task title unavailable"] = "任務名稱不可用",
             ["Main-story unlock"] = "主線解鎖",
             ["Post-story upgrade"] = "後傳強化",
+            ["Unlocked in save"] = "存檔已解鎖",
+            ["Upgraded in save"] = "存檔已強化",
             ["No stories match this status filter."] =
                 "沒有故事符合這個狀態篩選。",
-            ["Bonus summaries are based on the installed Encyclopedia. The status column covers the main regional story; post-story completion is not inferred without a verified dedicated flag."] =
-                "獎勵摘要依目前安裝版本的百曉冊整理。狀態欄只判定地區故事主線；未取得經驗證的專用旗標前，不會推測後傳是否完成。",
+            ["Bonus summaries are based on the installed Encyclopedia. Save badges use the game's dedicated sect-function flags; a missing badge is not proof that a story is incomplete."] =
+                "獎勵摘要依目前安裝版本的百曉冊整理。存檔徽章使用遊戲的門派功能專用旗標；沒有徽章不代表故事必定未完成。",
             ["Version-aware skill catalogue"] = "版本感知功法目錄",
             ["Your martial arts, mapped."] = "你的武學，一覽無遺。",
             ["Search every installed combat skill and compare it with the current Taiwu's learned, studied, breakthrough, mastery and equipped state."] =
@@ -231,6 +260,49 @@ public static class UiText
             ["Neutral effect"] = "中性效果",
             ["Current save · read only"] = "目前存檔 · 唯讀",
             ["Current Taiwu state"] = "目前太吾狀態",
+            ["Current save · potential sources"] = "目前存檔 · 潛在來源",
+            ["Find missing pages"] = "查找缺少篇章",
+            ["Searching save…"] = "正在搜尋存檔……",
+            ["Find current sources"] = "查找目前來源",
+            ["No verified page is missing"] = "沒有缺少已驗證篇章",
+            ["All fifteen verified study details have been read, so no source search is needed."] =
+                "十五個已驗證研讀細節都已讀取，不需要查找來源。",
+            ["Missing study details"] = "缺少的研讀細節",
+            ["Missing pages"] = "缺少",
+            ["Select a missing page to search people who have read it and matching books currently held in a character inventory."] =
+                "點選一篇缺少篇章，直接搜尋已讀取該篇的人物，以及目前由人物持有的相符功法書。",
+            ["Searching the current save"] = "正在搜尋目前存檔",
+            ["Large worlds may take several seconds. The save remains read only."] =
+                "世界人物較多時可能需要數秒；存檔全程維持唯讀。",
+            ["Page-source search failed"] = "篇章來源查找失敗",
+            ["The configured save could not be searched safely."] =
+                "無法安全搜尋已設定的存檔。",
+            ["The source search is unavailable."] = "來源查找目前不可用。",
+            ["Actionable sources"] = "可前往來源",
+            ["Unlocated records"] = "無法定位記錄",
+            ["Select a missing page"] = "選擇缺少篇章",
+            ["Choose one of the missing pages above to display only that page's sources."] =
+                "按上方其中一篇，只顯示該篇的來源結果。",
+            ["locatable"] = "個可定位",
+            ["Common page"] = "總綱",
+            ["Direct page"] = "正練篇",
+            ["Reverse page"] = "逆練篇",
+            ["Page"] = "篇章",
+            ["No current locatable source"] = "目前沒有可定位來源",
+            ["No person or character-held book in this save currently exposes this page."] =
+                "目前存檔中沒有已讀此篇的人物，也沒有由人物持有且包含此篇的功法書。",
+            ["Additional unlocated records"] = "另有無法定位記錄",
+            ["Partial scan warnings"] = "部分掃描警告",
+            ["A person is only a potential teacher: favor, relationship, status, and game rules may still prevent asking for or transferring the page."] =
+                "人物只代表潛在傳授者；好感、關係、身份及遊戲規則仍可能使請教或轉讓無法進行。",
+            ["Potential teacher"] = "潛在傳授者",
+            ["Character-held book"] = "人物持有書籍",
+            ["Potential source"] = "潛在來源",
+            ["Current Taiwu inventory"] = "目前太吾背包",
+            ["years old"] = "歲",
+            ["Location unavailable"] = "位置無法取得",
+            ["Page-source mapping is unsupported"] = "不支援篇章來源對應",
+            ["Page sources could not be read"] = "無法讀取篇章來源",
             ["Read"] = "讀取於",
             ["Character progress mapping is unsupported"] = "不支援人物進度對應",
             ["Current save is unavailable"] = "目前存檔無法取得",

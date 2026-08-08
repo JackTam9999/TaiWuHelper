@@ -79,6 +79,12 @@ public static class DependencyInjection
                     TaiwuCharacterCombatSkillProgressReader>>()
                 ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<
                     TaiwuCharacterCombatSkillProgressReader>.Instance));
+        services.AddSingleton<ICombatSkillPageSourceReader>(provider =>
+            new TaiwuCombatSkillPageSourceReader(
+                provider.GetRequiredService<TaiwuArchiveReadSession>(),
+                provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
+                provider.GetRequiredService<TaiwuGameTextResolver>(),
+                TimeProvider.System));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<IRegionStoryProgressReader>(provider =>

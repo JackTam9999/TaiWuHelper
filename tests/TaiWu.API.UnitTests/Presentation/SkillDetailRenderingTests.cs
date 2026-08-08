@@ -8,6 +8,7 @@ using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWuAPI.Components.Pages;
+using TaiWuAPI.Components.Skills;
 using Xunit;
 
 namespace TaiWu.API.UnitTests.Presentation;
@@ -21,12 +22,15 @@ public sealed partial class SkillCatalogueRenderingTests
         var progress = DetailedProgress();
         var (source, repository) = CurrentDetail(definition);
         var reader = DetailedProgressReader(progress);
+        var pageSourceReader =
+            Substitute.For<ICombatSkillPageSourceReader>();
 
         var html = await RenderDetailPageAsync(
             source,
             repository,
             reader,
-            TaiwuLanguage.English);
+            TaiwuLanguage.English,
+            pageSourceReader: pageSourceReader);
         var text = VisibleText(html);
 
         Assert.Contains("Black Blood Gu", text);
@@ -53,6 +57,8 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("Not studied", text);
         Assert.Contains("Unavailable", text);
         Assert.Contains("Display-only raw text", text);
+        Assert.Contains("Find missing pages", text);
+        Assert.DoesNotContain("Find current sources", text);
         Assert.Contains("Raw effect description.", text);
         Assert.DoesNotContain("原始效果描述", text);
         Assert.Contains("Source and availability", text);
@@ -63,12 +69,143 @@ public sealed partial class SkillCatalogueRenderingTests
         Assert.Contains("role=\"list\"", html);
         Assert.DoesNotContain("<img", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("<svg", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(pageSourceReader.ReceivedCalls());
         await reader.Received(1).ReadAsync(
             Arg.Is<CharacterCombatSkillProgressReadRequest>(request =>
                 request != null
                 && request.CharacterId == null
                 && request.PreferredLanguage == CatalogueLanguage.English),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Page_source_panel_only_shows_the_selected_page_result()
+    {
+        var source = new SkillProgressSource(
+            SkillProgressSourceKind.SaveSnapshot,
+            "save:test",
+            "combat-skill:606:study-detail:outline-0");
+        var labelSource = new CatalogueSourceReference(
+            CatalogueSourceKind.TraditionalChineseLanguageResource,
+            "language-cnh:test",
+            "study-detail:outline-0");
+        var detail = new CombatSkillStudyDetailProgress(
+            "outline-0",
+            13,
+            CombatSkillStudyDetailGroup.Outline,
+            CatalogueField<string>.Available("承", labelSource),
+            SkillProgressField<CombatSkillStudyState>.Available(
+                CombatSkillStudyState.NotRead,
+                source),
+            SkillProgressField<bool>.Available(false, source));
+        var otherDetail = new CombatSkillStudyDetailProgress(
+            "direct-0",
+            14,
+            CombatSkillStudyDetailGroup.Direct,
+            CatalogueField<string>.Available("起", labelSource),
+            SkillProgressField<CombatSkillStudyState>.Available(
+                CombatSkillStudyState.NotRead,
+                source),
+            SkillProgressField<bool>.Available(false, source));
+        var result = new CombatSkillPageSourceReadResult(
+            CombatSkillPageSourceReadStatus.Available,
+            606,
+            ["outline-0", "direct-0"],
+            new CombatSkillPageSourceMetadata(
+                new SaveSnapshotIdentity(
+                    new string('E', 64),
+                    DateTimeOffset.Parse("2026-08-08T12:00:00Z")),
+                "1.0.0-test",
+                []),
+            [
+                new CombatSkillPageSourceCandidate(
+                    CombatSkillPageSourceKind.CharacterKnowledge,
+                    CombatSkillPageSourceAvailability.Locatable,
+                    28825,
+                    "燕首嘉",
+                    56,
+                    17,
+                    663,
+                    "廣東 · 梅州 · 藥園",
+                    BookItemId: null,
+                    BookTemplateId: null,
+                    Quantity: 1,
+                    ["outline-0"]),
+                new CombatSkillPageSourceCandidate(
+                    CombatSkillPageSourceKind.InventoryBook,
+                    CombatSkillPageSourceAvailability.TaiwuInventory,
+                    34478,
+                    "太吾",
+                    37,
+                    17,
+                    702,
+                    "廣東 · 梅州 · 太吾村",
+                    BookItemId: 100,
+                    BookTemplateId: 750,
+                    Quantity: 1,
+                    ["outline-0"]),
+                new CombatSkillPageSourceCandidate(
+                    CombatSkillPageSourceKind.CharacterKnowledge,
+                    CombatSkillPageSourceAvailability.Unlocated,
+                    6005,
+                    CharacterName: null,
+                    Age: 50,
+                    AreaId: null,
+                    BlockId: null,
+                    LocationName: null,
+                    BookItemId: null,
+                    BookTemplateId: null,
+                    Quantity: 1,
+                    ["outline-0"]),
+                new CombatSkillPageSourceCandidate(
+                    CombatSkillPageSourceKind.CharacterKnowledge,
+                    CombatSkillPageSourceAvailability.Locatable,
+                    30001,
+                    "房芝泉",
+                    48,
+                    17,
+                    700,
+                    "廣東 · 梅州",
+                    BookItemId: null,
+                    BookTemplateId: null,
+                    Quantity: 1,
+                    ["direct-0"])
+            ],
+            Reason: null);
+
+        var details = new[] { detail, otherDetail };
+        var collapsedHtml = await RenderPageSourcePanelAsync(details, result);
+        var collapsedText = VisibleText(collapsedHtml);
+
+        Assert.Contains("查找缺少篇章", collapsedText);
+        Assert.Contains("缺少 承", collapsedText);
+        Assert.Contains("選擇缺少篇章", collapsedText);
+        Assert.Contains("按上方其中一篇，只顯示該篇的來源結果。", collapsedText);
+        Assert.DoesNotContain("燕首嘉", collapsedText);
+        Assert.DoesNotContain("房芝泉", collapsedText);
+        Assert.DoesNotContain("data-source-detail-id=\"outline-0\"", collapsedHtml);
+        Assert.Contains("data-missing-detail-id=\"outline-0\"", collapsedHtml);
+        Assert.Contains("aria-pressed=\"false\"", collapsedHtml);
+
+        var html = await RenderPageSourcePanelAsync(
+            details,
+            result,
+            selectedDetailId: detail.DetailId);
+        var text = VisibleText(html);
+
+        Assert.Contains("查找缺少篇章", text);
+        Assert.Contains("缺少 承", text);
+        Assert.Contains("可前往來源 2", text);
+        Assert.Contains("無法定位記錄 1", text);
+        Assert.Contains("潛在傳授者 燕首嘉", text);
+        Assert.Contains("56 歲 · 廣東 · 梅州 · 藥園", text);
+        Assert.Contains("人物持有書籍 目前太吾背包", text);
+        Assert.Contains("另有無法定位記錄: 1", text);
+        Assert.Contains("人物只代表潛在傳授者", text);
+        Assert.DoesNotContain("房芝泉", text);
+        Assert.Contains("data-source-detail-id=\"outline-0\"", html);
+        Assert.DoesNotContain("data-source-detail-id=\"direct-0\"", html);
+        Assert.Contains("aria-pressed=\"true\"", html);
     }
 
     [Fact]
@@ -244,13 +381,17 @@ public sealed partial class SkillCatalogueRenderingTests
         ICombatSkillCatalogueRepository repository,
         ICharacterCombatSkillProgressReader progressReader,
         TaiwuLanguage language,
-        string? context = null)
+        string? context = null,
+        ICombatSkillPageSourceReader? pageSourceReader = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton(source);
         services.AddSingleton(repository);
         services.AddSingleton(progressReader);
+        services.AddSingleton(
+            pageSourceReader
+            ?? Substitute.For<ICombatSkillPageSourceReader>());
         using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(
             provider,
@@ -276,6 +417,50 @@ public sealed partial class SkillCatalogueRenderingTests
                                     2,
                                     nameof(SkillDetail.Context),
                                     context);
+                                builder.CloseComponent();
+                            })
+                    }));
+            return output.ToHtmlString();
+        });
+    }
+
+    private static async Task<string> RenderPageSourcePanelAsync(
+        IReadOnlyList<CombatSkillStudyDetailProgress> details,
+        CombatSkillPageSourceReadResult result,
+        string? selectedDetailId = null)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        using var provider = services.BuildServiceProvider();
+        await using var renderer = new HtmlRenderer(
+            provider,
+            provider.GetRequiredService<ILoggerFactory>());
+
+        return await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            var output = await renderer.RenderComponentAsync<
+                CascadingValue<TaiwuLanguage>>(
+                ParameterView.FromDictionary(
+                    new Dictionary<string, object?>
+                    {
+                        [nameof(CascadingValue<TaiwuLanguage>.Value)] =
+                            TaiwuLanguage.Chinese,
+                        [nameof(CascadingValue<TaiwuLanguage>.ChildContent)] =
+                            (RenderFragment)(builder =>
+                            {
+                                builder.OpenComponent<SkillPageSourcePanel>(0);
+                                builder.AddAttribute(
+                                    1,
+                                    nameof(SkillPageSourcePanel.MissingDetails),
+                                    details);
+                                builder.AddAttribute(
+                                    2,
+                                    nameof(SkillPageSourcePanel.Result),
+                                    result);
+                                builder.AddAttribute(
+                                    3,
+                                    nameof(SkillPageSourcePanel.SelectedDetailId),
+                                    selectedDetailId);
                                 builder.CloseComponent();
                             })
                     }));

@@ -1,4 +1,5 @@
 using GameData.Domains;
+using GameData.Domains.Organization;
 using GameData.Domains.TaiwuEvent;
 using System.Globalization;
 using System.Reflection;
@@ -19,6 +20,18 @@ internal sealed partial class TaiwuRegionStoryProgressReader(
         ?? throw new InvalidDataException(
             "The installed GameData integer event-argument reader is "
             + "unavailable.");
+
+    private static readonly MethodInfo EventArgumentBoolGetter =
+        typeof(EventArgBox).GetMethod(
+            "Get",
+            [typeof(string), typeof(bool).MakeByRefType()])
+        ?? throw new InvalidDataException(
+            "The installed GameData Boolean event-argument reader is "
+            + "unavailable.");
+
+    private const sbyte ShixiangOrganizationId = 6;
+    private const string ShixiangEndingChoiceKey =
+        "ConchShip_PresetKey_SelectGoodEnd";
 
     private readonly TimeProvider _timeProvider = timeProvider
         ?? TimeProvider.System;
@@ -103,6 +116,29 @@ internal sealed partial class TaiwuRegionStoryProgressReader(
             arguments,
             story.BadEndDateKey,
             out int failingDate);
+        // Valid saves can lose the ending-date argument while retaining the
+        // sect function granted by story completion. The function status is
+        // therefore the stronger persistent fallback completion evidence.
+        var mainStoryFunctionUnlocked = DomainManager.Organization
+            .GetSectFunctionStatus(
+                organizationId,
+                SectFunctionStatuses.SectFunctionStatusType
+                    .SpecialInteractionUnlocked);
+        var postStoryFunctionUpgraded = DomainManager.Organization
+            .GetSectFunctionStatus(
+                organizationId,
+                SectFunctionStatuses.SectFunctionStatusType
+                    .UpgradedInteractionUnlocked);
+        // Shixiang retains its selected route even when its ending date is
+        // absent, allowing the recovered completion to keep the ending kind.
+        bool? inferredProsperousEnding = organizationId
+                == ShixiangOrganizationId
+            && TryGetBool(
+                arguments,
+                ShixiangEndingChoiceKey,
+                out var selectedProsperousEnding)
+                ? selectedProsperousEnding
+                : null;
 
         int? activeTaskChainId = null;
         int? currentTaskId = null;
@@ -127,11 +163,15 @@ internal sealed partial class TaiwuRegionStoryProgressReader(
         var status = Classify(
             hasProsperousEnding,
             hasFailingEnding,
+            mainStoryFunctionUnlocked,
+            inferredProsperousEnding,
             activeTaskChainId.HasValue);
         int? completionDate = status switch
         {
-            RegionStoryProgressStatus.ProsperousEnding => prosperousDate,
-            RegionStoryProgressStatus.FailingEnding => failingDate,
+            RegionStoryProgressStatus.ProsperousEnding
+                when hasProsperousEnding => prosperousDate,
+            RegionStoryProgressStatus.FailingEnding
+                when hasFailingEnding => failingDate,
             _ => null
         };
 
@@ -146,7 +186,9 @@ internal sealed partial class TaiwuRegionStoryProgressReader(
                 : null,
             currentTaskId.HasValue
                 ? ResolveTaskDescription(text, currentTaskId.Value)
-                : null);
+                : null,
+            mainStoryFunctionUnlocked,
+            postStoryFunctionUpgraded);
     }
 
     private static bool TryGetInt(
@@ -162,9 +204,24 @@ internal sealed partial class TaiwuRegionStoryProgressReader(
         return found;
     }
 
+    private static bool TryGetBool(
+        EventArgBox arguments,
+        string key,
+        out bool value)
+    {
+        object?[] invocationArguments = [key, false];
+        var found = EventArgumentBoolGetter.Invoke(
+            arguments,
+            invocationArguments) as bool? == true;
+        value = invocationArguments[1] is bool parsed && parsed;
+        return found;
+    }
+
     internal static RegionStoryProgressStatus Classify(
         bool hasProsperousEnding,
         bool hasFailingEnding,
+        bool mainStoryFunctionUnlocked,
+        bool? inferredProsperousEnding,
         bool hasActiveTask)
     {
         if (hasProsperousEnding)
@@ -175,6 +232,17 @@ internal sealed partial class TaiwuRegionStoryProgressReader(
         if (hasFailingEnding)
         {
             return RegionStoryProgressStatus.FailingEnding;
+        }
+
+        if (mainStoryFunctionUnlocked)
+        {
+            return inferredProsperousEnding switch
+            {
+                true => RegionStoryProgressStatus.ProsperousEnding,
+                false => RegionStoryProgressStatus.FailingEnding,
+                null => RegionStoryProgressStatus
+                    .CompletedEndingUnrecorded
+            };
         }
 
         return hasActiveTask

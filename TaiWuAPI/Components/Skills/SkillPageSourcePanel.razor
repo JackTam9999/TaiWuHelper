@@ -1,0 +1,300 @@
+@using TaiWu.Application.CombatSkills
+@using TaiWu.Domain.CombatSkills
+
+<section class="skill-detail-section page-source-panel @(Compact ? "compact-page-source-panel" : string.Empty)"
+         aria-labelledby="@HeadingId"
+         aria-busy="@Loading.ToString().ToLowerInvariant()">
+    <div class="section-heading compact-heading page-source-heading">
+        <div>
+            <p class="eyebrow">@T("Current save · potential sources")</p>
+            <h2 id="@HeadingId">@T("Find missing pages")</h2>
+        </div>
+    </div>
+
+    @if (MissingDetails.Count == 0)
+    {
+        <div class="page-source-state complete-source-state" role="status">
+            <strong>@T("No verified page is missing")</strong>
+            <p>@T("All fifteen verified study details have been read, so no source search is needed.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="missing-page-strip" aria-label="@T("Missing study details")">
+            <span>@T("Missing pages")</span>
+            @foreach (var detail in OrderedMissingDetails)
+            {
+                <button type="button"
+                        class="@MissingPageButtonClass(detail.DetailId)"
+                        data-missing-detail-id="@detail.DetailId"
+                        aria-pressed="@IsSelected(detail.DetailId).ToString().ToLowerInvariant()"
+                        disabled="@Loading"
+                        @onclick="() => SelectDetailAsync(detail.DetailId)">
+                    @DetailLabel(detail)
+                </button>
+            }
+        </div>
+
+        <p class="page-source-intro">
+            @T("Select a missing page to search people who have read it and matching books currently held in a character inventory.")
+        </p>
+
+        @if (Loading)
+        {
+            <div class="page-source-state" role="status" aria-live="polite">
+                <strong>@T("Searching the current save")</strong>
+                <p>@T("Large worlds may take several seconds. The save remains read only.")</p>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(Failure))
+        {
+            <div class="page-source-state problem-state" role="alert">
+                <strong>@T("Page-source search failed")</strong>
+                <p>@T(Failure)</p>
+            </div>
+        }
+        else if (Result is { Status: not CombatSkillPageSourceReadStatus.Available }
+                 unavailable)
+        {
+            <div class="page-source-state problem-state" role="status">
+                <strong>@SourceStatusTitle(unavailable.Status)</strong>
+                <p>@T(unavailable.Reason ?? "The source search is unavailable.")</p>
+            </div>
+        }
+        else if (Result is { Status: CombatSkillPageSourceReadStatus.Available }
+                 available)
+        {
+            @if (SelectedDetail is not { } selectedDetail)
+            {
+                <div class="page-source-state page-source-selection-state"
+                     role="status">
+                    <strong>@T("Select a missing page")</strong>
+                    <p>@T("Choose one of the missing pages above to display only that page's sources.")</p>
+                </div>
+            }
+            else
+            {
+                var candidates = CandidatesFor(
+                    available,
+                    selectedDetail.DetailId);
+                var actionable = candidates
+                    .Where(candidate => candidate.IsActionable)
+                    .ToArray();
+                var unlocatedCount = candidates.Count - actionable.Length;
+
+                <div class="page-source-summary" role="status">
+                    <div>
+                        <span>@T("Actionable sources")</span>
+                        <strong>@actionable.Length</strong>
+                    </div>
+                    <div>
+                        <span>@T("Unlocated records")</span>
+                        <strong>@unlocatedCount</strong>
+                    </div>
+                    @if (available.Metadata is { } metadata)
+                    {
+                        <div>
+                            <span>@T("Read")</span>
+                            <strong>@metadata.SaveSnapshot.ReadAtUtc.ToLocalTime().ToString("g")</strong>
+                        </div>
+                    }
+                </div>
+
+                <div class="page-source-results">
+                    <article class="page-source-result"
+                             data-source-detail-id="@selectedDetail.DetailId">
+                        <div class="page-source-result-heading">
+                            <div>
+                                <span>@GroupLabel(selectedDetail.Group)</span>
+                                <h3>@DetailLabel(selectedDetail)</h3>
+                            </div>
+                            <span class="source-count">
+                                @actionable.Length @T("locatable")
+                            </span>
+                        </div>
+
+                        @if (actionable.Length == 0)
+                        {
+                            <div class="page-source-empty">
+                                <strong>@T("No current locatable source")</strong>
+                                <p>@T("No person or character-held book in this save currently exposes this page.")</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="page-source-candidates">
+                                @foreach (var candidate in actionable)
+                                {
+                                    <div class="page-source-candidate"
+                                         data-source-kind="@candidate.Kind">
+                                        <span>@CandidateKind(candidate)</span>
+                                        <strong>@CandidateName(candidate)</strong>
+                                        <p>@CandidateContext(candidate)</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (unlocatedCount > 0)
+                        {
+                            <p class="unlocated-source-note">
+                                @T("Additional unlocated records"): @unlocatedCount
+                            </p>
+                        }
+                    </article>
+                </div>
+            }
+
+            @if (available.Metadata?.Warnings.Length > 0)
+            {
+                <details class="page-source-warnings">
+                    <summary>@T("Partial scan warnings")</summary>
+                    <ul>
+                        @foreach (var warning in available.Metadata.Warnings)
+                        {
+                            <li>@T(warning.Reason)</li>
+                        }
+                    </ul>
+                </details>
+            }
+
+            <p class="page-source-caveat">
+                @T("A person is only a potential teacher: favor, relationship, status, and game rules may still prevent asking for or transferring the page.")
+            </p>
+        }
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<CombatSkillStudyDetailProgress> MissingDetails
+        { get; set; } = [];
+
+    [Parameter]
+    public CombatSkillPageSourceReadResult? Result { get; set; }
+
+    [Parameter]
+    public bool Loading { get; set; }
+
+    [Parameter]
+    public string? Failure { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnFindDetail { get; set; }
+
+    [Parameter]
+    public bool Compact { get; set; }
+
+    [Parameter]
+    public string HeadingId { get; set; } = "page-source-heading";
+
+    [Parameter]
+    public string? SelectedDetailId { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SelectedDetailIdChanged { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<CombatSkillStudyDetailProgress>
+        OrderedMissingDetails => MissingDetails
+            .OrderBy(detail => detail.DisplayOrder)
+            .ToArray();
+
+    private CombatSkillStudyDetailProgress? SelectedDetail =>
+        OrderedMissingDetails.FirstOrDefault(
+            detail => IsSelected(detail.DetailId));
+
+    private bool IsSelected(string detailId) => string.Equals(
+        SelectedDetailId,
+        detailId,
+        StringComparison.Ordinal);
+
+    private string MissingPageButtonClass(string detailId) =>
+        IsSelected(detailId)
+            ? "missing-page-button selected"
+            : "missing-page-button";
+
+    private async Task SelectDetailAsync(string detailId)
+    {
+        await SelectedDetailIdChanged.InvokeAsync(detailId);
+        await OnFindDetail.InvokeAsync(detailId);
+    }
+
+    private static IReadOnlyList<CombatSkillPageSourceCandidate> CandidatesFor(
+        CombatSkillPageSourceReadResult result,
+        string detailId) => result.Candidates
+            .Where(candidate => candidate.DetailIds.Contains(
+                detailId,
+                StringComparer.Ordinal))
+            .ToArray();
+
+    private string DetailLabel(CombatSkillStudyDetailProgress detail) =>
+        detail.Label.IsAvailable
+            ? detail.Label.Value
+            : detail.DetailId;
+
+    private string GroupLabel(CombatSkillStudyDetailGroup group) => group switch
+    {
+        CombatSkillStudyDetailGroup.Outline => T("Common page"),
+        CombatSkillStudyDetailGroup.Direct => T("Direct page"),
+        CombatSkillStudyDetailGroup.Reverse => T("Reverse page"),
+        _ => T("Page")
+    };
+
+    private string CandidateKind(CombatSkillPageSourceCandidate candidate) =>
+        candidate.Kind switch
+        {
+            CombatSkillPageSourceKind.CharacterKnowledge =>
+                T("Potential teacher"),
+            CombatSkillPageSourceKind.InventoryBook =>
+                T("Character-held book"),
+            _ => T("Potential source")
+        };
+
+    private string CandidateName(CombatSkillPageSourceCandidate candidate) =>
+        candidate.Availability ==
+            CombatSkillPageSourceAvailability.TaiwuInventory
+            ? T("Current Taiwu inventory")
+            : string.IsNullOrWhiteSpace(candidate.CharacterName)
+                ? $"#{candidate.CharacterId}"
+                : candidate.CharacterName;
+
+    private string CandidateContext(
+        CombatSkillPageSourceCandidate candidate)
+    {
+        List<string> parts = [];
+        if (candidate.Age is { } age)
+        {
+            parts.Add($"{age} {T("years old")}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(candidate.LocationName))
+        {
+            parts.Add(candidate.LocationName);
+        }
+
+        if (candidate.Kind == CombatSkillPageSourceKind.InventoryBook
+            && candidate.Quantity > 1)
+        {
+            parts.Add($"×{candidate.Quantity}");
+        }
+
+        return parts.Count == 0
+            ? T("Location unavailable")
+            : string.Join(" · ", parts);
+    }
+
+    private string SourceStatusTitle(CombatSkillPageSourceReadStatus status) =>
+        status switch
+        {
+            CombatSkillPageSourceReadStatus.SaveMissing =>
+                T("Current save is unavailable"),
+            CombatSkillPageSourceReadStatus.UnsupportedVersion =>
+                T("Page-source mapping is unsupported"),
+            _ => T("Page sources could not be read")
+        };
+
+    private string T(string english) => UiText.Get(Language, english);
+}

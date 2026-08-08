@@ -8,6 +8,7 @@ public enum RegionStoryProgressStatus
     Unavailable,
     NotCompleted,
     InProgress,
+    CompletedEndingUnrecorded,
     ProsperousEnding,
     FailingEnding
 }
@@ -19,7 +20,9 @@ public sealed record RegionStoryProgressEntry(
     int? ActiveTaskChainId,
     int? CurrentTaskId,
     string? CurrentTaskTitle,
-    string? CurrentTaskDescription);
+    string? CurrentTaskDescription,
+    bool MainStoryFunctionUnlocked = false,
+    bool PostStoryFunctionUpgraded = false);
 
 public sealed record RegionStoryProgressWarning(
     string Code,

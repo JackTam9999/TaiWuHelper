@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress — scope corrected by new UI evidence |
+| Status | Awaiting product-owner completion decision |
 | Milestone | 3 |
 | Target release | TBD |
 | Last updated | 2026-08-08 |

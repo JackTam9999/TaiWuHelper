@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Status | Superseded — Epic reopened by new evidence |
-| Evidence date | 2026-08-07 |
+| Status | Technical audit passed — awaiting product-owner decision |
+| Evidence date | 2026-08-08 |
 | Epic | [EPIC-003](../roadmap/epic-003/EPIC.md) |
 | Backlog item | [E3-011](../roadmap/epic-003/BACKLOG.md#e3-011--validate-the-workflow-and-close-epic-3) |
 | Positive scenario | `E3-000-CAP-002`, `切磋武功`, paired identity `霍劍嬋` |
@@ -19,10 +19,12 @@ contexts. The original "unavailable means save-only" conclusion is therefore
 too broad and is superseded by
 [the reopened E3-000 evidence](../scenarios/E3-000-target-observation-evidence.md).
 
-The current editor, request, and Domain contracts still reject every
-hostile/story observation. That implementation remains safe—it never invents
-an empty loadout—but now discards useful visible evidence. E3-012 must add a
-separate partial active-effect path before this completion audit can be rerun.
+E3-012 now provides that separate partial active-effect path. The full
+hostile/story loadout remains unavailable, coverage is forced to partial, and
+the merger leaves equipped membership unchanged. Each reported name resolves
+through the guarded catalogue; direction supplies the versioned effect ID;
+visible power is retained as non-scoring evidence; and the unlabelled
+indicators from `E3-000-CAP-005` remain unsupported.
 
 ## Representative form reproduction
 
@@ -85,17 +87,17 @@ current-save vertical against a currently resolvable target.
 |---|---|---|
 | Full visible sparring page with five category rows and capacity states | Complete current displayed loadout | Passed by E3-000 evidence and the 18-skill form reproduction |
 | Cropped or incomplete sparring evidence | Partial; omitted skills remain unknown | Passed by Domain, merge, UI, threat, and impact tests |
-| Hostile/story character without opponent `運功` | Unavailable; not empty or partial | Passed by Domain and editor-state tests |
+| Hostile/story character without opponent `運功` but with a labelled combat effect panel | Full loadout unavailable; listed active effects are partial; omissions remain unknown | Passed by E3-012 Domain, merger, workflow, API, and bilingual rendering tests |
 | Same observation applied repeatedly | Equivalent snapshot, threats, recommendations, impact, and ordering | Passed by [E3-010](./E3-010-automated-verification.md) |
 | Observation cleared | Original save-only result, with no retained session observation | Passed by E3-006 and E3-010 lifecycle tests |
 
 ## Threat and recommendation evidence
 
 [Threat analysis](../architecture/TARGET-OBSERVATION-THREAT-ANALYSIS.md)
-distinguishes observed-equipped, save-equipped, and learned-unconfirmed
-sources. A partial observation can add confirmation but cannot remove an
-omitted possibility. A version-matched complete observation can replace stale
-equipped membership while retaining conflicts.
+distinguishes observed-active-effect, observed-equipped, save-equipped, and
+learned-unconfirmed sources. A partial observation can add confirmation but
+cannot remove an omitted possibility. A version-matched complete sparring
+observation can replace stale equipped membership while retaining conflicts.
 
 [Recommendation recalculation](../architecture/TARGET-OBSERVATION-RECOMMENDATION-RECALCULATION.md)
 uses only typed verified threats and counters after hard feasibility checks.
@@ -110,22 +112,22 @@ cases.
 | Epic criterion | Implementation or evidence | Result |
 |---|---|---|
 | Versioned observable fields and completeness | E3-000 decision table and completeness rule | Pass |
-| Hostile/story full loadout unavailable with partial battle-visible evidence | Reopened E3-000 and E3-012 | Reopened |
+| Hostile/story full loadout unavailable with partial battle-visible evidence | Completed E3-000 and [E3-012 verification](./E3-012-automated-verification.md) | Pass |
 | Stable bilingual identities | E3-003 resolver tests and the table above | Pass |
-| Partial active-effect and complete loadout coverage separated | E3-012 | Reopened |
+| Partial active-effect and complete loadout coverage separated | E3-012 Domain, provenance, API, and merger tests | Pass |
 | Time, reference, and provenance retained | [provenance design](../architecture/TARGET-OBSERVATION-PROVENANCE.md) | Pass |
 | Stale/conflicting evidence visible and deterministic | E3-002/E3-004/E3-010 tests | Pass |
 | Precedence limited to covered fields | E3-004 merger tests | Pass |
 | Missing target snapshot skill remains representable | E3-003 resolver tests | Pass |
-| Threat sources remain distinguishable | E3-007 plus new E3-012 provenance | Reopened |
-| Recommendation impact explained | E3-008/E3-009 plus E3-012 | Reopened |
+| Threat sources remain distinguishable | E3-007 plus E3-012 `ObservedActiveEffect` provenance | Pass |
+| Recommendation impact explained | E3-008/E3-009 plus E3-012 source-kind and rendering tests | Pass |
 | Clear reproduces save-only behavior | E3-006/E3-010 lifecycle tests | Pass |
 | Unknown raw effects cannot affect rules | E3-003/E3-007 tests | Pass |
 | Observation remains session-bound | E3-006 state and E3-010 safety tests | Pass |
 | No path, process, screenshot, or mutation contract | [API design](../architecture/TARGET-OBSERVATION-API.md) and architecture tests | Pass |
-| Bilingual accessible UI | Existing form plus E3-012 hostile/story partial mode | Reopened |
-| Required state matrix automated | Existing matrix plus E3-012 states | Reopened |
-| Local sources remain byte-for-byte unchanged | Existing evidence passes; E3-012 rerun pending | Reopened |
+| Bilingual accessible UI | Existing form plus E3-012 hostile/story partial mode | Pass |
+| Required state matrix automated | 843-test default matrix including E3-012 states | Pass |
+| Local sources remain byte-for-byte unchanged | E3-012 guarded current-save rerun: 1 passed, all before/after fingerprints unchanged | Pass |
 | Product-owner completion decision | This review | Pending |
 
 ## Verification commands
@@ -150,8 +152,14 @@ dotnet build TaiWu.slnx -c Release --no-restore
 dotnet test TaiWu.slnx -c Release --no-build --no-restore
 ```
 
-Result: **833 total; 826 passed; 0 failed; 7 expected opt-in skips**. The
+Result: **843 total; 836 passed; 0 failed; 7 expected opt-in skips**. The
 Release build completed with zero warnings and zero errors.
+
+The E3-012 guarded current-save vertical was also run explicitly: **1 passed;
+0 failed; 0 skipped**. Save, GameData runtime, and language-resource lengths,
+timestamps, and SHA-256 fingerprints were unchanged. Details, including one
+transparent transient lock/retry, are recorded in
+[E3-012 verification](./E3-012-automated-verification.md).
 
 ## Explicit future work
 
@@ -168,6 +176,7 @@ Observation history requires an explicit storage and lifecycle design.
 
 ## Product-owner decision
 
-Not ready for approval. New product-owner evidence submitted on 2026-08-08
-reopened the observable-field boundary and created E3-012. Epic 3 completion
-must be audited again after that partial battle-visible workflow is complete.
+The technical and evidence audit is complete and recommends approval. The only
+remaining criterion is the product owner's explicit decision to approve or
+reject Epic 3 completion. No merge or Epic status change to Complete should be
+made before that decision is recorded.

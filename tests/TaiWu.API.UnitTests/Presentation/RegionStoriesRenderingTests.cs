@@ -29,13 +29,18 @@ public sealed partial class RegionStoriesRenderingTests
         var text = VisibleText(html);
 
         Assert.Contains("地區故事、獎勵與下一步", text);
-        Assert.Contains("已完成結局 2", text);
+        Assert.Contains("已完成結局 4", text);
         Assert.Contains("進行中 2", text);
-        Assert.Contains("目前未進行 11", text);
+        Assert.Contains("目前未進行 9", text);
         Assert.Contains("少林派 《禪武之道》 進行中", text);
         Assert.Contains("老僧傳授", text);
         Assert.Contains("武當派 《龜蛇蟠扶》 進行中", text);
         Assert.Contains("逆練功法", text);
+        Assert.Contains("百花谷 《玄鴞白鹿》 已完成（結局未記錄）", text);
+        Assert.Contains("獅相門 《文武雙全》 衰敗結局", text);
+        Assert.Contains("完成狀態已驗證 門派功能已解鎖；存檔缺少結局日期", text);
+        Assert.Contains("存檔已解鎖", text);
+        Assert.Contains("存檔已強化", text);
         Assert.Contains("鑄劍山莊 《銅生試劍》 昌盛結局", text);
         Assert.Contains("世界 71 年 8 月", text);
         Assert.Contains("五仙教 《五聖心毒》 昌盛結局", text);
@@ -43,7 +48,7 @@ public sealed partial class RegionStoriesRenderingTests
         Assert.Contains("煉製王蠱", text);
         Assert.Contains("驅動王蠱", text);
         Assert.Contains("後傳強化", text);
-        Assert.Contains("不會推測後傳是否完成", text);
+        Assert.Contains("存檔徽章使用遊戲的門派功能專用旗標", text);
         Assert.Contains("data-organization-id=\"12\"", html);
         Assert.Contains("data-story-status=\"ProsperousEnding\"", html);
         await reader.Received(1).ReadAsync(
@@ -120,6 +125,17 @@ public sealed partial class RegionStoriesRenderingTests
             CurrentTaskId = 167,
             CurrentTaskTitle = "逆練功法",
             CurrentTaskDescription = "以逆練參悟任意武當派功法。"
+        };
+        entries[2] = entries[2] with
+        {
+            Status = RegionStoryProgressStatus.CompletedEndingUnrecorded,
+            MainStoryFunctionUnlocked = true
+        };
+        entries[5] = entries[5] with
+        {
+            Status = RegionStoryProgressStatus.FailingEnding,
+            MainStoryFunctionUnlocked = true,
+            PostStoryFunctionUpgraded = true
         };
         entries[8] = entries[8] with
         {

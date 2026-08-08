@@ -20,7 +20,7 @@
     </div>
     <div class="boundary-card" role="note">
         <strong>@T("Save remains read only")</strong>
-        <span>@T("Statuses are derived from ending dates and active world task chains. No story or save value is changed.")</span>
+        <span>@T("Statuses are derived from ending dates, unlocked sect functions, and active world task chains. No story or save value is changed.")</span>
     </div>
 </section>
 
@@ -164,6 +164,14 @@
                             <strong>@FormatWorldDate(progress.CompletionDate.Value)</strong>
                         </p>
                     }
+                    else if (IsCompleted(progress.Status)
+                        && progress.MainStoryFunctionUnlocked)
+                    {
+                        <p class="story-completion-date inferred">
+                            <span>@T("Completion verified")</span>
+                            <strong>@T("Sect function unlocked; ending date missing")</strong>
+                        </p>
+                    }
 
                     @if (progress.Status == RegionStoryProgressStatus.InProgress)
                     {
@@ -181,11 +189,23 @@
 
                     <div class="story-bonus-grid">
                         <section class="story-bonus main-bonus">
-                            <span>@T("Main-story unlock")</span>
+                            <div class="story-bonus-heading">
+                                <span>@T("Main-story unlock")</span>
+                                @if (progress.MainStoryFunctionUnlocked)
+                                {
+                                    <strong>@T("Unlocked in save")</strong>
+                                }
+                            </div>
                             <p>@definition.MainStoryBonus</p>
                         </section>
                         <section class="story-bonus post-bonus">
-                            <span>@T("Post-story upgrade")</span>
+                            <div class="story-bonus-heading">
+                                <span>@T("Post-story upgrade")</span>
+                                @if (progress.PostStoryFunctionUpgraded)
+                                {
+                                    <strong>@T("Upgraded in save")</strong>
+                                }
+                            </div>
                             <p>@definition.PostStoryBonus</p>
                         </section>
                     </div>
@@ -199,7 +219,7 @@
         }
 
         <p class="story-source-note">
-            @T("Bonus summaries are based on the installed Encyclopedia. The status column covers the main regional story; post-story completion is not inferred without a verified dedicated flag.")
+            @T("Bonus summaries are based on the installed Encyclopedia. Save badges use the game's dedicated sect-function flags; a missing badge is not proof that a story is incomplete.")
         </p>
     }
 </section>
@@ -226,8 +246,7 @@
             ProgressFor(definition.OrganizationId).Status));
 
     private int CompletedCount => _snapshot?.Stories.Count(story =>
-        story.Status is RegionStoryProgressStatus.ProsperousEnding
-            or RegionStoryProgressStatus.FailingEnding) ?? 0;
+        IsCompleted(story.Status)) ?? 0;
 
     private int InProgressCount => _snapshot?.Stories.Count(story =>
         story.Status == RegionStoryProgressStatus.InProgress) ?? 0;
@@ -341,7 +360,8 @@
         {
             StoryFilter.All => true,
             StoryFilter.Completed => status is
-                RegionStoryProgressStatus.ProsperousEnding
+                RegionStoryProgressStatus.CompletedEndingUnrecorded
+                or RegionStoryProgressStatus.ProsperousEnding
                 or RegionStoryProgressStatus.FailingEnding,
             StoryFilter.InProgress =>
                 status == RegionStoryProgressStatus.InProgress,
@@ -361,6 +381,8 @@
         {
             RegionStoryProgressStatus.ProsperousEnding => "prosperous",
             RegionStoryProgressStatus.FailingEnding => "failing",
+            RegionStoryProgressStatus.CompletedEndingUnrecorded =>
+                "completed-unrecorded",
             RegionStoryProgressStatus.InProgress => "in-progress",
             RegionStoryProgressStatus.NotCompleted => "not-completed",
             _ => "unavailable"
@@ -371,10 +393,17 @@
         {
             RegionStoryProgressStatus.ProsperousEnding => T("Prosperous ending"),
             RegionStoryProgressStatus.FailingEnding => T("Failing ending"),
+            RegionStoryProgressStatus.CompletedEndingUnrecorded =>
+                T("Completed — ending unrecorded"),
             RegionStoryProgressStatus.InProgress => T("In progress"),
             RegionStoryProgressStatus.NotCompleted => T("Not completed"),
             _ => T("Status unavailable")
         };
+
+    private static bool IsCompleted(RegionStoryProgressStatus status) =>
+        status is RegionStoryProgressStatus.CompletedEndingUnrecorded
+            or RegionStoryProgressStatus.ProsperousEnding
+            or RegionStoryProgressStatus.FailingEnding;
 
     private string FormatWorldDate(int date)
     {

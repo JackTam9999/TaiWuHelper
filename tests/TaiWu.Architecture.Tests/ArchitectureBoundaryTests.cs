@@ -975,6 +975,7 @@ public sealed partial class ArchitectureBoundaryTests
         {
             "() => ConfirmCandidateAsync(candidate)",
             "() => SelectContext(context)",
+            "() => SelectDetailAsync(detail.DetailId)",
             "() => SelectFactionAsync(null)",
             "() => SelectFactionAsync(option.FactionId)",
             "() => SelectTarget(target)",
