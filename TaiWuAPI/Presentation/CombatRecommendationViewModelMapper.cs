@@ -417,10 +417,16 @@ public static class CombatRecommendationViewModelMapper
                     value.Severity,
                     value.SourceKinds,
                     value.EvidenceReferences))],
-            [.. impact.FeasibilityChanges.Select(value =>
-                MapRecommendationImpact(value, skillNames))],
-            [.. impact.ScoringChanges.Select(value =>
-                MapRecommendationImpact(value, skillNames))],
+            [.. impact.FeasibilityChanges
+                .Where(value =>
+                    RecommendationPolicyDisplay.IsVisible(value.Policy))
+                .Select(value =>
+                    MapRecommendationImpact(value, skillNames))],
+            [.. impact.ScoringChanges
+                .Where(value =>
+                    RecommendationPolicyDisplay.IsVisible(value.Policy))
+                .Select(value =>
+                    MapRecommendationImpact(value, skillNames))],
             [.. impact.UnsupportedEvidence.Select(value =>
                 new TargetUnsupportedEvidenceViewModel(
                     value.Code,

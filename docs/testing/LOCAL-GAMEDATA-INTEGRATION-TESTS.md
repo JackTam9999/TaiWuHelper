@@ -100,5 +100,12 @@ The test does not claim that the selected current-save target is the historical
 E3-000 sparring opponent. The E3-000 screen and bilingual workflow are verified
 separately; this test exercises the read-only current-save integration boundary.
 
+E4-007 extends the same guard with loadout-comparison assertions. It requires
+Current plus typed Safe, Balanced, and Aggressive columns, distinguishes
+available policy loadouts from infeasible diagnostics, compares repeated
+observation comparison facts, and proves clearing returns to the save-only
+comparison facts. The existing class-filter command runs both the E3 lifecycle
+and E4 comparison assertions in the same single guarded test.
+
 Build output can contain local runtime copies required by GameData. Those files
 remain ignored, are never publish items, and must never be committed.

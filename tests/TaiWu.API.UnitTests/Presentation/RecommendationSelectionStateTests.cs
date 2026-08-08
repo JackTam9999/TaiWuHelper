@@ -9,14 +9,13 @@ public sealed class RecommendationSelectionStateTests
 {
     [Theory]
     [InlineData(RecommendationPolicy.Safe)]
-    [InlineData(RecommendationPolicy.Balanced)]
     [InlineData(RecommendationPolicy.Aggressive)]
-    public void Every_recommendation_style_can_be_selected(
+    public void Every_user_facing_recommendation_style_can_be_selected(
         RecommendationPolicy style)
     {
         var model = Model();
         var state = new RecommendationSelectionState();
-        state.Load(model, RecommendationPolicy.Balanced);
+        state.Load(model, RecommendationPolicy.Safe);
 
         state.ShowStyle(style);
 
@@ -44,15 +43,31 @@ public sealed class RecommendationSelectionStateTests
     }
 
     [Fact]
-    public void Initial_selection_uses_first_feasible_style_when_requested_is_infeasible()
+    public void Balanced_backend_style_is_not_user_selectable()
+    {
+        var model = Model();
+        var state = new RecommendationSelectionState();
+
+        state.Load(model, RecommendationPolicy.Balanced);
+
+        Assert.Equal(RecommendationPolicy.Safe, state.VisibleStyle);
+        Assert.Throws<ArgumentException>(
+            () => state.ShowStyle(RecommendationPolicy.Balanced));
+        Assert.Contains(
+            model.Styles,
+            style => style.Style == RecommendationPolicy.Balanced);
+    }
+
+    [Fact]
+    public void Initial_selection_uses_other_visible_style_when_safe_is_infeasible()
     {
         var state = new RecommendationSelectionState();
 
         state.Load(
-            Model(infeasibleStyle: RecommendationPolicy.Balanced),
-            RecommendationPolicy.Balanced);
+            Model(infeasibleStyle: RecommendationPolicy.Safe),
+            RecommendationPolicy.Safe);
 
-        Assert.Equal(RecommendationPolicy.Safe, state.VisibleStyle);
+        Assert.Equal(RecommendationPolicy.Aggressive, state.VisibleStyle);
         Assert.True(state.VisibleRecommendation?.HasRecommendation);
     }
 
@@ -73,7 +88,7 @@ public sealed class RecommendationSelectionStateTests
     public void Selected_threat_highlights_only_linked_content_and_toggles()
     {
         var state = new RecommendationSelectionState();
-        state.Load(Model(), RecommendationPolicy.Balanced);
+        state.Load(Model(), RecommendationPolicy.Safe);
 
         state.SelectThreat("threat:MAGIC_SOUND");
 
@@ -91,7 +106,7 @@ public sealed class RecommendationSelectionStateTests
     public void Unknown_style_and_threat_are_rejected()
     {
         var state = new RecommendationSelectionState();
-        state.Load(Model(), RecommendationPolicy.Balanced);
+        state.Load(Model(), RecommendationPolicy.Safe);
 
         Assert.Throws<ArgumentException>(
             () => state.ShowStyle((RecommendationPolicy)999));
@@ -101,6 +116,34 @@ public sealed class RecommendationSelectionStateTests
                 (RecommendationPolicy)999));
         Assert.Throws<ArgumentException>(
             () => state.SelectThreat("threat:UNKNOWN"));
+    }
+
+    [Fact]
+    public void Language_reload_restores_policy_threat_and_filter_mode()
+    {
+        var selection = new RecommendationSelectionState();
+        selection.Load(Model(), RecommendationPolicy.Safe);
+        selection.ShowStyle(RecommendationPolicy.Safe);
+        selection.SelectThreat("threat:MAGIC_SOUND");
+        var filter = new LoadoutComparisonFilterState();
+        filter.LoadComparison("comparison:chinese");
+        filter.ShowDifferences();
+
+        selection.Load(Model(), RecommendationPolicy.Safe);
+        filter.LoadComparison(
+            "comparison:english",
+            preserveMode: true);
+        selection.RestoreInteraction(
+            RecommendationPolicy.Safe,
+            "threat:MAGIC_SOUND");
+
+        Assert.Equal(RecommendationPolicy.Safe, selection.VisibleStyle);
+        Assert.Equal(
+            "threat:MAGIC_SOUND",
+            selection.SelectedThreatReference);
+        Assert.True(filter.DifferencesOnly);
+        filter.LoadComparison("comparison:new-target");
+        Assert.False(filter.DifferencesOnly);
     }
 
     private static CombatRecommendationViewModel Model(

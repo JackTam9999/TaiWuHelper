@@ -143,7 +143,36 @@ public sealed record LoadoutComparisonUnsupportedViewModel(
 
 public sealed class LoadoutComparisonFilterState
 {
+    private string? _comparisonReference;
+
     public bool DifferencesOnly { get; private set; }
+
+    public void LoadComparison(
+        string comparisonReference,
+        bool preserveMode = false)
+    {
+        if (string.IsNullOrWhiteSpace(comparisonReference))
+        {
+            throw new ArgumentException(
+                "A comparison reference is required.",
+                nameof(comparisonReference));
+        }
+
+        if (string.Equals(
+                _comparisonReference,
+                comparisonReference,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var hadComparison = _comparisonReference is not null;
+        _comparisonReference = comparisonReference;
+        if (hadComparison && !preserveMode)
+        {
+            ShowAll();
+        }
+    }
 
     public void ShowAll() => DifferencesOnly = false;
 

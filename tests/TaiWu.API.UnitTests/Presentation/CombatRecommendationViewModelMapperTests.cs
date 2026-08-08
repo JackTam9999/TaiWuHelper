@@ -221,7 +221,11 @@ public sealed class CombatRecommendationViewModelMapperTests
             model,
             selected);
 
-        Assert.Equal(2, details.Alternatives.Count);
+        var alternative = Assert.Single(details.Alternatives);
+        Assert.Equal(RecommendationPolicy.Aggressive, alternative.Style);
+        Assert.DoesNotContain(
+            details.Alternatives,
+            value => value.Style == RecommendationPolicy.Balanced);
         Assert.NotEmpty(details.Scores);
         Assert.NotEmpty(details.EvidenceReferences);
         Assert.Contains("never replaces", details.UnknownValuePolicy);

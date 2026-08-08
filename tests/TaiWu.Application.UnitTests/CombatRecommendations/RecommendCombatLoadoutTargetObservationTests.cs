@@ -2,11 +2,13 @@ using NSubstitute;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.LoadoutComparisons;
 using TaiWu.Application.TargetObservations;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.CombatThreats;
+using TaiWu.Domain.LoadoutComparisons;
 using Xunit;
 
 namespace TaiWu.Application.UnitTests.CombatRecommendations;
@@ -185,6 +187,9 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             FullResultFingerprint(first),
             FullResultFingerprint(second));
+        Assert.Equal(
+            ComparisonFingerprint(first),
+            ComparisonFingerprint(second));
         await catalogueSource.Received(2).ReadAsync(
             Arg.Any<CancellationToken>());
         await repository.Received(2).ReadStateAsync(
@@ -622,6 +627,12 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.Equal(
             FullResultFingerprint(initial),
             FullResultFingerprint(cleared));
+        Assert.NotEqual(
+            ComparisonFingerprint(initial),
+            ComparisonFingerprint(observed));
+        Assert.Equal(
+            ComparisonFingerprint(initial),
+            ComparisonFingerprint(cleared));
     }
 
     [Fact]
@@ -1011,6 +1022,75 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             $"decisions:{decisions}",
             $"impact:{impact}");
     }
+
+    private static string ComparisonFingerprint(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
+        List<string> facts =
+        [
+            comparison.ComparisonReference.Value,
+            comparison.SnapshotReference.Value
+        ];
+        foreach (var column in comparison.Columns)
+        {
+            facts.Add(
+                $"column:{column.Kind}/{column.Status}/"
+                + column.Diagnostic?.Code.Value);
+            if (column.Loadout is not null)
+            {
+                facts.Add(
+                    $"allocation:{column.Kind}/"
+                    + ComparisonValue(column.Loadout.GenericSlotAllocation));
+                foreach (var category in column.Loadout.Categories)
+                {
+                    facts.Add(
+                        $"capacity:{column.Kind}/{category.Category}/"
+                        + $"{ComparisonValue(category.Capacity.Used)}/"
+                        + $"{ComparisonValue(category.Capacity.Capacity)}/"
+                        + $"{ComparisonValue(category.Capacity.Remaining)}/"
+                        + $"{ComparisonValue(category.Capacity.CategoryContribution)}/"
+                        + ComparisonValue(
+                            category.Capacity.GenericContribution));
+                    facts.AddRange(category.Skills.Select(skill =>
+                        $"skill:{column.Kind}/{skill.Identity.Category}/"
+                        + $"{skill.Identity.SkillId}/"
+                        + $"{ComparisonValue(skill.Membership)}/"
+                        + $"{ComparisonValue(skill.EffectiveCost)}/"
+                        + string.Join(
+                            ",",
+                            skill.Actions.Select(action =>
+                                $"{action.Kind}/{action.RequiredDirection}"))));
+                }
+            }
+
+            var tactical = column.TacticalSummary;
+            if (tactical is null)
+            {
+                continue;
+            }
+
+            facts.Add(
+                $"tactical:{column.Kind}/"
+                + $"{ComparisonValue(tactical.ManualActionCount)}/"
+                + string.Join(",", tactical.CoveredThreats.Select(
+                    value => value.Value))
+                + "/"
+                + string.Join(",", tactical.UnresolvedThreats.Select(
+                    value => value.Value)));
+            facts.AddRange(tactical.ScoreComponents.Select(score =>
+                $"score:{column.Kind}/{score.Kind}/{score.Weight}/"
+                + ComparisonValue(score.Score)));
+        }
+
+        return string.Join("\n", facts);
+    }
+
+    private static string ComparisonValue<T>(
+        LoadoutComparisonValue<T> value) where T : notnull =>
+        value.IsAvailable
+            ? $"available:{value.Value}"
+            : $"unavailable:{value.UnavailableReason}";
 
     private static CombatSkillCatalogueSourceIdentity Identity { get; } = new(
         "1.0.0-current",

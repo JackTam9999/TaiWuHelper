@@ -420,6 +420,8 @@ public static class UiText
             ["Prepare for the fight before it starts."] = "在戰鬥開始前做好準備。",
             ["Search the configured save, choose a target and compare three evidence-backed loadout styles. Every instruction is performed manually by you in the game."] =
                 "搜尋已設定的存檔、選擇目標，並比較三種有證據支持的運功方案。所有操作均由你在遊戲中手動完成。",
+            ["Search the configured save, choose a target and compare two evidence-backed loadout approaches. Every instruction is performed manually by you in the game."] =
+                "搜尋已設定的存檔、選擇目標，並比較兩種有證據支持的運功取向。所有操作均由你在遊戲中手動完成。",
             ["TaiWu Helper cannot change the save, equip skills, or control the game."] =
                 "太吾助手不能修改存檔、裝備功法或控制遊戲。",
             ["Recommendation controls"] = "推薦設定",
@@ -632,6 +634,7 @@ public static class UiText
                 "只套用於實際施展的功法；單純裝備內功不視為施展。",
             ["None"] = "無",
             ["Same snapshot · three policies"] = "同一快照 · 三種策略",
+            ["Same snapshot · two approaches"] = "同一快照 · 兩種取向",
             ["Same snapshot · exact manual changes"] =
                 "同一快照 · 明確手動變更",
             ["Loadout comparison"] = "運功配置比較",
@@ -643,6 +646,8 @@ public static class UiText
             ["Scrollable loadout comparison"] = "可捲動的運功配置比較",
             ["Current loadout compared with Safe, Balanced, and Aggressive policy winners."] =
                 "比較目前運功配置與穩健、均衡、進取策略的最佳方案。",
+            ["Current loadout compared with Safe and Aggressive policy winners."] =
+                "比較目前運功配置與穩健、進取策略的最佳方案。",
             ["Category and skill"] = "類別與功法",
             ["Allocation change"] = "配置變更",
             ["View setup checklist and battle plan"] =

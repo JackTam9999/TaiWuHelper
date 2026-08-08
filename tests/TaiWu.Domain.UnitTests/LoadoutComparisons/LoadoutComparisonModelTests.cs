@@ -131,6 +131,62 @@ public sealed class LoadoutComparisonModelTests
     }
 
     [Fact]
+    public void Skill_cells_reject_invalid_values_and_malformed_actions()
+    {
+        var direction = Action(
+            LoadoutComparisonSkillActionKind.DirectionChangeRequired,
+            PracticeDirection.Reverse);
+        var breakthrough = Action(
+            LoadoutComparisonSkillActionKind.BreakthroughRequired,
+            PracticeDirection.Direct);
+        var identity = new LoadoutComparisonSkillIdentity(
+            SkillCategory.Attack,
+            25);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LoadoutComparisonSkillCell(
+                identity,
+                LoadoutComparisonValue<LoadoutComparisonMembership>.Available(
+                    (LoadoutComparisonMembership)99),
+                LoadoutComparisonValue<int>.Available(1),
+                []));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LoadoutComparisonSkillCell(
+                identity,
+                LoadoutComparisonValue<LoadoutComparisonMembership>.Available(
+                    LoadoutComparisonMembership.Added),
+                LoadoutComparisonValue<int>.Available(0),
+                []));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonSkillCell(
+                identity,
+                LoadoutComparisonValue<LoadoutComparisonMembership>.Unavailable(
+                    "Membership is unavailable."),
+                LoadoutComparisonValue<int>.Available(1),
+                [direction]));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonSkillCell(
+                identity,
+                LoadoutComparisonValue<LoadoutComparisonMembership>.Available(
+                    LoadoutComparisonMembership.Added),
+                LoadoutComparisonValue<int>.Available(1),
+                [direction, direction]));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonSkillCell(
+                identity,
+                LoadoutComparisonValue<LoadoutComparisonMembership>.Available(
+                    LoadoutComparisonMembership.Added),
+                LoadoutComparisonValue<int>.Available(1),
+                [breakthrough, direction]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Action(
+            (LoadoutComparisonSkillActionKind)99,
+            PracticeDirection.Direct));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Action(
+            LoadoutComparisonSkillActionKind.DirectionChangeRequired,
+            (PracticeDirection)99));
+    }
+
+    [Fact]
     public void Current_and_policy_columns_enforce_distinct_memberships()
     {
         var added = Cell(
@@ -302,6 +358,128 @@ public sealed class LoadoutComparisonModelTests
             Comparison([Current()], [second, first]));
     }
 
+    [Fact]
+    public void Tactical_summary_enforces_partition_and_canonical_scores()
+    {
+        var coverage = Score(
+            RecommendationScoreComponentKind.ThreatCoverage,
+            weight: 40);
+        var survival = Score(
+            RecommendationScoreComponentKind.Survival,
+            weight: 30);
+        var summary = new LoadoutComparisonTacticalSummary(
+            LoadoutComparisonValue<int>.Available(2),
+            LoadoutComparisonValue<LoadoutComparisonSkillIdentity>.Unavailable(
+                "No active defense is selected."),
+            LoadoutComparisonValue<LoadoutComparisonSkillIdentity>.Unavailable(
+                "No active agility is selected."),
+            [Ref("threat:covered")],
+            [Ref("threat:unresolved")],
+            [Ref("condition:weapon")],
+            [Ref("caveat:timing")],
+            [Ref("evidence:coverage")],
+            [coverage, survival]);
+
+        Assert.Equal(2, summary.ManualActionCount.Value);
+        Assert.Equal(
+            ["threat:covered"],
+            summary.CoveredThreats.Select(value => value.Value));
+        Assert.Equal(
+            [
+                RecommendationScoreComponentKind.ThreatCoverage,
+                RecommendationScoreComponentKind.Survival
+            ],
+            summary.ScoreComponents.Select(value => value.Kind));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LoadoutComparisonTacticalSummary(
+                LoadoutComparisonValue<int>.Available(-1),
+                summary.ActiveDefense,
+                summary.ActiveAgility,
+                [],
+                [],
+                [],
+                [],
+                [],
+                []));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonTacticalSummary(
+                LoadoutComparisonValue<int>.Available(0),
+                summary.ActiveDefense,
+                summary.ActiveAgility,
+                [Ref("threat:same")],
+                [Ref("threat:same")],
+                [],
+                [],
+                [],
+                []));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonTacticalSummary(
+                LoadoutComparisonValue<int>.Available(0),
+                summary.ActiveDefense,
+                summary.ActiveAgility,
+                [],
+                [],
+                [],
+                [],
+                [],
+                [coverage, coverage]));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonTacticalSummary(
+                LoadoutComparisonValue<int>.Available(0),
+                summary.ActiveDefense,
+                summary.ActiveAgility,
+                [],
+                [],
+                [],
+                [],
+                [],
+                [survival, coverage]));
+    }
+
+    [Fact]
+    public void Supporting_facts_reject_invalid_identity_text_and_references()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LoadoutComparisonSkillIdentity(SkillCategory.Attack, -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LoadoutComparisonSkillIdentity((SkillCategory)99, 1));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonDiagnostic(
+                Ref("diagnostic:test"),
+                " ",
+                []));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonDiagnostic(
+                Ref("diagnostic:test"),
+                "Synthetic diagnostic.",
+                [Ref("evidence:2"), Ref("evidence:1")]));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonReason(
+                Ref("reason:test"),
+                "Synthetic reason.",
+                [Ref("evidence:1"), Ref("evidence:1")],
+                []));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Score(
+            (RecommendationScoreComponentKind)99,
+            weight: 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Score(
+            RecommendationScoreComponentKind.ThreatCoverage,
+            weight: -1));
+        Assert.Throws<ArgumentException>(() =>
+            new LoadoutComparisonScoreComponent(
+                RecommendationScoreComponentKind.ThreatCoverage,
+                10,
+                LoadoutComparisonValue<decimal>.Available(0.5m),
+                " ",
+                Ref("evidence:score")));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Provenance(
+            (LoadoutComparisonBaselineField)99,
+            SnapshotDataSource.Save));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Provenance(
+            LoadoutComparisonBaselineField.EquippedSkills,
+            (SnapshotDataSource)99));
+    }
+
     private static LoadoutComparison Comparison(
         params LoadoutComparisonColumn[] columns) =>
         Comparison(columns, []);
@@ -424,6 +602,15 @@ public sealed class LoadoutComparisonModelTests
             evidenceReferences: [],
             scoreComponents: []);
     }
+
+    private static LoadoutComparisonScoreComponent Score(
+        RecommendationScoreComponentKind kind,
+        int weight) => new(
+            kind,
+            weight,
+            LoadoutComparisonValue<decimal>.Available(0.5m),
+            "Synthetic score explanation.",
+            Ref($"evidence:score:{kind}"));
 
     private static LoadoutComparisonDiagnostic Diagnostic()
     {

@@ -2,13 +2,18 @@
 
 ## Purpose
 
-Epic 4 presents the current player loadout beside the Safe, Balanced, and
-Aggressive policy winners. This document fixes the meaning of that comparison
-before Domain, API, or Presentation contracts are added.
+Epic 4 compares the current player loadout with the policy winners carried by
+the typed backend result. This document fixes the meaning of that comparison
+across Domain, API, and Presentation.
 
 The comparison is a read-only projection of one immutable
 `CombatLoadoutRecommendation`. It does not generate candidates, rescore a
 candidate, infer a missing value, persist a preference, or apply a loadout.
+
+The immutable comparison and API retain all four columns. During the Epic 4
+two-option product trial, Presentation projects only Current, Safe, and
+Aggressive. Balanced is neither deleted nor recomputed and can be restored
+without changing the Domain or API contract.
 
 ## Comparison boundary
 
@@ -240,14 +245,14 @@ re-evaluates row visibility from the same immutable comparison.
 
 ## Responsive and interaction contract
 
-At a comparison-container width of 1280 CSS pixels or more, the matrix shows
-Current plus all three policies. Below 1280 pixels, it shows Current plus one
-explicitly selected policy. Responsive mode changes only visibility and
+At a comparison-container width of 1280 CSS pixels or more, the trial matrix
+shows Current plus Safe and Aggressive. Below 1280 pixels, it shows Current plus
+one explicitly selected user-facing policy. Responsive mode changes only visibility and
 layout; facts, state vocabulary, and ordering are identical.
 
 The selected policy defaults to the recommendation's requested policy when
-feasible, otherwise to the first feasible policy in Safe, Balanced,
-Aggressive order, otherwise Safe so its diagnostic is immediately available.
+it is Safe or Aggressive and feasible, otherwise to the first feasible policy
+in Safe, Aggressive order, otherwise Safe so its diagnostic is immediately available.
 The selection is session-only UI state.
 
 The rendered structure provides:

@@ -3,11 +3,13 @@ using System.Security.Cryptography;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.LoadoutComparisons;
 using TaiWu.Application.Localization;
 using TaiWu.Application.TargetObservations;
 using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LoadoutComparisons;
 using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
 using Xunit;
@@ -18,7 +20,7 @@ public sealed class TargetObservationReadOnlyIntegrationTests
 {
     private const string SavePathVariable = "TAIWU_INTEGRATION_SAVE_PATH";
     [Fact]
-    public async Task Observation_apply_repeat_and_clear_preserve_all_sources()
+    public async Task Observation_and_comparison_repeat_clear_preserve_sources()
     {
         var savePath = RequireSavePath();
         var guardedPaths = DiscoverReadDependencies(savePath);
@@ -99,6 +101,14 @@ public sealed class TargetObservationReadOnlyIntegrationTests
             Assert.NotNull(first.TargetObservationImpact);
             Assert.Equal(ObservationSignature(first), ObservationSignature(second));
             Assert.Equal(SaveOnlySignature(initial), SaveOnlySignature(cleared));
+            AssertComparisonColumns(initial);
+            AssertComparisonColumns(first);
+            Assert.Equal(
+                ComparisonFactSignature(first),
+                ComparisonFactSignature(second));
+            Assert.Equal(
+                ComparisonFactSignature(initial),
+                ComparisonFactSignature(cleared));
             Assert.Null(cleared.TargetObservation);
             Assert.Null(cleared.TargetObservationImpact);
             Assert.Equal(
@@ -146,7 +156,131 @@ public sealed class TargetObservationReadOnlyIntegrationTests
             value.TargetObservationImpact.Conflicts.Select(conflict =>
                 $"{conflict.Field}/{conflict.PrecedenceRule}/"
                 + string.Join(",", conflict.Sources.Select(source =>
-                    $"{source.Source}/{source.CapturedAtUtc:O}")))));
+                            $"{source.Source}/{source.CapturedAtUtc:O}")))));
+
+    private static void AssertComparisonColumns(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
+
+        Assert.Equal(4, comparison.Columns.Length);
+        Assert.Equal(
+            LoadoutComparisonColumnStatus.Available,
+            comparison.Current.Status);
+        Assert.NotNull(comparison.Current.Loadout);
+        foreach (var style in recommendation.Styles)
+        {
+            var column = Assert.IsType<LoadoutComparisonColumn>(
+                comparison.GetPolicy(style.Policy));
+            if (style.ManualPlan.HasPlan)
+            {
+                Assert.Equal(
+                    LoadoutComparisonColumnStatus.Available,
+                    column.Status);
+                Assert.NotNull(column.Loadout);
+                Assert.NotNull(column.TacticalSummary);
+            }
+            else
+            {
+                Assert.Equal(
+                    LoadoutComparisonColumnStatus.Infeasible,
+                    column.Status);
+                Assert.Null(column.Loadout);
+                Assert.Null(column.TacticalSummary);
+                Assert.NotNull(column.Diagnostic);
+            }
+        }
+    }
+
+    private static string ComparisonFactSignature(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
+        List<string> facts =
+        [
+            $"target:{recommendation.Snapshot.Target.CharacterId}"
+        ];
+        facts.AddRange(comparison.BaselineProvenance.Select(value =>
+            $"provenance:{value.Field}/{value.Source}"));
+        foreach (var column in comparison.Columns)
+        {
+            facts.Add(
+                $"column:{column.Kind}/{column.Status}/"
+                + $"{column.Diagnostic?.Code.Value}/"
+                + column.Diagnostic?.Summary);
+            if (column.Loadout is not null)
+            {
+                facts.Add(
+                    $"allocation:{column.Kind}/"
+                    + ComparisonValue(column.Loadout.GenericSlotAllocation));
+                foreach (var category in column.Loadout.Categories)
+                {
+                    var capacity = category.Capacity;
+                    facts.Add(
+                        $"capacity:{column.Kind}/{category.Category}/"
+                        + $"{ComparisonValue(capacity.Used)}/"
+                        + $"{ComparisonValue(capacity.Capacity)}/"
+                        + $"{ComparisonValue(capacity.Remaining)}/"
+                        + $"{ComparisonValue(capacity.CategoryContribution)}/"
+                        + ComparisonValue(capacity.GenericContribution));
+                    facts.AddRange(category.Skills.Select(skill =>
+                        $"skill:{column.Kind}/{skill.Identity.Category}/"
+                        + $"{skill.Identity.SkillId}/"
+                        + $"{ComparisonValue(skill.Membership)}/"
+                        + $"{ComparisonValue(skill.EffectiveCost)}/"
+                        + string.Join(
+                            ",",
+                            skill.Actions.Select(action =>
+                                $"{action.Kind}/{action.RequiredDirection}/"
+                                + $"{action.Reason.Code.Value}/"
+                                + $"{action.Reason.Summary}/"
+                                + string.Join(
+                                    "+",
+                                    action.Reason.ThreatReferences.Select(
+                                        value => value.Value))))));
+                }
+            }
+
+            var tactical = column.TacticalSummary;
+            if (tactical is null)
+            {
+                continue;
+            }
+
+            facts.Add(
+                $"tactical:{column.Kind}/"
+                + $"{ComparisonValue(tactical.ManualActionCount)}/"
+                + $"{ComparisonValue(tactical.ActiveDefense)}/"
+                + $"{ComparisonValue(tactical.ActiveAgility)}");
+            facts.Add(
+                $"covered:{column.Kind}/"
+                + string.Join(",", tactical.CoveredThreats.Select(
+                    value => value.Value)));
+            facts.Add(
+                $"unresolved:{column.Kind}/"
+                + string.Join(",", tactical.UnresolvedThreats.Select(
+                    value => value.Value)));
+            facts.Add(
+                $"conditions:{column.Kind}/"
+                + string.Join(",", tactical.Conditions.Select(
+                    value => value.Value)));
+            facts.Add(
+                $"caveats:{column.Kind}/"
+                + string.Join(",", tactical.Caveats.Select(
+                    value => value.Value)));
+            facts.AddRange(tactical.ScoreComponents.Select(score =>
+                $"score:{column.Kind}/{score.Kind}/{score.Weight}/"
+                + $"{ComparisonValue(score.Score)}/{score.Explanation}"));
+        }
+
+        return string.Join("\n", facts);
+    }
+
+    private static string ComparisonValue<T>(
+        LoadoutComparisonValue<T> value) where T : notnull =>
+        value.IsAvailable
+            ? $"available:{value.Value}"
+            : $"unavailable:{value.UnavailableReason}";
 
     private static string RequireSavePath()
     {

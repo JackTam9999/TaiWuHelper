@@ -42,7 +42,7 @@
         <select id="comparison-policy-selector"
                 value="@SelectedPolicy"
                 @onchange="ChangePolicyAsync">
-            @foreach (var policy in Enum.GetValues<RecommendationPolicy>())
+            @foreach (var policy in RecommendationPolicyDisplay.VisiblePolicies)
             {
                 <option value="@policy">@PolicyLabel(policy)</option>
             }
@@ -103,12 +103,12 @@
          aria-label="@T("Scrollable loadout comparison")">
         <table class="comparison-table">
             <caption class="visually-hidden">
-                @T("Current loadout compared with Safe, Balanced, and Aggressive policy winners.")
+                @T("Current loadout compared with Safe and Aggressive policy winners.")
             </caption>
             <thead>
                 <tr>
                     <th scope="col">@T("Category and skill")</th>
-                    @foreach (var column in Comparison.Columns)
+                    @foreach (var column in VisibleColumns)
                     {
                         <th scope="col"
                             class="@ColumnClass(column)"
@@ -161,7 +161,7 @@
                             tabindex="-1">
                             <strong>@category.DisplayName</strong>
                         </th>
-                        @foreach (var column in Comparison.Columns)
+                        @foreach (var column in VisibleColumns)
                         {
                             var capacity = CapacityFor(category, column.Kind);
                             <td class="comparison-capacity-cell @ColumnClass(column)"
@@ -207,7 +207,7 @@
                                     <span>@T(skill.NameUnavailableReason)</span>
                                 }
                             </th>
-                            @foreach (var column in Comparison.Columns)
+                            @foreach (var column in VisibleColumns)
                             {
                                 var cell = CellFor(skill, column.Kind);
                                 <td class="comparison-skill-cell @ColumnClass(column)"
@@ -324,7 +324,7 @@
         }
 
         <div class="comparison-tactics-grid">
-            @foreach (var column in Comparison.Columns.Where(value =>
+            @foreach (var column in VisibleColumns.Where(value =>
                 value.Policy.HasValue))
             {
                 <article class="@PolicyTacticalClass(column)">
@@ -541,27 +541,30 @@
 
     [Parameter]
     public RecommendationPolicy SelectedPolicy { get; set; } =
-        RecommendationPolicy.Balanced;
+        RecommendationPolicy.Safe;
 
     [Parameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
 
     protected override void OnParametersSet()
     {
-        if (_comparisonReference is not null
-            && !string.Equals(
+        if (!string.Equals(
                 _comparisonReference,
                 Comparison.Reference,
                 StringComparison.Ordinal))
         {
-            FilterState.ShowAll();
+            _comparisonReference = Comparison.Reference;
+            FilterState.LoadComparison(_comparisonReference);
         }
-
-        _comparisonReference = Comparison.Reference;
     }
 
     private int VisibleRowCount => Comparison.Categories
         .Sum(category => VisibleSkills(category).Count());
+
+    private IEnumerable<LoadoutComparisonColumnViewModel> VisibleColumns =>
+        Comparison.Columns.Where(column =>
+            !column.Policy.HasValue
+            || RecommendationPolicyDisplay.IsVisible(column.Policy.Value));
 
     private int SelectedVisibleRowCount => Comparison.Categories.Sum(
         category => FilterState.DifferencesOnly
@@ -585,6 +588,7 @@
         FilterState.DifferencesOnly
             ? category.Skills.Where(skill => skill.Cells.Any(cell =>
                 cell.Column != LoadoutComparisonColumnKind.Current
+                && cell.Column != LoadoutComparisonColumnKind.Balanced
                 && cell.HasDifference))
             : category.Skills;
 
@@ -597,7 +601,8 @@
                 args.Value?.ToString(),
                 ignoreCase: true,
                 out var policy)
-            && Enum.IsDefined(policy))
+            && Enum.IsDefined(policy)
+            && RecommendationPolicyDisplay.IsVisible(policy))
         {
             await PolicySelected.InvokeAsync(policy);
         }
@@ -622,7 +627,7 @@
         LoadoutComparisonSkillRowViewModel skill)
     {
         var classes = new List<string> { "comparison-skill-row" };
-        foreach (var policy in Enum.GetValues<RecommendationPolicy>())
+        foreach (var policy in RecommendationPolicyDisplay.VisiblePolicies)
         {
             if (HasDifferenceForPolicy(skill, policy))
             {

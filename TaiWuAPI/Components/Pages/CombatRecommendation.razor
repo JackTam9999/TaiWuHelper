@@ -21,7 +21,7 @@
         <p class="eyebrow">@T("Read-only combat planning")</p>
         <h1>@T("Prepare for the fight before it starts.")</h1>
         <p class="hero-copy">
-            @T("Search the configured save, choose a target and compare three evidence-backed loadout styles. Every instruction is performed manually by you in the game.")
+            @T("Search the configured save, choose a target and compare two evidence-backed loadout approaches. Every instruction is performed manually by you in the game.")
         </p>
     </div>
     <div class="boundary-card" role="note">
@@ -87,7 +87,7 @@
         <div class="control-group">
             <label for="style-select">@T("Preferred style")</label>
             <select id="style-select" @bind="_form.Policy">
-                @foreach (var policy in Enum.GetValues<RecommendationPolicy>())
+                @foreach (var policy in RecommendationPolicyDisplay.VisiblePolicies)
                 {
                     <option value="@policy">@PolicyLabel(policy)</option>
                 }
@@ -251,14 +251,15 @@
     <section class="result-shell">
         <div class="section-heading">
             <div>
-                <p class="eyebrow">@T("Same snapshot · three policies")</p>
+                <p class="eyebrow">@T("Same snapshot · two approaches")</p>
                 <h2>@T("Recommendation ready")</h2>
             </div>
             <span class="information-badge">@T("Information only")</span>
         </div>
 
         <div class="style-tabs" role="group" aria-label="@T("Recommendation styles")">
-            @foreach (var style in _model.Styles)
+            @foreach (var style in _model.Styles.Where(style =>
+                RecommendationPolicyDisplay.IsVisible(style.Style)))
             {
                 var selected = style.Style == _selection.VisibleStyle;
                 <button type="button"
@@ -279,6 +280,7 @@
             <LoadoutComparisonMatrix Comparison="_model.Comparison"
                                      SelectedPolicy="_selection.VisibleStyle"
                                      Language="Language"
+                                     FilterState="_comparisonFilter"
                                      PolicySelected="ShowStyle"
                                      ThreatSelected="SelectThreat" />
         }
@@ -366,6 +368,7 @@
     private readonly List<TargetLookupEntry> _targetMatches = [];
     private readonly List<ObservationSkillOption> _observationSkills = [];
     private readonly RecommendationSelectionState _selection = new();
+    private readonly LoadoutComparisonFilterState _comparisonFilter = new();
     private readonly TargetObservationEditorState _targetObservation = new();
     private CancellationTokenSource? _searchCancellation;
     private CancellationTokenSource? _recommendationCancellation;
@@ -418,6 +421,8 @@
         _lastLanguage = Language;
         var selectedCharacterId = _selectedTarget?.CharacterId;
         var hadRecommendation = _model is not null;
+        var visibleStyle = _selection.VisibleStyle;
+        var selectedThreatReference = _selection.SelectedThreatReference;
         if (!_configurationValid
             || !selectedCharacterId.HasValue)
         {
@@ -438,6 +443,15 @@
         if (hadRecommendation)
         {
             await GetRecommendationAsync();
+            if (_model?.Comparison is not null)
+            {
+                _comparisonFilter.LoadComparison(
+                    _model.Comparison.Reference,
+                    preserveMode: true);
+                _selection.RestoreInteraction(
+                    visibleStyle,
+                    selectedThreatReference);
+            }
         }
     }
 
@@ -734,6 +748,8 @@
     private void PopulateObservationSkills(CombatRecommendationViewModel model)
     {
         var available = model.Styles
+            .Where(style =>
+                RecommendationPolicyDisplay.IsVisible(style.Style))
             .SelectMany(style => style.Categories)
             .SelectMany(category => category.Skills)
             .GroupBy(skill => skill.SkillId)
@@ -865,7 +881,7 @@
     private sealed class RecommendationForm
     {
         public RecommendationPolicy Policy { get; set; } =
-            RecommendationPolicy.Balanced;
+            RecommendationPolicy.Safe;
 
         public string PreferredWeapon { get; set; } = string.Empty;
 

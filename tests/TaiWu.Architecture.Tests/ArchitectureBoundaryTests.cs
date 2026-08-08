@@ -600,6 +600,13 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("aria-busy=", page);
         Assert.Contains("role=\"group\"", page);
         Assert.Contains("aria-pressed=", page);
+        Assert.Contains(
+            "RecommendationPolicyDisplay.VisiblePolicies",
+            page);
+        Assert.Contains(
+            "RecommendationPolicyDisplay.IsVisible(style.Style)",
+            page);
+        Assert.Contains("grid-template-columns: repeat(2, 1fr)", styles);
         Assert.Contains("Retry read", stateNotice);
         Assert.Contains("aria-live=", stateNotice);
         Assert.DoesNotContain("repair", stateNotice);
@@ -642,8 +649,10 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("comparison-unselected-policy", component);
         Assert.Contains("comparison-selected-policy", styles);
         Assert.Contains("comparison-difference-safe", styles);
-        Assert.Contains("comparison-difference-balanced", styles);
         Assert.Contains("comparison-difference-aggressive", styles);
+        Assert.Contains(
+            "RecommendationPolicyDisplay.VisiblePolicies",
+            component);
         Assert.Contains("overflow-wrap: anywhere", styles);
     }
 

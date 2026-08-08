@@ -54,7 +54,7 @@ Every completed item must:
 | 1 | Domain model | Immutable rows, cells, actions, and diagnostics are typed |
 | 2 | Comparison builder | Current and three policy winners are normalized deterministically |
 | 3 | API vertical | Typed comparison facts reach clients without UI re-derivation |
-| 4 | Core UI | Desktop users can compare all policies and follow exact changes |
+| 4 | Core UI | Desktop users can compare the two review policies and follow exact changes |
 | 5 | Responsive and accessible UI | Mobile, keyboard, and bilingual users receive equivalent facts |
 | 6 | Tactical explanation | Capacity, threats, requirements, caveats, and evidence explain differences |
 | 7 | Verification and completion | Safety, determinism, parity, and product acceptance close the epic |
@@ -244,7 +244,8 @@ need to rediscover comparison rules from raw style data.
 **Dependencies:** E4-003
 
 Add a comparison section to the combat recommendation page that lets desktop
-users inspect Current, Safe, Balanced, and Aggressive results together.
+users inspect Current, Safe, and Aggressive results together. Balanced remains
+in the typed recommendation/API result during the two-option product trial.
 
 #### Acceptance criteria
 
@@ -284,7 +285,7 @@ users inspect Current, Safe, Balanced, and Aggressive results together.
 
 **Dependencies:** E4-004
 
-Make the same comparison facts usable without a four-column viewport and
+Make the same comparison facts usable without a three-column viewport and
 complete the English/Traditional Chinese accessibility pass.
 
 #### Acceptance criteria
@@ -358,7 +359,7 @@ Completed on 2026-08-08. Focused verification passed 135/135 Application,
 
 ### E4-007 — Verify comparison safety, parity, and determinism
 
-**Status:** Planned
+**Status:** Two-option trial awaiting product-owner review
 
 **Priority:** P1
 
@@ -371,22 +372,22 @@ Epic 4 criterion, and record the product-owner decision.
 
 #### Acceptance criteria
 
-- [ ] Domain tests cover all comparison invariants and composite actions.
-- [ ] Application tests prove manual-plan parity and deterministic ordering for
-      all three policies.
-- [ ] API tests prove typed unavailable and infeasible states survive mapping.
-- [ ] Presentation tests cover bilingual desktop and narrow-screen workflows.
-- [ ] Architecture tests prevent file, process, screenshot, persistence,
+- [x] Domain tests cover all comparison invariants and composite actions.
+- [x] Application tests prove manual-plan parity and deterministic ordering for
+      all three backend policies.
+- [x] API tests prove typed unavailable and infeasible states survive mapping.
+- [x] Presentation tests cover bilingual desktop and narrow-screen workflows.
+- [x] Architecture tests prevent file, process, screenshot, persistence,
       game-control, and mutation-capable dependencies.
-- [ ] Applying the same player/target observation repeatedly produces an
+- [x] Applying the same player/target observation repeatedly produces an
       equivalent comparison.
-- [ ] Clearing observations reproduces the save-only comparison.
-- [ ] A guarded current-save vertical verifies Current plus all available
+- [x] Clearing observations reproduces the save-only comparison.
+- [x] A guarded current-save vertical verifies Current plus all available
       policy columns while preserving save, GameData, and language-resource
       fingerprints.
-- [ ] Release build, default test matrix, formatting, and diff checks pass.
-- [ ] Every Epic 4 acceptance criterion links to implementation or evidence.
-- [ ] Deferred export, persistence, screenshot assistance, lower-ranked
+- [x] Release build, default test matrix, formatting, and diff checks pass.
+- [x] Every Epic 4 acceptance criterion links to implementation or evidence.
+- [x] Deferred export, persistence, screenshot assistance, lower-ranked
       candidate exploration, and outcome feedback remain explicit future work.
 - [ ] The product owner records the Epic 4 completion decision.
 
@@ -395,6 +396,13 @@ Epic 4 criterion, and record the product-owner decision.
 - `docs/reviews/E4-007-automated-verification.md`.
 - `docs/reviews/E4-007-manual-verification.md`.
 - Updated completion decision in [EPIC-004](./EPIC.md).
+
+Implementation and verification for the reversible two-option review build
+completed on 2026-08-08. Release build passed
+with zero warnings/errors; the default matrix passed 924 total with 915 passed
+and 9 expected opt-in skips; the guarded current-save vertical passed 1/1 with
+all inspected fingerprints unchanged. Product-owner review and the completion
+decision remain pending.
 
 ## Future work outside Epic 4
 

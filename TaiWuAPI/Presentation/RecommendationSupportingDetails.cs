@@ -87,6 +87,8 @@ public static class RecommendationSupportingDetailsBuilder
         return new RecommendationSupportingDetailsViewModel(
             [.. recommendation.Styles
                 .Where(style => style.Reference != selectedStyle.Reference)
+                .Where(style =>
+                    RecommendationPolicyDisplay.IsVisible(style.Style))
                 .Select(style => new AlternativeStyleViewModel(
                     style.Reference,
                     style.Style,

@@ -2,17 +2,18 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented through E4-005 |
+| Status | Two-option review build implemented through E4-007 |
 | Epic | [EPIC-004](./EPIC.md) |
-| Backlog items | [E4-000](./BACKLOG.md#e4-000--define-comparison-semantics-and-ui-states), [E4-004](./BACKLOG.md#e4-004--build-the-desktop-comparison-matrix), [E4-005](./BACKLOG.md#e4-005--add-narrow-screen-bilingual-and-keyboard-interaction) |
+| Backlog items | [E4-000](./BACKLOG.md#e4-000--define-comparison-semantics-and-ui-states), [E4-004](./BACKLOG.md#e4-004--build-the-desktop-comparison-matrix), [E4-005](./BACKLOG.md#e4-005--add-narrow-screen-bilingual-and-keyboard-interaction), [E4-007](./BACKLOG.md#e4-007--verify-comparison-safety-parity-and-determinism) |
 | Primary surface | Existing local Blazor recommendation page |
 | Last updated | 2026-08-08 |
 
 ## Purpose
 
 Add one comparison section to the existing combat-recommendation workflow so
-the player can compare Current with the Safe, Balanced, and Aggressive policy
-winners without reconstructing changes across separate tabs.
+the player can compare Current with the Safe and Aggressive policy winners
+without reconstructing changes across separate tabs. Balanced remains in the
+backend comparison during this reversible two-option product trial.
 
 The data and state rules are defined by the
 [loadout comparison contract](../../architecture/LOADOUT-COMPARISON-CONTRACT.md).
@@ -48,25 +49,23 @@ save, target, or recommendation.
 │ Current provenance: loadout from current screen; capacity from save      │
 │ ⚠ Assistance used slots unavailable: one skill cost is unavailable.    │
 ├ Filter: (●) All rows  (○) Differences only   Categories: All 內 摧 輕 護 奇 ┤
-│ Category / skill    │ Current      │ Safe         │ Balanced     │ Aggressive │
-├ Neigong ─ capacity   │ 4/6, 萬用0    │ 4/6, 萬用1    │ 5/6, 萬用0    │ 5/6, 萬用0  │
-│ Synthetic Inner A  │ Present      │ ✓ Retained   │ ✓ Retained    │ ✓ Retained │
-├ Attack ─ capacity    │ 4/5          │ 5/6          │ 4/5           │ 5/5        │
-│ Synthetic Strike B │ Present      │ − Removed    │ ✓ Retained    │ ⇄ Direction:│
-│                      │              │              │               │   Reverse   │
-│ Synthetic Strike C │ Absent       │ + Added      │ + Added       │ + Added    │
-│                      │              │ ⇄ Reverse    │ ◇ Breakthrough│             │
+│ Category / skill       │ Current         │ Safe           │ Aggressive    │
+├ Neigong ─ capacity      │ 4/6, 萬用0       │ 4/6, 萬用1      │ 5/6, 萬用0     │
+│ Synthetic Inner A     │ Present         │ ✓ Retained     │ ✓ Retained    │
+├ Attack ─ capacity       │ 4/5             │ 5/6             │ 5/5           │
+│ Synthetic Strike B    │ Present         │ − Removed       │ ⇄ Reverse     │
+│ Synthetic Strike C    │ Absent          │ + Added         │ + Added       │
+│                         │                 │ ⇄ Reverse       │               │
 ├ Agility / Defense / Assistance follow the same row semantics          ┤
 │ Safe: covers T-01; unresolved T-03; 4 manual actions  [View plan]   │
-│ Balanced: no feasible proposal — required condition unavailable       │
 │ Aggressive: covers T-01; critical caveat remains       [View plan]   │
 ├ Legend: ✓ Retained  + Added  − Removed  ⇄ Direction  ◇ Breakthrough ┤
 │ Scores rank candidates only inside each policy; they are not win odds. │
 └ TaiWu Helper cannot equip, redirect, or break through skills. ─────┘
 ```
 
-The infeasible Balanced example deliberately remains a column. It is not
-rendered as an empty loadout.
+An infeasible Safe or Aggressive result deliberately remains a diagnostic
+column. It is not rendered as an empty loadout.
 
 ## Synthetic narrow-screen wireframe — Traditional Chinese
 
@@ -77,15 +76,15 @@ The synthetic example selects Safe.
 ┌ 運功比較 ─ 僅供參考 ─ 訓練目標 ─ 快照 S-42 ─┐
 │ 目前配置來源：畫面觀察；格數來源：存檔             │
 │ ⚠ 奇竅已用格數無法取得：一項功法成本無法取得。 │
-│ 比較方案：[ 安全 ▼ ]   顯示：[所有] [僅顯示差異] │
-├ 摘要：目前 ↔ 安全                                  ┤
-│ 內功 格數       │ 目前 4/6、萬用 0 │ 安全 4/6、萬用 1  │
+│ 比較方案：[ 穩健 ▼ ]   顯示：[所有] [僅顯示差異] │
+├ 摘要：目前 ↔ 穩健                                  ┤
+│ 內功 格數       │ 目前 4/6、萬用 0 │ 穩健 4/6、萬用 1  │
 │ 範例內功甲      │ 已裝備          │ ✓ 保留             │
-│ 摗破 格數       │ 目前 4/5         │ 安全 5/6          │
+│ 摗破 格數       │ 目前 4/5         │ 穩健 5/6          │
 │ 範例摗破乙      │ 已裝備          │ − 移除             │
 │ 範例摗破丙      │ 未裝備          │ + 加入；⇄ 改為逆練 │
 ├ 風險：已覆蓋 T-01；T-03 尚未解決                 ┤
-│ [前往安全方案的手動設置清單與戰鬥計畫]          │
+│ [前往穩健方案的手動設置清單與戰鬥計畫]          │
 ├ 圖例：✓ 保留  + 加入  − 移除  ⇄ 改變正逆練  ◇ 突破 ┤
 │ 分數僅用於各方案內排序，並非獲勝機率。             │
 └ 太吾助手不會裝備、改變正逆練或進行突破。 ───────┘
@@ -120,8 +119,8 @@ relationships, reading order, labels, actions, capacity, and diagnostics.
 
 The policy selector is visible in narrow mode and remains available as a
 compact "focus policy" control on desktop when it selects the checklist/battle
-plan destination. It is a native select or radio group with Safe, Balanced,
-and Aggressive in that order.
+plan destination. It is a native select or radio group with Safe and
+Aggressive in that order.
 
 The initial policy is the requested policy when feasible; otherwise the first
 feasible policy; otherwise Safe. Arrow keys change a radio selection according
@@ -192,9 +191,9 @@ still exists.
 |---|---|---|---|
 | No recommendation | Absent | Target-selection guidance | Request recommendation |
 | Loading | Busy placeholder; no mixed old/new columns | Loading text and information-only notice | Atomic success or failure |
-| Four feasible policies | Current plus all policies on desktop | Provenance, capacities, rows, summaries, legend, plan links | Filter, inspect, or rebuild |
-| Partly infeasible | Diagnostic occupies each affected policy column | Non-blank policy diagnostic; no fake empty proposal | Select another policy or change inputs |
-| All policies infeasible | Current plus three diagnostics | Generation/scoring diagnostics and known Current facts | Change inputs or refresh |
+| Both visible policies feasible | Current plus Safe and Aggressive on desktop | Provenance, capacities, rows, summaries, legend, plan links | Filter, inspect, or rebuild |
+| Partly infeasible | Diagnostic occupies each affected visible policy column | Non-blank policy diagnostic; no fake empty proposal | Select another policy or change inputs |
+| Both visible policies infeasible | Current plus two diagnostics | Generation/scoring diagnostics and known Current facts | Change inputs or refresh |
 | Value unavailable | Affected fact says unavailable | Localized reason near the fact | Inspect evidence or refresh if applicable |
 | Player observation applied | Rebuilt matrix | Current-screen provenance on replaced player fields | Clear observation |
 | Player observation stale/rejected | Save-based rebuilt matrix | Warning and rejection reason | Supply newer observation or continue with save |
@@ -218,9 +217,8 @@ meaning; final copy may be refined without changing the state vocabulary.
 |---|---|---|
 | comparison heading | Loadout comparison | 運功比較 |
 | Current | Current | 目前 |
-| Safe | Safe | 安全 |
-| Balanced | Balanced | 均衡 |
-| Aggressive | Aggressive | 進攻 |
+| Safe | Safe | 穩健 |
+| Aggressive | Aggressive | 進取 |
 | Retained | Retained | 保留 |
 | Added | Added | 加入 |
 | Removed | Removed | 移除 |
@@ -242,8 +240,8 @@ reason.
 ## Score presentation
 
 Policy scores appear only inside that policy's tactical detail, headed
-`Ranking within Safe`, `Ranking within Balanced`, or `Ranking within
-Aggressive` and the corresponding Traditional Chinese label. Components show
+`Ranking within Safe` or `Ranking within Aggressive` and the corresponding
+Traditional Chinese label. Components show
 their weight, available value, explanation, and evidence.
 
 There is no cross-policy score bar, podium, winner badge, best-score highlight,
@@ -295,7 +293,7 @@ the save and does not produce a new recommendation.
 - Battle-outcome collection or feedback training.
 - Comparing different snapshots, targets, saves, or catalogue versions as one
   simultaneous result.
-- Exposing lower-ranked candidates beyond the three policy winners.
+- Exposing lower-ranked candidates beyond the backend policy winners.
 
 The persistent notice is:
 
@@ -321,14 +319,14 @@ Traditional Chinese:
 | Bilingual representative state | English desktop and Traditional Chinese narrow wireframes |
 | Excluded capabilities | Explicitly out of scope |
 
-## E4-005 implementation and verification
+## E4-005/E4-007 implementation and verification
 
 The implemented matrix follows this contract with these concrete mechanics:
 
-- a native Safe/Balanced/Aggressive selector shares
+- a native Safe/Aggressive selector shares
   `RecommendationSelectionState` with the existing checklist and battle plan;
-- the requested policy is used when feasible, otherwise the first feasible
-  policy is selected, otherwise Safe;
+- a requested Safe or Aggressive policy is used when feasible, otherwise the
+  first feasible visible policy is selected, otherwise Safe;
 - below 1280 CSS pixels, Current and the selected policy remain visible while
   the other policy columns are removed from visual and accessibility layout;
 - selected-policy difference classes re-evaluate narrow row visibility without
@@ -341,16 +339,25 @@ The implemented matrix follows this contract with these concrete mechanics:
   and
 - long names, diagnostics, and action reasons wrap without ellipsis.
 
+The E4-007 review build applies a reversible Presentation projection: Safe and
+Aggressive are the only user-facing choices, while Balanced remains calculated
+and serialized by the backend. It does not change policy scoring or force a
+different lower-ranked candidate when both visible policies legitimately select
+the same loadout.
+
 Verification on 2026-08-08:
 
-- API/presentation tests passed 254/254, including English and Traditional
+- API/presentation tests passed 257/257, including English and Traditional
   Chinese feasible, partially infeasible, unchanged, changed, unavailable,
   selected-policy, filter-preservation, and accessible-markup states;
 - architecture tests passed 79/79, including the read-only/helper-local event
   allow-list and visible-identifier protections;
 - a 760 × 900 in-app-browser pass confirmed the page's narrow reflow, logical
   focusable order, bilingual controls, and no browser console errors;
-- the local development configuration had no save path, so matrix-specific
-  responsive facts were verified with the synthetic component renderer and a
-  stylesheet/semantic-markup audit rather than a live save; and
+- a current-save Release rerun verified Current/Safe/Aggressive desktop
+  columns, Current plus selected-policy narrow rendering, Safe/Aggressive-only
+  controls and tactical cards, one supporting alternative, and no rendered
+  Balanced/均衡 label; and
+- changing from Traditional Chinese to English preserved Aggressive selection
+  and differences-only state after the localized reread; and
 - the viewport override was reset after verification.

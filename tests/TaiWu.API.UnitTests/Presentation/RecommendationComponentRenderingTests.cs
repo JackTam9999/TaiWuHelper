@@ -292,7 +292,7 @@ public sealed partial class RecommendationComponentRenderingTests
     }
 
     [Fact]
-    public async Task Comparison_matrix_renders_feasible_infeasible_and_unavailable_facts()
+    public async Task Comparison_matrix_renders_two_policy_facts_and_hides_balanced()
     {
         var html = await RenderAsync<LoadoutComparisonMatrix>(
             new Dictionary<string, object?>
@@ -305,7 +305,7 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("Loadout comparison", text);
         Assert.Contains("Current loadout", text);
         Assert.Contains("Safe", text);
-        Assert.Contains("Balanced", text);
+        Assert.DoesNotContain("Balanced", text);
         Assert.Contains("Aggressive", text);
         Assert.Contains("Current baseline provenance", text);
         Assert.Contains("Equipped skills Save", text);
@@ -325,10 +325,7 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("3 / 4", text);
         Assert.Contains("Remaining: 1", text);
         Assert.Contains("萬用: 1", text);
-        Assert.Contains(
-            "No feasible candidate satisfies known slot constraints.",
-            text);
-        Assert.Contains("No feasible proposal", text);
+        Assert.DoesNotContain("No feasible proposal", text);
         Assert.Contains("Direction change required", text);
         Assert.Contains("Information only", text);
         Assert.Contains("href=\"#manual-checklist-heading\"", html);
@@ -474,7 +471,8 @@ public sealed partial class RecommendationComponentRenderingTests
         var aggressive = await RenderAsync<LoadoutComparisonMatrix>(
             new Dictionary<string, object?>
             {
-                [nameof(LoadoutComparisonMatrix.Comparison)] = Comparison(),
+                [nameof(LoadoutComparisonMatrix.Comparison)] =
+                    Comparison(aggressiveInfeasible: true),
                 [nameof(LoadoutComparisonMatrix.SelectedPolicy)] =
                     RecommendationPolicy.Aggressive,
                 [nameof(LoadoutComparisonMatrix.FilterState)] = filter
@@ -556,7 +554,7 @@ public sealed partial class RecommendationComponentRenderingTests
             Columns =
             [
                 .. comparison.Columns.Select(column =>
-                    column.Policy == RecommendationPolicy.Balanced
+                    column.Policy == RecommendationPolicy.Aggressive
                         ? column with
                         {
                             Tactical = column.Tactical! with
@@ -943,7 +941,8 @@ public sealed partial class RecommendationComponentRenderingTests
         }
     }
 
-    private static LoadoutComparisonViewModel Comparison()
+    private static LoadoutComparisonViewModel Comparison(
+        bool aggressiveInfeasible = false)
     {
         var current = ComparisonColumn(
             LoadoutComparisonColumnKind.Current,
@@ -960,24 +959,49 @@ public sealed partial class RecommendationComponentRenderingTests
             manualActions: 2,
             allocationChanged: true,
             tactical: Tactical(RecommendationPolicy.Balanced));
-        var aggressive = new LoadoutComparisonColumnViewModel(
-            LoadoutComparisonColumnKind.Aggressive,
-            LoadoutComparisonColumnStatus.Infeasible,
-            RecommendationPolicy.Aggressive,
-            "style:snapshot:test:aggressive",
-            GenericSlots: null,
-            GenericSlotsChanged: false,
-            ManualActionCount: null,
-            ManualActionCountUnavailableReason:
-                "No feasible candidate satisfies known slot constraints.",
-            Diagnostic:
-                "No feasible candidate satisfies known slot constraints.");
+        var aggressive = aggressiveInfeasible
+            ? new LoadoutComparisonColumnViewModel(
+                LoadoutComparisonColumnKind.Aggressive,
+                LoadoutComparisonColumnStatus.Infeasible,
+                RecommendationPolicy.Aggressive,
+                "style:snapshot:test:aggressive",
+                GenericSlots: null,
+                GenericSlotsChanged: false,
+                ManualActionCount: null,
+                ManualActionCountUnavailableReason:
+                    "No feasible candidate satisfies known slot constraints.",
+                Diagnostic:
+                    "No feasible candidate satisfies known slot constraints.")
+            : ComparisonColumn(
+                LoadoutComparisonColumnKind.Aggressive,
+                RecommendationPolicy.Aggressive,
+                manualActions: 2,
+                allocationChanged: true,
+                tactical: Tactical(RecommendationPolicy.Aggressive));
         var columns = new[] { current, safe, balanced, aggressive };
+        var comparisonSkills = ComparisonSkills();
+        if (aggressiveInfeasible)
+        {
+            comparisonSkills =
+            [
+                .. comparisonSkills.Select(skill => skill with
+                {
+                    Cells =
+                    [
+                        .. skill.Cells.Where(cell => cell.Column
+                            != LoadoutComparisonColumnKind.Aggressive)
+                    ]
+                })
+            ];
+        }
+
         var categories = Enum.GetValues<SkillCategory>()
             .Select(category => new LoadoutComparisonCategoryViewModel(
                 category,
                 CategoryName(category),
-                [
+                [..
+                    new[]
+                    {
                     ComparisonCapacity(
                         LoadoutComparisonColumnKind.Current,
                         category),
@@ -986,10 +1010,15 @@ public sealed partial class RecommendationComponentRenderingTests
                         category),
                     ComparisonCapacity(
                         LoadoutComparisonColumnKind.Balanced,
+                        category),
+                    ComparisonCapacity(
+                        LoadoutComparisonColumnKind.Aggressive,
                         category)
-                ],
+                    }.Where(capacity => !aggressiveInfeasible
+                        || capacity.Column
+                            != LoadoutComparisonColumnKind.Aggressive)],
                 category == SkillCategory.Attack
-                    ? ComparisonSkills()
+                    ? comparisonSkills
                     : []))
             .ToArray();
 
@@ -1157,6 +1186,10 @@ public sealed partial class RecommendationComponentRenderingTests
                 ComparisonCell(
                     LoadoutComparisonColumnKind.Balanced,
                     LoadoutComparisonMembership.Retained,
+                    cost: 1),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Aggressive,
+                    LoadoutComparisonMembership.Retained,
                     cost: 1)
             ]),
         new(
@@ -1183,6 +1216,17 @@ public sealed partial class RecommendationComponentRenderingTests
                                 .DirectionChangeRequired,
                             PracticeDirection.Reverse,
                             "Reverse practice is required for this counter.")
+                    ]),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Aggressive,
+                    LoadoutComparisonMembership.Added,
+                    cost: 1,
+                    [
+                        new LoadoutComparisonSkillActionViewModel(
+                            LoadoutComparisonSkillActionKind
+                                .DirectionChangeRequired,
+                            PracticeDirection.Reverse,
+                            "Reverse practice is required for this counter.")
                     ])
             ]),
         new(
@@ -1201,6 +1245,10 @@ public sealed partial class RecommendationComponentRenderingTests
                     cost: null),
                 ComparisonCell(
                     LoadoutComparisonColumnKind.Balanced,
+                    LoadoutComparisonMembership.Retained,
+                    cost: null),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Aggressive,
                     LoadoutComparisonMembership.Retained,
                     cost: null)
             ])

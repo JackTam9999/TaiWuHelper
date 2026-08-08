@@ -896,7 +896,7 @@ select {
 
 .style-tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     margin-top: 28px;
 }
@@ -4229,7 +4229,7 @@ select {
 
 .comparison-table {
     width: 100%;
-    min-width: 1120px;
+    min-width: 860px;
     border-spacing: 0;
     table-layout: fixed;
     border-collapse: separate;
@@ -4255,13 +4255,13 @@ select {
 }
 
 .comparison-table thead th {
-    width: 22%;
+    width: 40%;
     background: #152b29;
     text-align: left;
 }
 
 .comparison-table thead th:first-child {
-    width: 12%;
+    width: 20%;
 }
 
 .comparison-table thead th > strong,
@@ -4789,8 +4789,6 @@ select {
 
     .comparison-differences-only.comparison-selected-safe
         .comparison-skill-row:not(.comparison-difference-safe),
-    .comparison-differences-only.comparison-selected-balanced
-        .comparison-skill-row:not(.comparison-difference-balanced),
     .comparison-differences-only.comparison-selected-aggressive
         .comparison-skill-row:not(.comparison-difference-aggressive) {
         display: none;

@@ -7,7 +7,7 @@ public sealed class RecommendationSelectionState
     public CombatRecommendationViewModel? Recommendation { get; private set; }
 
     public RecommendationPolicy VisibleStyle { get; private set; } =
-        RecommendationPolicy.Balanced;
+        RecommendationPolicy.Safe;
 
     public string? SelectedThreatReference { get; private set; }
 
@@ -22,22 +22,33 @@ public sealed class RecommendationSelectionState
         ArgumentNullException.ThrowIfNull(recommendation);
         Recommendation = recommendation;
         SelectedThreatReference = null;
-        var requested = recommendation.Styles.SingleOrDefault(
-            style => style.Style == visibleStyle);
-        if (requested is null)
+        if (!Enum.IsDefined(visibleStyle))
         {
             throw new ArgumentException(
-                "The requested style is not present in the recommendation.",
+                "The requested style is unknown.",
                 nameof(visibleStyle));
         }
 
-        var initial = requested.HasRecommendation
-            ? visibleStyle
-            : recommendation.Styles.FirstOrDefault(
+        var visibleStyles = RecommendationPolicyDisplay.VisiblePolicies
+            .Select(policy => recommendation.Styles.SingleOrDefault(
+                style => style.Style == policy))
+            .Where(style => style is not null)
+            .Cast<RecommendationStyleViewModel>()
+            .ToArray();
+        if (visibleStyles.Length == 0)
+        {
+            throw new ArgumentException(
+                "The recommendation has no user-facing style.",
+                nameof(recommendation));
+        }
+
+        var requested = visibleStyles.SingleOrDefault(
+            style => style.Style == visibleStyle);
+        var initial = requested?.HasRecommendation == true
+            ? requested.Style
+            : visibleStyles.FirstOrDefault(
                 style => style.HasRecommendation)?.Style
-                ?? recommendation.Styles.FirstOrDefault(
-                    style => style.Style == RecommendationPolicy.Safe)?.Style
-                ?? requested.Style;
+                ?? visibleStyles[0].Style;
         ShowStyle(initial);
     }
 
@@ -45,12 +56,13 @@ public sealed class RecommendationSelectionState
     {
         Recommendation = null;
         SelectedThreatReference = null;
-        VisibleStyle = RecommendationPolicy.Balanced;
+        VisibleStyle = RecommendationPolicy.Safe;
     }
 
     public void ShowStyle(RecommendationPolicy style)
     {
         if (Recommendation is null
+            || !RecommendationPolicyDisplay.IsVisible(style)
             || Recommendation.Styles.All(value => value.Style != style))
         {
             throw new ArgumentException(
@@ -59,6 +71,18 @@ public sealed class RecommendationSelectionState
         }
 
         VisibleStyle = style;
+    }
+
+    public void RestoreInteraction(
+        RecommendationPolicy visibleStyle,
+        string? selectedThreatReference)
+    {
+        ShowStyle(visibleStyle);
+        SelectedThreatReference = selectedThreatReference is not null
+            && Recommendation!.Threats.Any(threat =>
+                threat.Reference == selectedThreatReference)
+                ? selectedThreatReference
+                : null;
     }
 
     public void SelectThreat(string? threatReference)

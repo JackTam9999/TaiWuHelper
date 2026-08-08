@@ -2,15 +2,15 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress |
+| Status | Two-option trial awaiting product-owner review |
 | Milestone | 4 |
 | Target release | TBD |
 | Last updated | 2026-08-08 |
 
 ## Summary
 
-Turn the existing current loadout, Safe, Balanced, and Aggressive recommendation
-results into one deterministic comparison surface. The player should be able to
+Turn the existing current loadout and policy recommendation results into one
+deterministic comparison surface. The player should be able to
 see which skills are retained, added, removed, redirected, or blocked behind a
 breakthrough; how category capacity and 萬用 allocation change; which threats
 each proposal covers; and which requirements or evidence gaps remain.
@@ -21,6 +21,15 @@ the same immutable combat snapshot and recommendation results delivered by
 [Epic 2](../epic-002/EPIC.md), and the evidence-aware observations delivered by
 [Epic 3](../epic-003/EPIC.md). It does not generate a second recommendation,
 apply a loadout, or control the game.
+
+### Two-option product trial
+
+Product-owner review found that three visible choices frequently selected the
+same loadout and added decision noise. The review build therefore exposes only
+`Safe` (穩健) and `Aggressive` (進取) in the player-facing form, tabs,
+comparison matrix, tactical cards, and responsive selector. `Balanced` remains
+calculated in the immutable recommendation and remains present in Domain and
+API comparison contracts for compatibility and a reversible review decision.
 
 ## Context
 
@@ -40,7 +49,7 @@ recommendation result and giving each comparison state explicit semantics.
 ## Primary user story
 
 > As a player preparing for a selected target, I want to compare my current
-> loadout with the Safe, Balanced, and Aggressive recommendations in one view so
+> loadout with the Safe and Aggressive recommendations in one view so
 > I can choose a policy and follow the exact manual changes without overlooking
 > capacity, direction, breakthrough, evidence, or unresolved-risk differences.
 
@@ -59,13 +68,15 @@ recommendation result and giving each comparison state explicit semantics.
 - As a player, I can hide unchanged rows and focus on required manual changes.
 - As a keyboard or mobile user, I can compare the current loadout with one
   selected policy without navigating an unusably wide table.
-- As an API consumer, I receive the same typed comparison semantics as the UI.
+- As an API consumer, I receive the complete typed comparison semantics while
+  Presentation deterministically exposes the current two-option trial.
 
 ## Goals
 
 1. Define an immutable, presentation-neutral comparison vocabulary.
-2. Compare the current player loadout with all feasible policy winners from a
-   single recommendation result.
+2. Compare the current player loadout with the two user-facing policy winners
+   from a single recommendation result while retaining the complete typed
+   result for API consumers.
 3. Reuse existing manual-plan change semantics instead of independently
    re-deriving add, remove, retain, direction, or breakthrough rules in the UI.
 4. Make category capacity and 萬用 allocation differences directly scannable.
@@ -131,8 +142,8 @@ existing warning and evidence model.
 
 ### Responsive comparison is still the same comparison
 
-Desktop may show the current loadout and all three policy columns. Narrow
-screens should show the current loadout plus one selected policy and provide an
+Desktop shows the current loadout with Safe and Aggressive. Narrow screens show
+the current loadout plus one selected user-facing policy and provide an
 accessible policy switcher. The data, status vocabulary, and ordering must not
 change with viewport size.
 
@@ -240,7 +251,7 @@ contract strategy.
 
 Add a comparison surface to the combat recommendation workflow:
 
-- desktop current/Safe/Balanced/Aggressive matrix;
+- desktop current/Safe/Aggressive matrix;
 - narrow-screen current-plus-selected-policy mode;
 - category navigation;
 - show-all versus differences-only control;
@@ -270,43 +281,44 @@ semantics, observation apply/clear behavior, and architecture safety.
 
 - no recommendation yet;
 - comparison loading;
-- Current plus three feasible policies;
+- Current plus two feasible user-facing policies;
 - one or more infeasible policies with diagnostics;
 - current-screen player observation applied;
 - current-screen observation rejected as stale;
 - target observation applied or cleared;
 - unavailable cost, capacity, direction, condition, or evidence;
 - all rows versus differences only;
-- desktop four-column mode;
+- desktop three-column mode;
 - narrow-screen selected-policy mode; and
 - recommendation read or calculation failure.
 
 ## Epic acceptance criteria
 
-- [ ] One immutable recommendation result supplies every comparison column.
-- [ ] Current, Safe, Balanced, and Aggressive columns use stable typed
-      identities and deterministic ordering.
-- [ ] Skill membership and manual actions agree exactly with the existing
+- [x] One immutable recommendation result supplies every comparison column.
+- [x] Current, Safe, Balanced, and Aggressive remain stable typed backend
+      columns; the review UI deterministically projects Current, Safe, and
+      Aggressive.
+- [x] Skill membership and manual actions agree exactly with the existing
       manual plan for every feasible policy.
-- [ ] Composite Add/Remove/Retain, direction, and breakthrough states cannot be
+- [x] Composite Add/Remove/Retain, direction, and breakthrough states cannot be
       collapsed into misleading single labels.
-- [ ] Capacity, remaining slots, effective cost, and 萬用 allocation preserve
+- [x] Capacity, remaining slots, effective cost, and 萬用 allocation preserve
       unavailable states and reasons.
-- [ ] Infeasible policies remain visible with diagnostics and never appear as
-      empty feasible loadouts.
-- [ ] Threat coverage, unresolved risks, conditions, caveats, and evidence are
+- [x] Infeasible user-facing policies remain visible with diagnostics and
+      never appear as empty feasible loadouts.
+- [x] Threat coverage, unresolved risks, conditions, caveats, and evidence are
       traceable to existing typed recommendation facts.
-- [ ] Cross-policy score display cannot be interpreted as win probability.
-- [ ] Save-derived and current-screen player baselines remain distinguishable.
-- [ ] Applying and clearing target or player observations rebuilds the entire
+- [x] Cross-policy score display cannot be interpreted as win probability.
+- [x] Save-derived and current-screen player baselines remain distinguishable.
+- [x] Applying and clearing target or player observations rebuilds the entire
       comparison without stale columns.
-- [ ] The API exposes the same comparison semantics as the UI.
-- [ ] Traditional Chinese and English layouts are complete and accessible.
-- [ ] Desktop and narrow-screen modes expose equivalent facts.
-- [ ] The comparison remains session-bound and information-only.
-- [ ] Automated tests cover feasible, infeasible, unchanged, changed,
+- [x] The API exposes the same comparison semantics as the UI.
+- [x] Traditional Chinese and English layouts are complete and accessible.
+- [x] Desktop and narrow-screen modes expose equivalent facts.
+- [x] The comparison remains session-bound and information-only.
+- [x] Automated tests cover feasible, infeasible, unchanged, changed,
       unavailable, observed, stale, and cleared states.
-- [ ] Local vertical verification proves all inspected save and game sources
+- [x] Local vertical verification proves all inspected save and game sources
       remain byte-for-byte unchanged.
 - [ ] The product owner records the Epic 4 completion decision.
 
@@ -314,7 +326,7 @@ semantics, observation apply/clear behavior, and architecture safety.
 
 - A player can identify every required skill and slot change without manually
   comparing separate recommendation tabs.
-- A player can explain why the three policies differ using threat, condition,
+- A player can explain why the two visible approaches differ using threat, condition,
   caveat, and evidence information already produced by the engine.
 - The differences-only view never hides a required direction, breakthrough, or
   萬用-allocation action.
@@ -326,7 +338,7 @@ semantics, observation apply/clear behavior, and architecture safety.
 
 | Risk | Mitigation |
 |---|---|
-| A wide matrix becomes unusable on mobile | Use Current plus one selected policy on narrow screens |
+| A wide matrix becomes unusable on mobile | Show Current plus two policies on desktop and one selected policy on narrow screens |
 | UI comparison disagrees with setup checklist | Build from authoritative manual-plan changes and test parity |
 | Missing data appears as zero or empty | Use typed unavailable values and required reasons |
 | Multiple actions on one skill are hidden | Model membership, direction, and breakthrough as composite states |
@@ -339,3 +351,10 @@ semantics, observation apply/clear behavior, and architecture safety.
 
 Implementation order and item-level evidence are tracked in
 [the Epic 4 backlog](./BACKLOG.md).
+
+The completed automated acceptance audit is recorded in
+[E4-007 automated verification](../../reviews/E4-007-automated-verification.md),
+and the bilingual desktop/narrow workflow is recorded in
+[E4-007 manual verification](../../reviews/E4-007-manual-verification.md).
+The two-option trial is ready for product-owner review; the explicit completion
+decision remains open.
