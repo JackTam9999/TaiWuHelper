@@ -274,6 +274,12 @@
             }
         </div>
 
+        @if (_model.Comparison is not null)
+        {
+            <LoadoutComparisonMatrix Comparison="_model.Comparison"
+                                     PolicySelected="ShowStyle" />
+        }
+
         @{
             var visible = _selection.VisibleRecommendation!;
         }
@@ -607,6 +613,7 @@
             ref _recommendationCancellation);
         _lastReadOperation = PageReadOperation.Recommendation;
         _isRecommending = true;
+        _model = null;
         _selection.Clear();
         _pageState = RecommendationPageState.Loading(
             "Building the combat recommendation");

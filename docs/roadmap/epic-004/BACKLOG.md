@@ -235,7 +235,7 @@ need to rediscover comparison rules from raw style data.
 
 ### E4-004 — Build the desktop comparison matrix
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -248,26 +248,29 @@ users inspect Current, Safe, Balanced, and Aggressive results together.
 
 #### Acceptance criteria
 
-- [ ] The matrix shows all five skill categories in stable order.
-- [ ] Every skill cell displays localized name, category, membership state,
+- [x] The matrix shows all five skill categories in stable order.
+- [x] Every skill cell displays localized name, category, membership state,
       and any direction or breakthrough action.
-- [ ] Capacity summaries show used, total, remaining, effective cost where
+- [x] Capacity summaries show used, total, remaining, effective cost where
       available, and 萬用 allocation.
-- [ ] Current baseline provenance is visible.
-- [ ] Infeasible policies show their diagnostic in place of loadout rows.
-- [ ] A legend explains statuses and does not rely on color alone.
-- [ ] All rows and differences-only modes preserve required manual actions.
-- [ ] Choosing a policy links to or selects the existing setup checklist and
+- [x] Current baseline provenance is visible.
+- [x] Infeasible policies show their diagnostic in place of loadout rows.
+- [x] A legend explains statuses and does not rely on color alone.
+- [x] All rows and differences-only modes preserve required manual actions.
+- [x] Choosing a policy links to or selects the existing setup checklist and
       battle plan for that same policy.
-- [ ] Loading, failure, stale, and observation-cleared states replace the
+- [x] Loading, failure, stale, and observation-cleared states replace the
       matrix atomically.
-- [ ] Component tests cover feasible, partially infeasible, unchanged,
+- [x] Component tests cover feasible, partially infeasible, unchanged,
       changed, and unavailable renderings.
 
 #### Evidence when complete
 
-- UI component implementation and rendering tests.
-- Updated recommendation-page architecture note.
+- `TaiWuAPI/Components/Recommendations/LoadoutComparisonMatrix.razor` and
+  focused mapper/rendering tests.
+- `docs/architecture/LOADOUT-COMPARISON-PRESENTATION.md`.
+- Verification on 2026-08-08: API/presentation tests passed 246/246 and
+  architecture tests passed 78/78.
 
 ## Slice 5: Responsive and accessible UI
 

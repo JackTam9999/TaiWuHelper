@@ -5,6 +5,7 @@ using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LoadoutComparisons;
 using TaiWuAPI.Presentation;
 using Xunit;
 
@@ -110,6 +111,51 @@ public sealed class CombatRecommendationViewModelMapperTests
                     warning.Message))
                 .Distinct()
                 .Count());
+    }
+
+    [Fact]
+    public async Task Maps_four_column_comparison_from_the_same_snapshot()
+    {
+        var recommendation = await RecommendAsync(
+            RecommendationPolicy.Balanced);
+
+        var model = CombatRecommendationViewModelMapper.Map(recommendation);
+        var comparison = Assert.IsType<LoadoutComparisonViewModel>(
+            model.Comparison);
+
+        Assert.Equal(model.SnapshotReference, comparison.SnapshotReference);
+        Assert.StartsWith("comparison:", comparison.Reference);
+        Assert.Equal(
+            [
+                LoadoutComparisonColumnKind.Current,
+                LoadoutComparisonColumnKind.Safe,
+                LoadoutComparisonColumnKind.Balanced,
+                LoadoutComparisonColumnKind.Aggressive
+            ],
+            comparison.Columns.Select(column => column.Kind));
+        Assert.Equal(
+            Enum.GetValues<SkillCategory>(),
+            comparison.Categories.Select(category => category.Category));
+        Assert.All(
+            comparison.Categories,
+            category => Assert.Contains(
+                category.Capacities,
+                capacity => capacity.Column
+                    == LoadoutComparisonColumnKind.Current));
+        Assert.Contains(
+            comparison.BaselineProvenance,
+            value => value.Field
+                == LoadoutComparisonBaselineField.EquippedSkills
+                && value.Source == SnapshotDataSource.Save);
+        Assert.Contains(
+            comparison.Categories.SelectMany(category => category.Skills),
+            skill => skill.Cells.Any(cell => cell.Membership is
+                LoadoutComparisonMembership.Added
+                or LoadoutComparisonMembership.Removed));
+        Assert.Contains(
+            "cannot equip",
+            comparison.InformationOnlyNotice,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

@@ -1,6 +1,8 @@
 using TaiWu.Application.CombatRecommendations;
+using TaiWu.Application.LoadoutComparisons;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LoadoutComparisons;
 
 namespace TaiWuAPI.Presentation;
 
@@ -15,8 +17,8 @@ public static class CombatRecommendationViewModelMapper
     {
         ArgumentNullException.ThrowIfNull(recommendation);
 
-        var snapshotReference =
-            $"snapshot:{recommendation.Snapshot.Metadata.CapturedAtUtc:O}";
+        var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
+        var snapshotReference = comparison.SnapshotReference.Value;
         var skillNames = recommendation.Snapshot.Player.LearnedSkills
             .ToDictionary(
                 skill => skill.SkillId,
@@ -68,8 +70,198 @@ public static class CombatRecommendationViewModelMapper
             MapTargetObservationImpact(
                 recommendation,
                 skillNames,
-                targetSkillNames));
+                targetSkillNames),
+            MapComparison(
+                comparison,
+                recommendation.Snapshot.Player,
+                skillNames));
     }
+
+    private static LoadoutComparisonViewModel MapComparison(
+        LoadoutComparison comparison,
+        PlayerCombatSnapshot player,
+        IReadOnlyDictionary<int, string> skillNames)
+    {
+        var currentAllocation = comparison.Current.Loadout!
+            .GenericSlotAllocation;
+        var columns = comparison.Columns
+            .Select(column => MapComparisonColumn(
+                comparison.SnapshotReference.Value,
+                column,
+                currentAllocation,
+                skillNames))
+            .ToArray();
+        var categories = Enum.GetValues<SkillCategory>()
+            .Select(category => MapComparisonCategory(
+                category,
+                comparison.Columns,
+                player,
+                skillNames))
+            .ToArray();
+
+        return new LoadoutComparisonViewModel(
+            comparison.ComparisonReference.Value,
+            comparison.SnapshotReference.Value,
+            columns,
+            categories,
+            [.. comparison.BaselineProvenance.Select(value =>
+                new LoadoutComparisonProvenanceViewModel(
+                    value.Field,
+                    value.Source,
+                    value.CapturedAtUtc))],
+            "TaiWu Helper cannot equip, redirect, or break through skills. "
+            + "Follow these instructions manually in the game.");
+    }
+
+    private static LoadoutComparisonColumnViewModel MapComparisonColumn(
+        string snapshotReference,
+        LoadoutComparisonColumn column,
+        LoadoutComparisonValue<GenericSlotAllocation> currentAllocation,
+        IReadOnlyDictionary<int, string> skillNames)
+    {
+        var allocation = column.Loadout?.GenericSlotAllocation;
+        var tactical = column.TacticalSummary;
+        return new LoadoutComparisonColumnViewModel(
+            column.Kind,
+            column.Status,
+            column.Policy,
+            column.Policy.HasValue
+                ? StyleReference(snapshotReference, column.Policy.Value)
+                : null,
+            allocation?.IsAvailable == true
+                ? new LoadoutComparisonGenericSlotsViewModel(
+                    allocation.Value.TotalSlots,
+                    allocation.Value.Attack,
+                    allocation.Value.Agility,
+                    allocation.Value.Defense,
+                    allocation.Value.Assistance)
+                : null,
+            column.Policy.HasValue
+                && allocation?.IsAvailable == true
+                && currentAllocation.IsAvailable
+                && allocation.Value != currentAllocation.Value,
+            tactical?.ManualActionCount.IsAvailable == true
+                ? tactical.ManualActionCount.Value
+                : null,
+            tactical is not null
+                && !tactical.ManualActionCount.IsAvailable
+                    ? tactical.ManualActionCount.UnavailableReason
+                    : null,
+            column.Diagnostic is null
+                ? allocation is not null && !allocation.IsAvailable
+                    ? UiEntityText.UseNames(
+                        allocation.UnavailableReason!,
+                        skillNames)
+                    : null
+                : UiEntityText.UseNames(
+                    column.Diagnostic.Summary,
+                    skillNames));
+    }
+
+    private static LoadoutComparisonCategoryViewModel MapComparisonCategory(
+        SkillCategory category,
+        IReadOnlyList<LoadoutComparisonColumn> columns,
+        PlayerCombatSnapshot player,
+        IReadOnlyDictionary<int, string> skillNames)
+    {
+        var categoryRows = columns
+            .Where(column => column.Loadout is not null)
+            .Select(column => (
+                column.Kind,
+                Row: column.Loadout!.Categories.Single(value =>
+                    value.Category == category)))
+            .ToArray();
+        var skillIds = categoryRows
+            .SelectMany(value => value.Row.Skills)
+            .Select(cell => cell.Identity.SkillId)
+            .Distinct()
+            .Order()
+            .ToArray();
+        var learned = player.LearnedSkills.ToDictionary(skill => skill.SkillId);
+
+        return new LoadoutComparisonCategoryViewModel(
+            category,
+            CategoryDisplayName(category),
+            [.. categoryRows.Select(value => MapCapacity(
+                value.Kind,
+                value.Row.Capacity))],
+            [.. skillIds.Select(skillId =>
+            {
+                if (!learned.TryGetValue(skillId, out var skill)
+                    || skill.Category != category)
+                {
+                    throw new InvalidOperationException(
+                        $"Comparison skill {skillId} is unavailable in "
+                        + $"the matching {category} snapshot.");
+                }
+
+                return new LoadoutComparisonSkillRowViewModel(
+                    category,
+                    skillId,
+                    skill.DisplayName.IsAvailable
+                        ? skill.DisplayName.Value
+                        : null,
+                    skill.DisplayName.IsAvailable
+                        ? null
+                        : skill.DisplayName.UnavailableReason,
+                    [.. categoryRows
+                        .Select(value => (
+                            value.Kind,
+                            Cell: value.Row.Skills.SingleOrDefault(cell =>
+                                cell.Identity.SkillId == skillId)))
+                        .Where(value => value.Cell is not null)
+                        .Select(value => MapComparisonSkill(
+                            value.Kind,
+                            value.Cell!,
+                            skill,
+                            skillNames))]);
+            })]);
+    }
+
+    private static LoadoutComparisonCapacityCellViewModel MapCapacity(
+        LoadoutComparisonColumnKind column,
+        LoadoutComparisonCapacitySummary capacity) => new(
+            column,
+            Available(capacity.Used),
+            Unavailable(capacity.Used),
+            Available(capacity.Capacity),
+            Unavailable(capacity.Capacity),
+            Available(capacity.Remaining),
+            Unavailable(capacity.Remaining),
+            Available(capacity.CategoryContribution),
+            Unavailable(capacity.CategoryContribution),
+            Available(capacity.GenericContribution),
+            Unavailable(capacity.GenericContribution));
+
+    private static LoadoutComparisonSkillCellViewModel MapComparisonSkill(
+        LoadoutComparisonColumnKind column,
+        LoadoutComparisonSkillCell cell,
+        CombatSkillSnapshot skill,
+        IReadOnlyDictionary<int, string> skillNames) => new(
+            column,
+            cell.Membership.IsAvailable ? cell.Membership.Value : null,
+            cell.Membership.IsAvailable
+                ? null
+                : cell.Membership.UnavailableReason,
+            skill.Direction.IsAvailable ? skill.Direction.Value : null,
+            skill.Direction.IsAvailable
+                ? null
+                : skill.Direction.UnavailableReason,
+            Available(cell.EffectiveCost),
+            Unavailable(cell.EffectiveCost),
+            [.. cell.Actions.Select(action =>
+                new LoadoutComparisonSkillActionViewModel(
+                    action.Kind,
+                    action.RequiredDirection,
+                    UiEntityText.UseNames(
+                        action.Reason.Summary,
+                        skillNames)))]);
+
+    private static int? Available(LoadoutComparisonValue<int> value) =>
+        value.IsAvailable ? value.Value : null;
+
+    private static string? Unavailable(LoadoutComparisonValue<int> value) =>
+        value.IsAvailable ? null : value.UnavailableReason;
 
     private static TargetObservationImpactViewModel? MapTargetObservationImpact(
         CombatLoadoutRecommendation recommendation,

@@ -14,6 +14,7 @@ using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.CombatThreats;
+using TaiWu.Domain.LoadoutComparisons;
 using TaiWuAPI.Components.Layout;
 using TaiWuAPI.Components.Recommendations;
 using TaiWuAPI.Localization;
@@ -288,6 +289,78 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.DoesNotContain("evidence:", text);
         Assert.DoesNotContain("#604", text);
         Assert.Contains("threat-highlight", html);
+    }
+
+    [Fact]
+    public async Task Comparison_matrix_renders_feasible_infeasible_and_unavailable_facts()
+    {
+        var html = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] =
+                    Comparison()
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("Loadout comparison", text);
+        Assert.Contains("Current loadout", text);
+        Assert.Contains("Safe", text);
+        Assert.Contains("Balanced", text);
+        Assert.Contains("Aggressive", text);
+        Assert.Contains("Current baseline provenance", text);
+        Assert.Contains("Equipped skills Save", text);
+        Assert.Contains("內功", text);
+        Assert.Contains("摧破", text);
+        Assert.Contains("輕靈", text);
+        Assert.Contains("護體", text);
+        Assert.Contains("奇竅", text);
+        Assert.Contains("Unchanged Guard", text);
+        Assert.Contains("Changed Blade", text);
+        Assert.Contains("Unknown Cost Art", text);
+        Assert.Contains("Retained", text);
+        Assert.Contains("Added", text);
+        Assert.Contains("Removed", text);
+        Assert.Contains("⇄ Change to Reverse", text);
+        Assert.Contains("Effective cost: Unavailable", text);
+        Assert.Contains("3 / 4", text);
+        Assert.Contains("Remaining: 1", text);
+        Assert.Contains("萬用: 1", text);
+        Assert.Contains(
+            "No feasible candidate satisfies known slot constraints.",
+            text);
+        Assert.Contains("No feasible proposal", text);
+        Assert.Contains("Direction change required", text);
+        Assert.Contains("Information only", text);
+        Assert.Contains("href=\"#manual-checklist-heading\"", html);
+        Assert.Contains("data-column=\"Current\"", html);
+        Assert.DoesNotContain("0 / 0", text);
+        Assert.Equal(
+            5,
+            Regex.Matches(html, "comparison-category-row").Count);
+    }
+
+    [Fact]
+    public async Task Comparison_difference_filter_keeps_changed_manual_actions()
+    {
+        var filter = new LoadoutComparisonFilterState();
+        filter.ShowDifferences();
+
+        var html = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] =
+                    Comparison(),
+                [nameof(LoadoutComparisonMatrix.FilterState)] = filter
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("Changed Blade", text);
+        Assert.Contains("Change to Reverse", text);
+        Assert.DoesNotContain("Unchanged Guard", text);
+        Assert.DoesNotContain("Unknown Cost Art", text);
+        Assert.Contains("1 skill row(s) shown", text);
+        Assert.Contains("aria-pressed", html);
+        Assert.Contains("class=\"active\"", html);
     }
 
     [Theory]
@@ -638,6 +711,217 @@ public sealed partial class RecommendationComponentRenderingTests
         {
         }
     }
+
+    private static LoadoutComparisonViewModel Comparison()
+    {
+        var current = ComparisonColumn(
+            LoadoutComparisonColumnKind.Current,
+            policy: null,
+            manualActions: 0);
+        var safe = ComparisonColumn(
+            LoadoutComparisonColumnKind.Safe,
+            RecommendationPolicy.Safe,
+            manualActions: 1);
+        var balanced = ComparisonColumn(
+            LoadoutComparisonColumnKind.Balanced,
+            RecommendationPolicy.Balanced,
+            manualActions: 2,
+            allocationChanged: true);
+        var aggressive = new LoadoutComparisonColumnViewModel(
+            LoadoutComparisonColumnKind.Aggressive,
+            LoadoutComparisonColumnStatus.Infeasible,
+            RecommendationPolicy.Aggressive,
+            "style:snapshot:test:aggressive",
+            GenericSlots: null,
+            GenericSlotsChanged: false,
+            ManualActionCount: null,
+            ManualActionCountUnavailableReason:
+                "No feasible candidate satisfies known slot constraints.",
+            Diagnostic:
+                "No feasible candidate satisfies known slot constraints.");
+        var columns = new[] { current, safe, balanced, aggressive };
+        var categories = Enum.GetValues<SkillCategory>()
+            .Select(category => new LoadoutComparisonCategoryViewModel(
+                category,
+                CategoryName(category),
+                [
+                    ComparisonCapacity(
+                        LoadoutComparisonColumnKind.Current,
+                        category),
+                    ComparisonCapacity(
+                        LoadoutComparisonColumnKind.Safe,
+                        category),
+                    ComparisonCapacity(
+                        LoadoutComparisonColumnKind.Balanced,
+                        category)
+                ],
+                category == SkillCategory.Attack
+                    ? ComparisonSkills()
+                    : []))
+            .ToArray();
+
+        return new LoadoutComparisonViewModel(
+            "comparison:test",
+            "snapshot:test",
+            columns,
+            categories,
+            [
+                new LoadoutComparisonProvenanceViewModel(
+                    LoadoutComparisonBaselineField.EquippedSkills,
+                    SnapshotDataSource.Save,
+                    DateTimeOffset.Parse("2026-08-08T12:00:00Z")),
+                new LoadoutComparisonProvenanceViewModel(
+                    LoadoutComparisonBaselineField.GenericSlotAllocation,
+                    SnapshotDataSource.CurrentScreenObservation,
+                    DateTimeOffset.Parse("2026-08-08T12:01:00Z")),
+                new LoadoutComparisonProvenanceViewModel(
+                    LoadoutComparisonBaselineField.SlotBudgets,
+                    SnapshotDataSource.GameConfiguration,
+                    DateTimeOffset.Parse("2026-08-08T12:00:00Z")),
+                new LoadoutComparisonProvenanceViewModel(
+                    LoadoutComparisonBaselineField
+                        .LegendaryBookCostAssignments,
+                    SnapshotDataSource.VerifiedRule,
+                    DateTimeOffset.Parse("2026-08-08T12:00:00Z"))
+            ],
+            "TaiWu Helper cannot equip, redirect, or break through skills. "
+            + "Follow these instructions manually in the game.");
+    }
+
+    private static LoadoutComparisonColumnViewModel ComparisonColumn(
+        LoadoutComparisonColumnKind kind,
+        RecommendationPolicy? policy,
+        int manualActions,
+        bool allocationChanged = false) => new(
+            kind,
+            LoadoutComparisonColumnStatus.Available,
+            policy,
+            policy.HasValue
+                ? $"style:snapshot:test:{policy.Value.ToString().ToLowerInvariant()}"
+                : null,
+            new LoadoutComparisonGenericSlotsViewModel(
+                Total: 4,
+                Attack: allocationChanged ? 2 : 1,
+                Agility: 1,
+                Defense: allocationChanged ? 0 : 1,
+                Assistance: 1),
+            allocationChanged,
+            manualActions,
+            ManualActionCountUnavailableReason: null,
+            Diagnostic: null);
+
+    private static LoadoutComparisonCapacityCellViewModel ComparisonCapacity(
+        LoadoutComparisonColumnKind column,
+        SkillCategory category)
+    {
+        var used = category == SkillCategory.Attack ? 3 : 0;
+        return new LoadoutComparisonCapacityCellViewModel(
+            column,
+            used,
+            UsedUnavailableReason: null,
+            Capacity: 4,
+            CapacityUnavailableReason: null,
+            Remaining: 4 - used,
+            RemainingUnavailableReason: null,
+            CategoryContribution: Math.Max(0, used - 1),
+            CategoryContributionUnavailableReason: null,
+            GenericContribution: category == SkillCategory.Attack ? 1 : 0,
+            GenericContributionUnavailableReason: null);
+    }
+
+    private static LoadoutComparisonSkillRowViewModel[] ComparisonSkills() =>
+    [
+        new(
+            SkillCategory.Attack,
+            101,
+            "Unchanged Guard",
+            NameUnavailableReason: null,
+            [
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Current,
+                    LoadoutComparisonMembership.Present,
+                    cost: 1),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Safe,
+                    LoadoutComparisonMembership.Retained,
+                    cost: 1),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Balanced,
+                    LoadoutComparisonMembership.Retained,
+                    cost: 1)
+            ]),
+        new(
+            SkillCategory.Attack,
+            102,
+            "Changed Blade",
+            NameUnavailableReason: null,
+            [
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Current,
+                    LoadoutComparisonMembership.Present,
+                    cost: 1),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Safe,
+                    LoadoutComparisonMembership.Removed,
+                    cost: 1),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Balanced,
+                    LoadoutComparisonMembership.Added,
+                    cost: 1,
+                    [
+                        new LoadoutComparisonSkillActionViewModel(
+                            LoadoutComparisonSkillActionKind
+                                .DirectionChangeRequired,
+                            PracticeDirection.Reverse,
+                            "Reverse practice is required for this counter.")
+                    ])
+            ]),
+        new(
+            SkillCategory.Attack,
+            103,
+            "Unknown Cost Art",
+            NameUnavailableReason: null,
+            [
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Current,
+                    LoadoutComparisonMembership.Present,
+                    cost: null),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Safe,
+                    LoadoutComparisonMembership.Retained,
+                    cost: null),
+                ComparisonCell(
+                    LoadoutComparisonColumnKind.Balanced,
+                    LoadoutComparisonMembership.Retained,
+                    cost: null)
+            ])
+    ];
+
+    private static LoadoutComparisonSkillCellViewModel ComparisonCell(
+        LoadoutComparisonColumnKind column,
+        LoadoutComparisonMembership membership,
+        int? cost,
+        IReadOnlyList<LoadoutComparisonSkillActionViewModel>? actions = null) =>
+        new(
+            column,
+            membership,
+            MembershipUnavailableReason: null,
+            PracticeDirection.Direct,
+            CurrentDirectionUnavailableReason: null,
+            cost,
+            cost.HasValue ? null : "Effective cost is unavailable.",
+            actions ?? []);
+
+    private static string CategoryName(SkillCategory category) =>
+        category switch
+        {
+            SkillCategory.Neigong => "內功",
+            SkillCategory.Attack => "摧破",
+            SkillCategory.Agility => "輕靈",
+            SkillCategory.Defense => "護體",
+            SkillCategory.Assistance => "奇竅",
+            _ => category.ToString()
+        };
 
     private static TargetObservationImpactViewModel TargetImpact() => new(
         [

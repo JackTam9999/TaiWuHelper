@@ -4031,6 +4031,346 @@ select {
     font-size: 0.81rem;
 }
 
+.loadout-comparison {
+    margin-top: 24px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: rgba(8, 24, 24, 0.58);
+}
+
+.comparison-heading,
+.comparison-controls {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.comparison-heading h3,
+.comparison-heading p {
+    margin: 0;
+}
+
+.comparison-heading h3 {
+    margin-top: 4px;
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+.comparison-provenance {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--jade);
+    background: rgba(71, 137, 121, 0.09);
+}
+
+.comparison-provenance > strong {
+    display: block;
+    margin-bottom: 10px;
+    color: #cde8df;
+}
+
+.comparison-provenance dl {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.comparison-provenance dl > div {
+    min-width: 0;
+}
+
+.comparison-provenance dt {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.comparison-provenance dd {
+    display: grid;
+    gap: 2px;
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.comparison-provenance small,
+.comparison-row-status {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.comparison-controls {
+    margin-top: 18px;
+}
+
+.comparison-filter {
+    display: inline-flex;
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(4, 17, 17, 0.5);
+}
+
+.comparison-filter button {
+    min-height: 38px;
+    padding: 7px 13px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    color: var(--muted);
+    background: transparent;
+    font-weight: 800;
+}
+
+.comparison-filter button.active {
+    border-color: rgba(215, 182, 107, 0.44);
+    color: #151612;
+    background: var(--gold);
+}
+
+.comparison-table-scroll {
+    max-width: 100%;
+    margin-top: 14px;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(4, 17, 17, 0.42);
+    scrollbar-color: var(--gold) rgba(4, 17, 17, 0.72);
+}
+
+.comparison-table-scroll:focus-visible {
+    outline: 3px solid rgba(215, 182, 107, 0.75);
+    outline-offset: 3px;
+}
+
+.comparison-table {
+    width: 100%;
+    min-width: 1120px;
+    border-spacing: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    color: var(--ink);
+    font-size: 0.78rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 13px 12px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.comparison-table tr > :last-child {
+    border-right: 0;
+}
+
+.comparison-table tbody:last-child tr:last-child > * {
+    border-bottom: 0;
+}
+
+.comparison-table thead th {
+    width: 22%;
+    background: #152b29;
+    text-align: left;
+}
+
+.comparison-table thead th:first-child {
+    width: 12%;
+}
+
+.comparison-table thead th > strong,
+.comparison-table thead th > small,
+.comparison-table thead th > span,
+.comparison-table thead th > a {
+    display: block;
+}
+
+.comparison-table thead th > strong {
+    color: #f3dda3;
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 1rem;
+}
+
+.comparison-table thead th > small {
+    min-height: 2.4em;
+    margin-top: 5px;
+    color: var(--muted);
+}
+
+.comparison-table thead th > a {
+    margin-top: 10px;
+    font-weight: 800;
+}
+
+.comparison-generic {
+    margin-top: 9px;
+    padding: 7px 8px;
+    border: 1px solid rgba(215, 182, 107, 0.19);
+    background: var(--gold-soft);
+    line-height: 1.5;
+}
+
+.comparison-generic em {
+    display: block;
+    margin-top: 3px;
+    color: #f1d58c;
+    font-size: 0.68rem;
+    font-style: normal;
+    font-weight: 800;
+}
+
+.comparison-diagnostic,
+.comparison-unavailable {
+    margin-top: 8px;
+    color: #ffc2b7;
+    line-height: 1.5;
+}
+
+.comparison-category-row > th {
+    background: rgba(215, 182, 107, 0.1);
+}
+
+.comparison-category-row > th strong,
+.comparison-category-row > th small,
+.comparison-skill-row > th strong,
+.comparison-skill-row > th small,
+.comparison-skill-row > th span {
+    display: block;
+}
+
+.comparison-category-row > th small,
+.comparison-skill-row > th small {
+    margin-top: 4px;
+    color: var(--muted);
+}
+
+.comparison-capacity-cell {
+    background: rgba(215, 182, 107, 0.04);
+}
+
+.comparison-capacity-cell strong,
+.comparison-capacity-cell span,
+.comparison-capacity-cell small {
+    display: block;
+}
+
+.comparison-capacity-cell strong {
+    color: #f0d48f;
+    font-size: 0.92rem;
+}
+
+.comparison-capacity-cell span {
+    margin-top: 4px;
+    color: #c9d5d0;
+}
+
+.comparison-skill-row > th {
+    background: rgba(17, 39, 38, 0.78);
+}
+
+.comparison-skill-cell {
+    background: rgba(10, 28, 27, 0.46);
+}
+
+.comparison-skill-cell > small {
+    display: block;
+    margin-top: 7px;
+    color: var(--muted);
+}
+
+.comparison-membership {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    min-height: 26px;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.comparison-membership.present,
+.comparison-membership.retained {
+    color: #a9dbcd;
+}
+
+.comparison-membership.added {
+    color: #f1d58c;
+}
+
+.comparison-membership.removed,
+.comparison-membership.unavailable {
+    color: #ffc2b7;
+}
+
+.comparison-membership.absent {
+    color: var(--muted);
+}
+
+.comparison-actions {
+    display: grid;
+    gap: 7px;
+    margin: 9px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.comparison-actions li {
+    padding: 8px;
+    border-left: 2px solid var(--gold);
+    background: var(--gold-soft);
+}
+
+.comparison-actions strong,
+.comparison-actions span {
+    display: block;
+}
+
+.comparison-actions span {
+    margin-top: 3px;
+    color: #d5dfda;
+    line-height: 1.45;
+}
+
+.comparison-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+    color: #cbd7d2;
+    font-size: 0.76rem;
+}
+
+.comparison-legend > strong {
+    color: var(--ink);
+}
+
+.comparison-legend b {
+    color: var(--gold);
+}
+
+.comparison-boundary {
+    margin: 15px 0 0;
+    padding: 12px 14px;
+    border: 1px solid rgba(238, 147, 128, 0.28);
+    color: #ffd0c7;
+    background: rgba(128, 57, 48, 0.1);
+    font-weight: 700;
+    line-height: 1.55;
+}
+
 @media (max-width: 900px) {
     .xiangshu-outcome-grid {
         grid-template-columns: 1fr;

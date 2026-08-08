@@ -1,0 +1,445 @@
+@using TaiWu.Domain.CombatRecommendations
+@using TaiWu.Domain.CombatSnapshots
+@using TaiWu.Domain.LoadoutComparisons
+@using TaiWuAPI.Presentation
+
+<section class="loadout-comparison"
+         aria-labelledby="loadout-comparison-heading"
+         data-comparison-reference="@Comparison.Reference">
+    <div class="comparison-heading">
+        <div>
+            <p class="eyebrow">@T("Same snapshot · exact manual changes")</p>
+            <h3 id="loadout-comparison-heading" tabindex="-1">
+                @T("Loadout comparison")
+            </h3>
+        </div>
+        <span class="information-badge">@T("Information only")</span>
+    </div>
+
+    <div class="comparison-provenance" role="note"
+         aria-label="@T("Current baseline provenance")">
+        <strong>@T("Current baseline provenance")</strong>
+        <dl>
+            @foreach (var provenance in Comparison.BaselineProvenance)
+            {
+                <div>
+                    <dt>@ProvenanceFieldLabel(provenance.Field)</dt>
+                    <dd>
+                        @ProvenanceSourceLabel(provenance.Source)
+                        <small>@provenance.CapturedAtUtc.ToLocalTime().ToString("g")</small>
+                    </dd>
+                </div>
+            }
+        </dl>
+    </div>
+
+    <div class="comparison-controls">
+        <div class="comparison-filter" role="group"
+             aria-label="@T("Comparison rows")">
+            <button type="button"
+                    aria-pressed="@(!FilterState.DifferencesOnly)"
+                    class="@(!FilterState.DifferencesOnly ? "active" : null)"
+                    @onclick="() => SetDifferencesOnly(false)">
+                @T("All rows")
+            </button>
+            <button type="button"
+                    aria-pressed="@FilterState.DifferencesOnly"
+                    class="@(FilterState.DifferencesOnly ? "active" : null)"
+                    @onclick="() => SetDifferencesOnly(true)">
+                @T("Differences only")
+            </button>
+        </div>
+        <span class="comparison-row-status" role="status" aria-live="polite">
+            @VisibleRowCount @T("skill row(s) shown")
+        </span>
+    </div>
+
+    <div class="comparison-table-scroll" tabindex="0"
+         aria-label="@T("Scrollable loadout comparison")">
+        <table class="comparison-table">
+            <caption class="visually-hidden">
+                @T("Current loadout compared with Safe, Balanced, and Aggressive policy winners.")
+            </caption>
+            <thead>
+                <tr>
+                    <th scope="col">@T("Category and skill")</th>
+                    @foreach (var column in Comparison.Columns)
+                    {
+                        <th scope="col" data-column="@column.Kind">
+                            <strong>@ColumnLabel(column)</strong>
+                            <small>@ColumnStatusLabel(column)</small>
+                            @if (column.GenericSlots is not null)
+                            {
+                                <span class="comparison-generic">
+                                    萬用 @GenericLabel(column.GenericSlots)
+                                    @if (column.GenericSlotsChanged)
+                                    {
+                                        <em>@T("Allocation change")</em>
+                                    }
+                                </span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(column.Diagnostic))
+                            {
+                                <span class="comparison-diagnostic" role="note">
+                                    @T(column.Diagnostic)
+                                </span>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(
+                                column.ManualActionCountUnavailableReason))
+                            {
+                                <span class="comparison-diagnostic" role="note">
+                                    @T(column.ManualActionCountUnavailableReason)
+                                </span>
+                            }
+                            @if (column.Policy.HasValue
+                                && column.Status
+                                    == LoadoutComparisonColumnStatus.Available)
+                            {
+                                <a href="#manual-checklist-heading"
+                                   @onclick="() => SelectPolicyAsync(column.Policy.Value)">
+                                    @T("View setup checklist and battle plan")
+                                </a>
+                            }
+                        </th>
+                    }
+                </tr>
+            </thead>
+            @foreach (var category in Comparison.Categories)
+            {
+                var visibleSkills = VisibleSkills(category).ToArray();
+                <tbody aria-labelledby="@CategoryHeadingId(category.Category)">
+                    <tr class="comparison-category-row">
+                        <th id="@CategoryHeadingId(category.Category)"
+                            scope="rowgroup">
+                            <strong>@category.DisplayName</strong>
+                        </th>
+                        @foreach (var column in Comparison.Columns)
+                        {
+                            var capacity = CapacityFor(category, column.Kind);
+                            <td class="comparison-capacity-cell">
+                                @if (capacity is null)
+                                {
+                                    <span>@T("Unavailable")</span>
+                                    @if (!string.IsNullOrWhiteSpace(column.Diagnostic))
+                                    {
+                                        <small>@T(column.Diagnostic)</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <strong>@CapacityLabel(capacity)</strong>
+                                    <span>@T("Remaining"): @ValueLabel(
+                                        capacity.Remaining,
+                                        capacity.RemainingUnavailableReason)</span>
+                                    <span>萬用: @ValueLabel(
+                                        capacity.GenericContribution,
+                                        capacity.GenericContributionUnavailableReason)</span>
+                                    @if (HasUnavailableCapacity(capacity))
+                                    {
+                                        <small>@CapacityUnavailableReason(capacity)</small>
+                                    }
+                                }
+                            </td>
+                        }
+                    </tr>
+                    @foreach (var skill in visibleSkills)
+                    {
+                        <tr class="comparison-skill-row"
+                            data-skill-id="@skill.SkillId">
+                            <th scope="row">
+                                <strong>@(skill.Name ?? T("Unnamed skill"))</strong>
+                                <small>@category.DisplayName</small>
+                                @if (!string.IsNullOrWhiteSpace(
+                                    skill.NameUnavailableReason))
+                                {
+                                    <span>@T(skill.NameUnavailableReason)</span>
+                                }
+                            </th>
+                            @foreach (var column in Comparison.Columns)
+                            {
+                                var cell = CellFor(skill, column.Kind);
+                                <td class="comparison-skill-cell">
+                                    @if (column.Status
+                                        != LoadoutComparisonColumnStatus.Available)
+                                    {
+                                        <span class="comparison-membership unavailable">
+                                            <span aria-hidden="true">?</span>
+                                            @ColumnStatusLabel(column)
+                                        </span>
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            column.Diagnostic))
+                                        {
+                                            <small class="comparison-unavailable">
+                                                @T(column.Diagnostic)
+                                            </small>
+                                        }
+                                    }
+                                    else if (cell is null)
+                                    {
+                                        <span class="comparison-membership absent">
+                                            <span aria-hidden="true">—</span>
+                                            @AbsentLabel(column.Kind)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="@MembershipClass(cell)"
+                                              data-membership="@cell.Membership">
+                                            <span aria-hidden="true">@MembershipIcon(cell)</span>
+                                            @MembershipLabel(cell)
+                                        </span>
+                                        <small>
+                                            @T("Effective cost"):
+                                            @ValueLabel(
+                                                cell.EffectiveCost,
+                                                cell.EffectiveCostUnavailableReason)
+                                        </small>
+                                        @if (cell.EffectiveCost is null
+                                            && !string.IsNullOrWhiteSpace(
+                                                cell.EffectiveCostUnavailableReason))
+                                        {
+                                            <small class="comparison-unavailable">
+                                                @T(cell.EffectiveCostUnavailableReason)
+                                            </small>
+                                        }
+                                        @if (cell.Actions.Count > 0)
+                                        {
+                                            <ul class="comparison-actions">
+                                                @foreach (var action in cell.Actions)
+                                                {
+                                                    <li>
+                                                        <strong>@ActionLabel(action)</strong>
+                                                        <span>@T(action.Reason)</span>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            cell.MembershipUnavailableReason))
+                                        {
+                                            <small class="comparison-unavailable">
+                                                @T(cell.MembershipUnavailableReason)
+                                            </small>
+                                        }
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            }
+        </table>
+    </div>
+
+    <div class="comparison-legend" role="note"
+         aria-label="@T("Comparison status legend")">
+        <strong>@T("Legend")</strong>
+        <span><b aria-hidden="true">✓</b> @T("Retained")</span>
+        <span><b aria-hidden="true">+</b> @T("Added")</span>
+        <span><b aria-hidden="true">−</b> @T("Removed")</span>
+        <span><b aria-hidden="true">⇄</b> @T("Direction change required")</span>
+        <span><b aria-hidden="true">◇</b> @T("Breakthrough required")</span>
+        <span><b aria-hidden="true">?</b> @T("Unavailable")</span>
+    </div>
+
+    <p class="comparison-boundary">@T(Comparison.InformationOnlyNotice)</p>
+</section>
+
+@code {
+    private string? _comparisonReference;
+
+    [Parameter, EditorRequired]
+    public LoadoutComparisonViewModel Comparison { get; set; } = default!;
+
+    [Parameter]
+    public LoadoutComparisonFilterState FilterState { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<RecommendationPolicy> PolicySelected { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    protected override void OnParametersSet()
+    {
+        if (_comparisonReference is not null
+            && !string.Equals(
+                _comparisonReference,
+                Comparison.Reference,
+                StringComparison.Ordinal))
+        {
+            FilterState.ShowAll();
+        }
+
+        _comparisonReference = Comparison.Reference;
+    }
+
+    private int VisibleRowCount => Comparison.Categories
+        .Sum(category => VisibleSkills(category).Count());
+
+    private IEnumerable<LoadoutComparisonSkillRowViewModel> VisibleSkills(
+        LoadoutComparisonCategoryViewModel category) =>
+        FilterState.DifferencesOnly
+            ? category.Skills.Where(skill => skill.Cells.Any(cell =>
+                cell.Column != LoadoutComparisonColumnKind.Current
+                && cell.HasDifference))
+            : category.Skills;
+
+    private void SetDifferencesOnly(bool value) =>
+        FilterState.SetDifferencesOnly(value);
+
+    private Task SelectPolicyAsync(RecommendationPolicy policy) =>
+        PolicySelected.InvokeAsync(policy);
+
+    private static LoadoutComparisonCapacityCellViewModel? CapacityFor(
+        LoadoutComparisonCategoryViewModel category,
+        LoadoutComparisonColumnKind column) =>
+        category.Capacities.SingleOrDefault(value => value.Column == column);
+
+    private static LoadoutComparisonSkillCellViewModel? CellFor(
+        LoadoutComparisonSkillRowViewModel skill,
+        LoadoutComparisonColumnKind column) =>
+        skill.Cells.SingleOrDefault(value => value.Column == column);
+
+    private string ColumnLabel(LoadoutComparisonColumnViewModel column) =>
+        column.Kind switch
+        {
+            LoadoutComparisonColumnKind.Current => T("Current loadout"),
+            LoadoutComparisonColumnKind.Safe => T("Safe"),
+            LoadoutComparisonColumnKind.Balanced => T("Balanced"),
+            LoadoutComparisonColumnKind.Aggressive => T("Aggressive"),
+            _ => column.Kind.ToString()
+        };
+
+    private string ColumnStatusLabel(LoadoutComparisonColumnViewModel column)
+        => column.Status switch
+        {
+            LoadoutComparisonColumnStatus.Available
+                when column.Kind == LoadoutComparisonColumnKind.Current =>
+                T("Baseline used for this result"),
+            LoadoutComparisonColumnStatus.Available =>
+                column.ManualActionCount.HasValue
+                    ? $"{column.ManualActionCount.Value} "
+                        + T("manual action(s)")
+                    : T("Feasible policy winner"),
+            LoadoutComparisonColumnStatus.Infeasible =>
+                T("No feasible proposal"),
+            LoadoutComparisonColumnStatus.Unavailable => T("Unavailable"),
+            _ => column.Status.ToString()
+        };
+
+    private string MembershipLabel(
+        LoadoutComparisonSkillCellViewModel cell) => cell.Membership switch
+        {
+            LoadoutComparisonMembership.Present => T("Present"),
+            LoadoutComparisonMembership.Retained => T("Retained"),
+            LoadoutComparisonMembership.Added => T("Added"),
+            LoadoutComparisonMembership.Removed => T("Removed"),
+            null => T("Unavailable"),
+            _ => cell.Membership.ToString()!
+        };
+
+    private static string MembershipIcon(
+        LoadoutComparisonSkillCellViewModel cell) => cell.Membership switch
+        {
+            LoadoutComparisonMembership.Present => "●",
+            LoadoutComparisonMembership.Retained => "✓",
+            LoadoutComparisonMembership.Added => "+",
+            LoadoutComparisonMembership.Removed => "−",
+            _ => "?"
+        };
+
+    private static string MembershipClass(
+        LoadoutComparisonSkillCellViewModel cell) =>
+        "comparison-membership "
+        + (cell.Membership?.ToString().ToLowerInvariant() ?? "unavailable");
+
+    private string ActionLabel(
+        LoadoutComparisonSkillActionViewModel action) => action.Kind switch
+        {
+            LoadoutComparisonSkillActionKind.DirectionChangeRequired =>
+                $"⇄ {T("Change to")} {DirectionLabel(action.RequiredDirection)}",
+            LoadoutComparisonSkillActionKind.BreakthroughRequired =>
+                $"◇ {T("Complete")} {DirectionLabel(action.RequiredDirection)} "
+                + T("breakthrough"),
+            _ => action.Kind.ToString()
+        };
+
+    private string DirectionLabel(PracticeDirection direction) =>
+        direction switch
+        {
+            PracticeDirection.Direct => Language == TaiwuLanguage.Chinese
+                ? "正練"
+                : "Direct",
+            PracticeDirection.Reverse => Language == TaiwuLanguage.Chinese
+                ? "逆練"
+                : "Reverse",
+            _ => T("Unavailable")
+        };
+
+    private string AbsentLabel(LoadoutComparisonColumnKind column) =>
+        column == LoadoutComparisonColumnKind.Current
+            ? T("Not equipped")
+            : T("Not part of this policy");
+
+    private string CapacityLabel(
+        LoadoutComparisonCapacityCellViewModel capacity) =>
+        $"{ValueLabel(capacity.Used, capacity.UsedUnavailableReason)} / "
+        + ValueLabel(capacity.Capacity, capacity.CapacityUnavailableReason);
+
+    private string ValueLabel(int? value, string? unavailableReason) =>
+        value?.ToString() ?? (string.IsNullOrWhiteSpace(unavailableReason)
+            ? T("Unavailable")
+            : T("Unavailable"));
+
+    private static bool HasUnavailableCapacity(
+        LoadoutComparisonCapacityCellViewModel capacity) =>
+        capacity.Used is null
+        || capacity.Capacity is null
+        || capacity.Remaining is null
+        || capacity.GenericContribution is null;
+
+    private string CapacityUnavailableReason(
+        LoadoutComparisonCapacityCellViewModel capacity) => T(
+        new[]
+        {
+            capacity.UsedUnavailableReason,
+            capacity.CapacityUnavailableReason,
+            capacity.RemainingUnavailableReason,
+            capacity.GenericContributionUnavailableReason
+        }.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))
+        ?? "Unavailable");
+
+    private static string GenericLabel(
+        LoadoutComparisonGenericSlotsViewModel generic) =>
+        $"{generic.Total} · 摧破 {generic.Attack} · 輕靈 {generic.Agility} · "
+        + $"護體 {generic.Defense} · 奇竅 {generic.Assistance}";
+
+    private string ProvenanceFieldLabel(
+        LoadoutComparisonBaselineField field) => field switch
+        {
+            LoadoutComparisonBaselineField.EquippedSkills =>
+                T("Equipped skills"),
+            LoadoutComparisonBaselineField.GenericSlotAllocation => "萬用",
+            LoadoutComparisonBaselineField.SlotBudgets => T("Slot budgets"),
+            LoadoutComparisonBaselineField.LegendaryBookCostAssignments =>
+                T("Legendary-book cost assignments"),
+            _ => field.ToString()
+        };
+
+    private string ProvenanceSourceLabel(SnapshotDataSource source) =>
+        source switch
+        {
+            SnapshotDataSource.Save => T("Save"),
+            SnapshotDataSource.CurrentScreenObservation =>
+                T("Current-screen observation"),
+            SnapshotDataSource.GameConfiguration => T("Game configuration"),
+            SnapshotDataSource.VerifiedRule => T("Verified rule"),
+            _ => source.ToString()
+        };
+
+    private static string CategoryHeadingId(SkillCategory category) =>
+        $"comparison-category-{category.ToString().ToLowerInvariant()}";
+
+    private string T(string english) => UiText.Get(Language, english);
+}
