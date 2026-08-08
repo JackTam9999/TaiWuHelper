@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.SaveGames;
+using TaiWu.Application.RegionStories;
 using TaiWu.Application.Targets;
 using TaiWu.Infrastructure.Catalogue;
 using TaiWu.Infrastructure.SaveGames;
@@ -80,6 +81,11 @@ public static class DependencyInjection
                     TaiwuCharacterCombatSkillProgressReader>.Instance));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
+        services.AddSingleton<IRegionStoryProgressReader>(provider =>
+            new TaiwuRegionStoryProgressReader(
+                provider.GetRequiredService<TaiwuArchiveReadSession>(),
+                provider.GetRequiredService<TaiwuGameTextResolver>(),
+                TimeProvider.System));
         services.AddSingleton<ITargetLookupReader, TaiwuTargetLookupReader>();
         return services;
     }

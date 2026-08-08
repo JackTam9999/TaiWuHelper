@@ -591,6 +591,8 @@ public sealed partial class RecommendationComponentRenderingTests
     {
         var serviceCollection = new ServiceCollection();
         serviceCollection.AddLogging();
+        serviceCollection.AddSingleton<NavigationManager>(
+            new TestNavigationManager());
         serviceCollection.AddSingleton(Substitute.For<IJSRuntime>());
         serviceCollection.AddSingleton(
             Substitute.For<IResolveTargetSkillSelection>());
@@ -608,6 +610,18 @@ public sealed partial class RecommendationComponentRenderingTests
                 ParameterView.FromDictionary(parameters));
             return output.ToHtmlString();
         });
+    }
+
+    private sealed class TestNavigationManager : NavigationManager
+    {
+        public TestNavigationManager()
+        {
+            Initialize("http://localhost/", "http://localhost/");
+        }
+
+        protected override void NavigateToCore(string uri, bool forceLoad)
+        {
+        }
     }
 
     private static TargetObservationImpactViewModel TargetImpact() => new(

@@ -1,0 +1,417 @@
+@page "/region-stories"
+@implements IAsyncDisposable
+@using Microsoft.Extensions.Options
+@using TaiWu.Application.RegionStories
+@using TaiWuAPI.Configuration
+@using TaiWuAPI.Presentation
+@inject ReadRegionStoryProgress ReadProgress
+@inject IOptions<SaveGameOptions> SaveOptions
+@inject ILogger<RegionStories> Logger
+
+<PageTitle>TaiWu Helper · @T("Regional stories")</PageTitle>
+
+<section class="story-hero">
+    <div>
+        <p class="eyebrow">@T("Read-only story progress")</p>
+        <h1>@T("Your regional stories, rewards, and next steps.")</h1>
+        <p class="hero-copy">
+            @T("Compare every sect's main-story reward and post-story upgrade with progress from the configured save.")
+        </p>
+    </div>
+    <div class="boundary-card" role="note">
+        <strong>@T("Save remains read only")</strong>
+        <span>@T("Statuses are derived from ending dates and active world task chains. No story or save value is changed.")</span>
+    </div>
+</section>
+
+<section class="story-shell"
+         aria-labelledby="regional-story-heading"
+         aria-busy="@_isLoading.ToString().ToLowerInvariant()">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">@T("Fifteen sect stories")</p>
+            <h2 id="regional-story-heading">@T("Story progress and bonuses")</h2>
+        </div>
+        @if (_isLoading)
+        {
+            <span class="working-status" role="status">@T("Reading story progress…")</span>
+        }
+        else
+        {
+            <button type="button"
+                    class="secondary-button"
+                    @onclick="LoadAsync"
+                    disabled="@(!_configurationValid)">
+                @T("Refresh save status")
+            </button>
+        }
+    </div>
+
+    @if (!_configurationValid)
+    {
+        <div class="story-page-state error" role="alert">
+            <strong>@T("Save configuration is invalid")</strong>
+            <span>@T("Set SaveGame:DefaultSaveFilePath before reading regional-story progress.")</span>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="story-page-state error" role="alert">
+            <div>
+                <strong>@T("Story progress could not be read")</strong>
+                <span>@T(_error)</span>
+            </div>
+            <button type="button"
+                    class="secondary-button"
+                    @onclick="LoadAsync">
+                @T("Retry read")
+            </button>
+        </div>
+    }
+    else if (_snapshot is not null)
+    {
+        <div class="story-metadata" aria-label="@T("Story snapshot metadata")">
+            <div>
+                <span>@T("Save modified")</span>
+                <strong>@_snapshot.SaveLastWriteTimeUtc.ToLocalTime().ToString("g")</strong>
+            </div>
+            <div>
+                <span>@T("Snapshot read")</span>
+                <strong>@_snapshot.CapturedAtUtc.ToLocalTime().ToString("g")</strong>
+            </div>
+            <div title="@_snapshot.SaveSha256">
+                <span>@T("Read-only fingerprint")</span>
+                <strong>@ShortFingerprint(_snapshot.SaveSha256)</strong>
+            </div>
+        </div>
+
+        <div class="story-summary" aria-label="@T("Story status summary")">
+            <button type="button"
+                    class="@FilterClass(StoryFilter.All)"
+                    aria-pressed="@(_filter == StoryFilter.All)"
+                    @onclick="() => SetFilter(StoryFilter.All)">
+                <span>@T("All stories")</span>
+                <strong>@_snapshot.Stories.Count</strong>
+            </button>
+            <button type="button"
+                    class="@FilterClass(StoryFilter.Completed)"
+                    aria-pressed="@(_filter == StoryFilter.Completed)"
+                    @onclick="() => SetFilter(StoryFilter.Completed)">
+                <span>@T("Completed endings")</span>
+                <strong>@CompletedCount</strong>
+            </button>
+            <button type="button"
+                    class="@FilterClass(StoryFilter.InProgress)"
+                    aria-pressed="@(_filter == StoryFilter.InProgress)"
+                    @onclick="() => SetFilter(StoryFilter.InProgress)">
+                <span>@T("In progress")</span>
+                <strong>@InProgressCount</strong>
+            </button>
+            <button type="button"
+                    class="@FilterClass(StoryFilter.NotCompleted)"
+                    aria-pressed="@(_filter == StoryFilter.NotCompleted)"
+                    @onclick="() => SetFilter(StoryFilter.NotCompleted)">
+                <span>@T("No active progress")</span>
+                <strong>@NotCompletedCount</strong>
+            </button>
+        </div>
+
+        <div class="story-common-reward" role="note">
+            <span aria-hidden="true">玄</span>
+            <div>
+                <strong>@T("Shared story reward")</strong>
+                <p>@T("Completing a regional story grants its sect treasure and raises the power of all that sect's martial arts. Completing the post-story upgrades the treasure into Xuan equipment and strengthens the unique function shown below.")</p>
+            </div>
+        </div>
+
+        @if (_snapshot.Warnings.Count > 0)
+        {
+            <details class="story-read-warning">
+                <summary>@T("Some story fields were unavailable")</summary>
+                <ul>
+                    @foreach (var warning in _snapshot.Warnings)
+                    {
+                        <li>@warning.Message</li>
+                    }
+                </ul>
+            </details>
+        }
+
+        <div class="region-story-grid">
+            @foreach (var definition in VisibleDefinitions)
+            {
+                var progress = ProgressFor(definition.OrganizationId);
+                <article class="region-story-card @StatusClass(progress.Status)"
+                         data-organization-id="@definition.OrganizationId"
+                         data-story-status="@progress.Status">
+                    <header class="story-card-heading">
+                        <span class="story-faction-mark" aria-hidden="true">
+                            @Initial(definition.Faction)
+                        </span>
+                        <div>
+                            <span>@definition.Faction</span>
+                            <h3>《@definition.Story》</h3>
+                        </div>
+                        <span class="story-status @StatusClass(progress.Status)">
+                            @StatusLabel(progress.Status)
+                        </span>
+                    </header>
+
+                    @if (progress.CompletionDate.HasValue)
+                    {
+                        <p class="story-completion-date">
+                            <span>@T("Ending recorded")</span>
+                            <strong>@FormatWorldDate(progress.CompletionDate.Value)</strong>
+                        </p>
+                    }
+
+                    @if (progress.Status == RegionStoryProgressStatus.InProgress)
+                    {
+                        <section class="story-current-task"
+                                 aria-label="@T("Current task")">
+                            <span>@T("Current task")</span>
+                            <strong>@DisplayTaskTitle(progress)</strong>
+                            @if (!string.IsNullOrWhiteSpace(
+                                progress.CurrentTaskDescription))
+                            {
+                                <p>@progress.CurrentTaskDescription</p>
+                            }
+                        </section>
+                    }
+
+                    <div class="story-bonus-grid">
+                        <section class="story-bonus main-bonus">
+                            <span>@T("Main-story unlock")</span>
+                            <p>@definition.MainStoryBonus</p>
+                        </section>
+                        <section class="story-bonus post-bonus">
+                            <span>@T("Post-story upgrade")</span>
+                            <p>@definition.PostStoryBonus</p>
+                        </section>
+                    </div>
+                </article>
+            }
+        </div>
+
+        @if (!VisibleDefinitions.Any())
+        {
+            <p class="story-empty">@T("No stories match this status filter.")</p>
+        }
+
+        <p class="story-source-note">
+            @T("Bonus summaries are based on the installed Encyclopedia. The status column covers the main regional story; post-story completion is not inferred without a verified dedicated flag.")
+        </p>
+    }
+</section>
+
+@code {
+    private CancellationTokenSource? _readCancellation;
+    private RegionStoryProgressSnapshot? _snapshot;
+    private TaiwuLanguage? _lastLanguage;
+    private StoryFilter _filter;
+    private string _saveFilePath = string.Empty;
+    private string? _error;
+    private bool _configurationValid;
+    private bool _isLoading;
+    private long _readVersion;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<RegionStoryDisplayDefinition> Definitions =>
+        RegionStoryCatalogue.For(Language);
+
+    private IEnumerable<RegionStoryDisplayDefinition> VisibleDefinitions =>
+        Definitions.Where(definition => MatchesFilter(
+            ProgressFor(definition.OrganizationId).Status));
+
+    private int CompletedCount => _snapshot?.Stories.Count(story =>
+        story.Status is RegionStoryProgressStatus.ProsperousEnding
+            or RegionStoryProgressStatus.FailingEnding) ?? 0;
+
+    private int InProgressCount => _snapshot?.Stories.Count(story =>
+        story.Status == RegionStoryProgressStatus.InProgress) ?? 0;
+
+    private int NotCompletedCount => _snapshot?.Stories.Count(story =>
+        story.Status is RegionStoryProgressStatus.NotCompleted
+            or RegionStoryProgressStatus.Unavailable) ?? 0;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _saveFilePath = SaveOptions.Value.DefaultSaveFilePath;
+            _configurationValid = true;
+        }
+        catch (OptionsValidationException)
+        {
+            _configurationValid = false;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_lastLanguage == Language)
+        {
+            return;
+        }
+
+        _lastLanguage = Language;
+        if (_configurationValid)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (!_configurationValid)
+        {
+            return;
+        }
+
+        var version = ++_readVersion;
+        _readCancellation?.Cancel();
+        _readCancellation?.Dispose();
+        _readCancellation = new CancellationTokenSource();
+        _isLoading = true;
+        _error = null;
+
+        try
+        {
+            var snapshot = await ReadProgress.ExecuteAsync(
+                new RegionStoryProgressReadRequest(
+                    _saveFilePath,
+                    Language),
+                _readCancellation.Token);
+            if (version == _readVersion)
+            {
+                _snapshot = snapshot;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException
+                or FileNotFoundException
+                or InvalidDataException)
+        {
+            if (version == _readVersion)
+            {
+                _snapshot = null;
+                _error = "The configured save did not contain readable "
+                    + "regional-story data.";
+            }
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unexpected regional-story progress read failure.");
+            if (version == _readVersion)
+            {
+                _snapshot = null;
+                _error = "An unexpected regional-story read failure occurred.";
+            }
+        }
+        finally
+        {
+            if (version == _readVersion)
+            {
+                _isLoading = false;
+            }
+        }
+    }
+
+    private RegionStoryProgressEntry ProgressFor(int organizationId) =>
+        _snapshot?.Stories.FirstOrDefault(story =>
+            story.OrganizationId == organizationId)
+        ?? new RegionStoryProgressEntry(
+            organizationId,
+            RegionStoryProgressStatus.Unavailable,
+            CompletionDate: null,
+            ActiveTaskChainId: null,
+            CurrentTaskId: null,
+            CurrentTaskTitle: null,
+            CurrentTaskDescription: null);
+
+    private bool MatchesFilter(RegionStoryProgressStatus status) =>
+        _filter switch
+        {
+            StoryFilter.All => true,
+            StoryFilter.Completed => status is
+                RegionStoryProgressStatus.ProsperousEnding
+                or RegionStoryProgressStatus.FailingEnding,
+            StoryFilter.InProgress =>
+                status == RegionStoryProgressStatus.InProgress,
+            StoryFilter.NotCompleted => status is
+                RegionStoryProgressStatus.NotCompleted
+                or RegionStoryProgressStatus.Unavailable,
+            _ => false
+        };
+
+    private void SetFilter(StoryFilter filter) => _filter = filter;
+
+    private string FilterClass(StoryFilter filter) =>
+        _filter == filter ? "story-summary-card active" : "story-summary-card";
+
+    private static string StatusClass(RegionStoryProgressStatus status) =>
+        status switch
+        {
+            RegionStoryProgressStatus.ProsperousEnding => "prosperous",
+            RegionStoryProgressStatus.FailingEnding => "failing",
+            RegionStoryProgressStatus.InProgress => "in-progress",
+            RegionStoryProgressStatus.NotCompleted => "not-completed",
+            _ => "unavailable"
+        };
+
+    private string StatusLabel(RegionStoryProgressStatus status) =>
+        status switch
+        {
+            RegionStoryProgressStatus.ProsperousEnding => T("Prosperous ending"),
+            RegionStoryProgressStatus.FailingEnding => T("Failing ending"),
+            RegionStoryProgressStatus.InProgress => T("In progress"),
+            RegionStoryProgressStatus.NotCompleted => T("Not completed"),
+            _ => T("Status unavailable")
+        };
+
+    private string FormatWorldDate(int date)
+    {
+        var year = date / 12;
+        var month = date % 12;
+        return Language == TaiwuLanguage.Chinese
+            ? $"世界 {year} 年 {month} 月"
+            : $"World year {year}, month {month}";
+    }
+
+    private string DisplayTaskTitle(RegionStoryProgressEntry progress) =>
+        string.IsNullOrWhiteSpace(progress.CurrentTaskTitle)
+            ? T("Task title unavailable")
+            : progress.CurrentTaskTitle;
+
+    private static string ShortFingerprint(string fingerprint) =>
+        fingerprint.Length <= 12
+            ? fingerprint
+            : $"{fingerprint[..12]}…";
+
+    private static string Initial(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "?" : value[..1];
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    public ValueTask DisposeAsync()
+    {
+        _readCancellation?.Cancel();
+        _readCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private enum StoryFilter
+    {
+        All,
+        Completed,
+        InProgress,
+        NotCompleted
+    }
+}

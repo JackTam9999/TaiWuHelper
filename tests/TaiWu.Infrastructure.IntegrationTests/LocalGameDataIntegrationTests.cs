@@ -6,6 +6,7 @@ using System.Text;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.Localization;
+using TaiWu.Application.RegionStories;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatSkills;
@@ -27,6 +28,8 @@ public sealed class LocalGameDataIntegrationTests
         "C9EB00A368A6CE25B2D816DAE941AFAC67B6217ED561FF7563F613C3B297CECA";
     private const string Epic2CharacterProgressGoldenSaveSha256 =
         "9C30C00CF1ABD05973435B14B724A0A41A1B0DCD7847A8CA04D4E60E2B53C916";
+    private const string RegionStoryGoldenSaveSha256 =
+        "948BFD358AD4F952683B5BFB2A719B9890E6E7DCEB415DD0222B4CDF2DCF2F16";
     private const int GoldenPlayerId = 21396;
     private const int GoldenTargetId = 16317;
 
@@ -561,6 +564,97 @@ public sealed class LocalGameDataIntegrationTests
             var after = await CaptureAsync(guardedPaths);
             AssertUnchanged(before, after);
         }
+    }
+
+    [Fact]
+    public async Task Region_story_progress_uses_endings_and_active_task_chains()
+    {
+        var savePath = RequireSavePath();
+        var guardedPaths = DiscoverGameOwnedReadDependencies(savePath);
+        var before = await CaptureAsync(guardedPaths);
+        Assert.SkipUnless(
+            string.Equals(
+                before[savePath].Sha256,
+                RegionStoryGoldenSaveSha256,
+                StringComparison.OrdinalIgnoreCase),
+            "Region-story integration skipped: the configured save does "
+            + "not match the verified story snapshot fingerprint.");
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var reader = provider.GetRequiredService<
+                IRegionStoryProgressReader>();
+
+            var snapshot = await reader.ReadAsync(
+                new RegionStoryProgressReadRequest(
+                    savePath,
+                    TaiwuLanguage.Chinese),
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(15, snapshot.Stories.Count);
+            Assert.Equal(
+                RegionStoryGoldenSaveSha256,
+                snapshot.SaveSha256,
+                ignoreCase: true);
+            Assert.Empty(snapshot.Warnings);
+            AssertStory(
+                snapshot,
+                organizationId: 1,
+                RegionStoryProgressStatus.InProgress,
+                currentTaskId: 142,
+                currentTaskTitle: "老僧傳授");
+            var shaolin = Assert.Single(
+                snapshot.Stories,
+                story => story.OrganizationId == 1);
+            Assert.DoesNotContain("{0}", shaolin.CurrentTaskDescription);
+            Assert.DoesNotContain("<color", shaolin.CurrentTaskDescription);
+            AssertStory(
+                snapshot,
+                organizationId: 4,
+                RegionStoryProgressStatus.InProgress,
+                currentTaskId: 168,
+                currentTaskTitle: "等待道長");
+            AssertStory(
+                snapshot,
+                organizationId: 9,
+                RegionStoryProgressStatus.ProsperousEnding,
+                completionDate: 860);
+            AssertStory(
+                snapshot,
+                organizationId: 12,
+                RegionStoryProgressStatus.ProsperousEnding,
+                completionDate: 1071);
+            Assert.Equal(
+                11,
+                snapshot.Stories.Count(story =>
+                    story.Status
+                    == RegionStoryProgressStatus.NotCompleted));
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            AssertUnchanged(before, after);
+        }
+    }
+
+    private static void AssertStory(
+        RegionStoryProgressSnapshot snapshot,
+        int organizationId,
+        RegionStoryProgressStatus expectedStatus,
+        int? completionDate = null,
+        int? currentTaskId = null,
+        string? currentTaskTitle = null)
+    {
+        var story = Assert.Single(
+            snapshot.Stories,
+            value => value.OrganizationId == organizationId);
+        Assert.Equal(expectedStatus, story.Status);
+        Assert.Equal(completionDate, story.CompletionDate);
+        Assert.Equal(currentTaskId, story.CurrentTaskId);
+        Assert.Equal(currentTaskTitle, story.CurrentTaskTitle);
     }
 
     private static string RequireSavePath()

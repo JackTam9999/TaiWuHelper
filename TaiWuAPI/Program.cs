@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.SaveGames;
+using TaiWu.Application.RegionStories;
 using TaiWu.Application.TargetObservations;
 using TaiWu.Application.Targets;
 using TaiWu.Infrastructure;
@@ -32,6 +33,7 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<ReadSaveGame>();
+builder.Services.AddScoped<ReadRegionStoryProgress>();
 builder.Services.AddScoped<
     IRecommendCombatLoadout,
     RecommendCombatLoadout>();

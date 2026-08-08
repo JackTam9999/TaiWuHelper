@@ -19,6 +19,51 @@ public static class UiText
             ["Primary navigation"] = "主要導覽",
             ["Recommendations"] = "戰鬥推薦",
             ["Skill atlas"] = "功法圖鑑",
+            ["Regional stories"] = "地區故事",
+            ["Read-only story progress"] = "唯讀故事進度",
+            ["Your regional stories, rewards, and next steps."] =
+                "你的地區故事、獎勵與下一步。",
+            ["Compare every sect's main-story reward and post-story upgrade with progress from the configured save."] =
+                "把十五派的主線獎勵、後傳強化與設定存檔中的進度放在一起比較。",
+            ["Save remains read only"] = "存檔維持唯讀",
+            ["Statuses are derived from ending dates and active world task chains. No story or save value is changed."] =
+                "狀態依結局日期及進行中的世界任務鏈判定；不會改動任何故事或存檔數值。",
+            ["Fifteen sect stories"] = "十五派地區故事",
+            ["Story progress and bonuses"] = "故事進度與獎勵",
+            ["Reading story progress…"] = "正在讀取故事進度……",
+            ["Refresh save status"] = "重新讀取存檔狀態",
+            ["Save configuration is invalid"] = "存檔設定無效",
+            ["Set SaveGame:DefaultSaveFilePath before reading regional-story progress."] =
+                "請先設定 SaveGame:DefaultSaveFilePath，才能讀取地區故事進度。",
+            ["Story progress could not be read"] = "無法讀取故事進度",
+            ["The configured save did not contain readable regional-story data."] =
+                "設定的存檔不包含可讀取的地區故事資料。",
+            ["An unexpected regional-story read failure occurred."] =
+                "讀取地區故事時發生未預期的錯誤。",
+            ["Story snapshot metadata"] = "故事快照資訊",
+            ["Save modified"] = "存檔修改時間",
+            ["Read-only fingerprint"] = "唯讀指紋",
+            ["Story status summary"] = "故事狀態摘要",
+            ["All stories"] = "全部故事",
+            ["Completed endings"] = "已完成結局",
+            ["In progress"] = "進行中",
+            ["No active progress"] = "目前未進行",
+            ["Shared story reward"] = "共通故事獎勵",
+            ["Completing a regional story grants its sect treasure and raises the power of all that sect's martial arts. Completing the post-story upgrades the treasure into Xuan equipment and strengthens the unique function shown below."] =
+                "完成地區故事可取得門派寶物，提高該門派所有功法威力；完成後傳後，寶物會升級為玄字裝備，並強化下列門派特有功能。",
+            ["Some story fields were unavailable"] = "部分故事欄位不可用",
+            ["Prosperous ending"] = "昌盛結局",
+            ["Failing ending"] = "衰落結局",
+            ["Not completed"] = "未完成",
+            ["Ending recorded"] = "結局記錄",
+            ["Current task"] = "當前任務",
+            ["Task title unavailable"] = "任務名稱不可用",
+            ["Main-story unlock"] = "主線解鎖",
+            ["Post-story upgrade"] = "後傳強化",
+            ["No stories match this status filter."] =
+                "沒有故事符合這個狀態篩選。",
+            ["Bonus summaries are based on the installed Encyclopedia. The status column covers the main regional story; post-story completion is not inferred without a verified dedicated flag."] =
+                "獎勵摘要依目前安裝版本的百曉冊整理。狀態欄只判定地區故事主線；未取得經驗證的專用旗標前，不會推測後傳是否完成。",
             ["Version-aware skill catalogue"] = "版本感知功法目錄",
             ["Your martial arts, mapped."] = "你的武學，一覽無遺。",
             ["Search every installed combat skill and compare it with the current Taiwu's learned, studied, breakthrough, mastery and equipped state."] =

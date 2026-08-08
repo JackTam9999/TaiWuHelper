@@ -13,8 +13,13 @@
             </span>
         </a>
         <nav class="primary-navigation" aria-label="@T("Primary navigation")">
-            <a href="/">@T("Recommendations")</a>
-            <a href="/skills">@T("Skill atlas")</a>
+            <NavLink href="/" Match="NavLinkMatch.All">
+                @T("Recommendations")
+            </NavLink>
+            <NavLink href="/skills">@T("Skill atlas")</NavLink>
+            <NavLink href="/region-stories">
+                @T("Regional stories")
+            </NavLink>
         </nav>
         <div class="header-actions">
             <div class="language-switcher"
