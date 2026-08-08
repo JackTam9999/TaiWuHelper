@@ -10,16 +10,18 @@
     </div>
 
     <div class="battle-phases">
-        @foreach (var phase in Phases)
+        @if (PopulatedPhases.Count == 0)
         {
-            <section class="battle-phase">
-                <h4>@T(phase.Title)</h4>
-                @if (phase.Items.Count == 0)
-                {
-                    <p>@T("No separate evidence-backed instruction is available for this phase.")</p>
-                }
-                else
-                {
+            <p class="battle-plan-empty">
+                @T("No separate evidence-backed battle instruction is available.")
+            </p>
+        }
+        else
+        {
+            @foreach (var phase in PopulatedPhases)
+            {
+                <section class="battle-phase">
+                    <h4>@T(phase.Title)</h4>
                     <ol>
                         @foreach (var item in phase.Items)
                         {
@@ -35,8 +37,8 @@
                             </li>
                         }
                     </ol>
-                }
-            </section>
+                </section>
+            }
         }
     </div>
 </section>
@@ -50,6 +52,9 @@
 
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<BattlePlanPhaseViewModel> PopulatedPhases =>
+        [.. Phases.Where(phase => phase.Items.Count > 0)];
 
     private string T(string english) => UiText.Get(Language, english);
 

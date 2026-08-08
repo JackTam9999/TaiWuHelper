@@ -15,43 +15,25 @@
                 @T("Loadout comparison")
             </h3>
         </div>
-        <span class="information-badge">@T("Information only")</span>
     </div>
 
     <div class="comparison-provenance" role="note"
          aria-label="@T("Current baseline provenance")">
         <strong>@T("Current baseline provenance")</strong>
         <dl>
-            @foreach (var provenance in Comparison.BaselineProvenance)
+            @foreach (var group in Comparison.BaselineProvenance.GroupBy(value =>
+                new { value.Source, value.CapturedAtUtc }))
             {
                 <div>
-                    <dt>@ProvenanceFieldLabel(provenance.Field)</dt>
+                    <dt>@string.Join(", ", group.Select(value =>
+                        ProvenanceFieldLabel(value.Field)))</dt>
                     <dd>
-                        @ProvenanceSourceLabel(provenance.Source)
-                        <small>@provenance.CapturedAtUtc.ToLocalTime().ToString("g")</small>
+                        @ProvenanceSourceLabel(group.Key.Source)
+                        <small>@group.Key.CapturedAtUtc.ToLocalTime().ToString("g")</small>
                     </dd>
                 </div>
             }
         </dl>
-    </div>
-
-    <div class="comparison-policy-control">
-        <label for="comparison-policy-selector">
-            @T("Compare policy")
-        </label>
-        <select id="comparison-policy-selector"
-                value="@SelectedPolicy"
-                @onchange="ChangePolicyAsync">
-            @foreach (var policy in RecommendationPolicyDisplay.VisiblePolicies)
-            {
-                <option value="@policy">@PolicyLabel(policy)</option>
-            }
-        </select>
-        <span class="comparison-policy-status"
-              role="status"
-              aria-live="polite">
-            @T("Comparing Current with") @PolicyLabel(SelectedPolicy)
-        </span>
     </div>
 
     <div class="comparison-controls">
@@ -325,7 +307,7 @@
 
         <div class="comparison-tactics-grid">
             @foreach (var column in VisibleColumns.Where(value =>
-                value.Policy.HasValue))
+                value.Policy == SelectedPolicy))
             {
                 <article class="@PolicyTacticalClass(column)">
                     <header>
@@ -594,19 +576,6 @@
 
     private void SetDifferencesOnly(bool value) =>
         FilterState.SetDifferencesOnly(value);
-
-    private async Task ChangePolicyAsync(ChangeEventArgs args)
-    {
-        if (Enum.TryParse<RecommendationPolicy>(
-                args.Value?.ToString(),
-                ignoreCase: true,
-                out var policy)
-            && Enum.IsDefined(policy)
-            && RecommendationPolicyDisplay.IsVisible(policy))
-        {
-            await PolicySelected.InvokeAsync(policy);
-        }
-    }
 
     private Task SelectPolicyAsync(RecommendationPolicy policy) =>
         PolicySelected.InvokeAsync(policy);

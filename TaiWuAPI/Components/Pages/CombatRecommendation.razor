@@ -249,13 +249,7 @@
     }
 
     <section class="result-shell">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">@T("Same snapshot · two approaches")</p>
-                <h2>@T("Recommendation ready")</h2>
-            </div>
-            <span class="information-badge">@T("Information only")</span>
-        </div>
+        <h2 class="visually-hidden">@T("Recommendation ready")</h2>
 
         <div class="style-tabs" role="group" aria-label="@T("Recommendation styles")">
             @foreach (var style in _model.Styles.Where(style =>
@@ -288,55 +282,43 @@
         @{
             var visible = _selection.VisibleRecommendation!;
         }
-        <div class="result-summary">
-            @if (visible.HasRecommendation)
+        <div class="@(_model.Threats.Count > 0
+            ? "briefing-grid"
+            : "briefing-grid briefing-grid-single")">
+            @if (_model.Threats.Count > 0)
             {
-                <div>
-                    <span>@T("Known-constraint score")</span>
-                    <strong>@visible.TotalScore?.ToString("0.##")</strong>
-                    <small>@T("This is not a win probability.")</small>
-                </div>
-                <div>
-                    <span>@T("Threats identified")</span>
-                    <strong>@_model.Threats.Count</strong>
-                </div>
-                <div>
-                    <span>@T("Manual changes")</span>
-                    <strong>@visible.ManualChanges.Count</strong>
-                </div>
-                <div>
-                    <span>@T("Conditional caveats")</span>
-                    <strong>@visible.Caveats.Count</strong>
-                </div>
+                <ThreatPanel Threats="_model.Threats"
+                             SelectedReference="_selection.SelectedThreatReference"
+                             SelectedReferenceChanged="SelectThreat" />
             }
-            else
-            {
-                <p>@T(visible.Diagnostic ?? "No feasible recommendation was produced.")</p>
-            }
-        </div>
-
-        <div class="briefing-grid">
-            <ThreatPanel Threats="_model.Threats"
-                         SelectedReference="_selection.SelectedThreatReference"
-                         SelectedReferenceChanged="SelectThreat" />
 
             <section class="loadout-panel" aria-labelledby="recommended-loadout-heading">
                 <div class="panel-heading">
                     <div>
                         <p class="eyebrow">@T("Manual configuration")</p>
-                        <h3 id="recommended-loadout-heading">@T("Recommended loadout")</h3>
+                        <h3 id="recommended-loadout-heading">@T("Skill details")</h3>
                     </div>
-                    <span class="validation-label">@T("Known constraints validated")</span>
                 </div>
 
                 @if (visible.HasRecommendation)
                 {
-                    @foreach (var category in visible.Categories)
-                    {
-                        <LoadoutCategory Category="category"
-                                         ManualChanges="visible.ManualChanges"
-                                         SelectedThreatReference="_selection.SelectedThreatReference" />
-                    }
+                    <details class="loadout-detail-disclosure">
+                        <summary>
+                            @T("Show detailed skill cards")
+                            <span>
+                                @visible.Categories.Sum(category => category.Skills.Count)
+                                @T("skill(s)")
+                            </span>
+                        </summary>
+                        <div class="loadout-detail-content">
+                            @foreach (var category in visible.Categories)
+                            {
+                                <LoadoutCategory Category="category"
+                                                 ManualChanges="visible.ManualChanges"
+                                                 SelectedThreatReference="_selection.SelectedThreatReference" />
+                            }
+                        </div>
+                    </details>
                 }
                 else
                 {

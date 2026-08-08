@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Status | Passed — two-option trial awaiting product-owner review |
-| Evidence date | 2026-08-08 |
+| Evidence date | 2026-08-09 |
 | Epic | [EPIC-004](../roadmap/epic-004/EPIC.md) |
 | Backlog item | [E4-007](../roadmap/epic-004/BACKLOG.md#e4-007--verify-comparison-safety-parity-and-determinism) |
 
@@ -31,13 +31,14 @@ Verified visible behavior:
 - the persistent information-only notice remained above the result;
 - the three visible desktop columns appeared in Current, Safe, Aggressive
   order;
-- the recommendation form, style tabs, and comparison selector each exposed
-  exactly Safe and Aggressive;
+- the form exposed Safe and Aggressive inputs, while one result-level button
+  group controlled the comparison, checklist, and plan;
 - each policy header linked to the existing setup checklist and battle plan;
 - all five category groups, skill membership/actions, capacity, unavailable
   reasons, 萬用 allocation, and Current provenance were visible;
-- exactly two policy-local tactical cards were present;
-- supporting details exposed one alternative to the selected policy;
+- only the selected policy's tactical card was present;
+- duplicate alternative, condition, and score disclosures were removed because
+  those facts already appear in the policy control and comparison;
 - threat/risk, requirement/caveat, unsupported-mechanic, evidence-count, and
   policy-local score boundaries rendered in Traditional Chinese; and
 - unresolved facts remained outside differences-only filtering; and
@@ -46,8 +47,8 @@ Verified visible behavior:
 ## Narrow responsive workflow
 
 At a 760 by 900 CSS-pixel viewport, the same loaded result showed Current plus
-the selected Safe policy. Aggressive was present in the native selector but its
-table column and tactical card were removed from the visual and accessibility
+the selected Safe policy. Aggressive remained available in the shared policy
+button group, but its table column was removed from the visual and accessibility
 layout. Category navigation, differences-only control, live row-count status,
 and unresolved-risk content remained visible and operable.
 
@@ -68,11 +69,11 @@ The corrected Release rerun preserved:
 - differences-only mode and its row-count status;
 - Current plus Aggressive narrow column visibility;
 - Aggressive-only tactical-card visibility;
-- Safe/Aggressive-only selector options with no Balanced text; and
+- Safe/Aggressive-only policy buttons with no Balanced text; and
 - the existing threat focus when that typed threat remains in the localized
   result.
 
-English headings, selector labels, status announcements, tactical boundaries,
+English headings, policy labels, status announcements, tactical boundaries,
 and the information-only notice rendered after the switch. The selected policy
 and row filter therefore no longer change as a side effect of language.
 
@@ -86,8 +87,32 @@ was closed, and the local server was stopped after verification.
 
 ## Result
 
+## Whole-page duplication review
+
+The 2026-08-09 review used the same current-save target to inspect the entire
+14,300-CSS-pixel result, not only the matrix. The simplified page:
+
+- keeps one detailed information-only notice instead of repeating result and
+  matrix badges;
+- keeps one result-level policy control instead of tabs plus a select;
+- groups matching warning cards while leaving every distinct warning message
+  visible;
+- groups provenance fields with the same source and capture time;
+- renders only the selected tactical card;
+- collapses the 25 detailed skill cards because the matrix already shows the
+  active loadout and manual actions;
+- omits the empty target-threat panel;
+- renders one empty battle-plan message instead of five identical phase rows;
+  and
+- keeps only supporting disclosures not already present in the comparison.
+
+Before the final warning grouping, the live result was approximately 9,200 CSS
+pixels, a reduction of about 36%. The final warning-only live reread was blocked
+when the running game locked the save, so that last presentation step was
+verified by component and architecture tests without bypassing the lock.
+
 Desktop and narrow workflows expose equivalent typed comparison facts in
-Traditional Chinese and English. Keyboard-native selectors and buttons retain
+Traditional Chinese and English. Keyboard-native buttons retain
 their expected roles, the layout does not depend on color alone, and every
 action remains helper-local or navigational. The review build intentionally
 shows only Safe and Aggressive without changing scoring or manufacturing a

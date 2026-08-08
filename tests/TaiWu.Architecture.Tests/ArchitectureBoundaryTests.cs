@@ -350,6 +350,11 @@ public sealed partial class ArchitectureBoundaryTests
                 componentRoot,
                 "Recommendations",
                 "CapacityBar.razor"));
+        var comparison = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "LoadoutComparisonMatrix.razor"));
 
         Assert.Contains("OrderByDescending(threat => threat.Severity)", threatPanel);
         Assert.Contains("<ThreatPanel", page);
@@ -363,7 +368,7 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("Skill.Conditions", skillCard);
         Assert.Contains("Skill.Cost.EvidenceReferences", skillCard);
         Assert.Contains("Category.GenericSlots", capacity);
-        Assert.Contains("This is not a win probability.", page);
+        Assert.Contains("they are not win odds.", comparison);
         Assert.DoesNotContain(">Apply<", page);
     }
 
@@ -510,11 +515,11 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.DoesNotContain("<details", warnings);
         Assert.Contains("Effect on recommendation:", warnings);
         Assert.Contains("warning.IsCritical", warnings);
-        Assert.Contains("Alternatives", supporting);
         Assert.Contains("Assumptions and unavailable data", supporting);
-        Assert.Contains("Conditional requirements", supporting);
-        Assert.Contains("Score contributions", supporting);
         Assert.Contains("Detailed evidence", supporting);
+        Assert.DoesNotContain("Alternatives", supporting);
+        Assert.DoesNotContain("Conditional requirements", supporting);
+        Assert.DoesNotContain("Score contributions", supporting);
         Assert.Contains("Details.UnknownValuePolicy", supporting);
         Assert.DoesNotContain("win probability", supporting);
     }
@@ -631,14 +636,23 @@ public sealed partial class ArchitectureBoundaryTests
             "Components",
             "Recommendations",
             "LoadoutComparisonMatrix.razor"));
+        var page = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "Components",
+            "Pages",
+            "CombatRecommendation.razor"));
         var styles = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "TaiWuAPI",
             "wwwroot",
             "app.css"));
 
-        Assert.Contains("<select id=\"comparison-policy-selector\"", component);
-        Assert.Contains("@onchange=\"ChangePolicyAsync\"", component);
+        Assert.DoesNotContain("comparison-policy-selector", component);
+        Assert.DoesNotContain("ChangePolicyAsync", component);
+        Assert.Contains("value.Policy == SelectedPolicy", component);
+        Assert.Contains("loadout-detail-disclosure", page);
+        Assert.DoesNotContain("result-summary", page);
         Assert.Contains("aria-live=\"polite\"", component);
         Assert.Contains("scope=\"rowgroup\"", component);
         Assert.Contains("scope=\"row\"", component);
@@ -1044,7 +1058,6 @@ public sealed partial class ArchitectureBoundaryTests
             "args => ChangeDirection(skill.SkillId, args)",
             "args => ChangeVisiblePower(skill.SkillId, args)",
             "ChangeAsync",
-            "ChangePolicyAsync",
             "ClearAsync",
             "ClearFiltersAsync",
             "ClearProgressCacheAsync",

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Status | Passed — two-option trial awaiting product-owner review |
-| Evidence date | 2026-08-08 |
+| Evidence date | 2026-08-09 |
 | Epic | [EPIC-004](../roadmap/epic-004/EPIC.md) |
 | Backlog item | [E4-007](../roadmap/epic-004/BACKLOG.md#e4-007--verify-comparison-safety-parity-and-determinism) |
 
@@ -23,7 +23,7 @@ Default matrix:
 dotnet test TaiWu.slnx -c Release --no-build --no-restore
 ```
 
-Result: **924 total; 915 passed; 0 failed; 9 expected opt-in
+Result: **926 total; 917 passed; 0 failed; 9 expected opt-in
 skips**. Two immediately repeated default runs also passed. The skips are the
 documented local GameData/save checks when their process-local environment
 variables are absent.
@@ -50,7 +50,7 @@ the two-option review-build commit.
 |---|---:|---|
 | Domain | 311/311 | Comparison identity/order, column states, category and skill uniqueness, numeric availability, capacity arithmetic, provenance, composite actions, malformed cells, tactical threat partitioning, score order, and supporting-fact validation |
 | Application | 135/135 | Four-column construction, exact manual-plan parity, deterministic order/references, capacity/allocation, infeasible/unavailable states, observation repeat, and clear-to-save-only comparison fingerprints |
-| API/presentation | 257/257 | Typed mapping/serialization, unavailable and infeasible states, Safe/Aggressive UI projection, hidden Balanced controls/content, bilingual responsive rendering, interaction-state restoration, tactical evidence, and information-only controls |
+| API/presentation | 259/259 | Typed mapping/serialization, unavailable and infeasible states, Safe/Aggressive UI projection, hidden Balanced controls/content, grouped warnings/provenance, compact empty plans, bilingual responsive rendering, interaction-state restoration, tactical evidence, and information-only controls |
 | Architecture | 79/79 | Layer direction plus file, process, screenshot, persistence, game-control, public-path, and mutation-capable dependency guards |
 
 The observation lifecycle tests now compare the complete normalized comparison
@@ -61,9 +61,12 @@ the original save-only comparison fingerprint.
 The two-option product trial changes only the Presentation projection. Domain,
 Application, and serialized API verification still cover Safe, Balanced, and
 Aggressive in deterministic order. Component and selection-state tests prove
-that the player-facing form, tabs, matrix, tactical cards, alternatives, and
-responsive selector expose only Safe and Aggressive, default to Safe, and
-cannot select a hidden Balanced result.
+that the player-facing form and single result-level button group expose only
+Safe and Aggressive, default to Safe, and cannot select a hidden Balanced
+result. Rendering and architecture tests also prove that matching warning cards
+are consolidated without hiding their messages, only the selected tactical
+card is rendered, repeated supporting panels are absent, detailed skill cards
+are collapsed, and an empty battle plan produces one message.
 
 ## Guarded current-save vertical
 

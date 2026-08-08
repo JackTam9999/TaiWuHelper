@@ -294,7 +294,7 @@ complete the English/Traditional Chinese accessibility pass.
 - [x] Switching policies does not lose filters, category position, warnings,
       or the relationship to the setup checklist.
 - [x] Desktop and narrow-screen modes expose equivalent comparison facts.
-- [x] Keyboard users can reach the policy selector, category navigation,
+- [x] Keyboard users can reach the policy control, category navigation,
       differences filter, legend, warnings, and evidence details in logical
       order.
 - [x] Focus remains stable after policy or filter changes.
@@ -398,8 +398,9 @@ Epic 4 criterion, and record the product-owner decision.
 - Updated completion decision in [EPIC-004](./EPIC.md).
 
 Implementation and verification for the reversible two-option review build
-completed on 2026-08-08. Release build passed
-with zero warnings/errors; the default matrix passed 924 total with 915 passed
+completed on 2026-08-08 and the whole-page duplication pass completed on
+2026-08-09. Release build passed
+with zero warnings/errors; the default matrix passed 926 total with 917 passed
 and 9 expected opt-in skips; the guarded current-save vertical passed 1/1 with
 all inspected fingerprints unchanged. Product-owner review and the completion
 decision remain pending.

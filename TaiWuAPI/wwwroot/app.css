@@ -875,8 +875,7 @@ select {
     border-right: 0;
 }
 
-.snapshot-strip span,
-.result-summary span {
+.snapshot-strip span {
     color: var(--muted);
     font-size: 0.75rem;
     letter-spacing: 0.05em;
@@ -920,33 +919,6 @@ select {
     text-transform: uppercase;
 }
 
-.result-summary {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    margin-top: 18px;
-    background: var(--line);
-}
-
-.result-summary > div,
-.result-summary > p {
-    display: grid;
-    gap: 8px;
-    margin: 0;
-    padding: 22px;
-    background: var(--panel-strong);
-}
-
-.result-summary strong {
-    color: var(--gold);
-    font-family: Georgia, serif;
-    font-size: 1.65rem;
-}
-
-.result-summary small {
-    color: var(--muted);
-}
-
 .briefing-grid {
     display: grid;
     grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.8fr);
@@ -970,6 +942,32 @@ select {
 
 .loadout-panel {
     padding: 24px;
+}
+
+.loadout-detail-disclosure {
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.loadout-detail-disclosure > summary {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 0;
+    color: var(--gold);
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.loadout-detail-disclosure > summary span {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.loadout-detail-content {
+    padding-top: 1px;
 }
 
 .panel-heading,
@@ -1408,6 +1406,15 @@ select {
     margin-top: 18px;
 }
 
+.battle-plan-empty {
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
 .battle-phase {
     display: grid;
     grid-template-columns: 150px minmax(0, 1fr);
@@ -1546,6 +1553,16 @@ select {
     color: var(--ink);
 }
 
+.warning-details-list {
+    display: grid;
+    gap: 7px;
+    margin: 2px 0 0;
+    padding-left: 20px;
+    color: #c7d2cd;
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
 .warning-evidence {
     display: flex;
     flex-wrap: wrap;
@@ -1608,7 +1625,6 @@ select {
     font-size: 0.68rem;
 }
 
-.alternative-list,
 .support-list,
 .evidence-list {
     display: grid;
@@ -1616,7 +1632,6 @@ select {
     padding: 0 15px 15px;
 }
 
-.alternative-list article,
 .support-list article,
 .evidence-list article {
     display: grid;
@@ -1625,14 +1640,12 @@ select {
     background: rgba(5, 16, 16, 0.32);
 }
 
-.alternative-list strong,
 .support-list strong,
 .evidence-list strong {
     color: var(--gold);
     font-size: 0.75rem;
 }
 
-.alternative-list span,
 .support-list span,
 .evidence-list span,
 .support-list p {
@@ -1640,37 +1653,6 @@ select {
     color: var(--muted);
     font-size: 0.76rem;
     line-height: 1.5;
-}
-
-.score-table-wrap {
-    padding: 0 15px 15px;
-    overflow-x: auto;
-}
-
-.score-table-wrap table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.72rem;
-}
-
-.score-table-wrap th,
-.score-table-wrap td {
-    padding: 9px;
-    border-bottom: 1px solid var(--line);
-    color: #c7d2cd;
-    text-align: left;
-    vertical-align: top;
-}
-
-.score-table-wrap thead th {
-    color: var(--muted);
-    font-size: 0.65rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.score-table-wrap tbody th {
-    color: var(--gold);
 }
 
 .evidence-list {
@@ -4103,38 +4085,12 @@ select {
     font-size: 0.72rem;
 }
 
-.comparison-policy-control {
-    display: grid;
-    grid-template-columns: auto minmax(150px, 240px) minmax(0, 1fr);
-    gap: 10px;
-    align-items: center;
-    margin-top: 16px;
-}
-
-.comparison-policy-control label {
-    color: #d7e3de;
-    font-size: 0.78rem;
-    font-weight: 800;
-}
-
-.comparison-policy-control select {
-    min-height: 42px;
-    width: 100%;
-    padding: 8px 34px 8px 10px;
-    border: 1px solid rgba(215, 182, 107, 0.35);
-    border-radius: 3px;
-    color: var(--ink);
-    background: #102322;
-    font-weight: 800;
-}
-
-.comparison-policy-status {
-    color: var(--muted);
-    font-size: 0.74rem;
-}
-
 .comparison-controls {
     margin-top: 18px;
+}
+
+.briefing-grid-single {
+    grid-template-columns: 1fr;
 }
 
 .comparison-row-status-narrow {
@@ -4500,7 +4456,7 @@ select {
 
 .comparison-tactics-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-top: 14px;
 }
@@ -4828,8 +4784,7 @@ select {
         justify-self: start;
     }
 
-    .snapshot-strip,
-    .result-summary {
+    .snapshot-strip {
         grid-template-columns: repeat(2, 1fr);
     }
 
@@ -4943,17 +4898,8 @@ select {
         text-align: left;
     }
 
-    .comparison-provenance dl,
-    .comparison-policy-control {
+    .comparison-provenance dl {
         grid-template-columns: 1fr;
-    }
-
-    .comparison-policy-control {
-        align-items: stretch;
-    }
-
-    .comparison-policy-status {
-        min-height: 1.4em;
     }
 
     .comparison-category-navigation {
@@ -4983,7 +4929,6 @@ select {
     .target-impact-grid,
     .target-selected-skills li,
     .snapshot-strip,
-    .result-summary,
     .skill-list {
         grid-template-columns: 1fr;
     }
@@ -5190,7 +5135,6 @@ select {
     .warning-banner,
     .snapshot-strip,
     .style-tabs,
-    .result-summary,
     .threat-panel,
     .recommendation-actions,
     .skill-evidence {

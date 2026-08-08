@@ -5,12 +5,13 @@
 | Status | Accepted |
 | Scope | Combat recommendation presentation and Blazor UI |
 | Backlog | E4-004 |
-| Last updated | 2026-08-08 |
+| Last updated | 2026-08-09 |
 
 ## Purpose
 
-The combat recommendation page presents the Current loadout beside the Safe,
-Balanced, and Aggressive winners produced from the same immutable snapshot.
+The combat recommendation page projects Current, Safe, and Aggressive from the
+complete typed Current/Safe/Balanced/Aggressive result produced from one
+immutable snapshot.
 The matrix is an inspection and manual-planning surface. It never recalculates
 feasibility, changes recommendation facts, or controls the game.
 
@@ -30,7 +31,7 @@ flowchart LR
     A["CombatLoadoutRecommendation"] --> B["CombatLoadoutComparisonBuilder"]
     B --> C["LoadoutComparisonViewModel mapping"]
     C --> D["LoadoutComparisonMatrix"]
-    D --> E["Current + Safe + Balanced + Aggressive"]
+    D --> E["Current + Safe + Aggressive"]
     D --> F["All rows / differences only"]
     D --> G["Existing setup checklist and battle plan"]
 ```
@@ -42,14 +43,14 @@ IDs correlate rows internally; only resolved names are rendered.
 
 ## Matrix structure
 
-- Columns remain in Current, Safe, Balanced, Aggressive order.
+- Typed columns remain in Current, Safe, Balanced, Aggressive order; the review
+  UI projects Current, Safe, Aggressive.
 - Category groups remain in 內功, 摧破, 輕靈, 護體, 奇竅 order.
 - Each category header reports used capacity, total capacity, remaining
   capacity, and the effective 萬用 contribution when available.
 - Each skill cell reports membership text plus an icon, effective cost, and
   any required direction or breakthrough action.
-- Current provenance names the source and capture time for equipped skills,
-  generic allocation, slot budgets, and legendary-book cost assignments.
+- Current provenance groups fields that share the same source and capture time.
 - An infeasible policy renders its diagnostic instead of an invented loadout
   or zero-valued capacity.
 - Unavailable fields render an explicit unavailable state and preserve their
@@ -57,10 +58,10 @@ IDs correlate rows internally; only resolved names are rendered.
 
 The desktop table has a fixed comparison canvas inside a keyboard-focusable
 horizontal scroll region. Below 1280 CSS pixels, responsive classes hide the
-two unselected policy columns and retain Current plus the policy selected in
-the native comparison selector. All four typed columns remain in the same DOM
-order, so selecting another policy exposes the same facts without rebuilding
-or rereading the recommendation.
+unselected visible policy column and retain Current plus the policy selected by
+the page-level Safe/Aggressive button group. All four typed columns remain in
+the immutable view model; Presentation omits Balanced and responsive CSS hides
+the unselected visible policy without rebuilding or rereading the result.
 
 ## Interaction state
 
@@ -73,17 +74,17 @@ narrow counts and CSS row visibility consider only the selected policy.
 
 `RecommendationSelectionState` owns the selected policy shared by the matrix,
 setup checklist, and battle plan. It starts with the requested policy when
-feasible, otherwise the first feasible policy, otherwise Safe. The matrix uses
-a native `select`, so keyboard selection and focus stability follow platform
-behavior.
+feasible, otherwise the first feasible policy, otherwise Safe. One page-level
+native button group changes that state for the matrix and downstream details.
 
 Policy links invoke the existing recommendation selection state and target the
 existing manual checklist heading. The selected checklist and battle plan
 therefore come from the same policy result as the chosen matrix column.
 
-The tactical cards remain outside the row-difference filter. Each card keeps
-the selected winner's covered and unresolved threats, requirements, caveats,
-and score components visible without producing a cross-policy total. Threat
+The selected policy's tactical card remains outside the row-difference filter.
+It keeps the winner's covered and unresolved threats, requirements, caveats,
+and score components visible without duplicating an unselected card or
+producing a cross-policy total. Threat
 facts select the existing target-analysis detail; they do not trigger a new
 read or recommendation.
 
@@ -122,7 +123,7 @@ an already-built policy. The visible information-only notice states that the
 player must perform every direction, breakthrough, and loadout change manually
 in the game.
 
-The architecture event-handler allow-list covers the two filter handlers and
+The architecture event-handler allow-list covers the policy buttons, the two filter handlers, and
 the policy-selection handler as read-only or helper-local operations. Existing
 forbidden file-write and game-control checks continue to scan all Presentation
 source.

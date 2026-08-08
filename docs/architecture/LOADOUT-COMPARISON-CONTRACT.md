@@ -267,8 +267,8 @@ The rendered structure provides:
 - a link from each feasible policy header to that same policy's existing
   manual checklist and battle plan.
 
-Keyboard order is: comparison heading/summary, warnings, policy selector in
-narrow mode, row filter, category navigation, matrix content, tactical
+Keyboard order is: comparison heading/summary, warnings, page-level policy
+buttons, row filter, category navigation, matrix content, selected tactical
 summaries, legend/evidence details, then the selected policy's checklist link.
 Native controls keep their expected arrow/space/enter behavior.
 

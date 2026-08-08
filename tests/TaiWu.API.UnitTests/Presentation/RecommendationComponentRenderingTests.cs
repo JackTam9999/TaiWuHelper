@@ -327,7 +327,9 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("萬用: 1", text);
         Assert.DoesNotContain("No feasible proposal", text);
         Assert.Contains("Direction change required", text);
-        Assert.Contains("Information only", text);
+        Assert.Contains(
+            "TaiWu Helper cannot equip, redirect, or break through skills.",
+            text);
         Assert.Contains("href=\"#manual-checklist-heading\"", html);
         Assert.Contains("data-column=\"Current\"", html);
         Assert.DoesNotContain("0 / 0", text);
@@ -399,8 +401,7 @@ public sealed partial class RecommendationComponentRenderingTests
         var text = VisibleText(html);
 
         Assert.Contains("運功配置比較", text);
-        Assert.Contains("比較方案", text);
-        Assert.Contains("目前比較方案： 穩健", text);
+        Assert.DoesNotContain("比較方案", text);
         Assert.Contains("所有列", text);
         Assert.Contains("僅顯示差異", text);
         Assert.Contains("比較類別", text);
@@ -577,17 +578,15 @@ public sealed partial class RecommendationComponentRenderingTests
         var distinct = await RenderAsync<LoadoutComparisonMatrix>(
             new Dictionary<string, object?>
             {
-                [nameof(LoadoutComparisonMatrix.Comparison)] = comparison
+                [nameof(LoadoutComparisonMatrix.Comparison)] = comparison,
+                [nameof(LoadoutComparisonMatrix.SelectedPolicy)] =
+                    RecommendationPolicy.Aggressive
             });
 
-        Assert.Collection(
-            Regex.Matches(VisibleText(identical), "MAGIC_SOUND")
-                .Cast<Match>(),
-            _ => { },
-            _ => { });
         Assert.Single(
-            Regex.Matches(VisibleText(distinct), "MAGIC_SOUND")
+            Regex.Matches(VisibleText(identical), "MAGIC_SOUND")
                 .Cast<Match>());
+        Assert.DoesNotContain("MAGIC_SOUND", VisibleText(distinct));
         Assert.Contains("DIRECT_PRESSURE", VisibleText(distinct));
         Assert.Contains("Verified direct pressure", VisibleText(distinct));
     }
@@ -773,6 +772,31 @@ public sealed partial class RecommendationComponentRenderingTests
     }
 
     [Fact]
+    public async Task Empty_battle_plan_renders_one_compact_message()
+    {
+        var phases = Enum.GetValues<BattlePlanPhaseKind>()
+            .Select(kind => new BattlePlanPhaseViewModel(
+                kind,
+                kind.ToString(),
+                []))
+            .ToArray();
+
+        var html = await RenderAsync<BattlePlan>(
+            new Dictionary<string, object?>
+            {
+                [nameof(BattlePlan.Phases)] = phases
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains(
+            "No separate evidence-backed battle instruction is available.",
+            text);
+        Assert.DoesNotContain("BeforeCombat", text);
+        Assert.Single(
+            Regex.Matches(html, "battle-plan-empty").Cast<Match>());
+    }
+
+    [Fact]
     public async Task Supporting_details_render_named_evidence_not_references()
     {
         var details = new RecommendationSupportingDetailsViewModel(
@@ -833,6 +857,49 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains(
             "Aggregated from 2236 evaluated combinations.",
             text);
+    }
+
+    [Fact]
+    public async Task Matching_warnings_render_as_one_group()
+    {
+        var warnings = new[]
+        {
+            new RecommendationWarningViewModel(
+                "warning:capacity:safe",
+                "Capacity",
+                "CAPACITY_UNAVAILABLE",
+                PresentationWarningKind.General,
+                IsCritical: false,
+                Occurrences: 1,
+                "Current capacity is unavailable.",
+                "Review the displayed slot limit manually.",
+                ["evidence:safe"]),
+            new RecommendationWarningViewModel(
+                "warning:capacity:aggressive",
+                "Capacity",
+                "CAPACITY_UNAVAILABLE",
+                PresentationWarningKind.General,
+                IsCritical: false,
+                Occurrences: 1,
+                "Effective capacity is unavailable.",
+                "Review the displayed slot limit manually.",
+                ["evidence:aggressive"])
+        };
+
+        var html = await RenderAsync<WarningBanner>(
+            new Dictionary<string, object?>
+            {
+                [nameof(WarningBanner.Warnings)] = warnings
+            });
+        var text = VisibleText(html);
+
+        Assert.Single(
+            Regex.Matches(html, "warning-item")
+                .Cast<Match>());
+        Assert.Contains("Effective capacity is unavailable.", text);
+        Assert.Contains("Current capacity is unavailable.", text);
+        Assert.Contains("Combined 2 related warnings.", text);
+        Assert.Contains("General · 2 evidence source(s)", text);
     }
 
     [Fact]

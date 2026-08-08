@@ -6,7 +6,7 @@
 | Epic | [EPIC-004](./EPIC.md) |
 | Backlog items | [E4-000](./BACKLOG.md#e4-000--define-comparison-semantics-and-ui-states), [E4-004](./BACKLOG.md#e4-004--build-the-desktop-comparison-matrix), [E4-005](./BACKLOG.md#e4-005--add-narrow-screen-bilingual-and-keyboard-interaction), [E4-007](./BACKLOG.md#e4-007--verify-comparison-safety-parity-and-determinism) |
 | Primary surface | Existing local Blazor recommendation page |
-| Last updated | 2026-08-08 |
+| Last updated | 2026-08-09 |
 
 ## Purpose
 
@@ -24,16 +24,16 @@ copy, keyboard order, focus behavior, and user-visible states.
 
 The section renders in this order:
 
-1. `Loadout comparison` heading and information-only notice.
-2. Target, snapshot, GameData/catalogue, and Current provenance summary.
-3. Existing snapshot/observation warnings.
-4. Narrow-mode policy selector when applicable.
-5. `All rows` / `Differences only` filter and category navigation.
-6. Current/policy comparison matrix grouped into all five categories.
-7. Capacity and 萬用-allocation summaries for each category/column.
-8. Policy tactical summaries, conditions, caveats, and unresolved risks.
-9. Change-state legend and evidence details.
-10. A policy-specific route to the existing setup checklist and battle plan.
+1. One persistent information-only notice and grouped warnings.
+2. One page-level Safe/Aggressive policy button group.
+3. `Loadout comparison` heading and grouped Current provenance summary.
+4. `All rows` / `Differences only` filter and category navigation.
+5. Current/policy comparison matrix grouped into all five categories.
+6. Capacity and 萬用-allocation summaries for each category/column.
+7. The selected policy's tactical summary, conditions, caveats, and risks.
+8. Change-state legend and evidence details.
+9. A collapsed detailed-skill-card disclosure.
+10. The selected policy's setup checklist and compact battle plan.
 
 Warnings, policy diagnostics, unavailable reasons, and required manual actions
 are primary text. They are never available only through hover, color, or a
@@ -76,7 +76,7 @@ The synthetic example selects Safe.
 ┌ 運功比較 ─ 僅供參考 ─ 訓練目標 ─ 快照 S-42 ─┐
 │ 目前配置來源：畫面觀察；格數來源：存檔             │
 │ ⚠ 奇竅已用格數無法取得：一項功法成本無法取得。 │
-│ 比較方案：[ 穩健 ▼ ]   顯示：[所有] [僅顯示差異] │
+│ 方案：[穩健] [進取]     顯示：[所有] [僅顯示差異] │
 ├ 摘要：目前 ↔ 穩健                                  ┤
 │ 內功 格數       │ 目前 4/6、萬用 0 │ 穩健 4/6、萬用 1  │
 │ 範例內功甲      │ 已裝備          │ ✓ 保留             │
@@ -115,20 +115,19 @@ relationships, reading order, labels, actions, capacity, and diagnostics.
 
 ## Controls and keyboard behavior
 
-### Policy selector
+### Policy control
 
-The policy selector is visible in narrow mode and remains available as a
-compact "focus policy" control on desktop when it selects the checklist/battle
-plan destination. It is a native select or radio group with Safe and
-Aggressive in that order.
+One page-level button group exposes Safe and Aggressive in that order. It is the
+only policy-selection surface on desktop and narrow layouts; the matrix does
+not repeat the same choice in a second select.
 
 The initial policy is the requested policy when feasible; otherwise the first
-feasible policy; otherwise Safe. Arrow keys change a radio selection according
-to platform conventions. A native select uses its normal keyboard behavior.
+feasible policy; otherwise Safe. Tab reaches each button and Space/Enter
+activates it using native button behavior.
 
 After selection:
 
-- focus remains on the selector;
+- focus remains on the selected button;
 - the matrix shows Current plus the selected policy in narrow mode;
 - differences-only rows are recalculated for that policy;
 - warnings, filter, category position, and expanded details remain intact;
@@ -168,7 +167,7 @@ The DOM and keyboard order is:
 
 1. comparison heading and summary;
 2. warnings and observation diagnostics;
-3. policy selector in narrow mode;
+3. Safe/Aggressive policy button group;
 4. row filter;
 5. category navigation/skip link;
 6. matrix headers and row details in visual order;
@@ -200,7 +199,7 @@ still exists.
 | Target observation applied | Rebuilt matrix | Observation status/impact and one coherent set of columns | Clear observation |
 | Observation cleared | Rebuilt save-only matrix | Cleared confirmation; no observed labels remain | Continue or apply new observation |
 | Differences only | Filtered skill rows | Active-filter label and row-count announcement | Show all rows |
-| Narrow mode | Current plus selected policy | Policy selector and equivalent facts | Select policy or widen viewport |
+| Narrow mode | Current plus selected policy | Policy buttons and equivalent facts | Select policy or widen viewport |
 | Read/calculation failure | Absent | Error summary without raw exception/path | Retry or correct configuration |
 
 The loading and failure states cannot display old columns as though they
@@ -323,7 +322,7 @@ Traditional Chinese:
 
 The implemented matrix follows this contract with these concrete mechanics:
 
-- a native Safe/Aggressive selector shares
+- one Safe/Aggressive button group shares
   `RecommendationSelectionState` with the existing checklist and battle plan;
 - a requested Safe or Aggressive policy is used when feasible, otherwise the
   first feasible visible policy is selected, otherwise Safe;
@@ -347,7 +346,7 @@ the same loadout.
 
 Verification on 2026-08-08:
 
-- API/presentation tests passed 257/257, including English and Traditional
+- API/presentation tests passed 259/259, including English and Traditional
   Chinese feasible, partially infeasible, unchanged, changed, unavailable,
   selected-policy, filter-preservation, and accessible-markup states;
 - architecture tests passed 79/79, including the read-only/helper-local event
@@ -355,9 +354,18 @@ Verification on 2026-08-08:
 - a 760 × 900 in-app-browser pass confirmed the page's narrow reflow, logical
   focusable order, bilingual controls, and no browser console errors;
 - a current-save Release rerun verified Current/Safe/Aggressive desktop
-  columns, Current plus selected-policy narrow rendering, Safe/Aggressive-only
-  controls and tactical cards, one supporting alternative, and no rendered
-  Balanced/均衡 label; and
+  columns, Current plus selected-policy narrow rendering, one Safe/Aggressive
+  control, selected-policy tactical detail, and no rendered Balanced/均衡
+  label; and
 - changing from Traditional Chinese to English preserved Aggressive selection
   and differences-only state after the localized reread; and
 - the viewport override was reset after verification.
+
+Whole-page simplification on 2026-08-09 removed repeated result-summary and
+information badges, grouped matching warnings and identical provenance rows,
+rendered only the selected tactical card, collapsed the duplicate detailed
+skill-card view, omitted an empty threat panel, reduced an empty battle plan to
+one message, and removed alternative/score/condition disclosures already
+present in the comparison. The first live current-save audit reduced the page
+from approximately 14,300 to 9,200 CSS pixels before the final warning-card
+grouping, while keeping all primary warnings and manual actions visible.

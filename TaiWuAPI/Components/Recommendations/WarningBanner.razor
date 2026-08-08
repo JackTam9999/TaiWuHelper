@@ -15,11 +15,9 @@
     </div>
 
     <div class="warning-list">
-        @foreach (var warning in Warnings
-            .OrderByDescending(value => value.IsCritical)
-            .ThenBy(value => value.Kind)
-            .ThenBy(value => value.Reference, StringComparer.Ordinal))
+        @foreach (var group in GroupedWarnings)
         {
+            var warning = group.Warning;
             <article class="@(warning.IsCritical ? "warning-item critical" : "warning-item")">
                 <div>
                     <span class="warning-kind">@WarningKindLabel(warning.Kind)</span>
@@ -29,23 +27,41 @@
                     }
                 </div>
                 <h3>@WarningTitle(warning)</h3>
-                @if (warning.Occurrences > 1)
+                @if (group.RelatedWarnings > 1)
                 {
                     <p class="warning-occurrences">
-                        @T("Aggregated from") @warning.Occurrences @T("evaluated combinations.")
+                        @T("Combined") @group.RelatedWarnings @T("related warnings.")
                     </p>
                 }
-                <p>@T(warning.Message)</p>
+                @if (group.EvaluatedCombinations > 1)
+                {
+                    <p class="warning-occurrences">
+                        @T("Aggregated from") @group.EvaluatedCombinations @T("evaluated combinations.")
+                    </p>
+                }
+                @if (group.Messages.Count == 1)
+                {
+                    <p>@T(group.Messages[0])</p>
+                }
+                else
+                {
+                    <ul class="warning-details-list">
+                        @foreach (var message in group.Messages)
+                        {
+                            <li>@T(message)</li>
+                        }
+                    </ul>
+                }
                 <p class="warning-effect">
                     <strong>@T("Effect on recommendation:")</strong>
                     @T(warning.EffectOnRecommendation)
                 </p>
-                @if (warning.EvidenceReferences.Count > 0)
+                @if (group.EvidenceSourceCount > 0)
                 {
                     <div class="warning-evidence" aria-label="@T("Warning evidence")">
                         <span>
                             @WarningTitle(warning) ·
-                            @warning.EvidenceReferences.Count
+                            @group.EvidenceSourceCount
                             @T("evidence source(s)")
                         </span>
                     </div>
@@ -61,6 +77,31 @@
 
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<WarningGroup> GroupedWarnings =>
+        [.. Warnings
+            .GroupBy(warning => new
+            {
+                warning.Code,
+                warning.Kind,
+                warning.IsCritical,
+                warning.EffectOnRecommendation
+            })
+            .Select(group => new WarningGroup(
+                group.OrderBy(value => value.Reference, StringComparer.Ordinal)
+                    .First(),
+                group.Count(),
+                group.Where(value => value.Occurrences > 1)
+                    .Sum(value => value.Occurrences),
+                [.. group.Select(value => value.Message)
+                    .Distinct(StringComparer.Ordinal)
+                    .Order(StringComparer.Ordinal)],
+                group.SelectMany(value => value.EvidenceReferences)
+                    .Distinct(StringComparer.Ordinal)
+                    .Count()))
+            .OrderByDescending(value => value.Warning.IsCritical)
+            .ThenBy(value => value.Warning.Kind)
+            .ThenBy(value => value.Warning.Reference, StringComparer.Ordinal)];
 
     private string WarningKindLabel(
         PresentationWarningKind kind) => kind switch
@@ -86,6 +127,13 @@
                 T("Unrecognized target mechanic"),
             _ => WarningKindLabel(warning.Kind)
         };
+
+    private sealed record WarningGroup(
+        RecommendationWarningViewModel Warning,
+        int RelatedWarnings,
+        int EvaluatedCombinations,
+        IReadOnlyList<string> Messages,
+        int EvidenceSourceCount);
 
     private string T(string english) => UiText.Get(Language, english);
 }

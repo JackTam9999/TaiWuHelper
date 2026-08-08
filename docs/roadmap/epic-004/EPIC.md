@@ -5,7 +5,7 @@
 | Status | Two-option trial awaiting product-owner review |
 | Milestone | 4 |
 | Target release | TBD |
-| Last updated | 2026-08-08 |
+| Last updated | 2026-08-09 |
 
 ## Summary
 
@@ -27,7 +27,7 @@ apply a loadout, or control the game.
 Product-owner review found that three visible choices frequently selected the
 same loadout and added decision noise. The review build therefore exposes only
 `Safe` (穩健) and `Aggressive` (進取) in the player-facing form, tabs,
-comparison matrix, tactical cards, and responsive selector. `Balanced` remains
+comparison matrix, selected tactical detail, and responsive policy control. `Balanced` remains
 calculated in the immutable recommendation and remains present in Domain and
 API comparison contracts for compatibility and a reversible review decision.
 
