@@ -321,7 +321,7 @@ complete the English/Traditional Chinese accessibility pass.
 
 ### E4-006 — Compare threat coverage, requirements, and unresolved risks
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -334,22 +334,25 @@ introducing new combat rules or probability language.
 
 #### Acceptance criteria
 
-- [ ] Each policy shows verified covered threat codes and titles.
-- [ ] Unresolved threats, unmet/manual conditions, caveats, and unsupported
+- [x] Each policy shows verified covered threat codes and titles.
+- [x] Unresolved threats, unmet/manual conditions, caveats, and unsupported
       mechanics remain visible.
-- [ ] Evidence references link tactical summaries to existing typed facts.
-- [ ] Policy score components retain their weights and explanations.
-- [ ] Cross-policy totals are not styled or labelled as win probability or a
+- [x] Evidence references link tactical summaries to existing typed facts.
+- [x] Policy score components retain their weights and explanations.
+- [x] Cross-policy totals are not styled or labelled as win probability or a
       universal best score.
-- [ ] Differences-only mode cannot hide an unresolved critical risk.
-- [ ] Raw effect prose or evidence-only power cannot become new coverage.
-- [ ] Tests cover distinct coverage, identical coverage, unsupported evidence,
+- [x] Differences-only mode cannot hide an unresolved critical risk.
+- [x] Raw effect prose or evidence-only power cannot become new coverage.
+- [x] Tests cover distinct coverage, identical coverage, unsupported evidence,
       critical caveats, and policy-local scoring.
 
 #### Evidence when complete
 
 - `docs/architecture/LOADOUT-COMPARISON-EXPLANATION.md`.
 - Focused Application and Presentation test summary.
+
+Completed on 2026-08-08. Focused verification passed 135/135 Application,
+256/256 API/presentation, and 79/79 architecture tests.
 
 ## Slice 7: Verification and completion
 

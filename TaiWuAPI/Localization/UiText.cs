@@ -681,6 +681,37 @@ public static class UiText
                 "沒有符合已知格位限制的可行候選方案。",
             ["Reverse practice is required for this counter."] =
                 "此克制效果需要逆練。",
+            ["Policy-local facts"] = "各策略獨立事實",
+            ["Threat coverage, requirements, and risks"] =
+                "威脅覆蓋、需求與風險",
+            ["Scores rank candidates only inside each policy; they are not win odds."] =
+                "分數僅用於各策略內排列候選方案，並非獲勝機率。",
+            ["Unsupported or excluded mechanics"] = "不支援或已排除的機制",
+            ["linked evidence facts"] = "項關聯證據事實",
+            ["Covered threats"] = "已覆蓋威脅",
+            ["Unresolved risks"] = "未解決風險",
+            ["Unresolved"] = "未解決",
+            ["No verified threat is covered by this policy."] =
+                "此策略未覆蓋任何已驗證威脅。",
+            ["No verified threat remains unresolved."] =
+                "沒有尚未解決的已驗證威脅。",
+            ["Requirements and caveats"] = "需求與注意事項",
+            ["No additional requirement or caveat was produced."] =
+                "未產生其他需求或注意事項。",
+            ["Known risk"] = "已知風險",
+            ["Ranking within"] = "策略內排名：",
+            ["No active defense is selected."] = "未選擇主動護體功法。",
+            ["No active agility is selected."] = "未選擇主動輕靈功法。",
+            ["Unrecognized target mechanic remains unsupported."] =
+                "仍有無法識別的目標機制未受支援。",
+            ["Weapon state must be confirmed manually."] =
+                "必須手動確認兵器狀態。",
+            ["Critical timing remains a manual decision."] =
+                "關鍵時機仍須由玩家手動判斷。",
+            ["Severity-weighted verified threats covered."] =
+                "按嚴重程度加權的已覆蓋驗證威脅。",
+            ["No verified damage evidence is available."] =
+                "沒有可用的已驗證傷害證據。",
             ["TaiWu Helper cannot equip, redirect, or break through skills. Follow these instructions manually in the game."] =
                 "太吾助手不會裝備、改變正逆練或進行突破。請在遊戲中手動按照指示操作。",
             ["Recommendation ready"] = "推薦已完成",

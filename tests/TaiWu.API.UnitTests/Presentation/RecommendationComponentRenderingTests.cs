@@ -408,6 +408,14 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("僅顯示差異", text);
         Assert.Contains("比較類別", text);
         Assert.Contains("跳至比較類別", text);
+        Assert.Contains("各策略獨立事實", text);
+        Assert.Contains("威脅覆蓋、需求與風險", text);
+        Assert.Contains("已覆蓋威脅", text);
+        Assert.Contains("未解決風險", text);
+        Assert.Contains("策略內排名： 穩健", text);
+        Assert.Contains(
+            "分數僅用於各策略內排列候選方案，並非獲勝機率。",
+            text);
         Assert.Contains("目前運功", text);
         Assert.Contains("保留", text);
         Assert.Contains("移除", text);
@@ -429,6 +437,18 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("data-column=\"Aggressive\"", html);
         Assert.DoesNotContain(">Attack<", html);
         Assert.DoesNotContain("Effective cost is unavailable.", text);
+        Assert.DoesNotContain(
+            "Unrecognized target mechanic remains unsupported.",
+            text);
+        Assert.DoesNotContain(
+            "Weapon state must be confirmed manually.",
+            text);
+        Assert.DoesNotContain(
+            "Critical timing remains a manual decision.",
+            text);
+        Assert.DoesNotContain(
+            "No verified damage evidence is available.",
+            text);
         Assert.DoesNotContain(
             "No feasible candidate satisfies known slot constraints.",
             text);
@@ -472,6 +492,106 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains(
             "No feasible candidate satisfies known slot constraints.",
             VisibleText(aggressive));
+    }
+
+    [Fact]
+    public async Task Comparison_tactics_keep_risks_evidence_and_policy_scores_visible()
+    {
+        var filter = new LoadoutComparisonFilterState();
+        filter.ShowDifferences();
+
+        var html = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] = Comparison(),
+                [nameof(LoadoutComparisonMatrix.SelectedPolicy)] =
+                    RecommendationPolicy.Safe,
+                [nameof(LoadoutComparisonMatrix.FilterState)] = filter
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("Threat coverage, requirements, and risks", text);
+        Assert.Contains("Unsupported or excluded mechanics", text);
+        Assert.Contains(
+            "Unrecognized target mechanic remains unsupported.",
+            text);
+        Assert.Contains("Covered threats", text);
+        Assert.Contains("MAGIC_SOUND", text);
+        Assert.Contains("Magic-sound mind damage", text);
+        Assert.Contains("Unresolved risks", text);
+        Assert.Contains("DEFEAT_LOOP", text);
+        Assert.Contains("Repeatable defeat-mark reset", text);
+        Assert.Contains("Critical · Unresolved", text);
+        Assert.Contains("Requirements and caveats", text);
+        Assert.Contains("Weapon state must be confirmed manually.", text);
+        Assert.Contains("Critical timing remains a manual decision.", text);
+        Assert.Contains("Ranking within Safe", text);
+        Assert.Contains("Threat coverage 40 0.75", text);
+        Assert.Contains("Severity-weighted verified threats covered.", text);
+        Assert.Contains("Damage potential 10", text);
+        Assert.Contains("No verified damage evidence is available.", text);
+        Assert.Contains(
+            "Scores rank candidates only inside each policy; "
+            + "they are not win odds.",
+            text);
+        Assert.Contains("comparison-unresolved", html);
+        Assert.Contains("class=\"critical\"", html);
+        Assert.Contains("type=\"button\"", html);
+        Assert.DoesNotContain("evidence:", text);
+        Assert.DoesNotContain("Best policy", text);
+        Assert.DoesNotContain("win probability", text);
+    }
+
+    [Fact]
+    public async Task Comparison_tactics_render_identical_and_distinct_coverage()
+    {
+        var identical = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] = Comparison()
+            });
+        var comparison = Comparison();
+        comparison = comparison with
+        {
+            Columns =
+            [
+                .. comparison.Columns.Select(column =>
+                    column.Policy == RecommendationPolicy.Balanced
+                        ? column with
+                        {
+                            Tactical = column.Tactical! with
+                            {
+                                CoveredThreats =
+                                [
+                                    new LoadoutComparisonThreatViewModel(
+                                        "threat:direct-pressure",
+                                        "DIRECT_PRESSURE",
+                                        "Verified direct pressure",
+                                        TargetThreatSeverity.Moderate,
+                                        ["evidence:direct-pressure"])
+                                ],
+                                UnresolvedThreats = []
+                            }
+                        }
+                        : column)
+            ]
+        };
+        var distinct = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] = comparison
+            });
+
+        Assert.Collection(
+            Regex.Matches(VisibleText(identical), "MAGIC_SOUND")
+                .Cast<Match>(),
+            _ => { },
+            _ => { });
+        Assert.Single(
+            Regex.Matches(VisibleText(distinct), "MAGIC_SOUND")
+                .Cast<Match>());
+        Assert.Contains("DIRECT_PRESSURE", VisibleText(distinct));
+        Assert.Contains("Verified direct pressure", VisibleText(distinct));
     }
 
     [Theory]
@@ -832,12 +952,14 @@ public sealed partial class RecommendationComponentRenderingTests
         var safe = ComparisonColumn(
             LoadoutComparisonColumnKind.Safe,
             RecommendationPolicy.Safe,
-            manualActions: 1);
+            manualActions: 1,
+            tactical: Tactical(RecommendationPolicy.Safe));
         var balanced = ComparisonColumn(
             LoadoutComparisonColumnKind.Balanced,
             RecommendationPolicy.Balanced,
             manualActions: 2,
-            allocationChanged: true);
+            allocationChanged: true,
+            tactical: Tactical(RecommendationPolicy.Balanced));
         var aggressive = new LoadoutComparisonColumnViewModel(
             LoadoutComparisonColumnKind.Aggressive,
             LoadoutComparisonColumnStatus.Infeasible,
@@ -896,14 +1018,23 @@ public sealed partial class RecommendationComponentRenderingTests
                     DateTimeOffset.Parse("2026-08-08T12:00:00Z"))
             ],
             "TaiWu Helper cannot equip, redirect, or break through skills. "
-            + "Follow these instructions manually in the game.");
+            + "Follow these instructions manually in the game.",
+            [
+                new LoadoutComparisonUnsupportedViewModel(
+                    IsCritical: true,
+                    "Unrecognized target mechanic remains unsupported.",
+                    "The affected mechanic was excluded from verified "
+                    + "scoring, so threat coverage may be incomplete.",
+                    ["evidence:unsupported"])
+            ]);
     }
 
     private static LoadoutComparisonColumnViewModel ComparisonColumn(
         LoadoutComparisonColumnKind kind,
         RecommendationPolicy? policy,
         int manualActions,
-        bool allocationChanged = false) => new(
+        bool allocationChanged = false,
+        LoadoutComparisonTacticalViewModel? tactical = null) => new(
             kind,
             LoadoutComparisonColumnStatus.Available,
             policy,
@@ -919,7 +1050,74 @@ public sealed partial class RecommendationComponentRenderingTests
             allocationChanged,
             manualActions,
             ManualActionCountUnavailableReason: null,
-            Diagnostic: null);
+            Diagnostic: null,
+            tactical);
+
+    private static LoadoutComparisonTacticalViewModel Tactical(
+        RecommendationPolicy policy) => new(
+            policy,
+            new LoadoutComparisonRoleViewModel(
+                "Synthetic Defense",
+                UnavailableReason: null),
+            new LoadoutComparisonRoleViewModel(
+                SkillName: null,
+                "No active agility is selected."),
+            [
+                new LoadoutComparisonThreatViewModel(
+                    "threat:magic-sound",
+                    "MAGIC_SOUND",
+                    "Magic-sound mind damage",
+                    TargetThreatSeverity.High,
+                    ["evidence:magic-sound"])
+            ],
+            [
+                new LoadoutComparisonThreatViewModel(
+                    "threat:defeat-loop",
+                    "DEFEAT_LOOP",
+                    "Repeatable defeat-mark reset",
+                    TargetThreatSeverity.Critical,
+                    ["evidence:defeat-loop"])
+            ],
+            [
+                new LoadoutComparisonConditionSummaryViewModel(
+                    "Changed Blade",
+                    RecommendationConditionKind.Weapon,
+                    CombatRequirementCriticality.Conditional,
+                    CombatRequirementStatus.Unknown,
+                    "Weapon state must be confirmed manually.",
+                    "evidence:weapon")
+            ],
+            [
+                new LoadoutComparisonCaveatSummaryViewModel(
+                    RecommendationCaveatKind.KnownRisk,
+                    "Critical timing remains a manual decision.",
+                    "Changed Blade",
+                    ["evidence:timing"])
+            ],
+            [
+                new LoadoutComparisonScoreSummaryViewModel(
+                    RecommendationScoreComponentKind.ThreatCoverage,
+                    Weight: 40,
+                    Score: 0.75m,
+                    ScoreUnavailableReason: null,
+                    "Severity-weighted verified threats covered.",
+                    "evidence:score:coverage"),
+                new LoadoutComparisonScoreSummaryViewModel(
+                    RecommendationScoreComponentKind.DamagePotential,
+                    Weight: 10,
+                    Score: null,
+                    "No verified damage evidence is available.",
+                    "No verified damage evidence is available.",
+                    "evidence:score:damage")
+            ],
+            [
+                "evidence:magic-sound",
+                "evidence:defeat-loop",
+                "evidence:weapon",
+                "evidence:timing",
+                "evidence:score:coverage",
+                "evidence:score:damage"
+            ]);
 
     private static LoadoutComparisonCapacityCellViewModel ComparisonCapacity(
         LoadoutComparisonColumnKind column,

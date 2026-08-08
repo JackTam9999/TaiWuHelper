@@ -39,6 +39,21 @@ public static class CombatRecommendationViewModelMapper
                 skillNames,
                 recommendation.Snapshot.Player.GenericSlotAllocation))
             .ToArray();
+        var threats = recommendation.ThreatAnalysis.Threats
+            .Select(value => new ThreatViewModel(
+                ThreatReference(value.Threat.Code),
+                value.Threat.Code,
+                UiEntityText.UseNames(value.Threat.Title, skillNames),
+                UiEntityText.UseNames(
+                    value.Threat.Explanation,
+                    skillNames),
+                value.Threat.Kind,
+                value.Threat.Severity,
+                value.Threat.ActivationTiming,
+                [.. value.Threat.Evidence.Select(evidence =>
+                    evidence.Reference)]))
+            .ToArray();
+        var warnings = MapWarnings(recommendation, skillNames);
 
         return new CombatRecommendationViewModel(
             snapshotReference,
@@ -52,20 +67,9 @@ public static class CombatRecommendationViewModelMapper
             recommendation.RequestedPolicy,
             StyleReference(snapshotReference, recommendation.RequestedPolicy),
             InformationOnlyNotice,
-            [.. recommendation.ThreatAnalysis.Threats
-                .Select(value => new ThreatViewModel(
-                    ThreatReference(value.Threat.Code),
-                    value.Threat.Code,
-                    UiEntityText.UseNames(value.Threat.Title, skillNames),
-                    UiEntityText.UseNames(
-                        value.Threat.Explanation,
-                        skillNames),
-                    value.Threat.Kind,
-                    value.Threat.Severity,
-                    value.Threat.ActivationTiming,
-                    [.. value.Threat.Evidence.Select(evidence => evidence.Reference)]))],
+            threats,
             styles,
-            MapWarnings(recommendation, skillNames),
+            warnings,
             MapInnerPowerState(recommendation.Snapshot.Player),
             MapTargetObservationImpact(
                 recommendation,
@@ -74,13 +78,19 @@ public static class CombatRecommendationViewModelMapper
             MapComparison(
                 comparison,
                 recommendation.Snapshot.Player,
-                skillNames));
+                skillNames,
+                threats,
+                styles,
+                warnings));
     }
 
     private static LoadoutComparisonViewModel MapComparison(
         LoadoutComparison comparison,
         PlayerCombatSnapshot player,
-        IReadOnlyDictionary<int, string> skillNames)
+        IReadOnlyDictionary<int, string> skillNames,
+        IReadOnlyList<ThreatViewModel> threats,
+        IReadOnlyList<RecommendationStyleViewModel> styles,
+        IReadOnlyList<RecommendationWarningViewModel> warnings)
     {
         var currentAllocation = comparison.Current.Loadout!
             .GenericSlotAllocation;
@@ -89,7 +99,10 @@ public static class CombatRecommendationViewModelMapper
                 comparison.SnapshotReference.Value,
                 column,
                 currentAllocation,
-                skillNames))
+                skillNames,
+                threats,
+                styles.SingleOrDefault(style =>
+                    style.Style == column.Policy)))
             .ToArray();
         var categories = Enum.GetValues<SkillCategory>()
             .Select(category => MapComparisonCategory(
@@ -110,14 +123,26 @@ public static class CombatRecommendationViewModelMapper
                     value.Source,
                     value.CapturedAtUtc))],
             "TaiWu Helper cannot equip, redirect, or break through skills. "
-            + "Follow these instructions manually in the game.");
+            + "Follow these instructions manually in the game.",
+            [.. warnings
+                .Where(warning => warning.IsCritical
+                    || warning.Kind
+                        == PresentationWarningKind.UnverifiedMechanic)
+                .Select(warning =>
+                    new LoadoutComparisonUnsupportedViewModel(
+                        warning.IsCritical,
+                        warning.Message,
+                        warning.EffectOnRecommendation,
+                        warning.EvidenceReferences))]);
     }
 
     private static LoadoutComparisonColumnViewModel MapComparisonColumn(
         string snapshotReference,
         LoadoutComparisonColumn column,
         LoadoutComparisonValue<GenericSlotAllocation> currentAllocation,
-        IReadOnlyDictionary<int, string> skillNames)
+        IReadOnlyDictionary<int, string> skillNames,
+        IReadOnlyList<ThreatViewModel> threats,
+        RecommendationStyleViewModel? style)
     {
         var allocation = column.Loadout?.GenericSlotAllocation;
         var tactical = column.TacticalSummary;
@@ -155,8 +180,117 @@ public static class CombatRecommendationViewModelMapper
                     : null
                 : UiEntityText.UseNames(
                     column.Diagnostic.Summary,
-                    skillNames));
+                    skillNames),
+            MapTactical(
+                column.TacticalSummary,
+                style,
+                threats,
+                skillNames));
     }
+
+    private static LoadoutComparisonTacticalViewModel? MapTactical(
+        LoadoutComparisonTacticalSummary? tactical,
+        RecommendationStyleViewModel? style,
+        IReadOnlyList<ThreatViewModel> threats,
+        IReadOnlyDictionary<int, string> skillNames)
+    {
+        if (tactical is null)
+        {
+            return null;
+        }
+
+        if (style is null || !style.HasRecommendation)
+        {
+            throw new InvalidOperationException(
+                "An available comparison tactical summary requires its "
+                + "mapped recommendation style.");
+        }
+
+        return new LoadoutComparisonTacticalViewModel(
+            style.Style,
+            MapRole(tactical.ActiveDefense, skillNames),
+            MapRole(tactical.ActiveAgility, skillNames),
+            MapTacticalThreats(tactical.CoveredThreats, threats),
+            MapTacticalThreats(tactical.UnresolvedThreats, threats),
+            [.. style.Categories
+                .SelectMany(category => category.Skills)
+                .SelectMany(skill => skill.Conditions.Select(condition =>
+                    new LoadoutComparisonConditionSummaryViewModel(
+                        skill.Name ?? "Unnamed skill",
+                        condition.Kind,
+                        condition.Criticality,
+                        condition.Status,
+                        condition.Evaluation,
+                        condition.EvidenceReference)))],
+            [.. style.Caveats.Select(caveat =>
+                new LoadoutComparisonCaveatSummaryViewModel(
+                    caveat.Kind,
+                    caveat.Explanation,
+                    caveat.SkillId.HasValue
+                        ? SkillName(skillNames, caveat.SkillId.Value)
+                        : null,
+                    caveat.EvidenceReferences))],
+            [.. tactical.ScoreComponents.Select(component =>
+                new LoadoutComparisonScoreSummaryViewModel(
+                    component.Kind,
+                    component.Weight,
+                    component.Score.IsAvailable
+                        ? component.Score.Value
+                        : null,
+                    component.Score.IsAvailable
+                        ? null
+                        : UiEntityText.UseNames(
+                            component.Score.UnavailableReason!,
+                            skillNames),
+                    UiEntityText.UseNames(
+                        component.Explanation,
+                        skillNames),
+                    component.EvidenceReference.Value))],
+            [.. tactical.EvidenceReferences.Select(value => value.Value)]);
+    }
+
+    private static LoadoutComparisonRoleViewModel MapRole(
+        LoadoutComparisonValue<LoadoutComparisonSkillIdentity> role,
+        IReadOnlyDictionary<int, string> skillNames) => role.IsAvailable
+            ? new(
+                SkillName(skillNames, role.Value.SkillId),
+                UnavailableReason: null)
+            : new(
+                SkillName: null,
+                UiEntityText.UseNames(
+                    role.UnavailableReason!,
+                    skillNames));
+
+    private static LoadoutComparisonThreatViewModel[] MapTacticalThreats(
+        IReadOnlyList<LoadoutComparisonReference> references,
+        IReadOnlyList<ThreatViewModel> threats) =>
+    [
+        .. references.Select(reference =>
+        {
+            var threat = threats.SingleOrDefault(value =>
+                string.Equals(
+                    value.Code,
+                    reference.Value,
+                    StringComparison.Ordinal)
+                || string.Equals(
+                    value.Reference,
+                    reference.Value,
+                    StringComparison.Ordinal));
+            if (threat is null)
+            {
+                throw new InvalidOperationException(
+                    $"Comparison threat {reference.Value} has no mapped "
+                    + "typed threat fact.");
+            }
+
+            return new LoadoutComparisonThreatViewModel(
+                threat.Reference,
+                threat.Code,
+                threat.Title,
+                threat.Severity,
+                threat.EvidenceReferences);
+        })
+    ];
 
     private static LoadoutComparisonCategoryViewModel MapComparisonCategory(
         SkillCategory category,

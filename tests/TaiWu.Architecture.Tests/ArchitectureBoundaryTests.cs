@@ -1013,6 +1013,7 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SelectFactionAsync(option.FactionId)",
             "() => SelectPolicyAsync(column.Policy.Value)",
             "() => SelectTarget(target)",
+            "() => SelectThreatAsync(threat.Reference)",
             "() => SelectedReferenceChanged.InvokeAsync(null)",
             "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
             "() => SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout)",

@@ -4421,6 +4421,274 @@ select {
     line-height: 1.45;
 }
 
+.comparison-tactics {
+    margin-top: 20px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    background: rgba(8, 26, 25, 0.5);
+}
+
+.comparison-tactics-heading {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.comparison-tactics-heading h4,
+.comparison-tactics-heading p {
+    margin: 0;
+}
+
+.comparison-tactics-heading h4 {
+    margin-top: 3px;
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 1.15rem;
+}
+
+.comparison-tactics-heading > p {
+    max-width: 420px;
+    color: var(--muted);
+    font-size: 0.74rem;
+    line-height: 1.5;
+    text-align: right;
+}
+
+.comparison-unsupported {
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid rgba(238, 147, 128, 0.28);
+    background: rgba(128, 57, 48, 0.09);
+}
+
+.comparison-unsupported > strong {
+    color: #ffc2b7;
+}
+
+.comparison-unsupported ul,
+.comparison-threat-summary ul,
+.comparison-requirements ul {
+    display: grid;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.comparison-unsupported li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 9px;
+}
+
+.comparison-unsupported li > span {
+    color: var(--danger);
+    font-weight: 900;
+}
+
+.comparison-unsupported li div,
+.comparison-unsupported li div > span,
+.comparison-unsupported li div > small {
+    display: block;
+}
+
+.comparison-unsupported li div > span,
+.comparison-unsupported li div > small {
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+.comparison-tactics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.comparison-tactics-card {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--line);
+    background: rgba(6, 20, 20, 0.62);
+    overflow-wrap: anywhere;
+}
+
+.comparison-tactics-card > header {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+}
+
+.comparison-tactics-card > header div,
+.comparison-tactics-card > header small {
+    display: block;
+}
+
+.comparison-tactics-card > header > span,
+.comparison-tactics-card > header small {
+    color: var(--muted);
+    font-size: 0.68rem;
+}
+
+.comparison-role-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.comparison-role-summary > span {
+    padding: 8px;
+    background: rgba(101, 182, 162, 0.07);
+}
+
+.comparison-role-summary strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--muted);
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.comparison-threat-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.comparison-threat-summary > section {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--line);
+}
+
+.comparison-threat-summary > section > strong {
+    color: #dce8e3;
+    font-size: 0.74rem;
+}
+
+.comparison-threat-summary p {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    line-height: 1.5;
+}
+
+.comparison-threat-summary button {
+    display: grid;
+    gap: 3px;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid rgba(101, 182, 162, 0.22);
+    color: var(--ink);
+    background: rgba(101, 182, 162, 0.06);
+    text-align: left;
+}
+
+.comparison-threat-summary button span,
+.comparison-threat-summary button small {
+    color: var(--muted);
+    font-size: 0.64rem;
+}
+
+.comparison-unresolved button,
+.comparison-unresolved li.unresolved button {
+    border-color: rgba(238, 147, 128, 0.26);
+    background: rgba(128, 57, 48, 0.08);
+}
+
+.comparison-unresolved li.critical button {
+    border-width: 2px;
+    border-color: var(--danger);
+    color: #ffd0c7;
+}
+
+.comparison-requirements,
+.comparison-policy-scores {
+    margin-top: 10px;
+    border-top: 1px solid var(--line);
+}
+
+.comparison-requirements > summary,
+.comparison-policy-scores > summary {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    color: var(--gold);
+    font-weight: 800;
+}
+
+.comparison-requirements > summary span,
+.comparison-policy-scores > summary span {
+    color: var(--muted);
+    font-size: 0.7rem;
+}
+
+.comparison-requirements li {
+    padding: 9px;
+    border-left: 2px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.comparison-requirements li.unsatisfied,
+.comparison-requirements li.unknown,
+.comparison-requirements li.comparison-caveat {
+    border-left-color: var(--danger);
+}
+
+.comparison-requirements li > span,
+.comparison-requirements li > small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+.comparison-requirements li p {
+    margin: 5px 0 0;
+    line-height: 1.5;
+}
+
+.comparison-score-boundary {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    line-height: 1.5;
+}
+
+.comparison-score-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.comparison-policy-scores table {
+    width: 100%;
+    min-width: 470px;
+    border-spacing: 0;
+    border-collapse: collapse;
+    font-size: 0.68rem;
+}
+
+.comparison-policy-scores th,
+.comparison-policy-scores td {
+    padding: 7px;
+    border: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+}
+
+.comparison-policy-scores td small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+}
+
 .comparison-legend {
     display: flex;
     flex-wrap: wrap;
@@ -4500,6 +4768,14 @@ select {
     }
 
     .comparison-table .comparison-policy-column:not(.comparison-selected-policy) {
+        display: none;
+    }
+
+    .comparison-tactics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-tactics-card.comparison-unselected-policy {
         display: none;
     }
 
@@ -4659,9 +4935,14 @@ select {
     }
 
     .comparison-heading,
-    .comparison-controls {
+    .comparison-controls,
+    .comparison-tactics-heading {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .comparison-tactics-heading > p {
+        text-align: left;
     }
 
     .comparison-provenance dl,
@@ -4689,6 +4970,11 @@ select {
 
     .comparison-table {
         min-width: 590px;
+    }
+
+    .comparison-threat-summary,
+    .comparison-role-summary {
+        grid-template-columns: 1fr;
     }
 
     .inline-control,

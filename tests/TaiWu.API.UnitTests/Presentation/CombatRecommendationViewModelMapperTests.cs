@@ -152,6 +152,37 @@ public sealed class CombatRecommendationViewModelMapperTests
             skill => skill.Cells.Any(cell => cell.Membership is
                 LoadoutComparisonMembership.Added
                 or LoadoutComparisonMembership.Removed));
+        var policyColumns = comparison.Columns
+            .Where(column => column.Policy.HasValue)
+            .ToArray();
+        Assert.Equal(3, policyColumns.Length);
+        Assert.All(
+            policyColumns,
+            column =>
+            {
+                var tactical = Assert.IsType<
+                    LoadoutComparisonTacticalViewModel>(column.Tactical);
+                Assert.Equal(column.Policy, tactical.Policy);
+                Assert.Equal(
+                    model.Threats.Select(threat => threat.Code)
+                        .Order(StringComparer.Ordinal),
+                    tactical.CoveredThreats
+                        .Concat(tactical.UnresolvedThreats)
+                        .Select(threat => threat.Code)
+                        .Order(StringComparer.Ordinal));
+                Assert.NotEmpty(tactical.Scores);
+                Assert.All(
+                    tactical.Scores,
+                    score =>
+                    {
+                        Assert.True(score.Weight >= 0);
+                        Assert.False(string.IsNullOrWhiteSpace(
+                            score.Explanation));
+                        Assert.False(string.IsNullOrWhiteSpace(
+                            score.EvidenceReference));
+                    });
+                Assert.NotEmpty(tactical.EvidenceReferences);
+            });
         Assert.Contains(
             "cannot equip",
             comparison.InformationOnlyNotice,

@@ -19,7 +19,9 @@ The authoritative comparison semantics are defined by
 Application normalization is described by
 [the comparison builder](./LOADOUT-COMPARISON-BUILDER.md), and the public
 transport shape is described by
-[the comparison API](./LOADOUT-COMPARISON-API.md).
+[the comparison API](./LOADOUT-COMPARISON-API.md). Policy-local threat,
+requirement, risk, and score projection is described by
+[the tactical explanation](./LOADOUT-COMPARISON-EXPLANATION.md).
 
 ## Presentation flow
 
@@ -78,6 +80,12 @@ behavior.
 Policy links invoke the existing recommendation selection state and target the
 existing manual checklist heading. The selected checklist and battle plan
 therefore come from the same policy result as the chosen matrix column.
+
+The tactical cards remain outside the row-difference filter. Each card keeps
+the selected winner's covered and unresolved threats, requirements, caveats,
+and score components visible without producing a cross-policy total. Threat
+facts select the existing target-analysis detail; they do not trigger a new
+read or recommendation.
 
 ## Accessibility and localization
 

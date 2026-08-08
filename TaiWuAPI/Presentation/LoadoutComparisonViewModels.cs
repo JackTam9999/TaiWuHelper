@@ -1,5 +1,6 @@
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.CombatThreats;
 using TaiWu.Domain.LoadoutComparisons;
 
 namespace TaiWuAPI.Presentation;
@@ -10,7 +11,13 @@ public sealed record LoadoutComparisonViewModel(
     IReadOnlyList<LoadoutComparisonColumnViewModel> Columns,
     IReadOnlyList<LoadoutComparisonCategoryViewModel> Categories,
     IReadOnlyList<LoadoutComparisonProvenanceViewModel> BaselineProvenance,
-    string InformationOnlyNotice);
+    string InformationOnlyNotice,
+    IReadOnlyList<LoadoutComparisonUnsupportedViewModel>? UnsupportedMechanics
+        = null)
+{
+    public IReadOnlyList<LoadoutComparisonUnsupportedViewModel>
+        SafeUnsupportedMechanics => UnsupportedMechanics ?? [];
+}
 
 public sealed record LoadoutComparisonColumnViewModel(
     LoadoutComparisonColumnKind Kind,
@@ -21,7 +28,8 @@ public sealed record LoadoutComparisonColumnViewModel(
     bool GenericSlotsChanged,
     int? ManualActionCount,
     string? ManualActionCountUnavailableReason,
-    string? Diagnostic);
+    string? Diagnostic,
+    LoadoutComparisonTacticalViewModel? Tactical = null);
 
 public sealed record LoadoutComparisonGenericSlotsViewModel(
     int Total,
@@ -82,6 +90,56 @@ public sealed record LoadoutComparisonProvenanceViewModel(
     LoadoutComparisonBaselineField Field,
     SnapshotDataSource Source,
     DateTimeOffset CapturedAtUtc);
+
+public sealed record LoadoutComparisonTacticalViewModel(
+    RecommendationPolicy Policy,
+    LoadoutComparisonRoleViewModel ActiveDefense,
+    LoadoutComparisonRoleViewModel ActiveAgility,
+    IReadOnlyList<LoadoutComparisonThreatViewModel> CoveredThreats,
+    IReadOnlyList<LoadoutComparisonThreatViewModel> UnresolvedThreats,
+    IReadOnlyList<LoadoutComparisonConditionSummaryViewModel> Conditions,
+    IReadOnlyList<LoadoutComparisonCaveatSummaryViewModel> Caveats,
+    IReadOnlyList<LoadoutComparisonScoreSummaryViewModel> Scores,
+    IReadOnlyList<string> EvidenceReferences);
+
+public sealed record LoadoutComparisonRoleViewModel(
+    string? SkillName,
+    string? UnavailableReason);
+
+public sealed record LoadoutComparisonThreatViewModel(
+    string Reference,
+    string Code,
+    string Title,
+    TargetThreatSeverity Severity,
+    IReadOnlyList<string> EvidenceReferences);
+
+public sealed record LoadoutComparisonConditionSummaryViewModel(
+    string SkillName,
+    RecommendationConditionKind Kind,
+    CombatRequirementCriticality Criticality,
+    CombatRequirementStatus Status,
+    string Evaluation,
+    string EvidenceReference);
+
+public sealed record LoadoutComparisonCaveatSummaryViewModel(
+    RecommendationCaveatKind Kind,
+    string Explanation,
+    string? SkillName,
+    IReadOnlyList<string> EvidenceReferences);
+
+public sealed record LoadoutComparisonScoreSummaryViewModel(
+    RecommendationScoreComponentKind Kind,
+    int Weight,
+    decimal? Score,
+    string? ScoreUnavailableReason,
+    string Explanation,
+    string EvidenceReference);
+
+public sealed record LoadoutComparisonUnsupportedViewModel(
+    bool IsCritical,
+    string Message,
+    string EffectOnRecommendation,
+    IReadOnlyList<string> EvidenceReferences);
 
 public sealed class LoadoutComparisonFilterState
 {
