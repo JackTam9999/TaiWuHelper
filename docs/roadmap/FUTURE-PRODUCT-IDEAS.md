@@ -5,7 +5,7 @@
 | Status | Proposed |
 | Scope | Post-Milestone 1 discovery |
 | Related epic | None |
-| Last updated | 2026-07-31 |
+| Last updated | 2026-08-08 |
 
 ## Purpose
 
@@ -76,6 +76,9 @@ provenance, and apply the documented source-of-truth precedence. Never silently
 replace one source with another.
 
 ### PI-003 — Side-by-side loadout comparison
+
+**Status:** Promoted to
+[EPIC-004](./epic-004/EPIC.md) on 2026-08-08.
 
 Compare:
 
@@ -180,7 +183,8 @@ Epic 3 on 2026-08-07. The ordering is retained as discovery context:
 
 1. Verified target observations and evidence provenance — promoted to
    [EPIC-003](./epic-003/EPIC.md).
-2. Side-by-side loadout comparison.
+2. Side-by-side loadout comparison — promoted to
+   [EPIC-004](./epic-004/EPIC.md).
 3. Bilingual martial-art catalogue — promoted to
    [EPIC-002](./epic-002/EPIC.md).
 4. Shareable recommendation card.
