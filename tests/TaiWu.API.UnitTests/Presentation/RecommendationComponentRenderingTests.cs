@@ -363,6 +363,117 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("class=\"active\"", html);
     }
 
+    [Fact]
+    public async Task Comparison_matrix_exposes_bilingual_accessible_narrow_state()
+    {
+        const string longName =
+            "超長測試功法名稱會完整換行而且不會隱藏必要的手動操作與無法取得原因";
+        var comparison = Comparison();
+        comparison = comparison with
+        {
+            Categories =
+            [
+                .. comparison.Categories.Select(category =>
+                    category.Category == SkillCategory.Attack
+                        ? category with
+                        {
+                            Skills =
+                            [
+                                .. category.Skills.Select(skill =>
+                                    skill.SkillId == 103
+                                        ? skill with { Name = longName }
+                                        : skill)
+                            ]
+                        }
+                        : category)
+            ]
+        };
+
+        var html = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] = comparison,
+                [nameof(LoadoutComparisonMatrix.SelectedPolicy)] =
+                    RecommendationPolicy.Safe,
+                [nameof(LoadoutComparisonMatrix.Language)] =
+                    TaiwuLanguage.Chinese
+            },
+            TaiwuLanguage.Chinese);
+        var text = VisibleText(html);
+
+        Assert.Contains("運功配置比較", text);
+        Assert.Contains("比較方案", text);
+        Assert.Contains("目前比較方案： 穩健", text);
+        Assert.Contains("所有列", text);
+        Assert.Contains("僅顯示差異", text);
+        Assert.Contains("比較類別", text);
+        Assert.Contains("跳至比較類別", text);
+        Assert.Contains("目前運功", text);
+        Assert.Contains("保留", text);
+        Assert.Contains("移除", text);
+        Assert.Contains("無法取得", text);
+        Assert.Contains(longName, text);
+        Assert.Contains(
+            "太吾助手不會裝備、改變正逆練或進行突破。"
+            + "請在遊戲中手動按照指示操作。",
+            text);
+        Assert.Contains("data-selected-policy=\"Safe\"", html);
+        Assert.Contains("comparison-selected-safe", html);
+        Assert.Contains("comparison-selected-policy", html);
+        Assert.Contains("comparison-unselected-policy", html);
+        Assert.Contains("scope=\"rowgroup\"", html);
+        Assert.Contains("tabindex=\"-1\"", html);
+        Assert.Contains("aria-live=\"polite\"", html);
+        Assert.Contains("aria-label=\"Changed Blade", html);
+        Assert.Contains("comparison-current-column", html);
+        Assert.Contains("data-column=\"Aggressive\"", html);
+        Assert.DoesNotContain(">Attack<", html);
+        Assert.DoesNotContain("Effective cost is unavailable.", text);
+        Assert.DoesNotContain(
+            "No feasible candidate satisfies known slot constraints.",
+            text);
+        Assert.DoesNotContain(
+            "Reverse practice is required for this counter.",
+            text);
+    }
+
+    [Fact]
+    public async Task Comparison_policy_switch_preserves_difference_filter_state()
+    {
+        var filter = new LoadoutComparisonFilterState();
+        filter.ShowDifferences();
+
+        var safe = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] = Comparison(),
+                [nameof(LoadoutComparisonMatrix.SelectedPolicy)] =
+                    RecommendationPolicy.Safe,
+                [nameof(LoadoutComparisonMatrix.FilterState)] = filter
+            });
+        var aggressive = await RenderAsync<LoadoutComparisonMatrix>(
+            new Dictionary<string, object?>
+            {
+                [nameof(LoadoutComparisonMatrix.Comparison)] = Comparison(),
+                [nameof(LoadoutComparisonMatrix.SelectedPolicy)] =
+                    RecommendationPolicy.Aggressive,
+                [nameof(LoadoutComparisonMatrix.FilterState)] = filter
+            });
+
+        Assert.True(filter.DifferencesOnly);
+        Assert.Contains("comparison-differences-only", safe);
+        Assert.Contains("comparison-selected-safe", safe);
+        Assert.Contains("Safe: Differences only: 1", VisibleText(safe));
+        Assert.Contains("comparison-differences-only", aggressive);
+        Assert.Contains("comparison-selected-aggressive", aggressive);
+        Assert.Contains(
+            "Aggressive: Differences only: 0",
+            VisibleText(aggressive));
+        Assert.Contains(
+            "No feasible candidate satisfies known slot constraints.",
+            VisibleText(aggressive));
+    }
+
     [Theory]
     [InlineData("loading", "Reading configured save", "status", false)]
     [InlineData("warning", "Recommendation ready with warnings", "status", true)]

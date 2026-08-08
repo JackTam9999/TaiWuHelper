@@ -54,8 +54,11 @@ IDs correlate rows internally; only resolved names are rendered.
   player-safe reason where one exists.
 
 The desktop table has a fixed comparison canvas inside a keyboard-focusable
-horizontal scroll region. Narrow-screen column selection is a separate E4-005
-enhancement; no facts are removed by the desktop implementation.
+horizontal scroll region. Below 1280 CSS pixels, responsive classes hide the
+two unselected policy columns and retain Current plus the policy selected in
+the native comparison selector. All four typed columns remain in the same DOM
+order, so selecting another policy exposes the same facts without rebuilding
+or rereading the recommendation.
 
 ## Interaction state
 
@@ -63,11 +66,37 @@ enhancement; no facts are removed by the desktop implementation.
 differences-only choice. Differences are based on typed membership and manual
 actions, so filtering cannot hide an action the player must perform. A new
 comparison reference resets the filter; changing the selected policy within
-one comparison does not.
+one comparison does not. Desktop counts consider every visible policy, while
+narrow counts and CSS row visibility consider only the selected policy.
+
+`RecommendationSelectionState` owns the selected policy shared by the matrix,
+setup checklist, and battle plan. It starts with the requested policy when
+feasible, otherwise the first feasible policy, otherwise Safe. The matrix uses
+a native `select`, so keyboard selection and focus stability follow platform
+behavior.
 
 Policy links invoke the existing recommendation selection state and target the
 existing manual checklist heading. The selected checklist and battle plan
 therefore come from the same policy result as the chosen matrix column.
+
+## Accessibility and localization
+
+Category links follow canonical order and target focusable row-group headings.
+A focus-revealed skip link reaches the first category. Column headers use
+`scope="col"`, category headers use `scope="rowgroup"`, and skill headers use
+`scope="row"`. Every skill and capacity cell has a localized accessible label
+containing its name/category, column, state, values, actions, and safe
+unavailable information.
+
+Text and icons jointly convey membership and action states. Long names,
+diagnostics, and unavailable reasons use wrapping instead of ellipsis. Policy
+and filter announcements are polite live regions with desktop and selected-
+policy narrow row counts.
+
+All comparison labels and the persistent non-interference notice use
+`UiText`. Pattern-based localization covers policy-specific unavailable and
+no-feasible-result diagnostics. Practice directions and resolved entity names
+remain player-facing rather than exposing enum values or technical IDs.
 
 ## Atomic page states
 

@@ -16,6 +16,26 @@ internal static partial class DynamicUiText
                 + "請依姓名、年齡與地點名稱選擇。";
         }
 
+        match = ComparisonStyleUnavailablePattern().Match(english);
+        if (match.Success)
+        {
+            return "此推薦中無法取得"
+                + UiText.Get(
+                    TaiwuLanguage.Chinese,
+                    match.Groups["policy"].Value)
+                + "方案結果。";
+        }
+
+        match = NoFeasiblePolicyWinnerPattern().Match(english);
+        if (match.Success)
+        {
+            return "沒有可用的"
+                + UiText.Get(
+                    TaiwuLanguage.Chinese,
+                    match.Groups["policy"].Value)
+                + "策略可行最佳方案。";
+        }
+
         match = SelectedTargetPattern().Match(english);
         if (match.Success)
         {
@@ -522,6 +542,16 @@ internal static partial class DynamicUiText
         @"^At the opening, use (?<skill>.+) once its activation requirements are satisfied\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex NamedOpeningAttackPattern();
+
+    [GeneratedRegex(
+        @"^The (?<policy>Safe|Balanced|Aggressive) style result is unavailable in this recommendation\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex ComparisonStyleUnavailablePattern();
+
+    [GeneratedRegex(
+        @"^No feasible (?<policy>Safe|Balanced|Aggressive) policy winner is available\.$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex NoFeasiblePolicyWinnerPattern();
 
     [GeneratedRegex(
         @"^Before combat or between attempts, use (?<alternative>.+) instead of (?<primary>.+) if \k<primary>'s activation requirements cannot be satisfied\.$",

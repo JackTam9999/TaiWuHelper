@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Approved contract |
+| Status | Implemented through E4-005 |
 | Epic | [EPIC-004](./EPIC.md) |
-| Backlog item | [E4-000](./BACKLOG.md#e4-000--define-comparison-semantics-and-ui-states) |
+| Backlog items | [E4-000](./BACKLOG.md#e4-000--define-comparison-semantics-and-ui-states), [E4-004](./BACKLOG.md#e4-004--build-the-desktop-comparison-matrix), [E4-005](./BACKLOG.md#e4-005--add-narrow-screen-bilingual-and-keyboard-interaction) |
 | Primary surface | Existing local Blazor recommendation page |
 | Last updated | 2026-08-08 |
 
@@ -320,3 +320,37 @@ Traditional Chinese:
 | Keyboard, headings, legend, focus, non-color cues | Matrix semantics, Controls, Focus order, and Non-color status cues |
 | Bilingual representative state | English desktop and Traditional Chinese narrow wireframes |
 | Excluded capabilities | Explicitly out of scope |
+
+## E4-005 implementation and verification
+
+The implemented matrix follows this contract with these concrete mechanics:
+
+- a native Safe/Balanced/Aggressive selector shares
+  `RecommendationSelectionState` with the existing checklist and battle plan;
+- the requested policy is used when feasible, otherwise the first feasible
+  policy is selected, otherwise Safe;
+- below 1280 CSS pixels, Current and the selected policy remain visible while
+  the other policy columns are removed from visual and accessibility layout;
+- selected-policy difference classes re-evaluate narrow row visibility without
+  changing the immutable comparison or losing the all/differences filter;
+- canonical category links and a skip link target focusable row-group
+  headings;
+- cell labels combine localized skill/category, policy, membership, values,
+  actions, and unavailable information;
+- polite live regions announce policy, filter, and desktop/narrow row counts;
+  and
+- long names, diagnostics, and action reasons wrap without ellipsis.
+
+Verification on 2026-08-08:
+
+- API/presentation tests passed 254/254, including English and Traditional
+  Chinese feasible, partially infeasible, unchanged, changed, unavailable,
+  selected-policy, filter-preservation, and accessible-markup states;
+- architecture tests passed 79/79, including the read-only/helper-local event
+  allow-list and visible-identifier protections;
+- a 760 × 900 in-app-browser pass confirmed the page's narrow reflow, logical
+  focusable order, bilingual controls, and no browser console errors;
+- the local development configuration had no save path, so matrix-specific
+  responsive facts were verified with the synthetic component renderer and a
+  stylesheet/semantic-markup audit rather than a live save; and
+- the viewport override was reset after verification.

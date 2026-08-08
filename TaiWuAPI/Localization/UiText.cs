@@ -670,6 +670,19 @@ public static class UiText
             ["Legendary-book cost assignments"] = "奇書佔格配置",
             ["Save"] = "存檔",
             ["Current-screen observation"] = "目前畫面觀察",
+            ["Compare policy"] = "比較方案",
+            ["Comparing Current with"] = "目前比較方案：",
+            ["Comparison categories"] = "比較類別",
+            ["Skip to comparison categories"] = "跳至比較類別",
+            ["Used capacity"] = "已用格數",
+            ["Generic contribution"] = "萬用貢獻",
+            ["Effective cost is unavailable."] = "無法取得有效佔格。",
+            ["No feasible candidate satisfies known slot constraints."] =
+                "沒有符合已知格位限制的可行候選方案。",
+            ["Reverse practice is required for this counter."] =
+                "此克制效果需要逆練。",
+            ["TaiWu Helper cannot equip, redirect, or break through skills. Follow these instructions manually in the game."] =
+                "太吾助手不會裝備、改變正逆練或進行突破。請在遊戲中手動按照指示操作。",
             ["Recommendation ready"] = "推薦已完成",
             ["Recommendation styles"] = "推薦風格",
             ["Known-constraint score"] = "已知條件評分",

@@ -22,7 +22,23 @@ public sealed class RecommendationSelectionState
         ArgumentNullException.ThrowIfNull(recommendation);
         Recommendation = recommendation;
         SelectedThreatReference = null;
-        ShowStyle(visibleStyle);
+        var requested = recommendation.Styles.SingleOrDefault(
+            style => style.Style == visibleStyle);
+        if (requested is null)
+        {
+            throw new ArgumentException(
+                "The requested style is not present in the recommendation.",
+                nameof(visibleStyle));
+        }
+
+        var initial = requested.HasRecommendation
+            ? visibleStyle
+            : recommendation.Styles.FirstOrDefault(
+                style => style.HasRecommendation)?.Style
+                ?? recommendation.Styles.FirstOrDefault(
+                    style => style.Style == RecommendationPolicy.Safe)?.Style
+                ?? requested.Style;
+        ShowStyle(initial);
     }
 
     public void Clear()

@@ -615,6 +615,39 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Loadout_comparison_wires_responsive_and_accessible_contract()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var component = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "Components",
+            "Recommendations",
+            "LoadoutComparisonMatrix.razor"));
+        var styles = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "wwwroot",
+            "app.css"));
+
+        Assert.Contains("<select id=\"comparison-policy-selector\"", component);
+        Assert.Contains("@onchange=\"ChangePolicyAsync\"", component);
+        Assert.Contains("aria-live=\"polite\"", component);
+        Assert.Contains("scope=\"rowgroup\"", component);
+        Assert.Contains("scope=\"row\"", component);
+        Assert.Contains("SkillCellAriaLabel(", component);
+        Assert.Contains("CapacityAriaLabel(", component);
+        Assert.Contains("Skip to comparison categories", component);
+        Assert.Contains("comparison-selected-policy", component);
+        Assert.Contains("comparison-unselected-policy", component);
+        Assert.Contains("comparison-selected-policy", styles);
+        Assert.Contains("comparison-difference-safe", styles);
+        Assert.Contains("comparison-difference-balanced", styles);
+        Assert.Contains("comparison-difference-aggressive", styles);
+        Assert.Contains("overflow-wrap: anywhere", styles);
+    }
+
+    [Fact]
     public void Production_source_has_no_save_write_or_game_control_apis()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -1001,6 +1034,7 @@ public sealed partial class ArchitectureBoundaryTests
             "args => ChangeDirection(skill.SkillId, args)",
             "args => ChangeVisiblePower(skill.SkillId, args)",
             "ChangeAsync",
+            "ChangePolicyAsync",
             "ClearAsync",
             "ClearFiltersAsync",
             "ClearProgressCacheAsync",

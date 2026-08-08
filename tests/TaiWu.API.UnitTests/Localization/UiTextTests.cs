@@ -207,6 +207,15 @@ public sealed class UiTextTests
                 "觀察已清除；推薦現在只使用存檔。"
             },
             {
+                "The Aggressive style result is unavailable in this "
+                + "recommendation.",
+                "此推薦中無法取得進取方案結果。"
+            },
+            {
+                "No feasible Balanced policy winner is available.",
+                "沒有可用的均衡策略可行最佳方案。"
+            },
+            {
                 "The archive reached the expected standalone event-runtime "
                 + "boundary: Void InitRuntimeEnvironment()",
                 "存檔已讀取至預期的獨立事件執行環境邊界："

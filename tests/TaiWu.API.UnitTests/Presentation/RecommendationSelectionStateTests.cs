@@ -44,6 +44,32 @@ public sealed class RecommendationSelectionStateTests
     }
 
     [Fact]
+    public void Initial_selection_uses_first_feasible_style_when_requested_is_infeasible()
+    {
+        var state = new RecommendationSelectionState();
+
+        state.Load(
+            Model(infeasibleStyle: RecommendationPolicy.Balanced),
+            RecommendationPolicy.Balanced);
+
+        Assert.Equal(RecommendationPolicy.Safe, state.VisibleStyle);
+        Assert.True(state.VisibleRecommendation?.HasRecommendation);
+    }
+
+    [Fact]
+    public void Initial_selection_defaults_to_safe_when_every_style_is_infeasible()
+    {
+        var state = new RecommendationSelectionState();
+
+        state.Load(
+            Model(allStylesInfeasible: true),
+            RecommendationPolicy.Aggressive);
+
+        Assert.Equal(RecommendationPolicy.Safe, state.VisibleStyle);
+        Assert.False(state.VisibleRecommendation?.HasRecommendation);
+    }
+
+    [Fact]
     public void Selected_threat_highlights_only_linked_content_and_toggles()
     {
         var state = new RecommendationSelectionState();
@@ -70,10 +96,16 @@ public sealed class RecommendationSelectionStateTests
         Assert.Throws<ArgumentException>(
             () => state.ShowStyle((RecommendationPolicy)999));
         Assert.Throws<ArgumentException>(
+            () => new RecommendationSelectionState().Load(
+                Model(),
+                (RecommendationPolicy)999));
+        Assert.Throws<ArgumentException>(
             () => state.SelectThreat("threat:UNKNOWN"));
     }
 
-    private static CombatRecommendationViewModel Model()
+    private static CombatRecommendationViewModel Model(
+        RecommendationPolicy? infeasibleStyle = null,
+        bool allStylesInfeasible = false)
     {
         const string snapshotReference = "snapshot:test";
         return new CombatRecommendationViewModel(
@@ -101,7 +133,8 @@ public sealed class RecommendationSelectionStateTests
                     snapshotReference,
                     policy,
                     policy == RecommendationPolicy.Balanced,
-                    HasRecommendation: true,
+                    HasRecommendation: !allStylesInfeasible
+                        && policy != infeasibleStyle,
                     CandidateReference: $"candidate:{policy}",
                     TotalScore: 1,
                     Scores: [],
@@ -110,7 +143,11 @@ public sealed class RecommendationSelectionStateTests
                     OpeningActions: [],
                     SwitchingConditions: [],
                     Caveats: [],
-                    Diagnostic: null))],
+                    Diagnostic: allStylesInfeasible
+                        || policy == infeasibleStyle
+                            ? "No feasible scored candidate is available "
+                                + "for a manual combat plan."
+                            : null))],
             Warnings: []);
     }
 }

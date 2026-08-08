@@ -276,7 +276,7 @@ users inspect Current, Safe, Balanced, and Aggressive results together.
 
 ### E4-005 — Add narrow-screen, bilingual, and keyboard interaction
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -289,29 +289,33 @@ complete the English/Traditional Chinese accessibility pass.
 
 #### Acceptance criteria
 
-- [ ] Narrow screens show Current plus one explicitly selected policy.
-- [ ] Switching policies does not lose filters, category position, warnings,
+- [x] Narrow screens show Current plus one explicitly selected policy.
+- [x] Switching policies does not lose filters, category position, warnings,
       or the relationship to the setup checklist.
-- [ ] Desktop and narrow-screen modes expose equivalent comparison facts.
-- [ ] Keyboard users can reach the policy selector, category navigation,
+- [x] Desktop and narrow-screen modes expose equivalent comparison facts.
+- [x] Keyboard users can reach the policy selector, category navigation,
       differences filter, legend, warnings, and evidence details in logical
       order.
-- [ ] Focus remains stable after policy or filter changes.
-- [ ] Screen readers receive meaningful column, category, skill, and status
+- [x] Focus remains stable after policy or filter changes.
+- [x] Screen readers receive meaningful column, category, skill, and status
       labels.
-- [ ] Status is conveyed by text/icon semantics in addition to color.
-- [ ] All new user-facing text has complete English and Traditional Chinese
+- [x] Status is conveyed by text/icon semantics in addition to color.
+- [x] All new user-facing text has complete English and Traditional Chinese
       localization.
-- [ ] Long bilingual skill names and unavailable reasons do not overflow or
+- [x] Long bilingual skill names and unavailable reasons do not overflow or
       hide required actions.
-- [ ] Rendering tests cover both languages and representative desktop/narrow
+- [x] Rendering tests cover both languages and representative desktop/narrow
       states.
 
 #### Evidence when complete
 
-- `docs/roadmap/epic-004/UI-004-loadout-comparison.md`.
-- Bilingual and accessibility rendering test summary.
-- Manual keyboard and responsive verification record.
+- `docs/roadmap/epic-004/UI-004-loadout-comparison.md` implementation and
+  verification record.
+- Bilingual, selected-policy, filter-preservation, and accessibility rendering
+  tests in `RecommendationComponentRenderingTests`.
+- Verification on 2026-08-08: API/presentation tests passed 254/254,
+  architecture tests passed 79/79, and solution formatting verification
+  passed.
 
 ## Slice 6: Tactical explanation
 
