@@ -5,11 +5,13 @@ using System.Security.Cryptography;
 using System.Text;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.Localization;
 using TaiWu.Application.RegionStories;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatSkills;
+using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.SaveGames;
 using TaiWu.Infrastructure.Catalogue;
@@ -30,6 +32,8 @@ public sealed class LocalGameDataIntegrationTests
         "9C30C00CF1ABD05973435B14B724A0A41A1B0DCD7847A8CA04D4E60E2B53C916";
     private const string RegionStoryGoldenSaveSha256 =
         "948BFD358AD4F952683B5BFB2A719B9890E6E7DCEB415DD0222B4CDF2DCF2F16";
+    private const string StoryTargetGoldenSaveSha256 =
+        "BCDD5C416779AA2A4557BACDD9F4940AFD795359BF21586D256926A57C437C24";
     private const int GoldenPlayerId = 21396;
     private const int GoldenTargetId = 16317;
 
@@ -632,6 +636,102 @@ public sealed class LocalGameDataIntegrationTests
                 snapshot.Stories.Count(story =>
                     story.Status
                     == RegionStoryProgressStatus.NotCompleted));
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            AssertUnchanged(before, after);
+        }
+    }
+
+    [Fact]
+    public async Task Story_target_lookup_uses_fixed_template_name_and_real_character()
+    {
+        var savePath = RequireSavePath();
+        var guardedPaths = DiscoverGameOwnedReadDependencies(savePath);
+        var before = await CaptureAsync(guardedPaths);
+        Assert.SkipUnless(
+            string.Equals(
+                before[savePath].Sha256,
+                StoryTargetGoldenSaveSha256,
+                StringComparison.OrdinalIgnoreCase),
+            "Story-target integration skipped: the configured save does "
+            + "not match the verified Wudang story snapshot fingerprint.");
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var targetReader =
+                provider.GetRequiredService<ITargetLookupReader>();
+            var lookup = new FindTargets(targetReader);
+
+            var result = await lookup.ExecuteAsync(
+                new FindTargetsRequest(
+                    savePath,
+                    "邋遢道長",
+                    language: TaiwuLanguage.Chinese),
+                TestContext.Current.CancellationToken);
+
+            Assert.True(
+                result.Status == TargetLookupStatus.Found,
+                string.Join(
+                    " | ",
+                    result.Warnings
+                        .Where(warning => warning.Message.Contains(
+                            "61848",
+                            StringComparison.Ordinal)
+                            || warning.Message.Contains(
+                                "63020",
+                                StringComparison.Ordinal))
+                        .Select(warning =>
+                            $"{warning.Code}:{warning.Message}")));
+            var target = Assert.Single(result.Matches);
+            Assert.Equal(61848, target.CharacterId);
+            Assert.Equal("邋遢道長", target.DisplayName);
+            Assert.Equal(TargetLookupKind.StoryCharacter, target.Kind);
+            Assert.Equal(633, target.TemplateId);
+            Assert.True(target.HasValidLocation);
+            Assert.DoesNotContain(
+                result.Warnings,
+                warning => (warning.Code is "TARGET_NAME_UNAVAILABLE"
+                    or "TARGET_CONTEXT_UNAVAILABLE")
+                    && warning.Message.Contains(
+                        "Character 61848 ",
+                        StringComparison.Ordinal));
+            Assert.Contains(
+                result.Warnings,
+                warning => warning.Code == "TARGET_LOCATION_UNAVAILABLE"
+                    && warning.Message.Contains(
+                        "Character 61848 ",
+                        StringComparison.Ordinal));
+
+            var snapshotReader =
+                provider.GetRequiredService<ICombatSnapshotReader>();
+            var combat = await snapshotReader.ReadAsync(
+                new CombatSnapshotReadRequest(
+                    savePath,
+                    target.CharacterId,
+                    language: TaiwuLanguage.Chinese),
+                TestContext.Current.CancellationToken);
+            Assert.True(combat.Target.DisplayName.IsAvailable);
+            Assert.Equal("邋遢道長", combat.Target.DisplayName.Value);
+            Assert.NotEmpty(combat.Target.LearnedSkills);
+
+            var recommendation = await new RecommendCombatLoadout(
+                    snapshotReader)
+                .ExecuteAsync(
+                    new RecommendCombatLoadoutRequest(
+                        savePath,
+                        target.CharacterId,
+                        RecommendationPolicy.Safe,
+                        language: TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+            Assert.Equal(
+                target.CharacterId,
+                recommendation.Snapshot.Target.CharacterId);
+            Assert.Equal(3, recommendation.Styles.Length);
         }
         finally
         {

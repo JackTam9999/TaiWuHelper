@@ -83,6 +83,18 @@ internal sealed class TaiwuTargetLookupReader(
         try
         {
             var displayName = text.ResolveCharacterName(character);
+            var kind = TargetLookupKind.RegularCharacter;
+            int? templateId = null;
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                displayName = text.ResolveFixedTemplateCharacterName(character);
+                if (!string.IsNullOrWhiteSpace(displayName))
+                {
+                    kind = TargetLookupKind.StoryCharacter;
+                    templateId = character.GetTemplateId();
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(displayName))
             {
                 warnings.Add(
@@ -94,6 +106,25 @@ internal sealed class TaiwuTargetLookupReader(
             }
 
             var location = character.GetLocation();
+            string? locationName = null;
+            try
+            {
+                locationName = text.ResolveLocationName(location);
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException
+                    or InvalidOperationException
+                    or IndexOutOfRangeException
+                    or NullReferenceException)
+            {
+                warnings.Add(
+                    new TargetLookupWarning(
+                        "TARGET_LOCATION_UNAVAILABLE",
+                        $"Character {characterId} was retained without a "
+                        + "localized location because its map context is "
+                        + $"unavailable: {exception.Message}"));
+            }
+
             entries.Add(
                 new TargetLookupEntry(
                     characterId,
@@ -101,7 +132,9 @@ internal sealed class TaiwuTargetLookupReader(
                     character.GetCurrAge(),
                     location.AreaId,
                     location.BlockId,
-                    text.ResolveLocationName(location)));
+                    locationName,
+                    kind,
+                    templateId));
         }
         catch (Exception exception)
             when (exception is ArgumentException

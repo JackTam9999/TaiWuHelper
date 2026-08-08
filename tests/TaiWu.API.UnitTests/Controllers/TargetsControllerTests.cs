@@ -40,6 +40,8 @@ public sealed class TargetsControllerTests
             {
                 Assert.Equal("target:16317", first.Reference);
                 Assert.Equal("何春石", first.DisplayName);
+                Assert.Equal(TargetLookupKind.RegularCharacter, first.Kind);
+                Assert.Null(first.TemplateId);
                 Assert.Equal("location:10:20", first.Location.Reference);
                 Assert.Equal(
                     "辽东 · 鸭绿江 · 玄石之地",
@@ -57,6 +59,25 @@ public sealed class TargetsControllerTests
                 && request.SaveFilePath == ConfiguredSavePath
                 && request.Language == TaiwuLanguage.Chinese),
             cancellationToken);
+    }
+
+    [Fact]
+    public async Task Story_match_exposes_kind_and_template_identity()
+    {
+        var controller = Controller(Reader());
+
+        var action = await controller.Find(
+            "邋遢道長",
+            maxResults: 25,
+            TestContext.Current.CancellationToken,
+            TaiwuLanguage.Chinese);
+
+        var ok = Assert.IsType<OkObjectResult>(action.Result);
+        var response = Assert.IsType<TargetLookupResponse>(ok.Value);
+        var match = Assert.Single(response.Matches);
+        Assert.Equal(61848, match.CharacterId);
+        Assert.Equal(TargetLookupKind.StoryCharacter, match.Kind);
+        Assert.Equal(633, match.TemplateId);
     }
 
     [Theory]
@@ -176,7 +197,16 @@ public sealed class TargetsControllerTests
                             "何春石",
                             age: 41,
                             areaId: 11,
-                            blockId: 21)
+                            blockId: 21),
+                        new TargetLookupEntry(
+                            61848,
+                            "邋遢道長",
+                            age: 40,
+                            areaId: 10,
+                            blockId: 369,
+                            "荊北 · 武當山 · 武當派",
+                            TargetLookupKind.StoryCharacter,
+                            templateId: 633)
                     ],
                     [
                         new TargetLookupWarning(

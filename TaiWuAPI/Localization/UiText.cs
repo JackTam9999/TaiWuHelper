@@ -429,6 +429,8 @@ public static class UiText
             ["Enter the in-game character name"] = "輸入遊戲內的人物姓名",
             ["Search"] = "搜尋",
             ["Target search results"] = "目標搜尋結果",
+            ["Story character"] = "劇情人物",
+            ["Not currently placed on the map"] = "目前未置於一般地圖",
             ["years"] = "歲",
             ["Location unavailable"] = "無法取得地點名稱",
             ["Area"] = "區域",

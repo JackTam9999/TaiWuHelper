@@ -67,6 +67,8 @@ public sealed class TargetsController(
                     entry.CharacterId,
                     entry.DisplayName,
                     entry.Age,
+                    entry.Kind,
+                    entry.TemplateId,
                     new TargetLocationResponse(
                         $"location:{entry.AreaId}:{entry.BlockId}",
                         entry.AreaId,

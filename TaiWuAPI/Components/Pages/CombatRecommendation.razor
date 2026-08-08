@@ -69,7 +69,13 @@
                         <button type="button"
                                 class="@TargetResultClass(target.CharacterId)"
                                 @onclick="() => SelectTarget(target)">
-                            <strong>@target.DisplayName</strong>
+                            <strong class="target-result-name">
+                                @target.DisplayName
+                                @if (target.Kind == TargetLookupKind.StoryCharacter)
+                                {
+                                    <em>@T("Story character")</em>
+                                }
+                            </strong>
                             <span>@target.Age @T("years")</span>
                             <small>@LocationName(target)</small>
                         </button>
@@ -181,7 +187,13 @@
         <div>
             @if (_selectedTarget is not null)
             {
-                <strong>@T("Selected"): @_selectedTarget.DisplayName</strong>
+                <strong>
+                    @T("Selected"): @_selectedTarget.DisplayName
+                    @if (_selectedTarget.Kind == TargetLookupKind.StoryCharacter)
+                    {
+                        <em class="target-kind-badge">@T("Story character")</em>
+                    }
+                </strong>
                 <span>@_selectedTarget.Age @T("years") · @LocationName(_selectedTarget)</span>
             }
             else
@@ -741,8 +753,23 @@
             ? "target-result selected"
             : "target-result";
 
-    private string LocationName(TargetLookupEntry target) =>
-        target.LocationDisplayName ?? T("Location unavailable");
+    private string LocationName(TargetLookupEntry target)
+    {
+        if (target.LocationDisplayName is not null)
+        {
+            return target.LocationDisplayName;
+        }
+
+        if (target.HasValidLocation)
+        {
+            return $"{T("Area")} {target.AreaId} · "
+                + $"{T("Block")} {target.BlockId}";
+        }
+
+        return target.Kind == TargetLookupKind.StoryCharacter
+            ? T("Not currently placed on the map")
+            : T("Location unavailable");
+    }
 
     private string CategoryName(SkillCategory category) => category switch
     {

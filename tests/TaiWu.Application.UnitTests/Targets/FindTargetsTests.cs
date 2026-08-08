@@ -96,6 +96,73 @@ public sealed class FindTargetsTests
     }
 
     [Fact]
+    public async Task Story_name_query_prefers_the_instance_placed_on_the_map()
+    {
+        var snapshot = new TargetLookupSnapshot(
+            DateTimeOffset.Parse("2026-08-08T12:00:00Z"),
+            "game-version",
+            [
+                new TargetLookupEntry(
+                    61848,
+                    "邋遢道長",
+                    age: 40,
+                    areaId: 10,
+                    blockId: 369,
+                    "荊北 · 武當山 · 武當派",
+                    TargetLookupKind.StoryCharacter,
+                    templateId: 633),
+                new TargetLookupEntry(
+                    63020,
+                    "邋遢道長",
+                    age: 100,
+                    areaId: -1,
+                    blockId: -1,
+                    kind: TargetLookupKind.StoryCharacter,
+                    templateId: 632)
+            ],
+            []);
+        var useCase = new FindTargets(Reader(snapshot));
+
+        var result = await useCase.ExecuteAsync(
+            new FindTargetsRequest("local.sav", "邋遢道長"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(TargetLookupStatus.Found, result.Status);
+        Assert.Equal(1, result.TotalMatches);
+        var target = Assert.Single(result.Matches);
+        Assert.Equal(61848, target.CharacterId);
+        Assert.Equal(TargetLookupKind.StoryCharacter, target.Kind);
+        Assert.Equal(633, target.TemplateId);
+        Assert.True(target.HasValidLocation);
+    }
+
+    [Fact]
+    public async Task Numeric_query_can_still_select_an_unplaced_story_instance()
+    {
+        var snapshot = new TargetLookupSnapshot(
+            DateTimeOffset.Parse("2026-08-08T12:00:00Z"),
+            "game-version",
+            [
+                new TargetLookupEntry(
+                    63020,
+                    "邋遢道長",
+                    age: 100,
+                    areaId: -1,
+                    blockId: -1,
+                    kind: TargetLookupKind.StoryCharacter,
+                    templateId: 632)
+            ],
+            []);
+        var useCase = new FindTargets(Reader(snapshot));
+
+        var result = await useCase.ExecuteAsync(
+            new FindTargetsRequest("local.sav", "63020"),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(63020, Assert.Single(result.Matches).CharacterId);
+    }
+
+    [Fact]
     public async Task Reader_failure_is_propagated()
     {
         var reader = Substitute.For<ITargetLookupReader>();
@@ -152,6 +219,19 @@ public sealed class FindTargetsTests
                 "local.sav",
                 "何",
                 FindTargetsRequest.MaximumResults + 1));
+    }
+
+    [Fact]
+    public void Story_target_requires_a_template_identity()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new TargetLookupEntry(
+                61848,
+                "邋遢道長",
+                age: 40,
+                areaId: 10,
+                blockId: 369,
+                kind: TargetLookupKind.StoryCharacter));
     }
 
     [Fact]

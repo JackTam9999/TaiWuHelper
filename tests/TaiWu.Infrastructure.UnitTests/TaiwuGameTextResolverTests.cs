@@ -68,6 +68,34 @@ public sealed class TaiwuGameTextResolverTests
             context.Resolve("CombatSkill", "Name_999"));
     }
 
+    [Fact]
+    public async Task Fixed_template_name_uses_character_language_fallback()
+    {
+        await using var fixture = await LanguageFixture.CreateAsync();
+        var resolver = new TaiwuGameTextResolver();
+        var english = resolver.CreateContext(
+            fixture.SavePath,
+            TaiwuLanguage.English);
+        var chinese = resolver.CreateContext(
+            fixture.SavePath,
+            TaiwuLanguage.Chinese);
+
+        Assert.Equal(
+            "Sloppy Taoist",
+            english.ResolveFixedTemplateCharacterName(
+                "Surname_633",
+                "GivenName_633"));
+        Assert.Equal(
+            "邋遢道長",
+            chinese.ResolveFixedTemplateCharacterName(
+                "Surname_633",
+                "GivenName_633"));
+        Assert.Null(
+            chinese.ResolveFixedTemplateCharacterName(
+                "Surname_999",
+                "GivenName_999"));
+    }
+
     private sealed class LanguageFixture : IAsyncDisposable
     {
         private LanguageFixture(string rootPath, string savePath)
@@ -137,6 +165,17 @@ public sealed class TaiwuGameTextResolverTests
                         firstName,
                         "Name_126_Woman_Apart_12",
                         suffix
+                    ],
+                    TestContext.Current.CancellationToken);
+                await File.WriteAllLinesAsync(
+                    Path.Combine(languagePath, "Character_language.txt"),
+                    [
+                        "Surname_633",
+                        string.Empty,
+                        "GivenName_633",
+                        folder == "Language_CNH"
+                            ? "邋遢道長"
+                            : "Sloppy Taoist"
                     ],
                     TestContext.Current.CancellationToken);
             }

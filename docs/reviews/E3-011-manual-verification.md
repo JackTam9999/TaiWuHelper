@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Technical audit passed — awaiting product-owner decision |
+| Status | Complete — product-owner approved |
 | Evidence date | 2026-08-08 |
 | Epic | [EPIC-003](../roadmap/epic-003/EPIC.md) |
 | Backlog item | [E3-011](../roadmap/epic-003/BACKLOG.md#e3-011--validate-the-workflow-and-close-epic-3) |
@@ -126,9 +126,9 @@ cases.
 | Observation remains session-bound | E3-006 state and E3-010 safety tests | Pass |
 | No path, process, screenshot, or mutation contract | [API design](../architecture/TARGET-OBSERVATION-API.md) and architecture tests | Pass |
 | Bilingual accessible UI | Existing form plus E3-012 hostile/story partial mode | Pass |
-| Required state matrix automated | 843-test default matrix including E3-012 states | Pass |
+| Required state matrix automated | 873-test default matrix including E3-012 and story-target states | Pass |
 | Local sources remain byte-for-byte unchanged | E3-012 guarded current-save rerun: 1 passed, all before/after fingerprints unchanged | Pass |
-| Product-owner completion decision | This review | Pending |
+| Product-owner completion decision | Explicit approval recorded on 2026-08-08 | Pass |
 
 ## Verification commands
 
@@ -152,7 +152,7 @@ dotnet build TaiWu.slnx -c Release --no-restore
 dotnet test TaiWu.slnx -c Release --no-build --no-restore
 ```
 
-Result: **843 total; 836 passed; 0 failed; 7 expected opt-in skips**. The
+Result: **873 total; 864 passed; 0 failed; 9 expected opt-in skips**. The
 Release build completed with zero warnings and zero errors.
 
 The E3-012 guarded current-save vertical was also run explicitly: **1 passed;
@@ -176,7 +176,6 @@ Observation history requires an explicit storage and lifecycle design.
 
 ## Product-owner decision
 
-The technical and evidence audit is complete and recommends approval. The only
-remaining criterion is the product owner's explicit decision to approve or
-reject Epic 3 completion. No merge or Epic status change to Complete should be
-made before that decision is recorded.
+On 2026-08-08, the product owner explicitly approved Epic 3 completion and
+authorized its merge to `master` after the successful workflow validation and
+merge-readiness review. Epic 3 is complete.

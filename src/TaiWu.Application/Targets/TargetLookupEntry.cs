@@ -8,7 +8,9 @@ public sealed record TargetLookupEntry
         int age,
         int areaId,
         int blockId,
-        string? locationDisplayName = null)
+        string? locationDisplayName = null,
+        TargetLookupKind kind = TargetLookupKind.RegularCharacter,
+        int? templateId = null)
     {
         if (characterId <= 0)
         {
@@ -33,6 +35,30 @@ public sealed record TargetLookupEntry
                 "Character age cannot be negative.");
         }
 
+        if (!Enum.IsDefined(kind))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(kind),
+                kind,
+                "Unknown target lookup kind.");
+        }
+
+        if (templateId is < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(templateId),
+                templateId,
+                "Character template ID cannot be negative.");
+        }
+
+        if (kind == TargetLookupKind.StoryCharacter
+            && !templateId.HasValue)
+        {
+            throw new ArgumentException(
+                "A story target requires a character template ID.",
+                nameof(templateId));
+        }
+
         CharacterId = characterId;
         DisplayName = displayName.Trim();
         Age = age;
@@ -41,6 +67,8 @@ public sealed record TargetLookupEntry
         LocationDisplayName = string.IsNullOrWhiteSpace(locationDisplayName)
             ? null
             : locationDisplayName.Trim();
+        Kind = kind;
+        TemplateId = templateId;
     }
 
     public int CharacterId { get; }
@@ -54,4 +82,10 @@ public sealed record TargetLookupEntry
     public int BlockId { get; }
 
     public string? LocationDisplayName { get; }
+
+    public TargetLookupKind Kind { get; }
+
+    public int? TemplateId { get; }
+
+    public bool HasValidLocation => AreaId >= 0 && BlockId >= 0;
 }

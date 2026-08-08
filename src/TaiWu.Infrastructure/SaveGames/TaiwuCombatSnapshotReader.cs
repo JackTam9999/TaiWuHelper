@@ -680,8 +680,14 @@ internal sealed class TaiwuCombatSnapshotReader(
         Character character,
         TaiwuGameTextContext text)
     {
+        var displayName = text.ResolveCharacterName(character);
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = text.ResolveFixedTemplateCharacterName(character);
+        }
+
         return MapText(
-            text.ResolveCharacterName(character),
+            displayName,
             "The character name was unavailable in the standalone runtime.");
     }
 

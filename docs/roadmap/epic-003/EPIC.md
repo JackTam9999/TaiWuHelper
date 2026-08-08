@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Awaiting product-owner completion decision |
+| Status | Complete |
 | Milestone | 3 |
 | Target release | TBD |
 | Last updated | 2026-08-08 |
@@ -363,7 +363,7 @@ The workflow must present these states explicitly:
       conflicting, ambiguous, unsupported, and cleared states.
 - [x] Local vertical verification proves all inspected game and save sources
       are byte-for-byte unchanged.
-- [ ] The product owner records the Epic 3 completion decision.
+- [x] The product owner records the Epic 3 completion decision.
 
 ## Success measures
 

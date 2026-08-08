@@ -16,6 +16,8 @@ public sealed record TargetLookupMatchResponse(
     int CharacterId,
     string DisplayName,
     int Age,
+    TargetLookupKind Kind,
+    int? TemplateId,
     TargetLocationResponse Location);
 
 public sealed record TargetLocationResponse(

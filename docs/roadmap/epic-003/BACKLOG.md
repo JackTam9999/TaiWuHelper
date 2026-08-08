@@ -433,7 +433,7 @@ Run the full cross-layer and local read-only verification matrix.
 
 ### E3-011 — Validate the workflow and close Epic 3
 
-**Status:** In progress
+**Status:** Complete
 
 **Priority:** P1
 
@@ -456,7 +456,7 @@ criterion, and record the product-owner decision.
 - [x] All Epic 3 acceptance criteria have linked implementation or evidence.
 - [x] Deferred screenshot assistance and observation history remain explicit
       future work rather than hidden partial implementations.
-- [ ] The product owner records the Epic 3 completion decision.
+- [x] The product owner records the Epic 3 completion decision.
 
 #### Evidence when complete
 

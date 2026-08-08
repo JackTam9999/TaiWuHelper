@@ -45,16 +45,30 @@ public sealed class FindTargets(ITargetLookupReader reader) : IFindTargets
             ];
         }
 
-        return
-        [
-            .. entries
-                .Where(entry => entry.DisplayName.Contains(
+        var nameMatches = entries
+            .Where(entry => entry.DisplayName.Contains(
                     query,
                     StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        var activeStoryNames = nameMatches
+            .Where(entry =>
+                entry.Kind == TargetLookupKind.StoryCharacter
+                && entry.HasValidLocation)
+            .Select(entry => entry.DisplayName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return
+        [
+            .. nameMatches
+                .Where(entry =>
+                    entry.Kind != TargetLookupKind.StoryCharacter
+                    || entry.HasValidLocation
+                    || !activeStoryNames.Contains(entry.DisplayName))
                 .OrderByDescending(entry => string.Equals(
                     entry.DisplayName,
                     query,
                     StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(entry => entry.HasValidLocation)
                 .ThenBy(
                     entry => entry.DisplayName,
                     StringComparer.Ordinal)

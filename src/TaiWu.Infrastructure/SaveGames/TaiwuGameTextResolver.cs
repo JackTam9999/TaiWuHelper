@@ -156,6 +156,35 @@ internal sealed class TaiwuGameTextContext(
                 .Where(value => !string.IsNullOrWhiteSpace(value)));
     }
 
+    public string? ResolveFixedTemplateCharacterName(Character character)
+    {
+        ArgumentNullException.ThrowIfNull(character);
+        if (!character.IsCreatedWithFixedTemplate())
+        {
+            return null;
+        }
+
+        var template = character.Template;
+        return ResolveFixedTemplateCharacterName(
+            template.Surname,
+            template.GivenName);
+    }
+
+    internal string? ResolveFixedTemplateCharacterName(
+        string? surnameKey,
+        string? givenNameKey)
+    {
+        var separator = language == TaiwuLanguage.English ? " " : string.Empty;
+        var resolved = new[] { surnameKey, givenNameKey }
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .Select(key => ResolveAvailable("Character", key))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToArray();
+        return resolved.Length == 0
+            ? null
+            : string.Join(separator, resolved);
+    }
+
     public string? ResolveLocationName(Location location)
     {
         if (!location.IsValid())
