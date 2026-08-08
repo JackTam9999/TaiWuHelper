@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | Complete |
+| Status | In progress — reopened by combat-tooltip evidence |
 | Epic | [EPIC-003](../roadmap/epic-003/EPIC.md) |
 | Backlog item | [E3-000](../roadmap/epic-003/BACKLOG.md#e3-000--verify-observable-target-loadout-fields) |
-| Inspection date | 2026-08-07 |
+| Inspection date | 2026-08-08 |
 | GameData product version | `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a` |
 | Language resource | Traditional Chinese (`CNH`), version-bound to the guarded installed resource and GameData build |
 
@@ -28,7 +28,7 @@ E3-000 inspection:
 | Fact | Evidence | Current conclusion |
 |---|---|---|
 | Prior golden target | Character `16317`, player-visible description `樂器奇書（52歲）` | Retained as historical save evidence; the product owner reports that this encounter is complete and the book has been claimed, so it is no longer the capture scenario |
-| Shaolin candidate target | The `少林` story encounter's `16精純老僧` | Rejected as the positive loadout scenario: capture `E3-000-CAP-001` shows `秘而不宣` instead of accessible character or `運功` information |
+| Shaolin candidate target | The `少林` story encounter's `16精純老僧` | Rejected as a complete-loadout scenario because `E3-000-CAP-001` shows `秘而不宣`; later combat-tooltip captures prove that some current combat facts can still be observed |
 | Prior target loadout | The configured save has no equipped-skill list for target `16317` | Save data cannot prove that target's current equipped skills and is not required for the replacement scenario |
 | Prior target learned skills | Target `16317` has versioned learned combat-skill data | Useful fallback evidence, but learned does not mean equipped |
 | Combat UI entry | Installed key `LK_HotKeyGroup_Combat_ViewEnemyCharacter` is localized as `查看對方人物` | The game exposes an ordinary player action for inspecting the opponent during combat |
@@ -70,11 +70,12 @@ remains the product-owner-provided scenario description.
 | Reported rule | Opponent `運功` is visible for `切磋武功`; hostile and story characters do not expose the opponent `運功` page |
 | Representative corroboration | `E3-000-CAP-001` is an inaccessible story target; `E3-000-CAP-002` is an accessible sparring target |
 
-This access distinction limits the feature's honest product scope. A manual
-current-screen loadout observation can be collected for a sparring opponent.
-It cannot be requested for a hostile or story target in this UI version. For
-those targets, the helper must retain save-only uncertainty and present an
-explicit unavailable state.
+This access distinction limits complete-loadout observation. A manual current-
+screen loadout observation can be collected for a sparring opponent. A hostile
+or story target cannot supply complete-loadout or absence evidence through the
+`運功` page, but `E3-000-CAP-003` through `E3-000-CAP-005` now prove that the
+combat UI may still expose partial current facts. The helper must distinguish
+"full loadout unavailable" from "no observable target evidence."
 
 ### E3-000-CAP-002 — accessible sparring-opponent loadout
 
@@ -103,18 +104,89 @@ recorded as `E3-000-ID-001`. A stable character ID was not guessed. The product
 flow must resolve and explicitly confirm the reported name through the target
 lookup before constructing the typed observation.
 
+### E3-000-CAP-003 — battle-visible inner-art effects
+
+| Field | Value |
+|---|---|
+| Product-owner report | Some information remains visible when the opponent `運功` page is unavailable |
+| Attachment timestamp (UTC) | `2026-08-08T00:21:27.0904234Z` |
+| Opaque evidence reference | `E3-000-CAP-003` |
+| Image dimensions | `527 × 503` |
+| PNG SHA-256 | `DBFCAEBDB287D615E18A60DB7320F114C14F67A223469418EC38F397FA8A166D` |
+| Repository distribution | Local-only; image not committed |
+| Visible result | A pinned `內功` information panel with three skill names, current power percentages, and active effect text |
+
+The exact guarded bilingual catalogue resolves every visible name uniquely.
+Each displayed effect text matches the skill's versioned reverse effect, so
+direction is supported by the text rather than inferred from color alone.
+
+| Stable ID | Traditional Chinese | English | Power | Verified visible effect |
+|---:|---|---|---:|---|
+| 71 | 柴山青囊訣 | Mt. Chai's Geomancy | 146% | Reverse effect 789 |
+| 64 | 彰施乃服篇 | Color's Inspiration | 129% | Reverse effect 783 |
+| 65 | 五金佳兵篇 | Sword's Making | 127% | Reverse effect 784 |
+
+### E3-000-CAP-004 — battle-visible special-skill effects
+
+| Field | Value |
+|---|---|
+| Product-owner report | Same partial-information scenario as `E3-000-CAP-003` |
+| Attachment timestamp (UTC) | `2026-08-08T00:21:43.8861968Z` |
+| Opaque evidence reference | `E3-000-CAP-004` |
+| Image dimensions | `534 × 438` |
+| PNG SHA-256 | `79AF2216102BF00F26438855AACE37EB8D3B370A918F39DEB853AF91F3DB6F87` |
+| Repository distribution | Local-only; image not committed |
+| Visible result | A pinned `絕技` information panel with three skill names, current power percentages, and active effect text |
+
+| Stable ID | Traditional Chinese | English | Power | Verified visible effect |
+|---:|---|---|---:|---|
+| 279 | 四指青膏 | Four Fingered Green Paste | 162% | Reverse effect 903 |
+| 275 | 神機陣 | Contrivance Formation | 142% | Reverse effect 899 |
+| 274 | 辟甲真鋼十四訣 | Steel Rending | 142% | Reverse effect 898 |
+
+These panels establish six visible active skill effects. They do not show
+every loadout category, slot, empty position, preset, or hidden continuation.
+They therefore support only partial battle-visible evidence and cannot prove
+that an omitted skill is absent. Until GameData behavior separately proves
+that every such panel entry must be equipped, the evidence kind must remain
+"visible active skill effect" rather than silently becoming complete equipped
+membership.
+
+### E3-000-CAP-005 — cropped battle indicators
+
+| Field | Value |
+|---|---|
+| Product-owner report | Additional indicators are visible in the same combat UI |
+| Attachment timestamp (UTC) | `2026-08-08T00:22:54.2403856Z` |
+| Opaque evidence reference | `E3-000-CAP-005` |
+| Image dimensions | `149 × 118` |
+| PNG SHA-256 | `D48761236D15E4701FFD35326873153B76CDD64858625358F5E9B33CE385879C` |
+| Repository distribution | Local-only; image not committed |
+| Visible result | Four colored indicators showing `2, 2, 3, 3` on each of two rows, plus three status icons and a visible `1` count |
+
+The crop contains no labels, target identity, surrounding control, or tooltip.
+The numeric values and icons are observable, but their exact fields and the
+meaning of the two rows remain unsupported. Epic 3 must not label or score
+them until a wider labeled capture or matching UI tooltip verifies their
+semantics.
+
 ## Observable-field decision table
 
 | Candidate field | Current status | Required evidence |
 |---|---|---|
 | Target identity | Available only as paired manual context | `E3-000-CAP-002` contains no identity; `E3-000-ID-001` reports `霍劍嬋`, which must be resolved and confirmed before typed observation construction |
-| Character-information accessibility | Context-dependent | `E3-000-ACCESS-001` reports sparring as accessible and hostile/story targets as unavailable; the two captures provide representative examples |
+| Character-information accessibility | Context-dependent | Sparring exposes the complete `運功` page; hostile/story denies that page but may expose partial combat information panels |
 | Equipped skill name | Verified | `E3-000-CAP-002` visibly labels every equipped card |
+| Battle-visible active skill name | Verified for partial evidence | `E3-000-CAP-003` and `E3-000-CAP-004` visibly label six current skill effects |
 | Stable skill ID | Not directly visible | Resolve the visible bilingual name through the Epic 2 catalogue and ask for confirmation on ambiguity |
 | Skill category | Verified | All five category rows are visibly separated and labeled |
+| Battle-tooltip heading | Verified | The new panels visibly distinguish `內功` and `絕技` |
 | Complete category coverage | Verified for the current displayed loadout | All category rows and capacity counters appear together with no visible scrolling, paging, or collapsed sections |
 | Empty or unavailable slots | Verified for the captured state | `護體 5/6` ends in an explicit locked tile rather than an omitted or off-screen card |
 | Practice direction | Verified | Equipped cards visibly expose `正` or `逆`; no `相抵` example is present |
+| Battle-visible active effect | Verified for the six captured entries | Each displayed text exactly matches the versioned reverse effect ID in the guarded catalogue |
+| Current power | Visible but not yet a typed mechanic | Record the percentage as evidence; do not let it influence scoring until a versioned power contract exists |
+| Cropped colored indicators and status icons | Visible, semantics unsupported | A wider labeled capture or individual tooltip is required before naming either numeric row or any icon |
 | Loadout preset | Unsupported | The opponent screen exposes no preset identity or preset-selection control; the evidence applies only to the current displayed combat loadout |
 | Observation time | Available from helper capture metadata | Record UTC attachment/capture time |
 | Evidence reference | Available from helper capture metadata | Record a short opaque label plus SHA-256; do not commit the image by default |
@@ -124,9 +196,10 @@ for a confirmed sparring opponent when all five category rows and their
 capacity states are captured like `E3-000-CAP-002`. Completeness applies only
 to the current displayed combat loadout, never to other presets. A hostile or
 story target, `秘而不宣`, missing category rows, cropped screens, or unresolved
-target identity must not produce an observation. Practice direction is
-observable for `正` and `逆`; `相抵` remains unsupported until separately
-observed.
+target identity must never produce a complete observation or an absence claim.
+It may produce a separately typed partial battle-visible observation for facts
+actually shown by a version-matched panel. Practice direction is observable
+for `正` and `逆`; `相抵` remains unsupported until separately observed.
 
 ## Versioned completeness rule
 
@@ -138,7 +211,7 @@ observed.
 | Complete-current-loadout requirements | Confirmed sparring context and target identity; accessible opponent `運功`; all five labeled category rows; every row's capacity state; no cropped or hidden continuation |
 | Supported direction | Visible `正` and `逆` only; `相抵` remains unsupported |
 | Preset semantics | Current displayed combat loadout only; no inference about other presets |
-| Unavailable semantics | Hostile/story context or `秘而不宣` means unavailable, never empty |
+| Unavailable semantics | Hostile/story context or `秘而不宣` means the complete loadout is unavailable, never empty; separately visible battle-tooltip facts remain partial evidence |
 | Invalidation | Any GameData version, language-resource fingerprint, or layout change makes completeness unsupported until re-observed |
 
 Later Domain and Application items may consume this rule as evidence for
@@ -171,32 +244,47 @@ evidence unless the product owner separately approves distribution. The
 repository should normally retain only a sanitized evidence description,
 capture time, and SHA-256.
 
+For hostile/story combat-tooltip evidence:
+
+1. Pair the capture with an explicitly confirmed encounter and target.
+2. Pin the information panel with the game's displayed `T` action when useful.
+3. Capture the complete labeled panel, including its `內功`, `絕技`, or other
+   heading, every visible entry, power, and effect text.
+4. Treat every submitted panel as partial unless a separate versioned rule
+   proves complete coverage.
+5. Capture individual tooltips or a wider labeled view for numeric indicators
+   and icons; do not infer their semantics from color or shape.
+
 ## Resolved decisions
 
-1. The opponent loadout is observable in sparring context, not for hostile or
-   story targets in the supported UI version.
-2. The full current displayed sparring loadout is observable when all five
+1. The complete opponent loadout is observable in sparring context, not for
+   hostile or story targets in the supported UI version.
+2. Hostile/story combat may still expose partial active skill names, power,
+   and effect text; these facts require a separate provenance and cannot prove
+   absence.
+3. The full current displayed sparring loadout is observable when all five
    rows and capacity states appear as in `E3-000-CAP-002`.
-3. All five categories are visible and clearly labeled.
-4. The captured unavailable slot is explicitly locked rather than silently
+4. All five categories are visible and clearly labeled.
+5. The captured unavailable slot is explicitly locked rather than silently
    omitted; a cropped or missing row still cannot prove absence.
-5. No preset identity or selector is visible, so completeness never extends
+6. No preset identity or selector is visible, so completeness never extends
    beyond the current displayed combat loadout.
-6. `正` and `逆` are visible on equipped cards; `相抵` is not yet supported.
-7. Power percentages are visible, but this evidence does not claim that any
+7. `正` and `逆` are visible on equipped cards; the six tooltip effects also
+   identify reverse direction by exact versioned text; `相抵` is unsupported.
+8. Power percentages are visible, but this evidence does not claim that any
    displayed field changes only after combat begins.
-8. Target identity is not visible on the loadout screen. Explicit paired
+9. Target identity is not visible on the loadout screen. Explicit paired
    target selection and confirmation are mandatory.
+10. The two rows of colored values and three status icons in `E3-000-CAP-005`
+    remain unsupported until their labels are captured.
 
 ## Current E3-000 status
 
-The read-only source and UI-entry checks are complete. `E3-000-CAP-001` proves
-that the `少林` story encounter's `16精純老僧` is not observable and must not be
-treated as an empty loadout. `E3-000-CAP-002` supports complete-current-loadout
-coverage and visible `正`/`逆` direction for an accessible sparring opponent.
-`E3-000-ID-001` identifies that sparring opponent as `霍劍嬋` while preserving
-the rule that stable IDs must be resolved and explicitly confirmed rather than
-guessed. `E3-000-ACCESS-001` limits that model to UI-visible sparring evidence
-and requires an explicit unavailable state for hostile/story targets. The
-versioned observable-field boundary is complete and ready for the E3-001
-Domain model.
+E3-000 is reopened. `E3-000-CAP-001` still proves that the `少林` story
+encounter's full `運功` page is unavailable and must never become an empty
+loadout. `E3-000-CAP-002` continues to support complete-current-loadout
+coverage for sparring. New captures `E3-000-CAP-003` and `E3-000-CAP-004`
+prove that hostile/story combat can expose useful partial skill-effect
+evidence, while `E3-000-CAP-005` records additional visible but unlabeled
+indicators. The existing hostile/story rejection model is therefore too broad
+and must be revised before Epic 3 can close.

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Awaiting product-owner approval |
+| Status | Superseded — Epic reopened by new evidence |
 | Evidence date | 2026-08-07 |
 | Epic | [EPIC-003](../roadmap/epic-003/EPIC.md) |
 | Backlog item | [E3-011](../roadmap/epic-003/BACKLOG.md#e3-011--validate-the-workflow-and-close-epic-3) |
@@ -11,17 +11,18 @@
 
 ## Decision boundary
 
-The supported game UI exposes the opponent `運功` page for a `切磋武功`
-opponent. It does not expose that page for hostile or story characters. The
-second case is therefore an explicit unavailable observation state, never an
-empty or partial loadout and never a request for the player to report hidden
-information.
+The supported game UI exposes the complete opponent `運功` page for a
+`切磋武功` opponent. It does not expose that complete page for hostile or story
+characters. Captures submitted after this audit nevertheless prove that the
+combat UI exposes partial `內功` and `絕技` skill-effect panels for those
+contexts. The original "unavailable means save-only" conclusion is therefore
+too broad and is superseded by
+[the reopened E3-000 evidence](../scenarios/E3-000-target-observation-evidence.md).
 
-This distinction is implemented at every layer: the editor disables entry for
-hostile/story context, the request and Domain contracts accept only sparring
-observations, and tests prove that inaccessible contexts produce no selected
-skills. The source evidence and exact version boundary are recorded in
-[E3-000](../scenarios/E3-000-target-observation-evidence.md).
+The current editor, request, and Domain contracts still reject every
+hostile/story observation. That implementation remains safe—it never invents
+an empty loadout—but now discards useful visible evidence. E3-012 must add a
+separate partial active-effect path before this completion audit can be rerun.
 
 ## Representative form reproduction
 
@@ -109,22 +110,22 @@ cases.
 | Epic criterion | Implementation or evidence | Result |
 |---|---|---|
 | Versioned observable fields and completeness | E3-000 decision table and completeness rule | Pass |
-| Hostile/story observation unavailable | E3-000 captures; Domain/request/editor guards | Pass |
+| Hostile/story full loadout unavailable with partial battle-visible evidence | Reopened E3-000 and E3-012 | Reopened |
 | Stable bilingual identities | E3-003 resolver tests and the table above | Pass |
-| Partial and complete coverage separated | E3-001/E3-004 models and merge tests | Pass |
+| Partial active-effect and complete loadout coverage separated | E3-012 | Reopened |
 | Time, reference, and provenance retained | [provenance design](../architecture/TARGET-OBSERVATION-PROVENANCE.md) | Pass |
 | Stale/conflicting evidence visible and deterministic | E3-002/E3-004/E3-010 tests | Pass |
 | Precedence limited to covered fields | E3-004 merger tests | Pass |
 | Missing target snapshot skill remains representable | E3-003 resolver tests | Pass |
-| Threat sources remain distinguishable | E3-007 and threat-analysis design | Pass |
-| Recommendation impact explained | E3-008/E3-009 and impact design | Pass |
+| Threat sources remain distinguishable | E3-007 plus new E3-012 provenance | Reopened |
+| Recommendation impact explained | E3-008/E3-009 plus E3-012 | Reopened |
 | Clear reproduces save-only behavior | E3-006/E3-010 lifecycle tests | Pass |
 | Unknown raw effects cannot affect rules | E3-003/E3-007 tests | Pass |
 | Observation remains session-bound | E3-006 state and E3-010 safety tests | Pass |
 | No path, process, screenshot, or mutation contract | [API design](../architecture/TARGET-OBSERVATION-API.md) and architecture tests | Pass |
-| Bilingual accessible UI | [form design](../architecture/TARGET-OBSERVATION-FORM.md) and rendering tests | Pass |
-| Required state matrix automated | E3-001 through E3-010 test evidence | Pass |
-| Local sources remain byte-for-byte unchanged | E3-000 and E3-010 fingerprints | Pass |
+| Bilingual accessible UI | Existing form plus E3-012 hostile/story partial mode | Reopened |
+| Required state matrix automated | Existing matrix plus E3-012 states | Reopened |
+| Local sources remain byte-for-byte unchanged | Existing evidence passes; E3-012 rerun pending | Reopened |
 | Product-owner completion decision | This review | Pending |
 
 ## Verification commands
@@ -167,6 +168,6 @@ Observation history requires an explicit storage and lifecycle design.
 
 ## Product-owner decision
 
-Pending. All technical and evidence criteria are satisfied, subject to the
-documented historical-target caveat. The product owner must now approve or
-reject Epic 3 completion before the final checkbox and Epic status are closed.
+Not ready for approval. New product-owner evidence submitted on 2026-08-08
+reopened the observable-field boundary and created E3-012. Epic 3 completion
+must be audited again after that partial battle-visible workflow is complete.

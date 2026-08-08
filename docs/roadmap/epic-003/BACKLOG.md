@@ -56,13 +56,14 @@ Every completed item must:
 | 4 | Manual UI | Players can enter and confirm bilingual target observations |
 | 5 | Recommendation integration | Confirmed equipped evidence changes threat analysis correctly |
 | 6 | Impact explanation | Players can see what changed and why |
-| 7 | Verification and completion | Determinism and non-interference close the epic |
+| 7 | Verification and completion | Determinism and non-interference close the original vertical |
+| 8 | Scope correction | Hostile/story battle-visible evidence is modeled without inventing a complete loadout |
 
 ## Slice 0: Evidence boundary
 
 ### E3-000 — Verify observable target-loadout fields
 
-**Status:** Complete
+**Status:** In progress
 
 **Priority:** P0
 
@@ -79,8 +80,10 @@ meaning and completeness of every field proposed for manual entry.
       versions without committing proprietary assets.
 - [x] Target identity, skill name, category, slot visibility, empty-slot
       behavior, paging, and direction visibility are evaluated separately.
-- [x] Sparring, hostile, and story-target access semantics are evaluated
-      separately; unavailable hostile/story UI never implies an empty loadout.
+- [x] Sparring complete-loadout access, hostile/story full-page unavailability,
+      and hostile/story partial combat-tooltip evidence are evaluated
+      separately; an unavailable full page never implies an empty loadout or
+      no observable evidence.
 - [x] The evidence proves whether a screen can support `CompleteLoadout` or
       only `PartialLoadout`.
 - [x] Any category or direction not reliably visible remains unsupported.
@@ -441,10 +444,12 @@ criterion, and record the product-owner decision.
 
 - [x] The manual form can reproduce the representative E3-000 observation.
 - [x] Resolved bilingual skill identities match the recorded target UI.
-- [x] Partial/complete semantics agree with the verified screen behavior.
-- [x] Threat and recommendation changes are evidence-backed and explainable.
+- [ ] Partial/complete semantics agree with the expanded verified screen
+      behavior, including hostile/story combat tooltips.
+- [ ] Threat and recommendation changes from battle-visible active effects are
+      evidence-backed and explainable.
 - [x] Clearing returns to the expected save-only result.
-- [x] All Epic 3 acceptance criteria have linked implementation or evidence.
+- [ ] All Epic 3 acceptance criteria have linked implementation or evidence.
 - [x] Deferred screenshot assistance and observation history remain explicit
       future work rather than hidden partial implementations.
 - [ ] The product owner records the Epic 3 completion decision.
@@ -453,6 +458,48 @@ criterion, and record the product-owner decision.
 
 - `docs/reviews/E3-011-manual-verification.md`.
 - Updated status and completion decision in [EPIC-003](./EPIC.md).
+
+### E3-012 — Support hostile/story battle-visible observations
+
+**Status:** In progress
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E3-000, E3-003, E3-005, E3-007, E3-009
+
+Replace the overly broad hostile/story rejection with a separate partial
+observation path for skill effects that the normal combat UI visibly exposes,
+without claiming that the hidden `運功` page or full equipped loadout is known.
+
+#### Acceptance criteria
+
+- [x] Versioned evidence records the visible panel heading, skill name, power,
+      effect text, stable bilingual identity, and unresolved indicators.
+- [ ] Observation provenance distinguishes a complete sparring `運功` screen
+      from a hostile/story battle-visible active-effect panel.
+- [ ] Hostile/story observations are always partial and can never establish
+      omitted-skill absence or complete loadout coverage.
+- [ ] Visible names resolve through the guarded catalogue; exact versioned
+      effect text may confirm direction/effect ID without accepting a free-form
+      mechanic claim.
+- [ ] Current power may be retained as evidence but cannot influence legality
+      or scoring until a separate typed power rule exists.
+- [ ] Unlabeled colored values and status icons remain explicitly unsupported.
+- [ ] Threat analysis can use a verified visible active effect without
+      silently relabeling it as complete equipped membership.
+- [ ] The bilingual UI explains that the full loadout is unavailable while
+      allowing only the partial facts actually visible in combat.
+- [ ] Applying and clearing the observation remain deterministic,
+      session-bound, and information-only.
+- [ ] Domain, API, Presentation, architecture, and local read-only tests pass.
+
+#### Evidence when complete
+
+- Revised [E3-000 evidence](../../scenarios/E3-000-target-observation-evidence.md).
+- Updated target-observation provenance, API, threat-analysis, and UI design.
+- E3-012 automated and local read-only verification summary.
 
 ## Future work outside Epic 3
 

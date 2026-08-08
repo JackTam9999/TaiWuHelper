@@ -2,21 +2,23 @@
 
 | Field | Value |
 |---|---|
-| Status | Awaiting product-owner approval |
+| Status | In progress — scope corrected by new UI evidence |
 | Milestone | 3 |
 | Target release | TBD |
-| Last updated | 2026-08-07 |
+| Last updated | 2026-08-08 |
 
 ## Summary
 
-Allow the player to manually report sparring-opponent combat information that
-is visible in the current game UI but absent or stale in the configured save.
+Allow the player to manually report target combat information that is visible
+in the current game UI but absent or stale in the configured save.
 Resolve the reported skills through the local bilingual catalogue, retain
 observation time and provenance, merge only verified fields into an immutable
 analysis snapshot, and show exactly how the confirmed evidence changes threat
 analysis and loadout recommendations. Hostile and story targets do not expose
-their opponent `運功` page in the supported UI version and therefore remain an
-explicit unavailable, save-only case.
+their complete opponent `運功` page in the supported UI version, but later
+evidence proves that their combat information panels may expose partial active
+skill names, power, and effect text. The helper must accept only those visible
+facts without treating them as a complete loadout or an absence claim.
 
 Epic 3 remains an information-only workflow. The helper does not inspect game
 memory, capture the screen, automate input, attach to the game, or modify any
@@ -318,6 +320,7 @@ The workflow must present these states explicitly:
 - confirmed partial observation;
 - confirmed complete observation;
 - observation older than save;
+- full loadout unavailable with partial battle-visible evidence;
 - save time unavailable;
 - observation/save conflict;
 - unsupported catalogue or GameData version;
@@ -328,28 +331,31 @@ The workflow must present these states explicitly:
 
 - [x] The supported target UI fields and completeness rules are documented
       with versioned evidence.
-- [x] Hostile/story targets remain explicitly unavailable for current-screen
-      loadout observation and never become empty-loadout claims.
+- [ ] Hostile/story complete loadouts remain explicitly unavailable while
+      separately visible battle-effect evidence is accepted only as partial
+      and never becomes an empty-loadout claim.
 - [x] Target observations use stable bilingual catalogue identities.
-- [x] Partial and complete loadout coverage cannot be confused.
+- [ ] Partial battle-visible effects and complete sparring loadout coverage
+      cannot be confused.
 - [x] Observation time, evidence reference, and field provenance are retained.
 - [x] Stale and conflicting observations remain visible and deterministic.
 - [x] Only explicitly covered fields receive current-screen precedence.
 - [x] An observed skill missing from a stale target snapshot is represented
       without fabricating unrelated progress.
-- [x] Threat analysis distinguishes confirmed equipped sources from possible
-      learned sources.
-- [x] Recommendation impact is explained in terms of changed evidence,
+- [ ] Threat analysis distinguishes battle-visible active effects, confirmed
+      equipped sources, and possible learned sources.
+- [ ] Recommendation impact is explained in terms of changed evidence,
       threats, counters, feasibility, and unresolved risks.
 - [x] Save-only behavior remains reproducible after clearing the observation.
 - [x] Unknown raw effects cannot influence legality or scoring.
 - [x] Observation state is session-bound and is not persisted as history.
 - [x] No endpoint accepts a screenshot path, game path, process identifier, or
       mutation-capable game type.
-- [x] The UI is bilingual, accessible, and explicit about evidence status.
-- [x] Automated tests cover valid, partial, complete, stale, conflicting,
-      ambiguous, unsupported, and cleared states.
-- [x] Local vertical verification proves all inspected game and save sources
+- [ ] The UI is bilingual, accessible, and explicit about full-loadout
+      unavailability versus partial battle-visible evidence.
+- [ ] Automated tests cover valid, battle-visible partial, complete, stale,
+      conflicting, ambiguous, unsupported, and cleared states.
+- [ ] Local vertical verification proves all inspected game and save sources
       are byte-for-byte unchanged.
 - [ ] The product owner records the Epic 3 completion decision.
 
@@ -357,8 +363,8 @@ The workflow must present these states explicitly:
 
 - A player can report a representative sparring-target loadout without
   entering a raw skill ID.
-- A hostile/story target produces an explicit unavailable state without
-  requesting hidden data.
+- A hostile/story target keeps the complete loadout unavailable while allowing
+  the player to report only skill effects visibly exposed by the combat UI.
 - Every observation-used threat identifies current-screen provenance.
 - A partial observation never removes an unobserved possibility.
 - A complete observation changes absence claims only when the verified
