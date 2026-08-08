@@ -109,7 +109,7 @@ public contracts.
 
 ### E4-001 — Add immutable comparison contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -123,26 +123,29 @@ summaries, provenance, and diagnostics.
 
 #### Acceptance criteria
 
-- [ ] A comparison owns one snapshot reference and exactly one Current column.
-- [ ] At most one column exists for each recommendation policy.
-- [ ] A category row cannot contain duplicate skill identities or mismatched
+- [x] A comparison owns one snapshot reference and exactly one Current column.
+- [x] At most one column exists for each recommendation policy.
+- [x] A category row cannot contain duplicate skill identities or mismatched
       skill categories.
-- [ ] Membership state is separate from direction-change and
+- [x] Membership state is separate from direction-change and
       breakthrough-required actions.
-- [ ] Unavailable numeric or tactical values carry non-blank reasons.
-- [ ] Infeasible policies cannot contain a feasible proposed loadout.
-- [ ] Public references are stable logical identifiers, not local paths.
-- [ ] Collections are immutable and ordering is constructor-validated or
+- [x] Unavailable numeric or tactical values carry non-blank reasons.
+- [x] Infeasible policies cannot contain a feasible proposed loadout.
+- [x] Public references are stable logical identifiers, not local paths.
+- [x] Collections are immutable and ordering is constructor-validated or
       normalized by the builder.
-- [ ] Domain contracts reference no GameData, ASP.NET Core, SQLite, files,
+- [x] Domain contracts reference no GameData, ASP.NET Core, SQLite, files,
       screenshots, or processes.
-- [ ] Tests cover validation, equality, immutability, composite states, missing
+- [x] Tests cover validation, equality, immutability, composite states, missing
       policies, and unavailable values.
 
 #### Evidence when complete
 
 - `docs/architecture/LOADOUT-COMPARISON-DOMAIN.md`.
 - Focused Domain test summary.
+- Verification on 2026-08-08: Domain unit tests passed 308/308, architecture
+  tests passed 78/78, and `dotnet format TaiWu.slnx --verify-no-changes
+  --no-restore` passed.
 
 ## Slice 2: Comparison builder
 
