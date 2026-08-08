@@ -151,7 +151,7 @@ summaries, provenance, and diagnostics.
 
 ### E4-002 — Build deterministic comparisons from recommendation results
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -165,20 +165,20 @@ recommendations.
 
 #### Acceptance criteria
 
-- [ ] The builder accepts one `CombatLoadoutRecommendation` and performs no
+- [x] The builder accepts one `CombatLoadoutRecommendation` and performs no
       save, catalogue, database, network, or clock read.
-- [ ] Current membership comes from the player snapshot used by that result.
-- [ ] Proposed membership, capacity, scoring, threat links, conditions,
+- [x] Current membership comes from the player snapshot used by that result.
+- [x] Proposed membership, capacity, scoring, threat links, conditions,
       caveats, and diagnostics come from the matching style result.
-- [ ] Every manual change has a corresponding comparison action and every
+- [x] Every manual change has a corresponding comparison action and every
       comparison action traces to a manual change.
-- [ ] Add plus direction change and Add plus breakthrough remain composite.
-- [ ] Current and proposed 萬用 allocations use the existing validated
+- [x] Add plus direction change and Add plus breakthrough remain composite.
+- [x] Current and proposed 萬用 allocations use the existing validated
       snapshots and proposals.
-- [ ] Infeasible or missing styles produce typed diagnostics.
-- [ ] Skill and row ordering is category-first and stable-ID based.
-- [ ] Repeated identical input produces structurally equal output.
-- [ ] Tests cover all-retained, mixed changes, capacity changes, composite
+- [x] Infeasible or missing styles produce typed diagnostics.
+- [x] Skill and row ordering is category-first and stable-ID based.
+- [x] Repeated identical input produces structurally equal output.
+- [x] Tests cover all-retained, mixed changes, capacity changes, composite
       actions, infeasible policies, unavailable values, and deterministic
       ordering.
 
@@ -186,6 +186,9 @@ recommendations.
 
 - `docs/architecture/LOADOUT-COMPARISON-BUILDER.md`.
 - Manual-plan parity test matrix.
+- Verification on 2026-08-08: Application unit tests passed 135/135,
+  architecture tests passed 78/78, and solution formatting verification
+  passed.
 
 ## Slice 3: API vertical
 
