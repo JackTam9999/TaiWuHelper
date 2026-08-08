@@ -75,6 +75,8 @@ The typed response includes:
   backlash-on-use element when available;
 - analyzed target threats;
 - Safe, Balanced, and Aggressive style results from that one snapshot;
+- an additive `comparison` object containing Current, Safe, Balanced, and
+  Aggressive columns from that same immutable result;
 - the requested style;
 - component scores;
 - selected skill details and evidence-backed reasons;
@@ -100,6 +102,35 @@ Each successful style also returns `genericSlots`, containing the total
 available generic slots and proposed allocation for attack, agility, defense,
 and assistance. The UI checklist shows an allocation step only when the
 proposed value differs from the current allocation.
+
+### Loadout comparison
+
+`comparison.columns` is always ordered Current, Safe, Balanced, Aggressive.
+Available columns expose five ordered category rows, typed skill membership,
+separate direction/breakthrough actions, capacity, effective cost, and 萬用
+allocation. Policy columns also expose covered/unresolved threats, conditions,
+caveats, evidence, manual-action count, active roles, and policy-local score
+components.
+
+Unavailable numeric, membership, direction, name, role, and allocation facts
+use an explicit object containing `isAvailable`, nullable `value`, and
+`unavailableReason`. An unavailable value is never returned as zero or an
+empty feasible loadout.
+
+An infeasible or missing policy remains a column with `status` and
+`diagnostic`; its `loadout` and `tacticalSummary` are null. Current provenance
+states whether equipped skills, slot budgets, 萬用 allocation, and
+legendary-book assignments came from the save or a current-screen observation.
+
+The comparison score notice states that scores rank candidates only inside
+their own policy and are not win odds. Clients must not compare totals as a
+universal ranking.
+
+The change is backward-compatible and additive. Existing fields retain their
+shape. `snapshotReference` remains opaque; clients must compare the full value
+and not parse its suffix. See
+[the comparison API contract](../architecture/LOADOUT-COMPARISON-API.md) for
+the complete projection and versioning rules.
 
 ## Errors
 

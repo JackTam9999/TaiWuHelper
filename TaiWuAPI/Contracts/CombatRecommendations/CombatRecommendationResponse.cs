@@ -16,7 +16,8 @@ public sealed record CombatRecommendationResponse(
     IReadOnlyList<CombatRecommendationStyleResponse> Styles,
     IReadOnlyList<CombatRecommendationWarningResponse> Warnings,
     InnerPowerStateResponse? InnerPowerState = null,
-    TargetObservationResponse? TargetObservation = null);
+    TargetObservationResponse? TargetObservation = null,
+    LoadoutComparisonResponse? Comparison = null);
 
 public sealed record TargetObservationResponse(
     int TargetCharacterId,

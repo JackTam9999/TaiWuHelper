@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using System.Reflection;
+using System.Text.Json;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LoadoutComparisons;
 using TaiWuAPI.Configuration;
 using TaiWuAPI.Contracts.CombatRecommendations;
 using TaiWuAPI.Controllers;
@@ -46,6 +48,31 @@ public sealed class CombatRecommendationsControllerTests
         var response = Assert.IsType<CombatRecommendationResponse>(
             ok.Value);
         Assert.Null(response.TargetObservation);
+        var comparison = Assert.IsType<LoadoutComparisonResponse>(
+            response.Comparison);
+        Assert.Equal(response.SnapshotReference, comparison.SnapshotReference);
+        Assert.Equal(4, comparison.Columns.Count);
+        Assert.Equal(
+            Enum.GetValues<LoadoutComparisonColumnKind>(),
+            comparison.Columns.Select(column => column.Kind));
+        Assert.All(
+            comparison.Columns.Skip(1),
+            column => Assert.Equal(
+                LoadoutComparisonColumnStatus.Available,
+                column.Status));
+        var safeComparison = comparison.Columns.Single(column =>
+            column.Kind == LoadoutComparisonColumnKind.Safe);
+        Assert.Equal(5, safeComparison.Loadout!.Categories.Count);
+        Assert.Contains(
+            "not win odds",
+            safeComparison.TacticalSummary!.ScoreScopeNotice);
+        Assert.All(
+            safeComparison.TacticalSummary.CoveredThreats,
+            threat => Assert.False(string.IsNullOrWhiteSpace(threat.Title)));
+        Assert.All(
+            safeComparison.Loadout.Categories
+                .SelectMany(category => category.Skills),
+            skill => Assert.True(skill.Name.IsAvailable));
         Assert.Equal(
             RecommendationPolicy.Aggressive,
             response.RequestedStyle);
@@ -155,6 +182,189 @@ public sealed class CombatRecommendationsControllerTests
                 && request.CurrentLoadoutObservation.DisplayedSlotBudgets!
                     [SkillCategory.Attack].Capacity == 10),
             cancellationToken);
+    }
+
+    [Fact]
+    public async Task Infeasible_policies_are_diagnostics_not_empty_loadouts()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(EmptySnapshot());
+        var controller = Controller(reader);
+
+        var action = await controller.Recommend(
+            new CombatRecommendationApiRequest
+            {
+                TargetCharacterId = 16317
+            },
+            TestContext.Current.CancellationToken);
+
+        var comparison = Response(action).Comparison!;
+        Assert.All(
+            comparison.Columns.Skip(1),
+            column =>
+            {
+                Assert.Equal(
+                    LoadoutComparisonColumnStatus.Infeasible,
+                    column.Status);
+                Assert.Null(column.Loadout);
+                Assert.NotNull(column.Diagnostic);
+                Assert.False(string.IsNullOrWhiteSpace(
+                    column.Diagnostic!.Summary));
+            });
+    }
+
+    [Fact]
+    public async Task Unavailable_cost_and_capacity_keep_public_reasons()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(UnavailableCurrentSnapshot());
+        var controller = Controller(reader);
+
+        var action = await controller.Recommend(
+            new CombatRecommendationApiRequest
+            {
+                TargetCharacterId = 16317
+            },
+            TestContext.Current.CancellationToken);
+
+        var current = Response(action).Comparison!.Columns.Single(column =>
+            column.Kind == LoadoutComparisonColumnKind.Current);
+        var attack = current.Loadout!.Categories.Single(category =>
+            category.Category == SkillCategory.Attack);
+        var skill = Assert.Single(attack.Skills);
+        Assert.False(skill.EffectiveCost.IsAvailable);
+        Assert.Null(skill.EffectiveCost.Value);
+        Assert.Contains(
+            "GridCost",
+            skill.EffectiveCost.UnavailableReason);
+        Assert.False(attack.Capacity.Used.IsAvailable);
+        Assert.Null(attack.Capacity.Used.Value);
+        Assert.Equal(
+            "Used slots were unavailable.",
+            attack.Capacity.Used.UnavailableReason);
+        Assert.False(attack.Capacity.Remaining.IsAvailable);
+    }
+
+    [Fact]
+    public async Task Observed_baseline_fields_are_distinct_from_save_fields()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var snapshot = GoldenSnapshot();
+        var observedAt = DateTimeOffset.Parse("2026-08-08T14:00:00Z");
+        var observed = new CombatSnapshot(
+            snapshot.Metadata,
+            snapshot.Player,
+            snapshot.Target,
+            snapshot.Warnings,
+            [
+                new SnapshotFieldSource(
+                    CombatSnapshotObservationMerger
+                        .PlayerEquippedSkillsField,
+                    SnapshotDataSource.CurrentScreenObservation,
+                    observedAt,
+                    "observation:current"),
+                new SnapshotFieldSource(
+                    CombatSnapshotObservationMerger
+                        .PlayerGenericSlotAllocationField,
+                    SnapshotDataSource.CurrentScreenObservation,
+                    observedAt,
+                    "observation:current")
+            ]);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(observed);
+        var controller = Controller(reader);
+
+        var action = await controller.Recommend(
+            new CombatRecommendationApiRequest
+            {
+                TargetCharacterId = 16317
+            },
+            TestContext.Current.CancellationToken);
+
+        var provenance = Response(action).Comparison!.BaselineProvenance;
+        Assert.Equal(
+            SnapshotDataSource.CurrentScreenObservation,
+            provenance.Single(value => value.Field
+                == LoadoutComparisonBaselineField.EquippedSkills).Source);
+        Assert.Equal(
+            SnapshotDataSource.CurrentScreenObservation,
+            provenance.Single(value => value.Field
+                == LoadoutComparisonBaselineField.GenericSlotAllocation)
+                .Source);
+        Assert.Equal(
+            SnapshotDataSource.Save,
+            provenance.Single(value => value.Field
+                == LoadoutComparisonBaselineField.SlotBudgets).Source);
+    }
+
+    [Fact]
+    public async Task Mixed_and_missing_styles_keep_typed_policy_status()
+    {
+        var feasible = await Recommendation(GoldenSnapshot());
+        var infeasible = await Recommendation(EmptySnapshot());
+        var mixed = RecommendationWithStyles(
+            feasible,
+            [
+                feasible.Styles.Single(style =>
+                    style.Policy == RecommendationPolicy.Safe),
+                infeasible.Styles.Single(style =>
+                    style.Policy == RecommendationPolicy.Balanced),
+                feasible.Styles.Single(style =>
+                    style.Policy == RecommendationPolicy.Aggressive)
+            ]);
+        var missing = RecommendationWithStyles(
+            feasible,
+            [
+                feasible.Styles.Single(style =>
+                    style.Policy == RecommendationPolicy.Safe),
+                infeasible.Styles.Single(style =>
+                    style.Policy == RecommendationPolicy.Balanced)
+            ]);
+
+        var mixedResponse = await Response(mixed);
+        var missingResponse = await Response(missing);
+
+        Assert.Equal(
+            [
+                LoadoutComparisonColumnStatus.Available,
+                LoadoutComparisonColumnStatus.Infeasible,
+                LoadoutComparisonColumnStatus.Available
+            ],
+            mixedResponse.Comparison!.Columns.Skip(1)
+                .Select(column => column.Status));
+        var unavailable = missingResponse.Comparison!.Columns.Single(column =>
+            column.Kind == LoadoutComparisonColumnKind.Aggressive);
+        Assert.Equal(
+            LoadoutComparisonColumnStatus.Unavailable,
+            unavailable.Status);
+        Assert.Null(unavailable.Loadout);
+        Assert.Equal(
+            "STYLE_RESULT_UNAVAILABLE",
+            unavailable.Diagnostic!.Code);
+    }
+
+    [Fact]
+    public async Task Comparison_serialization_is_deterministic_and_path_safe()
+    {
+        var recommendation = await Recommendation(GoldenSnapshot());
+
+        var first = CombatRecommendationResponseMapper.Map(recommendation);
+        var second = CombatRecommendationResponseMapper.Map(recommendation);
+        var firstJson = JsonSerializer.Serialize(first.Comparison);
+        var secondJson = JsonSerializer.Serialize(second.Comparison);
+
+        Assert.Equal(firstJson, secondJson);
+        Assert.DoesNotContain(ConfiguredSavePath, firstJson);
+        Assert.DoesNotContain(@"C:\Taiwu", firstJson);
+        Assert.DoesNotContain("exception", firstJson, StringComparison.OrdinalIgnoreCase);
     }
 
     private static DisplayedSlotBudgetRequest Budget(
@@ -275,6 +485,78 @@ public sealed class CombatRecommendationsControllerTests
                 }));
     }
 
+    private static CombatRecommendationsController Controller(
+        IRecommendCombatLoadout recommender)
+    {
+        return new CombatRecommendationsController(
+            recommender,
+            Options.Create(
+                new SaveGameOptions
+                {
+                    DefaultSaveFilePath = ConfiguredSavePath
+                }));
+    }
+
+    private static CombatRecommendationResponse Response(
+        ActionResult<CombatRecommendationResponse> action)
+    {
+        var ok = Assert.IsType<OkObjectResult>(action.Result);
+        return Assert.IsType<CombatRecommendationResponse>(ok.Value);
+    }
+
+    private static async Task<CombatRecommendationResponse> Response(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var recommender = Substitute.For<IRecommendCombatLoadout>();
+        recommender.ExecuteAsync(
+                Arg.Any<RecommendCombatLoadoutRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(recommendation);
+        var action = await Controller(recommender).Recommend(
+            new CombatRecommendationApiRequest
+            {
+                TargetCharacterId = 16317,
+                Objective = RecommendationPolicy.Safe
+            },
+            TestContext.Current.CancellationToken);
+        return Response(action);
+    }
+
+    private static async Task<CombatLoadoutRecommendation> Recommendation(
+        CombatSnapshot snapshot)
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        return await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                ConfiguredSavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Safe),
+            TestContext.Current.CancellationToken);
+    }
+
+    private static CombatLoadoutRecommendation RecommendationWithStyles(
+        CombatLoadoutRecommendation source,
+        CombatRecommendationStyleResult[] styles)
+    {
+        var constructor = typeof(CombatLoadoutRecommendation)
+            .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Single(value => value.GetParameters().Length == 7);
+        return (CombatLoadoutRecommendation)constructor.Invoke(
+        [
+            source.Snapshot,
+            source.ThreatAnalysis,
+            source.Generation,
+            RecommendationPolicy.Safe,
+            styles,
+            null,
+            null
+        ]);
+    }
+
     private static CombatSnapshot GoldenSnapshot()
     {
         var playerSkill = Skill(
@@ -332,6 +614,87 @@ public sealed class CombatRecommendationsControllerTests
                     "SOURCE_WARNING",
                     "Preserved source warning.")
             ]);
+    }
+
+    private static CombatSnapshot EmptySnapshot()
+    {
+        return Snapshot(
+            playerSkills: [],
+            new CombatLoadoutSnapshot([], [], [], [], []),
+            new SlotBudgetSet(
+            [
+                new SlotBudget(SkillCategory.Neigong, 0, 6),
+                new SlotBudget(SkillCategory.Attack, 0, 2),
+                new SlotBudget(SkillCategory.Agility, 0, 2),
+                new SlotBudget(SkillCategory.Defense, 0, 2),
+                new SlotBudget(SkillCategory.Assistance, 0, 2)
+            ]));
+    }
+
+    private static CombatSnapshot UnavailableCurrentSnapshot()
+    {
+        var skill = new CombatSkillSnapshot(
+            900,
+            SnapshotValue<string>.Available("Current skill"),
+            SkillCategory.Attack,
+            SnapshotValue<int>.Unavailable("Grid cost was not captured."),
+            SnapshotValue<bool>.Available(true),
+            SnapshotValue<PracticeDirection>.Available(
+                PracticeDirection.Direct),
+            SkillSlotContribution.None,
+            SnapshotValue<int>.Available(1900),
+            SnapshotValue<int>.Available(2900));
+        return Snapshot(
+            [skill],
+            new CombatLoadoutSnapshot([], [skill.SkillId], [], [], []),
+            new SlotBudgetSet(
+            [
+                new SlotBudget(SkillCategory.Neigong, 0, 6),
+                new SlotBudget(
+                    SkillCategory.Attack,
+                    SnapshotValue<int>.Unavailable(
+                        "Used slots were unavailable."),
+                    capacity: 2),
+                new SlotBudget(SkillCategory.Agility, 0, 2),
+                new SlotBudget(SkillCategory.Defense, 0, 2),
+                new SlotBudget(SkillCategory.Assistance, 0, 2)
+            ]));
+    }
+
+    private static CombatSnapshot Snapshot(
+        CombatSkillSnapshot[] playerSkills,
+        CombatLoadoutSnapshot playerLoadout,
+        SlotBudgetSet slotBudgets)
+    {
+        return new CombatSnapshot(
+            new CombatSnapshotMetadata(
+                ConfiguredSavePath,
+                new string('B', 64),
+                DateTimeOffset.Parse("2026-08-08T12:00:00Z"),
+                SnapshotValue<DateTimeOffset>.Available(
+                    DateTimeOffset.Parse("2026-08-08T11:00:00Z")),
+                SnapshotValue<string>.Available(
+                    VerifiedCombatEffectCatalogs.GoldenGameDataVersion)),
+            new PlayerCombatSnapshot(
+                characterId: 1,
+                SnapshotValue<string>.Available("Taiwu"),
+                playerSkills,
+                playerLoadout,
+                equipment: [],
+                slotBudgets,
+                new GenericSlotAllocation(0, 0, 0, 0, 0),
+                legendaryBookCostSlots: [],
+                legendaryBookCostAssignments: []),
+            new TargetCombatSnapshot(
+                characterId: 16317,
+                SnapshotValue<string>.Available("Target"),
+                SnapshotValue<int>.Available(52),
+                features: [],
+                learnedSkills: [],
+                SnapshotValue<CombatLoadoutSnapshot>.Available(
+                    new CombatLoadoutSnapshot([], [], [], [], [])),
+                equipment: []),
+            warnings: []);
     }
 
     private static CombatSkillSnapshot Skill(

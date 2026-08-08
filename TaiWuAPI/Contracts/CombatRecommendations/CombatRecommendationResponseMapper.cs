@@ -1,5 +1,6 @@
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
+using TaiWu.Application.LoadoutComparisons;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 
@@ -12,8 +13,8 @@ public static class CombatRecommendationResponseMapper
     {
         ArgumentNullException.ThrowIfNull(recommendation);
 
-        var snapshotReference =
-            $"snapshot:{recommendation.Snapshot.Metadata.CapturedAtUtc:O}";
+        var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
+        var snapshotReference = comparison.SnapshotReference.Value;
         var threats = recommendation.ThreatAnalysis.Threats
             .Select(value => new CombatThreatResponse(
                 ThreatReference(value.Threat.Code),
@@ -38,7 +39,10 @@ public static class CombatRecommendationResponseMapper
             styles,
             MapWarnings(recommendation),
             MapInnerPowerState(recommendation.Snapshot.Player),
-            MapTargetObservation(recommendation));
+            MapTargetObservation(recommendation),
+            LoadoutComparisonResponseMapper.Map(
+                comparison,
+                recommendation));
     }
 
     private static TargetObservationResponse? MapTargetObservation(

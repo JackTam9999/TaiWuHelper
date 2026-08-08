@@ -194,7 +194,7 @@ recommendations.
 
 ### E4-003 — Expose typed loadout comparison contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -207,26 +207,29 @@ need to rediscover comparison rules from raw style data.
 
 #### Acceptance criteria
 
-- [ ] The API exposes snapshot identity, Current provenance, policy status,
+- [x] The API exposes snapshot identity, Current provenance, policy status,
       category rows, skill states, composite actions, capacity, tactical
       summaries, evidence references, and diagnostics.
-- [ ] Existing recommendation facts retain their existing meaning and stable
+- [x] Existing recommendation facts retain their existing meaning and stable
       references.
-- [ ] Unavailable values remain nullable or explicitly unavailable with a
+- [x] Unavailable values remain nullable or explicitly unavailable with a
       reason; zero is never used as a substitute.
-- [ ] Infeasible policies cannot serialize a fake empty proposal.
-- [ ] Public contracts expose no save path, game path, screenshot path,
+- [x] Infeasible policies cannot serialize a fake empty proposal.
+- [x] Public contracts expose no save path, game path, screenshot path,
       process identifier, or exception detail.
-- [ ] Serialization order is deterministic.
-- [ ] Controller tests cover feasible, mixed, infeasible, unavailable, and
+- [x] Serialization order is deterministic.
+- [x] Controller tests cover feasible, mixed, infeasible, unavailable, and
       observed-baseline responses.
-- [ ] API documentation includes backward-compatibility and versioning notes.
+- [x] API documentation includes backward-compatibility and versioning notes.
 
 #### Evidence when complete
 
 - `docs/architecture/LOADOUT-COMPARISON-API.md`.
 - Updated combat-recommendation API documentation.
 - Focused API test summary.
+- Verification on 2026-08-08: API/controller tests passed 243/243,
+  architecture tests passed 78/78, and solution formatting verification
+  passed.
 
 ## Slice 4: Core UI
 
