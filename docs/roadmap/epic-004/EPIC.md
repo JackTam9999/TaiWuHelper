@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | Two-option trial awaiting product-owner review |
+| Status | Complete — product-owner approved 2026-08-10 |
 | Milestone | 4 |
 | Target release | TBD |
-| Last updated | 2026-08-09 |
+| Last updated | 2026-08-10 |
 
 ## Summary
 
@@ -22,10 +22,10 @@ the same immutable combat snapshot and recommendation results delivered by
 [Epic 3](../epic-003/EPIC.md). It does not generate a second recommendation,
 apply a loadout, or control the game.
 
-### Two-option product trial
+### Two-option product decision
 
 Product-owner review found that three visible choices frequently selected the
-same loadout and added decision noise. The review build therefore exposes only
+same loadout and added decision noise. The approved design therefore exposes only
 `Safe` (穩健) and `Aggressive` (進取) in the player-facing form, tabs,
 comparison matrix, selected tactical detail, and responsive policy control. `Balanced` remains
 calculated in the immutable recommendation and remains present in Domain and
@@ -69,7 +69,7 @@ recommendation result and giving each comparison state explicit semantics.
 - As a keyboard or mobile user, I can compare the current loadout with one
   selected policy without navigating an unusably wide table.
 - As an API consumer, I receive the complete typed comparison semantics while
-  Presentation deterministically exposes the current two-option trial.
+  Presentation deterministically exposes the approved two-option design.
 
 ## Goals
 
@@ -296,7 +296,7 @@ semantics, observation apply/clear behavior, and architecture safety.
 
 - [x] One immutable recommendation result supplies every comparison column.
 - [x] Current, Safe, Balanced, and Aggressive remain stable typed backend
-      columns; the review UI deterministically projects Current, Safe, and
+      columns; the approved UI deterministically projects Current, Safe, and
       Aggressive.
 - [x] Skill membership and manual actions agree exactly with the existing
       manual plan for every feasible policy.
@@ -320,7 +320,7 @@ semantics, observation apply/clear behavior, and architecture safety.
       unavailable, observed, stale, and cleared states.
 - [x] Local vertical verification proves all inspected save and game sources
       remain byte-for-byte unchanged.
-- [ ] The product owner records the Epic 4 completion decision.
+- [x] The product owner records the Epic 4 completion decision.
 
 ## Success measures
 
@@ -356,5 +356,5 @@ The completed automated acceptance audit is recorded in
 [E4-007 automated verification](../../reviews/E4-007-automated-verification.md),
 and the bilingual desktop/narrow workflow is recorded in
 [E4-007 manual verification](../../reviews/E4-007-manual-verification.md).
-The two-option trial is ready for product-owner review; the explicit completion
-decision remains open.
+On 2026-08-10, the product owner approved the simplified two-option page and
+authorized its merge to `master`. Epic 4 is complete.

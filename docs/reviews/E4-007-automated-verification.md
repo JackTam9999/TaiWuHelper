@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Passed — two-option trial awaiting product-owner review |
+| Status | Complete — product-owner approved |
 | Evidence date | 2026-08-09 |
 | Epic | [EPIC-004](../roadmap/epic-004/EPIC.md) |
 | Backlog item | [E4-007](../roadmap/epic-004/BACKLOG.md#e4-007--verify-comparison-safety-parity-and-determinism) |
@@ -42,7 +42,7 @@ git diff --check
 ```
 
 Result: formatting passed. The final diff check is repeated immediately before
-the two-option review-build commit.
+the completion commit.
 
 ## Focused comparison verification
 
@@ -58,7 +58,7 @@ projection as well as the recommendation result. Reapplying the same typed
 observation produces the same comparison fingerprint. Clearing it produces
 the original save-only comparison fingerprint.
 
-The two-option product trial changes only the Presentation projection. Domain,
+The approved two-option design changes only the Presentation projection. Domain,
 Application, and serialized API verification still cover Safe, Balanced, and
 Aggressive in deterministic order. Component and selection-state tests prove
 that the player-facing form and single result-level button group expose only
@@ -125,7 +125,7 @@ runtime files are not committed.
 | Comparison is session-bound and information-only | Presentation state ownership, persistent notice, architecture guards | Pass |
 | Feasible, infeasible, unchanged, changed, unavailable, observed, stale, and cleared states are automated | Domain/Application/API/Presentation state matrix across Epic 4 plus observation suites | Pass |
 | Local inspected sources remain byte-for-byte unchanged | Final guarded vertical: 1/1, before/after fingerprints equal | Pass |
-| Product-owner completion decision | Explicit decision not yet recorded | Pending |
+| Product-owner completion decision | Explicit approval recorded on 2026-08-10 | Pass |
 
 ## Explicit future work
 
@@ -136,6 +136,6 @@ work with their own privacy, persistence, and evidence decisions.
 
 ## Decision boundary
 
-All implementation and verification criteria are satisfied for the two-option
-review build. Epic 4 remains open for product-owner review and the explicit
-completion decision.
+All implementation and verification criteria are satisfied. On 2026-08-10,
+the product owner approved the simplified two-option design and authorized the
+Epic 4 branch for merge to `master`. Epic 4 is complete.

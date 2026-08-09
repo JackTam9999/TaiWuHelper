@@ -10,8 +10,8 @@ The comparison is a read-only projection of one immutable
 `CombatLoadoutRecommendation`. It does not generate candidates, rescore a
 candidate, infer a missing value, persist a preference, or apply a loadout.
 
-The immutable comparison and API retain all four columns. During the Epic 4
-two-option product trial, Presentation projects only Current, Safe, and
+The immutable comparison and API retain all four columns. In the approved Epic 4
+two-option design, Presentation projects only Current, Safe, and
 Aggressive. Balanced is neither deleted nor recomputed and can be restored
 without changing the Domain or API contract.
 
@@ -245,7 +245,7 @@ re-evaluates row visibility from the same immutable comparison.
 
 ## Responsive and interaction contract
 
-At a comparison-container width of 1280 CSS pixels or more, the trial matrix
+At a comparison-container width of 1280 CSS pixels or more, the approved matrix
 shows Current plus Safe and Aggressive. Below 1280 pixels, it shows Current plus
 one explicitly selected user-facing policy. Responsive mode changes only visibility and
 layout; facts, state vocabulary, and ordering are identical.

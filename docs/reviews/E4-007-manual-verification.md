@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Passed — two-option trial awaiting product-owner review |
+| Status | Complete — product-owner approved |
 | Evidence date | 2026-08-09 |
 | Epic | [EPIC-004](../roadmap/epic-004/EPIC.md) |
 | Backlog item | [E4-007](../roadmap/epic-004/BACKLOG.md#e4-007--verify-comparison-safety-parity-and-determinism) |
@@ -23,7 +23,7 @@ before/after source fingerprints.
 A uniquely selected current-save regular target produced Current, Safe, and
 Aggressive player-facing comparison columns from one successful recommendation
 with warnings. The immutable backend result continued to contain the Balanced
-policy for API compatibility; the two-option product trial projected it out of
+policy for API compatibility; the approved two-option design projected it out of
 the UI.
 
 Verified visible behavior:
@@ -114,7 +114,11 @@ verified by component and architecture tests without bypassing the lock.
 Desktop and narrow workflows expose equivalent typed comparison facts in
 Traditional Chinese and English. Keyboard-native buttons retain
 their expected roles, the layout does not depend on color alone, and every
-action remains helper-local or navigational. The review build intentionally
+action remains helper-local or navigational. The approved design intentionally
 shows only Safe and Aggressive without changing scoring or manufacturing a
-different lower-ranked winner. Manual verification passed; the product owner
-will review the two-option trial before recording the Epic completion decision.
+different lower-ranked winner. Manual verification passed.
+
+## Product-owner decision
+
+On 2026-08-10, the product owner accepted the simplified two-option page,
+approved Epic 4 completion, and authorized its merge to `master`.

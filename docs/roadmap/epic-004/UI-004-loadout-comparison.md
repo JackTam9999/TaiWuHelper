@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Two-option review build implemented through E4-007 |
+| Status | Accepted — Epic 4 complete |
 | Epic | [EPIC-004](./EPIC.md) |
 | Backlog items | [E4-000](./BACKLOG.md#e4-000--define-comparison-semantics-and-ui-states), [E4-004](./BACKLOG.md#e4-004--build-the-desktop-comparison-matrix), [E4-005](./BACKLOG.md#e4-005--add-narrow-screen-bilingual-and-keyboard-interaction), [E4-007](./BACKLOG.md#e4-007--verify-comparison-safety-parity-and-determinism) |
 | Primary surface | Existing local Blazor recommendation page |
@@ -13,7 +13,7 @@
 Add one comparison section to the existing combat-recommendation workflow so
 the player can compare Current with the Safe and Aggressive policy winners
 without reconstructing changes across separate tabs. Balanced remains in the
-backend comparison during this reversible two-option product trial.
+backend comparison behind the approved two-option Presentation design.
 
 The data and state rules are defined by the
 [loadout comparison contract](../../architecture/LOADOUT-COMPARISON-CONTRACT.md).
@@ -338,7 +338,7 @@ The implemented matrix follows this contract with these concrete mechanics:
   and
 - long names, diagnostics, and action reasons wrap without ellipsis.
 
-The E4-007 review build applies a reversible Presentation projection: Safe and
+The approved E4-007 design applies a reversible Presentation projection: Safe and
 Aggressive are the only user-facing choices, while Balanced remains calculated
 and serialized by the backend. It does not change policy scoring or force a
 different lower-ranked candidate when both visible policies legitimately select

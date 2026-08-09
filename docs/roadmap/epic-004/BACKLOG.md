@@ -245,7 +245,7 @@ need to rediscover comparison rules from raw style data.
 
 Add a comparison section to the combat recommendation page that lets desktop
 users inspect Current, Safe, and Aggressive results together. Balanced remains
-in the typed recommendation/API result during the two-option product trial.
+in the typed recommendation/API result behind the approved two-option UI.
 
 #### Acceptance criteria
 
@@ -359,7 +359,7 @@ Completed on 2026-08-08. Focused verification passed 135/135 Application,
 
 ### E4-007 — Verify comparison safety, parity, and determinism
 
-**Status:** Two-option trial awaiting product-owner review
+**Status:** Complete
 
 **Priority:** P1
 
@@ -389,7 +389,7 @@ Epic 4 criterion, and record the product-owner decision.
 - [x] Every Epic 4 acceptance criterion links to implementation or evidence.
 - [x] Deferred export, persistence, screenshot assistance, lower-ranked
       candidate exploration, and outcome feedback remain explicit future work.
-- [ ] The product owner records the Epic 4 completion decision.
+- [x] The product owner records the Epic 4 completion decision.
 
 #### Evidence when complete
 
@@ -397,13 +397,13 @@ Epic 4 criterion, and record the product-owner decision.
 - `docs/reviews/E4-007-manual-verification.md`.
 - Updated completion decision in [EPIC-004](./EPIC.md).
 
-Implementation and verification for the reversible two-option review build
+Implementation and verification for the reversible two-option design
 completed on 2026-08-08 and the whole-page duplication pass completed on
 2026-08-09. Release build passed
 with zero warnings/errors; the default matrix passed 926 total with 917 passed
 and 9 expected opt-in skips; the guarded current-save vertical passed 1/1 with
-all inspected fingerprints unchanged. Product-owner review and the completion
-decision remain pending.
+all inspected fingerprints unchanged. The product owner approved Epic 4 and
+authorized its merge to `master` on 2026-08-10.
 
 ## Future work outside Epic 4
 
