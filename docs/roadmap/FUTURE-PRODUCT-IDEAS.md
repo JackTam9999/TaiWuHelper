@@ -3,17 +3,16 @@
 | Field | Value |
 |---|---|
 | Status | Proposed |
-| Scope | Post-Milestone 1 discovery |
-| Related epic | None |
-| Last updated | 2026-08-08 |
+| Scope | Ongoing product discovery after Epic 4 |
+| Related epics | EPIC-001 through EPIC-004 |
+| Last updated | 2026-08-10 |
 
 ## Purpose
 
-Record potentially valuable product ideas discovered while reviewing other
-Taiwu community tools. These ideas are deliberately outside
-[EPIC-001](./epic-001/EPIC.md) and its Milestone 1
-backlog. An idea must receive its own epic, acceptance criteria, and delivery
-decision before implementation begins.
+Record potentially valuable product ideas that have not yet been promoted into
+an active epic. An idea may extend a completed epic or open a new product area,
+but it must receive an explicit epic boundary, acceptance criteria, and
+delivery decision before implementation begins.
 
 Every future feature remains subject to
 [ADR-0001: Absolute game non-interference](../architecture/ADR-0001-absolute-game-non-interference.md).
@@ -174,25 +173,127 @@ content, or any data intended to be written back into the game. A generated
 catalogue database is a local cache and must never be committed or shipped as
 application content.
 
+### PI-007 — Target archetypes and counter playbooks
+
+**Status:** Proposed as the leading Epic 5 candidate on 2026-08-10.
+
+Scale the existing verified target-specific recommendation pipeline by
+classifying each target into one or more evidence-backed combat archetypes.
+Classification is multi-label rather than mutually exclusive: a target may be
+blade-oriented, apply high physical-damage pressure, use poison, and have a
+defeat-threshold reset at the same time.
+
+Candidate profile dimensions include:
+
+- attack or weapon family;
+- physical, internal, body, Qi, penetration, or repeated-hit pressure;
+- physical or internal defense, avoidance, recovery, and reset mechanics;
+- poison, mind-break, distraction-mark, movement, range, weapon, and trick
+  disruption; and
+- opening burst, sustained attrition, threshold triggers, and other combat
+  tempo characteristics.
+
+Each archetype defines a reusable counter playbook containing response goals,
+verified counter or mitigation candidates, timing, requirements, evidence, and
+known gaps. A playbook is not a fixed loadout and does not claim that one
+representative target defines every member of the archetype.
+
+The final recommendation combines all matched playbooks, resolves conflicts
+and capacity pressure, filters against the player's learned skills and current
+practice directions, and then applies target-specific adjustments from the
+target's actual skills, effects, equipment, observations, and unresolved
+evidence. The UI should distinguish the reusable archetype response from the
+adjustments made for this exact target.
+
+Initial classification must use explicit, versioned, verified rules. It must
+not infer mechanics from a skill name, weapon label, or untyped raw effect
+description. Unknown fields remain unknown. Statistical clustering, automatic
+training, and win-probability claims remain outside the initial epic.
+
+### PI-008 — Companion role and candidate finder
+
+Find suitable 同道 candidates for a player-selected role or objective rather
+than claiming that one character is universally best. Possible objectives
+include a combat role, teaching or inheritance value, a particular life-skill
+role, settlement work, or a balanced long-term candidate.
+
+The comparison should explain the relevant attributes, learned skills,
+features, availability, evidence freshness, missing data, and tradeoffs used
+for the selected role. It may rank only fields supported by version-matched
+save or GameData evidence and must not automate recruitment, dialogue, travel,
+or party changes.
+
+### PI-009 — Companion development planner
+
+Create a staged, information-only development plan for an existing or selected
+同道. Start from a chosen future role, identify the gap between current and
+desired capabilities, and suggest evidence-backed priorities for skills,
+training, equipment, and other verified development resources.
+
+The plan must distinguish directly observed progress, save-derived state,
+verified opportunities, and speculative or unavailable data. It should expose
+conflicts between multiple desired roles instead of combining them into an
+impossible universal build. It must never perform training or modify a
+character, party, save, or game state.
+
+### PI-010 — Village workforce and building management
+
+Provide a read-only settlement planning surface that connects villagers,
+roles, buildings, current assignments, resource constraints, and uncovered
+work. Recommendations should be objective-specific, such as production,
+recovery, training support, or balanced operation, and should explain why a
+villager is suitable for a particular assignment.
+
+The current save remains authoritative for people, buildings, assignments,
+and resources. The helper may produce a manual reassignment checklist, but it
+must not automate work assignment, construction, collection, or any other
+in-game operation.
+
+### PI-011 — Library and book planning
+
+Build a library and study-planning view from book, page, ownership, condition,
+and location data only where those fields can be read and interpreted with
+version-matched evidence. Help the player identify relevant holdings, missing
+or incomplete material, duplicates, study priorities, and connections to
+player or companion development goals.
+
+Acquisition sources, repair behavior, reading requirements, and progression
+effects must be separately verified before they become recommendations. This
+idea may begin as a bounded slice of PI-010, but it should become its own epic
+if its inventory, study, acquisition, or progression rules require a distinct
+domain model.
+
 ## Suggested promotion order
 
-This was the original suggested promotion order after Milestone 1. The product
-owner selected the catalogue and character skill atlas for Epic 2 on
-2026-08-02, then selected target observations plus evidence provenance for
-Epic 3 on 2026-08-07. The ordering is retained as discovery context:
+### Completed promotions
 
-1. Verified target observations and evidence provenance — promoted to
-   [EPIC-003](./epic-003/EPIC.md).
-2. Side-by-side loadout comparison — promoted to
-   [EPIC-004](./epic-004/EPIC.md).
-3. Bilingual martial-art catalogue — promoted to
-   [EPIC-002](./epic-002/EPIC.md).
-4. Shareable recommendation card.
-5. Version-aware observation and result persistence.
+The product owner promoted and completed these discovery ideas:
 
-The two evidence ideas promoted into Epic 3 provide the most direct improvement
-to recommendation correctness. The remaining ideas primarily improve
-discovery, presentation, sharing, and repeat-use performance.
+1. Bilingual martial-art catalogue — promoted to
+   [EPIC-002](./epic-002/EPIC.md) on 2026-08-02.
+2. Verified target observations and evidence provenance — promoted to
+   [EPIC-003](./epic-003/EPIC.md) on 2026-08-07.
+3. Side-by-side loadout comparison — promoted to
+   [EPIC-004](./epic-004/EPIC.md) on 2026-08-08 and completed with the approved
+   two-option design on 2026-08-10.
+
+### Current candidates after Epic 4
+
+1. Target archetypes and counter playbooks — leading Epic 5 candidate because
+   it reuses the completed threat, evidence, recommendation, and comparison
+   foundations while expanding target coverage.
+2. Companion role and candidate finder.
+3. Companion development planner.
+4. Village workforce and building management.
+5. Library and book planning, initially assessed as a village-management slice.
+6. Version-aware observation, recommendation, and outcome persistence.
+7. Shareable recommendation card, which may remain a smaller enhancement
+   because copy and print foundations already exist.
+
+The companion and settlement ideas intentionally remain separate. They may
+share character, skill, evidence, and comparison primitives, but each needs a
+different objective model and should not be combined into one unbounded
+optimizer epic.
 
 ## Discovery questions
 
@@ -206,5 +307,19 @@ discovery, presentation, sharing, and repeat-use performance.
 - Which extracted catalogue fields may be safely distributed?
 - Which raw effect fields are useful for local display, and which effects need
   verified typed rules before the recommendation engine may use them?
+- Which independent profile dimensions distinguish reusable target archetypes
+  without forcing a target into one mutually exclusive group?
+- Which representative targets and counter evidence are sufficient to validate
+  the first archetype playbooks?
+- How should overlapping playbooks resolve conflicting counters, timing, and
+  category or universal-slot pressure?
+- Which player-selected roles make companion comparison useful, and which
+  character fields are reliable enough to rank for each role?
+- Which development opportunities can be represented as verified steps rather
+  than speculative advice?
+- Which village assignments, buildings, resource constraints, and worker
+  capabilities are available from the current save?
+- Does library planning share enough of the village model to remain one slice,
+  or does it require a separate inventory and progression domain?
 - What SQLite retention and deletion controls should the player have?
 - Which ideas justify separate epics rather than remaining small enhancements?
