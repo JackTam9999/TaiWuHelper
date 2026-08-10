@@ -67,6 +67,14 @@ and proprietary runtime content are intentionally absent from this record.
   五黃辟毒術 candidate through the existing feasibility and bounded generator.
 - API and Presentation tests preserve the split identities and bilingual
   strategy states.
+- A screenshot-reported real-save poison-family result exposed a Presentation
+  crash: recommendation generation covered `CONFIGURED_POISON_APPLICATION`,
+  but the comparison mapper only knew the older analyzed-threat list. The
+  recommendation now exposes one complete typed threat inventory assembled
+  from analyzed threats plus eligible playbook goals. Comparison building,
+  API mapping, UI mapping, evidence, stable references, and observation-impact
+  explanations all consume that inventory. A synthetic poison-family UI test
+  reproduces the failing shape without retaining the target identity.
 - The guarded current-save vertical evaluates every registered family,
   repeats/apply/clear deterministically, and preserves every inspected source.
 - The local Traditional Chinese strategy workflow renders one available panel,
@@ -74,8 +82,9 @@ and proprietary runtime content are intentionally absent from this record.
   section without document overflow after rebuilding the remediated
   application. The obsolete outer-counter gap is absent.
 - The Release build passed with zero warnings and errors. The default matrix
-  passed **1,052 total; 1,043 passed; 0 failed; 9 expected opt-in skips**.
-  Domain passed 417/417 and Application passed 138/138.
+  passed **1,053 total; 1,044 passed; 0 failed; 9 expected opt-in skips**.
+  Domain passed 417/417, Application passed 138/138, and API/Presentation
+  passed 276/276.
 - The guarded current-save vertical passed 1/1 in about 29 seconds and retained
   its source-preservation guard.
 - `dotnet format TaiWu.slnx --no-restore` and `git diff --check` pass on the

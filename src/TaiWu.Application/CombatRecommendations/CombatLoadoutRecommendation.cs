@@ -48,6 +48,15 @@ public sealed record CombatLoadoutRecommendation
         TargetObservation = targetObservation;
         TargetObservationImpact = targetObservationImpact;
         TargetPlaybook = targetPlaybook;
+        RecommendationThreats =
+        [
+            .. ThreatAnalysis.Threats
+                .Select(value => value.Threat)
+                .Concat(TargetPlaybook?.EligibleGoals
+                    .SelectMany(goal => goal.Threats) ?? [])
+                .DistinctBy(threat => threat.Code, StringComparer.Ordinal)
+                .OrderBy(threat => threat.Code, StringComparer.Ordinal)
+        ];
     }
 
     public CombatSnapshot Snapshot { get; }
@@ -56,6 +65,8 @@ public sealed record CombatLoadoutRecommendation
         Snapshot.Warnings;
 
     public TargetThreatAnalysis ThreatAnalysis { get; }
+
+    public ImmutableArray<TargetThreat> RecommendationThreats { get; }
 
     public TargetPlaybookPersonalization? TargetPlaybook { get; }
 

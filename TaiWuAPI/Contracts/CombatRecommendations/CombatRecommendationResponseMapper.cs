@@ -21,14 +21,14 @@ public static class CombatRecommendationResponseMapper
 
         var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
         var snapshotReference = comparison.SnapshotReference.Value;
-        var threats = recommendation.ThreatAnalysis.Threats
+        var threats = recommendation.RecommendationThreats
             .Select(value => new CombatThreatResponse(
-                ThreatReference(value.Threat.Code),
-                value.Threat.Code,
-                value.Threat.Title,
-                value.Threat.Severity,
-                value.Threat.ActivationTiming,
-                [.. value.Threat.Evidence.Select(evidence => evidence.Reference)]))
+                ThreatReference(value.Code),
+                value.Code,
+                value.Title,
+                value.Severity,
+                value.ActivationTiming,
+                [.. value.Evidence.Select(evidence => evidence.Reference)]))
             .ToArray();
         var styles = recommendation.Styles
             .Select(style => MapStyle(snapshotReference, style))

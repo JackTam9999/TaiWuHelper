@@ -186,10 +186,11 @@ internal static class TargetObservationRecommendationImpactAnalyzer
     {
         var skill = recommendation.Snapshot.Player.LearnedSkills.Single(value =>
             value.SkillId == option.Candidate.SkillId);
-        var linkedThreats = recommendation.ThreatAnalysis.Threats
-            .Where(value => option.ThreatCodes.Contains(value.Threat.Code))
+        var linkedThreats = recommendation.RecommendationThreats
+            .Where(value => option.ThreatCodes.Contains(value.Code))
             .ToArray();
-        var threatEvidence = linkedThreats.SelectMany(EvidenceReferences);
+        var threatEvidence = linkedThreats.SelectMany(value =>
+            value.Evidence.Select(evidence => evidence.Reference));
         return new TargetRecommendationImpact(
             policy,
             kind,
@@ -199,7 +200,7 @@ internal static class TargetObservationRecommendationImpactAnalyzer
             option.Candidate.RequiredDirection,
             [.. option.ThreatCodes.Order(StringComparer.Ordinal)],
             [.. linkedThreats
-                .Select(value => value.Threat.Title)
+                .Select(value => value.Title)
                 .Distinct(StringComparer.Ordinal)
                 .Order(StringComparer.Ordinal)],
             [.. threatEvidence

@@ -735,10 +735,10 @@ Run the full automated and guarded local verification matrix, audit every Epic
 #### Completion evidence
 
 - Remediated Release build: zero warnings and zero errors.
-- Default Release matrix: 1,052 total; 1,043 passed; 0 failed; 9 expected
+- Default Release matrix: 1,053 total; 1,044 passed; 0 failed; 9 expected
   opt-in integration skips.
 - Focused layers: Domain 417/417, Application 138/138, Infrastructure unit
-  132/132, API/Presentation 275/275, and Architecture 80/80.
+  132/132, API/Presentation 276/276, and Architecture 80/80.
 - Guarded current-save vertical: 1 passed, 0 failed, 0 skipped; every
   registered family evaluated and every inspected source unchanged.
 - The rebuilt Traditional Chinese desktop workflow exposed the verified outer
@@ -779,6 +779,8 @@ exact channel-resistance evidence affect production recommendations.
       on every identity.
 - [x] Opposite directions of one skill remain visible to feasibility while the
       loadout generator deterministically selects one direction per skill.
+- [x] The recommendation threat inventory includes every eligible playbook
+      threat, so comparison/API/UI mapping cannot lose a newly covered family.
 - [x] A current-player test proves an owned reverse 五黃辟毒術 path flows from
       poison evidence through matching, playbook composition, feasibility, and
       bounded recommendation generation.
@@ -794,8 +796,12 @@ exact channel-resistance evidence affect production recommendations.
   and breakthrough-active; machine paths, fingerprints, and save content are
   not committed.
 - [E5-011 remediation review](../../reviews/E5-011-playbook-remediation.md).
-- Remediated Release verification: 1,052 total; 1,043 passed; 0 failed;
+- Remediated Release verification: 1,053 total; 1,044 passed; 0 failed;
   9 expected opt-in skips; guarded current-save vertical 1/1.
+- A screenshot-reported real-save poison-family crash was reproduced and
+  traced to a missing typed comparison threat. The complete threat inventory
+  and a poison-family Presentation regression test close that path without
+  recording the target identity.
 
 ## Future work outside Epic 5
 

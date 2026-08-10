@@ -321,6 +321,39 @@ public sealed class CombatRecommendationViewModelMapperTests
     }
 
     [Fact]
+    public async Task Maps_playbook_only_poison_threat_into_comparison()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var snapshot = PoisonSnapshot();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+        var recommendation = await new RecommendCombatLoadout(reader)
+            .ExecuteAsync(
+                new RecommendCombatLoadoutRequest(
+                    SavePath,
+                    snapshot.Target.CharacterId,
+                    RecommendationPolicy.Safe),
+                TestContext.Current.CancellationToken);
+
+        var model = CombatRecommendationViewModelMapper.Map(recommendation);
+
+        var threat = Assert.Single(
+            model.Threats,
+            value => value.Code == "CONFIGURED_POISON_APPLICATION");
+        var comparison = Assert.IsType<LoadoutComparisonViewModel>(
+            model.Comparison);
+        Assert.Contains(
+            comparison.Columns
+                .Where(column => column.Tactical is not null)
+                .SelectMany(column => column.Tactical!.CoveredThreats),
+            value => value.Code == threat.Code
+                && value.Reference == threat.Reference
+                && value.Title == threat.Title);
+    }
+
+    [Fact]
     public async Task Stable_references_repeat_without_execution_operations()
     {
         var recommendation = await RecommendAsync(
@@ -517,6 +550,72 @@ public sealed class CombatRecommendationViewModelMapperTests
                     "SOURCE_WARNING",
                     "Preserved source warning.")
             ]);
+    }
+
+    private static CombatSnapshot PoisonSnapshot()
+    {
+        var wuhuang = Skill(
+            282,
+            SkillCategory.Defense,
+            PracticeDirection.Reverse,
+            directEffectId: 180,
+            reverseEffectId: 906);
+        var poisonAttack = new CombatSkillSnapshot(
+            718,
+            SnapshotValue<string>.Available("測試毒素功法"),
+            SkillCategory.Attack,
+            SnapshotValue<int>.Available(1),
+            SnapshotValue<bool>.Available(true),
+            SnapshotValue<PracticeDirection>.Available(
+                PracticeDirection.Direct),
+            SkillSlotContribution.None,
+            SnapshotValue<int>.Available(668),
+            SnapshotValue<int>.Available(1394),
+            hasConfiguredOuterDamage: SnapshotValue<bool>.Available(false),
+            hasConfiguredPoisonApplication:
+                SnapshotValue<bool>.Available(true));
+
+        return new CombatSnapshot(
+            new CombatSnapshotMetadata(
+                SavePath,
+                new string('B', 64),
+                DateTimeOffset.Parse("2026-08-10T12:00:00Z"),
+                SnapshotValue<DateTimeOffset>.Available(
+                    DateTimeOffset.Parse("2026-08-10T11:00:00Z")),
+                SnapshotValue<string>.Available(
+                    VerifiedCombatEffectCatalogs.GoldenGameDataVersion)),
+            new PlayerCombatSnapshot(
+                characterId: 21396,
+                SnapshotValue<string>.Available("Taiwu"),
+                [wuhuang],
+                new CombatLoadoutSnapshot([], [], [], [], []),
+                equipment: [],
+                new SlotBudgetSet(
+                [
+                    new SlotBudget(SkillCategory.Neigong, 0, 6),
+                    new SlotBudget(SkillCategory.Attack, 0, 2),
+                    new SlotBudget(SkillCategory.Agility, 0, 2),
+                    new SlotBudget(SkillCategory.Defense, 0, 2),
+                    new SlotBudget(SkillCategory.Assistance, 0, 2)
+                ]),
+                new GenericSlotAllocation(0, 0, 0, 0, 0),
+                legendaryBookCostSlots: [],
+                legendaryBookCostAssignments: []),
+            new TargetCombatSnapshot(
+                characterId: 24680,
+                SnapshotValue<string>.Available("Poison target"),
+                SnapshotValue<int>.Available(40),
+                features: [],
+                [poisonAttack],
+                SnapshotValue<CombatLoadoutSnapshot>.Available(
+                    new CombatLoadoutSnapshot(
+                        [],
+                        [poisonAttack.SkillId],
+                        [],
+                        [],
+                        [])),
+                equipment: []),
+            warnings: []);
     }
 
     private static CombatSkillSnapshot Skill(

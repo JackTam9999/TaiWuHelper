@@ -422,8 +422,8 @@ public static class CombatLoadoutComparisonBuilder
     {
         var covered = plan.SelectedRecommendation.Candidate.ThreatCodes;
         var coveredSet = covered.ToHashSet(StringComparer.Ordinal);
-        var unresolved = recommendation.ThreatAnalysis.Threats
-            .Select(value => value.Threat.Code)
+        var unresolved = recommendation.RecommendationThreats
+            .Select(value => value.Code)
             .Where(code => !coveredSet.Contains(code));
         var explanation = style.Explanation;
         var conditionReferences = explanation?.Skills.SelectMany(skill =>
@@ -516,8 +516,8 @@ public static class CombatLoadoutComparisonBuilder
                 .Concat(
                     style.Explanation.Caveats.SelectMany(caveat =>
                         caveat.EvidenceReferences));
-        var threatEvidence = recommendation.ThreatAnalysis.Threats
-            .SelectMany(value => value.Threat.Evidence)
+        var threatEvidence = recommendation.RecommendationThreats
+            .SelectMany(value => value.Evidence)
             .Select(value => value.Reference);
         return References(
             "evidence",
@@ -644,9 +644,8 @@ public static class CombatLoadoutComparisonBuilder
             snapshotReference.Value,
             recommendation.RequestedPolicy.ToString()
         ];
-        parts.AddRange(recommendation.ThreatAnalysis.Threats
-            .OrderBy(value => value.Threat.Code, StringComparer.Ordinal)
-            .Select(value => value.Threat.Code));
+        parts.AddRange(recommendation.RecommendationThreats
+            .Select(value => value.Code));
         parts.AddRange(columns.Select(column =>
             column.Status == LoadoutComparisonColumnStatus.Available
                 && column.Kind != LoadoutComparisonColumnKind.Current

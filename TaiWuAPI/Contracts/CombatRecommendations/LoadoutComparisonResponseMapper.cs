@@ -20,8 +20,7 @@ public static class LoadoutComparisonResponseMapper
 
         var skills = recommendation.Snapshot.Player.LearnedSkills
             .ToDictionary(skill => skill.SkillId);
-        var threats = recommendation.ThreatAnalysis.Threats
-            .Select(value => value.Threat)
+        var threats = recommendation.RecommendationThreats
             .ToDictionary(threat => threat.Code, StringComparer.Ordinal);
         return new LoadoutComparisonResponse(
             comparison.ComparisonReference.Value,

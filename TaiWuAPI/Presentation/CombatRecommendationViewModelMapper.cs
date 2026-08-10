@@ -45,18 +45,18 @@ public static class CombatRecommendationViewModelMapper
                 skillNames,
                 recommendation.Snapshot.Player.GenericSlotAllocation))
             .ToArray();
-        var threats = recommendation.ThreatAnalysis.Threats
+        var threats = recommendation.RecommendationThreats
             .Select(value => new ThreatViewModel(
-                ThreatReference(value.Threat.Code),
-                value.Threat.Code,
-                UiEntityText.UseNames(value.Threat.Title, skillNames),
+                ThreatReference(value.Code),
+                value.Code,
+                UiEntityText.UseNames(value.Title, skillNames),
                 UiEntityText.UseNames(
-                    value.Threat.Explanation,
+                    value.Explanation,
                     skillNames),
-                value.Threat.Kind,
-                value.Threat.Severity,
-                value.Threat.ActivationTiming,
-                [.. value.Threat.Evidence.Select(evidence =>
+                value.Kind,
+                value.Severity,
+                value.ActivationTiming,
+                [.. value.Evidence.Select(evidence =>
                     evidence.Reference)]))
             .ToArray();
         var warnings = MapWarnings(recommendation, skillNames);

@@ -268,6 +268,10 @@ public sealed class RecommendCombatLoadoutTests
             strategy.EligibleGoals,
             goal => goal.Code
                 == "MITIGATE_CONFIGURED_POISON_APPLICATION");
+        Assert.Contains(
+            result.RecommendationThreats,
+            threat => threat.Code
+                == "CONFIGURED_POISON_APPLICATION");
         var counter = Assert.Single(
             strategy.Counters,
             value => value.Option.StableKey
