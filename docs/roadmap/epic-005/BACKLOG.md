@@ -202,7 +202,7 @@ identity.
 
 ### E5-002 — Define versioned multi-label archetype rules and match states
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -215,21 +215,21 @@ match outcome without turning incomplete evidence into `NotMatched`.
 
 #### Acceptance criteria
 
-- [ ] An archetype definition has a stable identity, version, localized-title
+- [x] An archetype definition has a stable identity, version, localized-title
       key, required facet predicates, optional supporting predicates, explicit
       exclusions, and evidence references.
-- [ ] Definitions contain no target character ID, localized matching string,
+- [x] Definitions contain no target character ID, localized matching string,
       raw GameData object, or fixed recommended loadout.
-- [ ] One profile may be evaluated against every applicable definition and may
+- [x] One profile may be evaluated against every applicable definition and may
       return multiple matched archetypes.
-- [ ] Matched, partial, not-matched, unsupported, and conflicting results have
+- [x] Matched, partial, not-matched, unsupported, and conflicting results have
       explicit construction rules.
-- [ ] `NotMatched` requires sufficient contrary evidence and cannot result
+- [x] `NotMatched` requires sufficient contrary evidence and cannot result
       only from an unavailable facet.
-- [ ] Match results retain supporting, missing, excluding, and conflicting
+- [x] Match results retain supporting, missing, excluding, and conflicting
       facet references.
-- [ ] Definitions and matches have deterministic stable keys and ordering.
-- [ ] Unit tests prove that one profile can multi-match and one archetype can
+- [x] Definitions and matches have deterministic stable keys and ordering.
+- [x] Unit tests prove that one profile can multi-match and one archetype can
       match multiple synthetic target profiles.
 
 #### Evidence when complete
@@ -237,6 +237,29 @@ match outcome without turning incomplete evidence into `NotMatched`.
 - Domain archetype-definition, predicate, match, and diagnostic contracts.
 - Domain tests for every match state and multi-label invariant.
 - `docs/architecture/TARGET-ARCHETYPE-MATCHING.md`.
+
+#### Completion evidence
+
+- Versioned definitions own a stable archetype identity, exact applicable
+  profile-rule version, localized-title resource key, required and optional
+  predicates, explicit exclusions, and evidence references. Their contract has
+  no target identity, localized match text, GameData object, or loadout.
+- `FacetConfirmed` and typed `ValueEquals` predicates evaluate immutable profile
+  facets. Missing, incomplete, unsupported, conflicting, and contradicted facts
+  remain distinct.
+- Every supplied definition is evaluated independently. Results retain
+  canonical supporting, missing, excluding, and conflicting facet references
+  plus typed diagnostics.
+- Confirmed required-value contradiction or a confirmed explicit exclusion is
+  required for `NotMatched`. Unknown exclusions remain partial; unavailable
+  requirements remain unsupported or partial.
+- Domain tests cover every match state, multi-match, one rule across multiple
+  targets, exclusions, version mismatch, deterministic ordering, and stable
+  keys.
+- Domain unit tests passed **357/357**. `dotnet build TaiWu.slnx -c Release
+  --no-restore` completed with zero warnings and zero errors; the full no-build
+  solution run passed **972 total: 963 passed, 0 failed, 9 expected opt-in
+  integration skips**.
 
 ## Slice 2: Profile extraction and matching
 

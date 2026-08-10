@@ -56,6 +56,44 @@ internal static class TargetProfileText
         return normalized;
     }
 
+    internal static string ResourceKey(string value, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        var normalized = value.Trim();
+        if (normalized.Length > 256
+            || !IsAsciiLetterOrDigit(normalized[0])
+            || normalized.Any(character =>
+                !IsAsciiLetterOrDigit(character)
+                && character is not '.' and not '_' and not '-' and not ':'))
+        {
+            throw new ArgumentException(
+                "A resource key must start with an ASCII letter or digit and "
+                + "contain only ASCII letters, digits, periods, underscores, "
+                + "hyphens, or colons.",
+                parameterName);
+        }
+
+        return normalized;
+    }
+
+    internal static string Fingerprint(string value, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        var normalized = value.Trim();
+        if (normalized.Length != 64
+            || normalized.Any(character =>
+                character is not (>= '0' and <= '9')
+                    and not (>= 'A' and <= 'F')))
+        {
+            throw new ArgumentException(
+                "A profile fingerprint must contain 64 uppercase hexadecimal "
+                + "characters.",
+                parameterName);
+        }
+
+        return normalized;
+    }
+
     internal static string? OptionalDetail(
         string? value,
         string parameterName)
