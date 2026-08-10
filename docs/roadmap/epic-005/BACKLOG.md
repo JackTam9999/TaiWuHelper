@@ -141,7 +141,7 @@ Document exact semantics before adding Domain profile or matching contracts.
 
 ### E5-001 — Add immutable target combat-profile contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -155,22 +155,22 @@ identity.
 
 #### Acceptance criteria
 
-- [ ] Profile dimensions separately represent attack family, pressure,
+- [x] Profile dimensions separately represent attack family, pressure,
       resilience, control, and tempo.
-- [ ] Each facet has a stable non-localized identity, typed value, evidence
+- [x] Each facet has a stable non-localized identity, typed value, evidence
       state, provenance, source version, and optional unavailable reason.
-- [ ] Confirmed, incomplete, unsupported, and conflicting evidence states have
+- [x] Confirmed, incomplete, unsupported, and conflicting evidence states have
       explicit invariants.
-- [ ] Missing evidence cannot construct a confirmed facet or zero value.
-- [ ] Collections are copied into immutable values with stable ordering.
-- [ ] Blank codes, duplicate facets, invalid enum values, incompatible values,
+- [x] Missing evidence cannot construct a confirmed facet or zero value.
+- [x] Collections are copied into immutable values with stable ordering.
+- [x] Blank codes, duplicate facets, invalid enum values, incompatible values,
       blank evidence, and invalid versions fail construction.
-- [ ] A profile fingerprint is derived from stable facts and excludes display
+- [x] A profile fingerprint is derived from stable facts and excludes display
       text, local paths, timestamps that do not affect semantics, and mutable
       references.
-- [ ] Domain types have no Application, Infrastructure, Presentation,
+- [x] Domain types have no Application, Infrastructure, Presentation,
       persistence, filesystem, process, or GameData dependencies.
-- [ ] Unit tests cover valid, empty, duplicate, unavailable, conflicting, and
+- [x] Unit tests cover valid, empty, duplicate, unavailable, conflicting, and
       deterministic-fingerprint cases.
 
 #### Evidence when complete
@@ -178,6 +178,27 @@ identity.
 - `src/TaiWu.Domain/TargetProfiles/` immutable contracts.
 - `tests/TaiWu.Domain.UnitTests/TargetProfiles/` invariant tests.
 - Updated `docs/architecture/TARGET-COMBAT-PROFILE.md`.
+
+#### Completion evidence
+
+- `TargetCombatProfile` owns canonical immutable facets and diagnostics for one
+  target and profile-rule version. The five independent dimensions are part of
+  the Domain vocabulary.
+- Confirmed facets require a compatible typed presence or positive-measurement
+  value plus evidence. Incomplete and unsupported facets have no authoritative
+  value; conflicting facets retain at least two distinct typed candidates with
+  their own evidence.
+- Stable tokens reject blanks, localized/path-shaped identity values, and
+  invalid versions. Duplicate or incompatible values fail construction.
+- The length-prefixed canonical fingerprint includes stable semantic facts and
+  excludes optional unavailable detail, display text, paths, timestamps, and
+  caller-owned mutable collections.
+- Domain unit tests: **337 passed, 0 failed, 0 skipped**. Architecture tests:
+  **79 passed, 0 failed, 0 skipped**.
+- `dotnet build TaiWu.slnx -c Release --no-restore` completed with zero
+  warnings and zero errors. `dotnet test TaiWu.slnx -c Release --no-build
+  --no-restore` passed **952 total: 943 passed, 0 failed, 9 expected opt-in
+  integration skips**.
 
 ### E5-002 — Define versioned multi-label archetype rules and match states
 

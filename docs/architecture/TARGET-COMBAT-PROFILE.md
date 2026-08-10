@@ -2,9 +2,10 @@
 
 This document defines the evidence boundary selected by
 [E5-000](../roadmap/epic-005/BACKLOG.md#e5-000--verify-target-profile-signals-and-select-the-representative-matrix).
-It precedes the Epic 5 Domain model: it records which facts may become profile
-facets, which sources own them, and which tempting interpretations remain
-unsupported.
+It records which facts may become profile facets, which sources own them, and
+which tempting interpretations remain unsupported. E5-001 adds the immutable
+Domain contract that preserves this boundary before extraction and matching
+are implemented.
 
 The supported GameData product version is
 `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a`. Every rule in this document
@@ -28,6 +29,104 @@ these families.
 Weapon subtype is retained as descriptive attack context. It never proves a
 damage channel, penetration level, defense, poison mechanic, control mechanic,
 or counter by itself.
+
+## Domain contract
+
+E5-001 implements the presentation-neutral contract in
+`TaiWu.Domain.TargetProfiles`. It has no Application, Infrastructure, API,
+filesystem, process, persistence, or GameData dependency.
+
+| Type | Responsibility |
+|---|---|
+| `TargetCombatProfile` | Owns target identity, profile-rule version, canonical facets, canonical diagnostics, and the deterministic SHA-256 fingerprint |
+| `TargetProfileFacetIdentity` | Combines one independent dimension with a stable non-localized facet code |
+| `TargetProfileFacet` | Enforces confirmed, incomplete, unsupported, or conflicting state invariants |
+| `TargetProfileFacetValue` | Carries either exact mechanic presence or one or more typed positive measurements |
+| `TargetProfileMeasurement` | Binds a stable component code to a positive integer and stable raw-unit code |
+| `TargetProfileEvidence` | Binds an opaque evidence reference to typed provenance, stable source identity, and exact source version |
+| `TargetProfileConflictCandidate` | Retains one typed candidate value and its own evidence rather than selecting a silent winner |
+| `TargetProfileUnavailableReason` | Carries a stable reason code and optional explanatory detail |
+| `TargetProfileDiagnostic` | Carries stable severity, code, optional facet reference, and evidence references without presentation copy |
+
+### Dimensions
+
+`TargetProfileDimension` contains five independent axes in canonical order:
+
+1. `AttackFamily`;
+2. `Pressure`;
+3. `Resilience`;
+4. `Control`; and
+5. `Tempo`.
+
+A facet identity belongs to exactly one dimension. The value supplied to a
+confirmed or conflicting facet must repeat the same dimension and facet code;
+mixing an attack-family value into a pressure facet fails construction.
+
+### Evidence-state invariants
+
+| State | Authoritative value | Evidence | Conflict candidates | Unavailable reason |
+|---|---|---|---|---|
+| `Confirmed` | Exactly one compatible typed value | One or more unique entries | Forbidden | Forbidden |
+| `Incomplete` | Forbidden | One or more unique entries showing the partial fact or attempted source | Forbidden | Required |
+| `Unsupported` | Forbidden | One or more unique entries identifying the unsupported source/rule | Forbidden | Required |
+| `Conflicting` | Forbidden | Derived from the candidate evidence | At least two distinct, compatible typed values, each with evidence | Required |
+
+This makes a single value impossible when evidence is missing or conflicting.
+Confirmed numeric measurements must be greater than zero; E5-001 therefore
+cannot silently turn missing data into a confirmed zero. A future mechanic
+with a meaningful zero needs a separate typed value contract and evidence
+revision.
+
+### Stable identities and versions
+
+Facet codes, evidence references, source identities, measurement/unit codes,
+reason codes, and diagnostic codes use restricted stable tokens. They cannot
+contain localized text, whitespace, `/`, or `\`. Versions use a restricted
+version token that accepts the installed GameData product version while
+rejecting local paths. Blank tokens, invalid enum values, and incompatible
+values fail immediately.
+
+Explanatory unavailable detail is deliberately separate from the stable reason
+code. It may help a later presentation layer, but cannot alter profile identity.
+
+### Immutability and canonical order
+
+All incoming facet, evidence, measurement, conflict-candidate, diagnostic, and
+evidence-reference enumerables are copied. Caller mutation cannot change the
+constructed model.
+
+Collections are canonicalized with ordinal stable keys:
+
+- facets by dimension, then facet code;
+- measurements by component code;
+- evidence by provenance, source identity, version, and reference;
+- conflict candidates by typed value and evidence; and
+- diagnostics by severity, code, facet, and evidence references.
+
+Duplicate facets, measurements, evidence, conflict values, diagnostics, and
+diagnostic evidence references fail construction instead of being discarded.
+An empty profile is valid because zero confirmed facets is a meaningful result.
+
+### Profile fingerprint
+
+`TargetCombatProfile.Fingerprint` is an uppercase SHA-256 over a length-prefixed
+canonical representation containing:
+
+- fingerprint-schema marker;
+- target character ID;
+- profile-rule version;
+- canonical facet identities, states, typed values, evidence, conflicts, and
+  stable unavailable-reason codes; and
+- canonical diagnostic facts.
+
+Length-prefix encoding prevents delimiter ambiguity in stable source
+identities and evidence references. Reordering any input collection produces
+the same fingerprint. Changing the target, rule version, facet, evidence,
+conflict, or diagnostic fact changes it.
+
+The model has no display-name, localized-title, timestamp, or path property.
+Optional unavailable detail—including local diagnostic text—is excluded from
+the fingerprint. Mutable input references are never retained.
 
 ## Evidence pipeline
 
