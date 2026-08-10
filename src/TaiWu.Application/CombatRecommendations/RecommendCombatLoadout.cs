@@ -149,7 +149,17 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
             .SelectMany(category => player.EquippedSkills.Get(category))
             .ToHashSet();
         var counterRules = playbookPlan.Options
-            .Select(option => option.CounterRule)
+            .GroupBy(option => option.CounterRule.Effect.SkillId)
+            .Select(group => group
+                .OrderByDescending(option => playbookPlan.Access.Evaluations
+                    .Single(evaluation => ReferenceEquals(
+                        evaluation.Rule,
+                        option.CounterRule)).IsAccessible)
+                .ThenByDescending(option => option.Strength)
+                .ThenBy(option => option.StableKey, StringComparer.Ordinal)
+                .First()
+                .CounterRule)
+            .OrderBy(rule => rule.Effect.SkillId)
             .ToArray();
         var counterSkillIds = counterRules
             .Select(rule => rule.Effect.SkillId)

@@ -14,5 +14,8 @@ public enum TargetThreatKind
     TrickDisruption,
     RangeControl,
     PracticeDirectionSuppression,
-    CombatStartEffect
+    CombatStartEffect,
+    ConfiguredOuterDamagePressure,
+    ChannelResistanceAsymmetry,
+    ConfiguredPoisonApplication
 }

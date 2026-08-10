@@ -332,9 +332,12 @@ internal static class TargetStrategyUiText
     { get; } = new Dictionary<string, BilingualText>(
             StringComparer.Ordinal)
     {
-        ["MIND_RESONANCE_RESET_BASELINE"] = new(
-                "Mind resonance and defeat-reset chain",
-                "心神共鳴與敗北標記重置連鎖"),
+        ["MIND_RESONANCE_BASELINE"] = new(
+                "Mind resonance chain",
+                "心神共鳴連鎖"),
+        ["DEFEAT_MARK_RESET_OVERLAY"] = new(
+                "Defeat-mark reset overlay",
+                "敗北標記重置附加型"),
         ["OUTER_DAMAGE_CONFIGURED"] = new(
                 "Configured outer-damage pressure",
                 "已配置外傷壓力"),
@@ -405,16 +408,6 @@ internal static class TargetStrategyUiText
     { get; } = new Dictionary<string, BilingualText>(
             StringComparer.Ordinal)
     {
-        ["TargetPlaybook.Gap.NoVerifiedOuterDamageCounter"] = new(
-                "No verified outer-damage counter is registered yet.",
-                "目前尚未登記經驗證的外傷應對功法。"),
-        ["TargetPlaybook.Gap.NoVerifiedChannelAccessOption"] = new(
-                "No verified option for exploiting the resistance gap is "
-                + "registered yet.",
-                "目前尚未登記可利用抗性差距的經驗證功法。"),
-        ["TargetPlaybook.Gap.NoVerifiedPoisonCounter"] = new(
-                "No verified poison counter is registered yet.",
-                "目前尚未登記經驗證的毒素應對功法。"),
         ["TargetPlaybook.Gap.NoGuaranteedResetLockout"] = new(
                 "No verified option guarantees that the reset cannot recur.",
                 "目前沒有經驗證的功法可保證重置不會再次發生。"),
@@ -445,7 +438,15 @@ internal static class TargetStrategyUiText
         ["EXACT_TARGET_THREAT_OUTSIDE_PLAYBOOK"] = new(
                 "The exact target has a verified threat outside the matched "
                 + "playbook.",
-                "此目標具有已驗證、但不在已匹配策略中的威脅。")
+                "此目標具有已驗證、但不在已匹配策略中的威脅。"),
+        ["LOWER_INNER_RESISTANCE_SELECTS_OUTER_ROUTE"] = new(
+                "Higher outer resistance selects the direct route through "
+                + "the lower inner resistance.",
+                "目標禦體較高，改用正練路線以外傷攻擊較低的禦氣。"),
+        ["LOWER_OUTER_RESISTANCE_SELECTS_INNER_ROUTE"] = new(
+                "Higher inner resistance selects the reverse route through "
+                + "the lower outer resistance.",
+                "目標禦氣較高，改用逆練路線以內傷攻擊較低的禦體。")
     };
 
     private sealed record BilingualText(string English, string Chinese);

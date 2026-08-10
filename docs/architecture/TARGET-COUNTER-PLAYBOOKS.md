@@ -14,10 +14,11 @@ and why. A playable option exists only when it wraps the exact
 `CombatCounterRule` registered by the catalogue for the exact GameData
 version.
 
-The catalogue intentionally does not guess a 功法 for the three new profile
-families. E5-000 verified their target-side predicates, but did not verify a
-corresponding player-side effect and counter rule. Those goals therefore keep
-an explicit `NoVerifiedOption` gap until separate evidence is reviewed.
+E5-011 closed the original target-side-only gap with exact, read-only catalogue
+evidence. The three new families now reference reviewed effects and counter
+rules for 逆練伏龍刀法, both directions of 錯倒陰陽拂塵, and both directions
+of 五黃辟毒術. Ownership, breakthrough, direction, active role, and capacity
+remain player-specific feasibility checks rather than catalogue assumptions.
 
 ## Domain contract
 
@@ -32,7 +33,7 @@ The `TaiWu.Domain.TargetPlaybooks` namespace contains:
 | `TargetCounterPlaybookGap` | Typed missing, inaccessible, or incomplete response with evidence and an optional exact counter reference |
 | `TargetCounterPlaybookCatalog` | Exact-version archetype, reviewed-counter, and playbook registry |
 | `TargetCounterPlaybookResolution` | `Resolved`, `UnsupportedGameDataVersion`, or `ArchetypeNotFound` result |
-| `VerifiedTargetCounterPlaybooks` | Initial baseline plus three evidence-gated families |
+| `VerifiedTargetCounterPlaybooks` | Mind baseline, independent reset overlay, and three evidence-gated families |
 
 No playbook contract contains a target character ID, target name, current
 player identity, or fixed complete loadout.
@@ -84,9 +85,9 @@ gap kinds are:
 | `IncompleteEvidence` | A response exists but a known limitation prevents a stronger claim |
 
 An inaccessible-option gap must name an option on the same goal. The initial
-static catalogue uses `NoVerifiedOption` and `IncompleteEvidence`. E5-006 may
-materialize `InaccessibleVerifiedOption` after the existing player-access and
-feasibility checks run.
+static catalogue retains `IncompleteEvidence` only for the non-guaranteed reset
+lockout. E5-006 materializes `InaccessibleVerifiedOption` after the existing
+player-access and feasibility checks run.
 
 ## Exact version identities
 
@@ -107,14 +108,11 @@ without its exact version gate.
 
 | Archetype | Reusable goal | Verified playable options | Explicit gap |
 |---|---|---|---|
-| `MIND_RESONANCE_RESET_BASELINE` | Survive mind damage, control distraction marks, break resonance, pressure the defeat-mark reset | Six existing Epic 1 counter rules, attached only to threats they address | Random true-Qi drain is not a guaranteed reset lockout |
-| `OUTER_DAMAGE_CONFIGURED` | Prepare for verified configured outer-damage access | None | No verified outer-damage counter |
-| `CHANNEL_RESISTANCE_ASYMMETRY` | Preserve access to the lesser-resisted channel | None | No verified channel-access option |
-| `POISON_APPLICATION_CONFIGURED` | Prepare for verified configured poison application | None | No verified poison counter |
-
-The last three are useful playbooks even while their option lists are empty:
-they preserve a stable mechanical goal, priority, timing, conflict boundary,
-evidence, and a truthful reason why the helper cannot yet choose a 功法.
+| `MIND_RESONANCE_BASELINE` | Survive mind damage, control distraction marks, break resonance | Five existing Epic 1 counter rules, attached only to threats they address | None |
+| `DEFEAT_MARK_RESET_OVERLAY` | Pressure the defeat-mark reset independently of mind/resonance | Reverse 七輪 random true-Qi drain mitigation | Random true-Qi drain is not a guaranteed reset lockout |
+| `OUTER_DAMAGE_CONFIGURED` | Prepare for verified configured outer-damage access | Reverse 伏龍 reduces all enemy 摧破 power for the battle | Current player may not own or have completed the required reverse direction |
+| `CHANNEL_RESISTANCE_ASYMMETRY` | Attack through the lesser-resisted channel | Direct 錯倒 routes outer injury through inner resistance; Reverse 錯倒 routes inner injury through outer resistance | Exact resistance measurements replace the wrong direction before feasibility |
+| `POISON_APPLICATION_CONFIGURED` | Actively defend against verified configured poison application | Direct 五黃 prevents direct poison and reduces corresponding poison; Reverse 五黃 prevents direct poison and reflects it | The effect applies while 五黃 is the active defense |
 
 ### Baseline goal mapping
 
@@ -125,8 +123,12 @@ evidence, and a truthful reason why the helper cannot yet choose a 功法.
 | 30 | `BREAK_MIND_RESONANCE_CASCADE` | Critical / combat-start passive | `MIND_RESONANCE_CASCADE` | Reverse 金猊; Reverse 老君; Reverse 萬花; Direct 墨玉 |
 | 40 | `PRESSURE_DEFEAT_MARK_RESET` | Critical / equipped passive | `DEFEAT_MARK_RESET_LOOP` | Reverse 七輪 random true-Qi drain mitigation |
 
-Across those goals, every one of the four existing baseline threats and all six
-existing counter rules is retained. Options may appear under multiple goals.
+The first three goals belong to `MIND_RESONANCE_BASELINE`; sequence 40 belongs
+to the independent `DEFEAT_MARK_RESET_OVERLAY`. Across both playbooks, every
+one of the four existing threats and all six existing counter rules is
+retained. A magic-sound target without reset can therefore reuse the mind
+responses without falsely requiring the reset signature. Options may appear
+under multiple goals.
 The composer in
 [TARGET-PLAYBOOK-COMPOSITION.md](TARGET-PLAYBOOK-COMPOSITION.md) deduplicates
 them globally by stable counter identity while retaining every goal reference.
@@ -165,10 +167,12 @@ replaced by a name-similar unverified skill. See
 
 Focused Domain tests cover:
 
-- all four delivered versioned families;
+- all five delivered versioned definitions and playbooks;
 - exact baseline threat, counter, effect, timing, requirement, and evidence
   linkage;
-- the three new typed goals and their explicit no-option gaps;
+- exact playable options for all three new families;
+- resistance-direction replacement from exact outer/inner measurements;
+- independent mind/resonance and defeat-reset matching;
 - exact-version and unknown-archetype resolution;
 - construction invariants and inaccessible-option gap references;
 - rejection of reconstructed or unregistered counter rules;

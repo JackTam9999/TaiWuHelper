@@ -50,14 +50,15 @@ public sealed class TargetStrategyResponseMapperTests
         Assert.Equal(
             [
                 "CHANNEL_RESISTANCE_ASYMMETRY",
-                "MIND_RESONANCE_RESET_BASELINE",
+                "DEFEAT_MARK_RESET_OVERLAY",
+                "MIND_RESONANCE_BASELINE",
                 "OUTER_DAMAGE_CONFIGURED",
                 "POISON_APPLICATION_CONFIGURED"
             ],
             english.Archetypes.Select(value => value.Code));
         var baseline = Assert.Single(
             english.Archetypes,
-            value => value.Code == "MIND_RESONANCE_RESET_BASELINE");
+            value => value.Code == "MIND_RESONANCE_BASELINE");
         Assert.Equal(TargetArchetypeMatchState.Matched, baseline.State);
         Assert.NotEqual(
             baseline.Title,
@@ -65,8 +66,9 @@ public sealed class TargetStrategyResponseMapperTests
                 chinese.Archetypes,
                 value => value.Code == baseline.Code).Title);
 
-        var source = Assert.Single(english.Playbook.Sources);
-        Assert.Equal(baseline.Code, source.ArchetypeCode);
+        Assert.Equal(
+            ["DEFEAT_MARK_RESET_OVERLAY", baseline.Code],
+            english.Playbook.Sources.Select(source => source.ArchetypeCode));
         Assert.Equal(
             [
                 "SURVIVE_MIND_DAMAGE_PRESSURE",
@@ -140,7 +142,7 @@ public sealed class TargetStrategyResponseMapperTests
     }
 
     [Fact]
-    public async Task Partial_and_unsupported_states_do_not_create_playbooks()
+    public async Task Split_baseline_composes_without_reset_overlay()
     {
         var partial = CombatRecommendationResponseMapper.Map(
             await Recommend(PartialSnapshot()),
@@ -150,18 +152,23 @@ public sealed class TargetStrategyResponseMapperTests
             TaiwuLanguage.English).TargetStrategy!;
 
         Assert.Equal(
-            TargetArchetypeMatchState.Partial,
+            TargetArchetypeMatchState.Matched,
             Assert.Single(
                 partial.Archetypes,
                 value => value.Code
-                    == "MIND_RESONANCE_RESET_BASELINE").State);
-        Assert.Empty(partial.Playbook.Sources);
-        Assert.Empty(partial.Playbook.Goals);
-        Assert.Contains(
-            partial.Adjustments.Items,
-            item => item.Action == TargetPlaybookAdjustmentAction.Added
-                && item.ResultResponse?.Kind
-                    == TargetPlaybookResponseReferenceKind.Threat);
+                    == "MIND_RESONANCE_BASELINE").State);
+        Assert.Equal(
+            TargetArchetypeMatchState.Unsupported,
+            Assert.Single(
+                partial.Archetypes,
+                value => value.Code
+                    == "DEFEAT_MARK_RESET_OVERLAY").State);
+        Assert.Equal(
+            ["MIND_RESONANCE_BASELINE"],
+            partial.Playbook.Sources.Select(source => source.ArchetypeCode));
+        Assert.DoesNotContain(
+            partial.Playbook.Goals,
+            goal => goal.Code == "PRESSURE_DEFEAT_MARK_RESET");
         Assert.All(
             unsupported.Archetypes,
             value => Assert.Equal(
@@ -240,11 +247,11 @@ public sealed class TargetStrategyResponseMapperTests
             EmptySnapshot().Player,
             TaiwuLanguage.Chinese);
 
-        Assert.Equal(4, multipleResponse.Archetypes.Count(value =>
+        Assert.Equal(5, multipleResponse.Archetypes.Count(value =>
             value.State == TargetArchetypeMatchState.Matched));
-        Assert.Equal(4, multipleResponse.Playbook.Sources.Count);
+        Assert.Equal(5, multipleResponse.Playbook.Sources.Count);
         Assert.Equal(7, multipleResponse.Playbook.Goals.Count);
-        Assert.Equal(4, multipleResponse.Playbook.Gaps.Count);
+        Assert.Single(multipleResponse.Playbook.Gaps);
         Assert.All(
             multipleResponse.Playbook.Goals,
             goal => Assert.True(goal.IsEligible));

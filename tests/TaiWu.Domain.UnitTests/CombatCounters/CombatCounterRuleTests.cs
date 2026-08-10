@@ -55,6 +55,45 @@ public sealed class CombatCounterRuleTests
     }
 
     [Fact]
+    public void Epic5_family_rules_expose_poison_and_both_channel_directions()
+    {
+        var rules = VerifiedCombatCounterRuleSets
+            .Epic5TargetFamilies
+            .Rules;
+
+        Assert.Equal(4, rules.Length);
+        Assert.Equal(
+            [PracticeDirection.Reverse, PracticeDirection.Direct],
+            rules.Where(rule => rule.Effect.SkillId == 282)
+                .Select(rule => rule.RequiredDirection)
+                .Order());
+        Assert.All(
+            rules.Where(rule => rule.Effect.SkillId == 282),
+            rule =>
+            {
+                Assert.Equal(
+                    CombatCounterStrength.HardCounter,
+                    rule.Strength);
+                Assert.Equal(
+                    CombatCounterActivationTiming.ActiveDefense,
+                    rule.ActivationTiming);
+                Assert.Contains(
+                    "CONFIGURED_POISON_APPLICATION",
+                    rule.ThreatCodes);
+            });
+        Assert.Equal(
+            [PracticeDirection.Reverse, PracticeDirection.Direct],
+            rules.Where(rule => rule.Effect.SkillId == 687)
+                .Select(rule => rule.RequiredDirection)
+                .Order());
+        Assert.All(
+            rules.Where(rule => rule.Effect.SkillId == 687),
+            rule => Assert.Contains(
+                "CHANNEL_RESISTANCE_ASYMMETRY",
+                rule.ThreatCodes));
+    }
+
+    [Fact]
     public void Golden_rules_represent_required_activation_timing()
     {
         var rules = VerifiedCombatCounterRuleSets

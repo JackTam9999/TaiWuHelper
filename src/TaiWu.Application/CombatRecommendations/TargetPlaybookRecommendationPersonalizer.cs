@@ -35,7 +35,8 @@ internal static class TargetPlaybookRecommendationPersonalizer
             observedVersion);
         var adjustments = TargetSpecificPlaybookAdjuster.Apply(
             composition,
-            analysis);
+            analysis,
+            VerifiedTargetPlaybookAdjustmentRules.For(analysis));
         var eligibleGoalCodes = EligibleGoalCodes(
             composition,
             adjustments);

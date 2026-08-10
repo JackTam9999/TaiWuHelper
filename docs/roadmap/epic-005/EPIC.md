@@ -378,48 +378,48 @@ The workflow must present these states explicitly:
 
 ## Epic acceptance criteria
 
-- [ ] Versioned evidence defines every profile field, threshold, unit,
+- [x] Versioned evidence defines every profile field, threshold, unit,
       precedence rule, and unavailable state used by Epic 5.
-- [ ] Weapon or attack family remains separate from damage, defense, control,
+- [x] Weapon or attack family remains separate from damage, defense, control,
       and tempo mechanics.
-- [ ] One target can match multiple archetypes and one archetype can match
+- [x] One target can match multiple archetypes and one archetype can match
       multiple targets.
-- [ ] Missing evidence never becomes a negative match or a zero value.
-- [ ] Match states distinguish matched, partial, not matched, unsupported, and
+- [x] Missing evidence never becomes a negative match or a zero value.
+- [x] Match states distinguish matched, partial, not matched, unsupported, and
       conflicting outcomes.
-- [ ] Every matched facet and archetype links to typed evidence and source
+- [x] Every matched facet and archetype links to typed evidence and source
       provenance.
-- [ ] Localized names and raw effect descriptions never become stable identity
+- [x] Localized names and raw effect descriptions never become stable identity
       or scored mechanics.
-- [ ] High/low labels use documented, versioned semantics rather than arbitrary
+- [x] High/low labels use documented, versioned semantics rather than arbitrary
       UI thresholds.
-- [ ] The first catalogue contains the verified baseline plus three newly
+- [x] The first catalogue contains the verified baseline plus three newly
       verified playbook families.
-- [ ] Every playbook expresses response goals and verified options rather than
+- [x] Every playbook expresses response goals and verified options rather than
       a fixed universal loadout.
-- [ ] Playbook composition deterministically deduplicates shared coverage and
+- [x] Playbook composition deterministically deduplicates shared coverage and
       exposes true timing, requirement, or capacity conflicts.
-- [ ] Exact-target evidence can retain, elevate, reduce, add, replace, or leave
+- [x] Exact-target evidence can retain, elevate, reduce, add, replace, or leave
       unresolved a playbook response with an explicit reason.
-- [ ] Final 功法 selections still pass ownership, direction, effect, requirement,
+- [x] Final 功法 selections still pass ownership, direction, effect, requirement,
       capacity, backlash, and bounded-search safeguards.
-- [ ] An inaccessible counter remains a visible gap and is never replaced by
+- [x] An inaccessible counter remains a visible gap and is never replaced by
       an invented effect.
-- [ ] Applying or clearing target observations atomically rebuilds profile,
+- [x] Applying or clearing target observations atomically rebuilds profile,
       matches, playbooks, adjustments, recommendation, and comparison.
-- [ ] API and UI expose equivalent typed archetype and playbook semantics.
-- [ ] The UI adds one compact strategy explanation without restoring duplicate
+- [x] API and UI expose equivalent typed archetype and playbook semantics.
+- [x] The UI adds one compact strategy explanation without restoring duplicate
       recommendation controls or policy results.
-- [ ] Traditional Chinese and English layouts are complete, responsive,
+- [x] Traditional Chinese and English layouts are complete, responsive,
       keyboard accessible, and do not rely on color alone.
-- [ ] Identical evidence and rules produce identical ordering, fingerprints,
+- [x] Identical evidence and rules produce identical ordering, fingerprints,
       diagnostics, adjustments, and recommendations.
-- [ ] Automated tests cover matched, multi-match, partial, not-matched,
+- [x] Automated tests cover matched, multi-match, partial, not-matched,
       unsupported, conflicting, inaccessible-counter, composition-conflict,
       adjusted, observation-applied, and cleared states.
-- [ ] Guarded local verification proves every inspected save, GameData, and
+- [x] Guarded local verification proves every inspected save, GameData, and
       language source remains byte-for-byte unchanged.
-- [ ] No file, process, screenshot, automation, persistence, or game-control
+- [x] No file, process, screenshot, automation, persistence, or game-control
       capability is introduced.
 - [ ] The product owner records the Epic 5 completion decision.
 
@@ -456,6 +456,20 @@ The workflow must present these states explicitly:
 | The UI becomes another long duplicate result | Add a compact strategy layer and reuse existing threat, loadout, and comparison details |
 | Scope expands to every target or management system | Enforce the initial family matrix and keep PI-008 through PI-011 outside Epic 5 |
 | Feature drifts toward game control | Enforce ADR-0001 in contracts, architecture tests, and UI language |
+
+## Completion decision
+
+The original E5-010 technical completion claim was reopened after an
+independent review found that all three new families identified a target
+problem but supplied no playable 功法. E5-011 closes that gap with exact
+version-gated outer-damage, channel-routing, and poison counters; splits the
+reusable mind/resonance response from the defeat-reset overlay; and wires
+reviewed exact-target replacement into production. The
+[pre-remediation automated](../../reviews/E5-010-automated-verification.md),
+[pre-remediation manual](../../reviews/E5-010-manual-verification.md), and
+[remediation](../../reviews/E5-011-playbook-remediation.md) reviews retain the
+full audit trail. Epic 5 remains `In progress` until the product owner reviews
+the remediated result and records the final completion decision.
 
 ## Delivery reference
 

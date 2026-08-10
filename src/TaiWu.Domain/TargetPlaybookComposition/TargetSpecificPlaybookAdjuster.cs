@@ -101,6 +101,9 @@ public static class TargetSpecificPlaybookAdjuster
             evidence.Add(TargetPlaybookAdjustmentEvidence.FromFacet(facet));
             evidence.AddRange(
                 TargetPlaybookAdjustmentEvidence.FromFacetSources(facet));
+            evidence.AddRange(
+                TargetPlaybookAdjustmentEvidence
+                    .FromFacetMeasurementRelations(facet));
         }
 
         foreach (var threat in analysis.ThreatAnalysis.Threats)
@@ -312,7 +315,10 @@ public static class TargetSpecificPlaybookAdjuster
                 .SelectMany(identity => evidenceByIdentity[identity])
                 .ToArray();
             var requiredState = RequiredState(rule.Action);
-            if (!exact.Any(value => value.State == requiredState))
+            var wrongState = rule.RequiredEvidenceIdentities.Any(identity =>
+                !evidenceByIdentity[identity].Any(value =>
+                    value.State == requiredState));
+            if (wrongState)
             {
                 diagnostics.Add(new TargetPlaybookAdjustmentDiagnostic(
                     EvidenceStateMismatchCode,

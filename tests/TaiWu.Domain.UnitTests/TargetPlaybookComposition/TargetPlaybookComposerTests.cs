@@ -17,12 +17,17 @@ public sealed class TargetPlaybookComposerTests
         var analysis = TargetPlaybookFixture.FullAnalysis();
         var composition = Compose(analysis);
 
-        Assert.Equal(4, composition.SourcePlaybooks.Length);
+        Assert.Equal(5, composition.SourcePlaybooks.Length);
         Assert.Equal(7, composition.Goals.Length);
-        Assert.Equal(6, composition.Options.Length);
-        Assert.Equal(4, composition.Threats.Length);
-        Assert.Equal(4, composition.KnownGaps.Length);
-        Assert.Empty(composition.Conflicts);
+        Assert.Equal(10, composition.Options.Length);
+        Assert.Equal(7, composition.Threats.Length);
+        Assert.Single(composition.KnownGaps);
+        Assert.Equal(5, composition.Conflicts.Length);
+        Assert.All(
+            composition.Conflicts,
+            conflict => Assert.Equal(
+                TargetPlaybookCompositionConflictKind.ActiveRole,
+                conflict.Kind));
         Assert.Empty(composition.Diagnostics);
         Assert.Equal(64, composition.StableKey.Length);
 
@@ -52,7 +57,7 @@ public sealed class TargetPlaybookComposerTests
             playbook.Identity.Archetype.Code);
         var goal = Assert.Single(composition.Goals);
         Assert.Equal("PREPARE_FOR_OUTER_DAMAGE", goal.Code);
-        Assert.Equal(3, composition.Diagnostics.Length);
+        Assert.Equal(4, composition.Diagnostics.Length);
         Assert.All(
             composition.Diagnostics,
             diagnostic =>
@@ -122,7 +127,10 @@ public sealed class TargetPlaybookComposerTests
         var catalog = new TargetCounterPlaybookCatalog(
             new TargetProfileVersion(TargetPlaybookFixture.GameVersion),
             [matched],
-            [VerifiedCombatCounterRuleSets.GoldenMagicSound],
+            [
+                VerifiedCombatCounterRuleSets.GoldenMagicSound,
+                VerifiedCombatCounterRuleSets.Epic5TargetFamilies
+            ],
             [Playbook(matched, Goal("MATCHED_GOAL"))]);
 
         var composition = TargetPlaybookComposer.Compose(
@@ -268,7 +276,10 @@ public sealed class TargetPlaybookComposerTests
         var reordered = new TargetCounterPlaybookCatalog(
             catalog.GameDataVersion,
             catalog.Archetypes.Reverse(),
-            [VerifiedCombatCounterRuleSets.GoldenMagicSound],
+            [
+                VerifiedCombatCounterRuleSets.Epic5TargetFamilies,
+                VerifiedCombatCounterRuleSets.GoldenMagicSound
+            ],
             catalog.Playbooks.Reverse());
 
         var first = TargetPlaybookComposer.Compose(
@@ -301,7 +312,7 @@ public sealed class TargetPlaybookComposerTests
 
         Assert.Empty(composition.SourcePlaybooks);
         Assert.Empty(composition.Goals);
-        Assert.Equal(4, composition.Diagnostics.Length);
+        Assert.Equal(5, composition.Diagnostics.Length);
         Assert.All(
             composition.Diagnostics,
             diagnostic => Assert.Equal(

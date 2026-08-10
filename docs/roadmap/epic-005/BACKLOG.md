@@ -381,14 +381,15 @@ hard-coding a universal loadout.
 - `TaiWu.Domain.TargetPlaybooks` provides immutable identities, goals,
   verified options, typed gaps, exact-version resolution, deterministic
   ordering, and the initial versioned catalogue.
-- The catalogue registers the baseline and the three E5-000 families. Only
-  the baseline exposes playable options: all six are the exact existing
-  `VerifiedCombatCounterRuleSets.GoldenMagicSound` instances. The new families
-  keep explicit `NoVerifiedOption` gaps rather than guessing 功法 from names or
-  raw descriptions.
-- The baseline retains all four verified threats, the existing strength,
-  direction, activation timing, effect identity, requirements, source
-  evidence, and the non-guaranteed reset-lockout caveat.
+- The catalogue registers the reusable mind/resonance baseline, an independent
+  defeat-mark reset overlay, and the three E5-000 families. E5-011 superseded
+  the initial gap-only delivery with exact reviewed options for configured
+  outer damage, channel resistance asymmetry, and configured poison.
+- The mind/resonance baseline retains the verified mind, distraction, and
+  resonance semantics. The separate reset overlay retains the existing
+  strength, direction, activation timing, effect identity, requirements,
+  source evidence, and non-guaranteed reset-lockout caveat without preventing
+  broader reuse of the mind counters.
 - Focused Domain verification on 2026-08-10: 385 passed, 0 failed, 0 skipped.
 - Full release verification on 2026-08-10: 1,000 total, 991 passed,
   0 failed, and 9 expected opt-in integration skips.
@@ -681,7 +682,7 @@ player's accessible 功法 produced the final recommendation.
 
 ### E5-010 — Verify archetype reuse, safety, and determinism
 
-**Status:** Planned
+**Status:** Remediated — awaiting product-owner decision
 
 **Priority:** P1
 
@@ -694,33 +695,33 @@ Run the full automated and guarded local verification matrix, audit every Epic
 
 #### Acceptance criteria
 
-- [ ] Domain tests cover profile, evidence, definition, match, playbook,
+- [x] Domain tests cover profile, evidence, definition, match, playbook,
       composition, adjustment, conflict, and deterministic-order invariants.
-- [ ] Synthetic cases prove one target can multi-match and one playbook family
+- [x] Synthetic cases prove one target can multi-match and one playbook family
       can apply to multiple targets without target-ID rules.
-- [ ] Application tests prove exact-target adjustment, player feasibility,
+- [x] Application tests prove exact-target adjustment, player feasibility,
       recommendation parity, and observation apply/clear behavior.
-- [ ] API tests prove typed unavailable, partial, unsupported, conflicting,
+- [x] API tests prove typed unavailable, partial, unsupported, conflicting,
       multi-match, playbook-gap, and adjustment states survive mapping.
-- [ ] Presentation tests cover bilingual desktop and narrow workflows,
+- [x] Presentation tests cover bilingual desktop and narrow workflows,
       keyboard semantics, non-color states, and duplicate-element guards.
-- [ ] Architecture tests prevent localized or raw-text mechanical matching,
+- [x] Architecture tests prevent localized or raw-text mechanical matching,
       unbounded alternative engines, file/process/screenshot access,
       persistence, game control, and mutation-capable dependencies.
-- [ ] The baseline and all three newly verified playbook families pass their
-      documented synthetic verification matrix.
-- [ ] Guarded local verification exercises every representative family
+- [x] The mind/resonance baseline, reset overlay, and all three newly verified
+      playbook families pass their documented synthetic verification matrix.
+- [x] Guarded local verification exercises every representative family
       available in the current save and records unsupported local cases
       honestly.
-- [ ] Repeated identical runs produce equivalent profile, match, playbook,
+- [x] Repeated identical runs produce equivalent profile, match, playbook,
       adjustment, recommendation, comparison, and diagnostic fingerprints.
-- [ ] Applying the same observation repeatedly is idempotent and clearing it
+- [x] Applying the same observation repeatedly is idempotent and clearing it
       reproduces the save-only result.
-- [ ] All inspected save, GameData, language, and other game-owned source
+- [x] All inspected save, GameData, language, and other game-owned source
       fingerprints remain unchanged.
-- [ ] Release build, default test matrix, formatting, and diff checks pass.
-- [ ] Every Epic 5 acceptance criterion links to implementation or evidence.
-- [ ] Deferred clustering, persistence, screenshot assistance, outcome
+- [x] Release build, default test matrix, formatting, and diff checks pass.
+- [x] Every Epic 5 acceptance criterion links to implementation or evidence.
+- [x] Deferred clustering, persistence, screenshot assistance, outcome
       learning, broader target coverage, companions, village, and library work
       remain explicit future work.
 - [ ] The product owner records the Epic 5 completion decision.
@@ -730,6 +731,71 @@ Run the full automated and guarded local verification matrix, audit every Epic
 - `docs/reviews/E5-010-automated-verification.md`.
 - `docs/reviews/E5-010-manual-verification.md`.
 - Updated completion decision in [EPIC-005](./EPIC.md).
+
+#### Completion evidence
+
+- Remediated Release build: zero warnings and zero errors.
+- Default Release matrix: 1,052 total; 1,043 passed; 0 failed; 9 expected
+  opt-in integration skips.
+- Focused layers: Domain 417/417, Application 138/138, Infrastructure unit
+  132/132, API/Presentation 275/275, and Architecture 80/80.
+- Guarded current-save vertical: 1 passed, 0 failed, 0 skipped; every
+  registered family evaluated and every inspected source unchanged.
+- The rebuilt Traditional Chinese desktop workflow exposed the verified outer
+  counter in one compact strategy panel with no document overflow. The earlier
+  English/Traditional Chinese 390 by 844 layout matrix remains valid.
+- The original technical completion claim was reopened by independent review
+  because the three new families were gap-only. E5-011 records the completed
+  remediation; the product-owner decision remains open.
+
+### E5-011 — Deliver playable family counters and reusable overlays
+
+**Status:** Complete
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E5-004, E5-005, E5-010 independent review
+
+Close the product-value gaps found by the independent playbook-family review:
+give each new family at least one exact, typed counter path; separate the
+defeat-reset requirement from the reusable mind/resonance response; and make
+exact channel-resistance evidence affect production recommendations.
+
+#### Acceptance criteria
+
+- [x] Configured outer damage references the reviewed reverse 伏龍刀法
+      all-摧破 power reduction effect.
+- [x] Configured poison references both reviewed 五黃辟毒術 directions with
+      their active-defense requirement.
+- [x] Channel-resistance asymmetry references both reviewed
+      錯倒陰陽拂塵 directions and selects the route that attacks the lower
+      resistance channel.
+- [x] Mind/resonance counters do not require defeat-mark reset evidence; reset
+      is an independent composable overlay.
+- [x] Production uses reviewed exact-target replacement rules.
+- [x] Rules requiring several evidence identities require the requested state
+      on every identity.
+- [x] Opposite directions of one skill remain visible to feasibility while the
+      loadout generator deterministically selects one direction per skill.
+- [x] A current-player test proves an owned reverse 五黃辟毒術 path flows from
+      poison evidence through matching, playbook composition, feasibility, and
+      bounded recommendation generation.
+- [x] Catalogue, composition, adjustment, Application, API, guarded read-only,
+      and compact UI regression checks pass.
+
+#### Completion evidence
+
+- Exact effect and counter entries are version-gated in the Domain catalogue;
+  names and raw descriptions remain display evidence only.
+- Read-only catalogue inspection confirmed the reviewed mechanics and costs.
+  Read-only current-save inspection confirmed reverse 五黃辟毒術 is learned
+  and breakthrough-active; machine paths, fingerprints, and save content are
+  not committed.
+- [E5-011 remediation review](../../reviews/E5-011-playbook-remediation.md).
+- Remediated Release verification: 1,052 total; 1,043 passed; 0 failed;
+  9 expected opt-in skips; guarded current-save vertical 1/1.
 
 ## Future work outside Epic 5
 

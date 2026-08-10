@@ -1495,12 +1495,14 @@ select {
 
 .warning-list {
     display: grid;
+    min-width: 0;
     gap: 9px;
     margin-top: 18px;
 }
 
 .warning-item {
     display: grid;
+    min-width: 0;
     gap: 7px;
     padding: 14px 16px;
     border-left: 3px solid var(--gold);
@@ -1543,6 +1545,7 @@ select {
     color: #c7d2cd;
     font-size: 0.8rem;
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .warning-effect {
@@ -5296,8 +5299,11 @@ select {
     }
 
     .primary-navigation a {
-        flex: 1;
+        flex: 1 1 0;
+        min-width: 0;
+        padding-inline: 6px;
         text-align: center;
+        overflow-wrap: anywhere;
     }
 
     .section-heading,

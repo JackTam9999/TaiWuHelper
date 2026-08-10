@@ -138,6 +138,55 @@ public static class VerifiedCombatEffectCatalogs
                     CombatEffectMechanic.DrainEnemyRandomTrueQi)
             ]);
 
+    public static CombatEffectCatalog Epic5TargetFamilies { get; } =
+        new(
+            GoldenGameDataVersion,
+            [
+                Entry(
+                    282,
+                    "五黃辟毒術",
+                    PracticeDirection.Direct,
+                    180,
+                    "以此功法進行防禦時：運用者免受所有直接毒害；敵人對"
+                    + "運用者施加的毒素，反而會減少運用者相應的毒素",
+                    CombatEffectMechanic
+                        .PreventOwnDirectPoisonWhileDefending,
+                    CombatEffectMechanic
+                        .ReduceOwnCorrespondingPoisonOnEnemyApplication),
+                Entry(
+                    282,
+                    "五黃辟毒術",
+                    PracticeDirection.Reverse,
+                    906,
+                    "以此功法進行防禦時：運用者免受所有直接毒害；敵人對"
+                    + "運用者施加的毒素，反而會施加到敵人自己的身上",
+                    CombatEffectMechanic
+                        .PreventOwnDirectPoisonWhileDefending,
+                    CombatEffectMechanic.ReflectEnemyAppliedPoison),
+                Entry(
+                    687,
+                    "錯倒陰陽拂塵",
+                    PracticeDirection.Direct,
+                    697,
+                    "此功法造成的直接外傷改由敵人的禦氣抵擋；施展此功法"
+                    + "的過程中，敵人所有的正練「奇竅」功法無法生效；"
+                    + "此功法施展結束後，極短時間內封禁敵人所有的正練"
+                    + "「奇竅」功法",
+                    CombatEffectMechanic
+                        .RouteOwnOuterDamageThroughEnemyInnerResistance),
+                Entry(
+                    687,
+                    "錯倒陰陽拂塵",
+                    PracticeDirection.Reverse,
+                    1423,
+                    "此功法造成的直接內傷改由敵人的禦體抵擋；施展此功法"
+                    + "的過程中，敵人所有的逆練「奇竅」功法無法生效；"
+                    + "此功法施展結束後，極短時間內封禁敵人所有的逆練"
+                    + "「奇竅」功法",
+                    CombatEffectMechanic
+                        .RouteOwnInnerDamageThroughEnemyOuterResistance)
+            ]);
+
     private static CombatEffectCatalogEntry Entry(
         int skillId,
         string skillName,

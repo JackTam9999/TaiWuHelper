@@ -47,7 +47,7 @@ public sealed class RecommendCombatLoadoutTests
         Assert.Contains(
             targetPlaybook.Analysis.ArchetypeMatches.Matches,
             match => match.Definition.Identity.Code
-                    == "MIND_RESONANCE_RESET_BASELINE"
+                    == "MIND_RESONANCE_BASELINE"
                 && match.State == TargetArchetypeMatchState.Matched);
         Assert.Equal(4, targetPlaybook.EligibleGoals.Length);
         Assert.Contains(
@@ -112,7 +112,7 @@ public sealed class RecommendCombatLoadoutTests
     }
 
     [Fact]
-    public async Task Partial_archetype_does_not_supply_playbook_counters()
+    public async Task Unsupported_reset_overlay_does_not_supply_reset_counter()
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
         var counter = Skill(
@@ -161,27 +161,20 @@ public sealed class RecommendCombatLoadoutTests
         Assert.Contains(
             targetPlaybook.Analysis.ArchetypeMatches.Matches,
             match => match.Definition.Identity.Code
-                    == "MIND_RESONANCE_RESET_BASELINE"
-                && match.State == TargetArchetypeMatchState.Partial);
-        Assert.Empty(targetPlaybook.Composition.SourcePlaybooks);
-        Assert.Empty(targetPlaybook.EligibleGoals);
-        Assert.Empty(targetPlaybook.Counters);
+                    == "DEFEAT_MARK_RESET_OVERLAY"
+                && match.State == TargetArchetypeMatchState.Unsupported);
+        Assert.DoesNotContain(
+            targetPlaybook.Composition.SourcePlaybooks,
+            playbook => playbook.Identity.Archetype.Code
+                == "DEFEAT_MARK_RESET_OVERLAY");
+        Assert.DoesNotContain(
+            targetPlaybook.EligibleGoals,
+            goal => goal.Code == "PRESSURE_DEFEAT_MARK_RESET");
+        Assert.DoesNotContain(
+            targetPlaybook.Counters,
+            counter => counter.Option.StableKey
+                == "REVERSE_QILUN_TRUE_QI_DRAIN");
         Assert.NotEmpty(result.Generation.Candidates);
-        Assert.All(
-            result.Generation.Candidates.SelectMany(
-                candidate => candidate.SelectedOptions),
-            option =>
-            {
-                Assert.Null(option.CounterStrength);
-                Assert.Empty(option.ThreatCodes);
-            });
-        Assert.All(
-            result.Scoring.RankedCandidates,
-            candidate => Assert.Equal(
-                100m,
-                candidate.Get(
-                    RecommendationScoreComponentKind.ThreatCoverage)
-                    .Score));
     }
 
     [Fact]
@@ -226,6 +219,69 @@ public sealed class RecommendCombatLoadoutTests
             result.Generation.Candidates.SelectMany(
                 candidate => candidate.SelectedOptions),
             option => option.CounterStrength.HasValue);
+    }
+
+    [Fact]
+    public async Task Poison_family_recommends_owned_reverse_wuhuang_defense()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var wuhuang = Skill(
+            282,
+            SkillCategory.Defense,
+            PracticeDirection.Reverse,
+            directEffectId: 180,
+            reverseEffectId: 906,
+            gridCost: 2);
+        var poisonAttack = ConfiguredAttack(
+            718,
+            PracticeDirection.Direct,
+            directEffectId: 668,
+            reverseEffectId: 1394,
+            poison: true);
+        var snapshot = Snapshot(
+            [wuhuang],
+            [poisonAttack],
+            new CombatLoadoutSnapshot([], [], [], [], []),
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                new CombatLoadoutSnapshot(
+                    [],
+                    [poisonAttack.SkillId],
+                    [],
+                    [],
+                    [])),
+            warnings: []);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+
+        var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
+
+        var strategy = Assert.IsType<TargetPlaybookPersonalization>(
+            result.TargetPlaybook);
+        Assert.Contains(
+            strategy.EligibleGoals,
+            goal => goal.Code
+                == "MITIGATE_CONFIGURED_POISON_APPLICATION");
+        var counter = Assert.Single(
+            strategy.Counters,
+            value => value.Option.StableKey
+                == "REVERSE_WUHUANG_POISON_DEFENSE");
+        Assert.Equal(
+            TargetPlaybookCounterAvailabilityState.Feasible,
+            counter.State);
+        Assert.True(counter.Access.IsAccessible);
+        Assert.Contains(
+            result.Generation.Candidates,
+            candidate => candidate.SelectedOptions.Any(option =>
+                option.Candidate.SkillId == wuhuang.SkillId
+                && option.Candidate.RequiredDirection
+                    == PracticeDirection.Reverse));
     }
 
     [Fact]
@@ -566,18 +622,42 @@ public sealed class RecommendCombatLoadoutTests
         SkillCategory category,
         PracticeDirection direction,
         int directEffectId,
-        int reverseEffectId)
+        int reverseEffectId,
+        int gridCost = 1)
     {
         return new CombatSkillSnapshot(
             skillId,
             SnapshotValue<string>.Available($"Skill {skillId}"),
             category,
-            SnapshotValue<int>.Available(1),
+            SnapshotValue<int>.Available(gridCost),
             SnapshotValue<bool>.Available(true),
             SnapshotValue<PracticeDirection>.Available(direction),
             SkillSlotContribution.None,
             SnapshotValue<int>.Available(directEffectId),
             SnapshotValue<int>.Available(reverseEffectId));
+    }
+
+    private static CombatSkillSnapshot ConfiguredAttack(
+        int skillId,
+        PracticeDirection direction,
+        int directEffectId,
+        int reverseEffectId,
+        bool poison)
+    {
+        return new CombatSkillSnapshot(
+            skillId,
+            SnapshotValue<string>.Available($"Skill {skillId}"),
+            SkillCategory.Attack,
+            SnapshotValue<int>.Available(1),
+            SnapshotValue<bool>.Available(true),
+            SnapshotValue<PracticeDirection>.Available(direction),
+            SkillSlotContribution.None,
+            SnapshotValue<int>.Available(directEffectId),
+            SnapshotValue<int>.Available(reverseEffectId),
+            hasConfiguredOuterDamage:
+                SnapshotValue<bool>.Available(false),
+            hasConfiguredPoisonApplication:
+                SnapshotValue<bool>.Available(poison));
     }
 
     private static CombatSkillSnapshot UnbrokenSkill(

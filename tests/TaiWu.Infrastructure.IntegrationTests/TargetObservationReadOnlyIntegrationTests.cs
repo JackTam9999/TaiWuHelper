@@ -10,6 +10,7 @@ using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.LoadoutComparisons;
+using TaiWu.Domain.TargetPlaybooks;
 using TaiWu.Domain.TargetProfiles;
 using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
@@ -110,6 +111,14 @@ public sealed class TargetObservationReadOnlyIntegrationTests
             Assert.NotNull(first.TargetObservationImpact);
             Assert.Equal(ObservationSignature(first), ObservationSignature(second));
             Assert.Equal(SaveOnlySignature(initial), SaveOnlySignature(cleared));
+            Assert.Equal(
+                TargetStrategySignature(first),
+                TargetStrategySignature(second));
+            Assert.Equal(
+                TargetStrategySignature(initial),
+                TargetStrategySignature(cleared));
+            AssertAllRegisteredArchetypesEvaluated(initial.TargetPlaybook);
+            AssertAllRegisteredArchetypesEvaluated(first.TargetPlaybook);
             AssertComparisonColumns(initial);
             AssertComparisonColumns(first);
             Assert.Equal(
@@ -182,6 +191,48 @@ public sealed class TargetObservationReadOnlyIntegrationTests
                 $"{conflict.Field}/{conflict.PrecedenceRule}/"
                 + string.Join(",", conflict.Sources.Select(source =>
                             $"{source.Source}/{source.CapturedAtUtc:O}")))));
+
+    private static string TargetStrategySignature(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var strategy = Assert.IsType<TargetPlaybookPersonalization>(
+            recommendation.TargetPlaybook);
+        return string.Join(
+            "\n",
+            strategy.Analysis.Profile.Fingerprint,
+            strategy.Analysis.ArchetypeMatches.StableKey,
+            strategy.Composition.StableKey,
+            strategy.Adjustments.StableKey,
+            string.Join(",", strategy.Analysis.ArchetypeMatches.Matches.Select(
+                match => $"{match.Definition.Identity.Code}/{match.State}")),
+            string.Join(",", strategy.Composition.Diagnostics.Select(
+                diagnostic => $"{diagnostic.Code}/"
+                    + $"{diagnostic.Archetype.Code}/"
+                    + $"{diagnostic.MatchState}/"
+                    + diagnostic.ResolutionStatus)),
+            string.Join(",", strategy.EligibleGoals.Select(
+                goal => goal.StableKey)),
+            string.Join(",", strategy.Counters.Select(counter =>
+                $"{counter.Option.StableKey}/{counter.State}/"
+                    + $"{counter.Gap?.StableKey}")),
+            string.Join(",", strategy.Gaps.Select(gap => gap.StableKey)),
+            string.Join(",", recommendation.Generation.Diagnostics.Select(
+                diagnostic => $"{diagnostic.Code}/{diagnostic.SkillId}/"
+                    + diagnostic.Occurrences)));
+    }
+
+    private static void AssertAllRegisteredArchetypesEvaluated(
+        TargetPlaybookPersonalization? strategy)
+    {
+        var value = Assert.IsType<TargetPlaybookPersonalization>(strategy);
+        Assert.Equal(
+            VerifiedTargetCounterPlaybooks.Initial.Archetypes
+                .Select(definition => definition.Identity.Code)
+                .Order(StringComparer.Ordinal),
+            value.Analysis.ArchetypeMatches.Matches
+                .Select(match => match.Definition.Identity.Code)
+                .Order(StringComparer.Ordinal));
+    }
 
     private static void AssertComparisonColumns(
         CombatLoadoutRecommendation recommendation)

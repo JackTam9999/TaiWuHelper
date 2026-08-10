@@ -20,6 +20,40 @@ public sealed class CombatEffectCatalogTests
     }
 
     [Fact]
+    public void Epic5_family_catalog_records_exact_poison_and_channel_effects()
+    {
+        var catalog = VerifiedCombatEffectCatalogs.Epic5TargetFamilies;
+
+        Assert.Equal(
+            VerifiedCombatEffectCatalogs.GoldenGameDataVersion,
+            catalog.GameDataVersion);
+        Assert.Equal(4, catalog.Entries.Length);
+        Assert.Contains(
+            CombatEffectMechanic.PreventOwnDirectPoisonWhileDefending,
+            catalog.Resolve(
+                catalog.GameDataVersion,
+                282,
+                PracticeDirection.Reverse,
+                906).CatalogEntry!.Mechanics);
+        Assert.Contains(
+            CombatEffectMechanic
+                .RouteOwnOuterDamageThroughEnemyInnerResistance,
+            catalog.Resolve(
+                catalog.GameDataVersion,
+                687,
+                PracticeDirection.Direct,
+                697).CatalogEntry!.Mechanics);
+        Assert.Contains(
+            CombatEffectMechanic
+                .RouteOwnInnerDamageThroughEnemyOuterResistance,
+            catalog.Resolve(
+                catalog.GameDataVersion,
+                687,
+                PracticeDirection.Reverse,
+                1423).CatalogEntry!.Mechanics);
+    }
+
+    [Fact]
     public void Reverse_qilun_records_random_true_qi_drain_limitation()
     {
         var catalog = VerifiedCombatEffectCatalogs.GoldenAntiMagic;

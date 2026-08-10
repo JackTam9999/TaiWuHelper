@@ -58,6 +58,45 @@ public static class VerifiedTargetThreatTaxonomies
             ],
             unknownMechanics: []);
 
+    public static TargetThreatSet Epic5TargetFamilies { get; } =
+        TargetThreatTaxonomy.Normalize(
+            [
+                Threat(
+                    "CONFIGURED_OUTER_DAMAGE_PRESSURE",
+                    TargetThreatKind.ConfiguredOuterDamagePressure,
+                    TargetThreatSeverity.High,
+                    "Configured outer-damage pressure",
+                    "An active target attack is configured to cause outer "
+                    + "damage, so reducing enemy attack-skill power is a "
+                    + "verified mitigation path.",
+                    TargetThreatActivationTiming.OnSkillUse,
+                    "Verified from the active-skill outer-damage profile "
+                    + "facet and exact 伏龍刀法 reverse effect 1234."),
+                Threat(
+                    "CHANNEL_RESISTANCE_ASYMMETRY",
+                    TargetThreatKind.ChannelResistanceAsymmetry,
+                    TargetThreatSeverity.High,
+                    "Outer/inner resistance asymmetry",
+                    "The target's base outer and inner resistances differ, "
+                    + "so an exact channel-routing attack can target the "
+                    + "lower resistance.",
+                    TargetThreatActivationTiming.Always,
+                    "Verified from exact base resistance measurements and "
+                    + "錯倒陰陽拂塵 effects 697 and 1423."),
+                Threat(
+                    "CONFIGURED_POISON_APPLICATION",
+                    TargetThreatKind.ConfiguredPoisonApplication,
+                    TargetThreatSeverity.High,
+                    "Configured poison application",
+                    "An active target attack is configured to apply poison, "
+                    + "so active direct-poison defense is a verified "
+                    + "response.",
+                    TargetThreatActivationTiming.OnHit,
+                    "Verified from the active-skill poison profile facet "
+                    + "and 五黃辟毒術 effects 180 and 906.")
+            ],
+            unknownMechanics: []);
+
     private static TargetThreat Threat(
         string code,
         TargetThreatKind kind,

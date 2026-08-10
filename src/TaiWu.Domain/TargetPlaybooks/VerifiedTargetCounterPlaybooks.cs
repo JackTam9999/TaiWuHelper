@@ -18,12 +18,25 @@ public static class VerifiedTargetCounterPlaybooks
     {
         var extractionRules = VerifiedTargetProfileExtractionRuleSets.Initial;
         var threatSet = VerifiedTargetThreatTaxonomies.GoldenMagicSound;
+        var familyThreats = VerifiedTargetThreatTaxonomies
+            .Epic5TargetFamilies;
         var counterRules = VerifiedCombatCounterRuleSets.GoldenMagicSound;
+        var familyCounterRules = VerifiedCombatCounterRuleSets
+            .Epic5TargetFamilies;
 
         var mindDamage = Threat(threatSet, "POSITIVE_MAGIC_SOUND_MIND_DAMAGE");
         var distraction = Threat(threatSet, "DISTRACTION_MARK_ACCUMULATION");
         var resonance = Threat(threatSet, "MIND_RESONANCE_CASCADE");
         var reset = Threat(threatSet, "DEFEAT_MARK_RESET_LOOP");
+        var outerPressure = Threat(
+            familyThreats,
+            "CONFIGURED_OUTER_DAMAGE_PRESSURE");
+        var channelAsymmetry = Threat(
+            familyThreats,
+            "CHANNEL_RESISTANCE_ASYMMETRY");
+        var poisonApplication = Threat(
+            familyThreats,
+            "CONFIGURED_POISON_APPLICATION");
 
         var mindFacet = FacetFor(
             extractionRules,
@@ -39,10 +52,15 @@ public static class VerifiedTargetCounterPlaybooks
             TargetThreatKind.DefeatMarkReset);
 
         var baseline = Archetype(
-            "MIND_RESONANCE_RESET_BASELINE",
-            "TargetArchetype.MindResonanceResetBaseline.Title",
-            [mindFacet, distractionFacet, resonanceFacet, resetFacet],
+            "MIND_RESONANCE_BASELINE",
+            "TargetArchetype.MindResonanceBaseline.Title",
+            [mindFacet, distractionFacet, resonanceFacet],
             ["E5-000", "M1-001"]);
+        var resetOverlay = Archetype(
+            "DEFEAT_MARK_RESET_OVERLAY",
+            "TargetArchetype.DefeatMarkResetOverlay.Title",
+            [resetFacet],
+            ["E5-011", "M1-001"]);
         var outer = Archetype(
             "OUTER_DAMAGE_CONFIGURED",
             "TargetArchetype.OuterDamageConfigured.Title",
@@ -61,61 +79,79 @@ public static class VerifiedTargetCounterPlaybooks
 
         return new TargetCounterPlaybookCatalog(
             extractionRules.GameDataVersion,
-            [baseline, outer, resistance, poison],
-            [counterRules],
+            [baseline, resetOverlay, outer, resistance, poison],
+            [counterRules, familyCounterRules],
             [
-                BaselinePlaybook(
+                MindPlaybook(
                     baseline.Identity,
                     counterRules,
                     mindFacet,
                     distractionFacet,
                     resonanceFacet,
-                    resetFacet,
                     mindDamage,
                     distraction,
-                    resonance,
+                    resonance),
+                ResetPlaybook(
+                    resetOverlay.Identity,
+                    counterRules,
+                    resetFacet,
                     reset),
-                GapPlaybook(
+                Playbook(
                     outer.Identity,
-                    "PREPARE_FOR_OUTER_DAMAGE",
-                    extractionRules.OuterDamageFacet,
-                    TargetResponsePriority.High,
-                    CombatCounterActivationTiming.CombatStartPassive,
-                    "OUTER_DAMAGE_RESPONSE",
-                    "NO_VERIFIED_OUTER_DAMAGE_COUNTER",
-                    "TargetPlaybook.Gap.NoVerifiedOuterDamageCounter"),
-                GapPlaybook(
+                    [Goal(
+                        "PREPARE_FOR_OUTER_DAMAGE",
+                        10,
+                        TargetResponsePriority.High,
+                        CombatCounterActivationTiming.ActiveAttack,
+                        [extractionRules.OuterDamageFacet],
+                        [outerPressure],
+                        Options(
+                            counterRules,
+                            "REVERSE_FULONG_POWER_REDUCTION"),
+                        ["OUTER_DAMAGE_RESPONSE"])],
+                    ["E5-011", "E5-000"]),
+                Playbook(
                     resistance.Identity,
-                    "EXPLOIT_LESS_RESISTED_CHANNEL",
-                    extractionRules.ChannelResistanceFacet,
-                    TargetResponsePriority.High,
-                    CombatCounterActivationTiming.ActiveAttack,
-                    "PRIMARY_DAMAGE_CHANNEL",
-                    "NO_VERIFIED_CHANNEL_ACCESS_OPTION",
-                    "TargetPlaybook.Gap.NoVerifiedChannelAccessOption"),
-                GapPlaybook(
+                    [Goal(
+                        "EXPLOIT_LESS_RESISTED_CHANNEL",
+                        10,
+                        TargetResponsePriority.High,
+                        CombatCounterActivationTiming.ActiveAttack,
+                        [extractionRules.ChannelResistanceFacet],
+                        [channelAsymmetry],
+                        Options(
+                            familyCounterRules,
+                            "DIRECT_YINYANG_ROUTE_OUTER_TO_INNER",
+                            "REVERSE_YINYANG_ROUTE_INNER_TO_OUTER"),
+                        ["PRIMARY_DAMAGE_CHANNEL"])],
+                    ["E5-011", "E5-000"]),
+                Playbook(
                     poison.Identity,
-                    "MITIGATE_CONFIGURED_POISON_APPLICATION",
-                    extractionRules.PoisonApplicationFacet,
-                    TargetResponsePriority.High,
-                    CombatCounterActivationTiming.CombatStartPassive,
-                    "POISON_RESPONSE",
-                    "NO_VERIFIED_POISON_COUNTER",
-                    "TargetPlaybook.Gap.NoVerifiedPoisonCounter")
+                    [Goal(
+                        "MITIGATE_CONFIGURED_POISON_APPLICATION",
+                        10,
+                        TargetResponsePriority.High,
+                        CombatCounterActivationTiming.ActiveDefense,
+                        [extractionRules.PoisonApplicationFacet],
+                        [poisonApplication],
+                        Options(
+                            familyCounterRules,
+                            "DIRECT_WUHUANG_POISON_DEFENSE",
+                            "REVERSE_WUHUANG_POISON_DEFENSE"),
+                        ["POISON_RESPONSE"])],
+                    ["E5-011", "E5-000"])
             ]);
     }
 
-    private static TargetCounterPlaybook BaselinePlaybook(
+    private static TargetCounterPlaybook MindPlaybook(
         TargetArchetypeIdentity identity,
         CombatCounterRuleSet counterRules,
         TargetProfileFacetIdentity mindFacet,
         TargetProfileFacetIdentity distractionFacet,
         TargetProfileFacetIdentity resonanceFacet,
-        TargetProfileFacetIdentity resetFacet,
         TargetThreat mindDamage,
         TargetThreat distraction,
-        TargetThreat resonance,
-        TargetThreat reset)
+        TargetThreat resonance)
     {
         return Playbook(
             identity,
@@ -159,54 +195,36 @@ public static class VerifiedTargetCounterPlaybooks
                         "REVERSE_LAOJUN_MARK_CLEAR",
                         "REVERSE_WANHUA_RESONANCE",
                         "DIRECT_MOYU_MARK_DURATION"),
-                    ["MIND_RESONANCE_RESPONSE"]),
-                Goal(
-                    "PRESSURE_DEFEAT_MARK_RESET",
-                    40,
-                    TargetResponsePriority.Critical,
-                    CombatCounterActivationTiming.EquippedPassive,
-                    [resetFacet],
-                    [reset],
-                    Options(
-                        counterRules,
-                        "REVERSE_QILUN_TRUE_QI_DRAIN"),
-                    ["DEFEAT_RESET_RESPONSE"],
-                    [new TargetCounterPlaybookGap(
-                        "NO_GUARANTEED_RESET_LOCKOUT",
-                        TargetCounterPlaybookGapKind.IncompleteEvidence,
-                        "TargetPlaybook.Gap.NoGuaranteedResetLockout",
-                        ["M1-001"])])
+                    ["MIND_RESONANCE_RESPONSE"])
             ],
             ["E5-000", "M1-001"]);
     }
 
-    private static TargetCounterPlaybook GapPlaybook(
+    private static TargetCounterPlaybook ResetPlaybook(
         TargetArchetypeIdentity identity,
-        string goalCode,
-        TargetProfileFacetIdentity facet,
-        TargetResponsePriority priority,
-        CombatCounterActivationTiming timing,
-        string conflictGroup,
-        string gapCode,
-        string gapMessageKey)
+        CombatCounterRuleSet counterRules,
+        TargetProfileFacetIdentity resetFacet,
+        TargetThreat reset)
     {
         return Playbook(
             identity,
             [Goal(
-                goalCode,
-                10,
-                priority,
-                timing,
-                [facet],
-                [],
-                [],
-                [conflictGroup],
+                "PRESSURE_DEFEAT_MARK_RESET",
+                40,
+                TargetResponsePriority.Critical,
+                CombatCounterActivationTiming.EquippedPassive,
+                [resetFacet],
+                [reset],
+                Options(
+                    counterRules,
+                    "REVERSE_QILUN_TRUE_QI_DRAIN"),
+                ["DEFEAT_RESET_RESPONSE"],
                 [new TargetCounterPlaybookGap(
-                    gapCode,
-                    TargetCounterPlaybookGapKind.NoVerifiedOption,
-                    gapMessageKey,
-                    ["E5-000"])])],
-            ["E5-000"]);
+                    "NO_GUARANTEED_RESET_LOCKOUT",
+                    TargetCounterPlaybookGapKind.IncompleteEvidence,
+                    "TargetPlaybook.Gap.NoGuaranteedResetLockout",
+                    ["M1-001"])])],
+            ["E5-011", "M1-001"]);
     }
 
     private static TargetArchetypeDefinition Archetype(

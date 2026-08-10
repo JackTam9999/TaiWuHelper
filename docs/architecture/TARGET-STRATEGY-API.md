@@ -106,14 +106,14 @@ fields but retain the state-bearing structure.
       }]
     },
     "archetypes": [{
-      "code": "MIND_RESONANCE_RESET_BASELINE",
+      "code": "MIND_RESONANCE_BASELINE",
       "version": "1.0.0",
       "title": "Mind resonance and defeat-reset chain",
       "state": "Matched"
     }],
     "playbook": {
       "sources": [{
-        "archetypeCode": "MIND_RESONANCE_RESET_BASELINE",
+        "archetypeCode": "MIND_RESONANCE_BASELINE",
         "playbookVersion": "1.0.0"
       }],
       "goals": [{
@@ -138,8 +138,8 @@ fields but retain the state-bearing structure.
       "unavailableReason": { "code": "REQUIRED_SOURCE_UNAVAILABLE" }
     },
     "archetype": {
-      "code": "MIND_RESONANCE_RESET_BASELINE",
-      "state": "Partial",
+      "code": "DEFEAT_MARK_RESET_OVERLAY",
+      "state": "Unsupported",
       "missingFacets": [{ "code": "DEFEAT_MARK_RESET" }]
     },
     "playbookSources": []
@@ -183,14 +183,16 @@ fields but retain the state-bearing structure.
 {
   "archetypes": [
     { "code": "CHANNEL_RESISTANCE_ASYMMETRY", "state": "Matched" },
-    { "code": "MIND_RESONANCE_RESET_BASELINE", "state": "Matched" },
+    { "code": "DEFEAT_MARK_RESET_OVERLAY", "state": "Matched" },
+    { "code": "MIND_RESONANCE_BASELINE", "state": "Matched" },
     { "code": "OUTER_DAMAGE_CONFIGURED", "state": "Matched" },
     { "code": "POISON_APPLICATION_CONFIGURED", "state": "Matched" }
   ],
   "playbook": {
     "sources": [
       { "archetypeCode": "CHANNEL_RESISTANCE_ASYMMETRY" },
-      { "archetypeCode": "MIND_RESONANCE_RESET_BASELINE" },
+      { "archetypeCode": "DEFEAT_MARK_RESET_OVERLAY" },
+      { "archetypeCode": "MIND_RESONANCE_BASELINE" },
       { "archetypeCode": "OUTER_DAMAGE_CONFIGURED" },
       { "archetypeCode": "POISON_APPLICATION_CONFIGURED" }
     ],

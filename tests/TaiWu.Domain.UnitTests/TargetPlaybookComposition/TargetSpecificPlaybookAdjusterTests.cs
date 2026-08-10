@@ -237,6 +237,66 @@ public sealed class TargetSpecificPlaybookAdjusterTests
     }
 
     [Fact]
+    public void Every_required_evidence_identity_must_have_the_required_state()
+    {
+        var (analysis, composition) = FullInputs();
+        var probe = TargetSpecificPlaybookAdjuster.Apply(
+            composition,
+            analysis);
+        var confirmed = OuterFacetEvidenceIdentity(probe);
+        var contrary = probe.ExactEvidence.Single(value =>
+            value.Kind == TargetPlaybookAdjustmentEvidenceKind.ArchetypeMatch
+            && value.State
+                == TargetPlaybookAdjustmentEvidenceState.Contrary).Identity;
+        var mixed = new TargetPlaybookAdjustmentRule(
+            "MIXED_EVIDENCE_RULE",
+            TargetPlaybookAdjustmentAction.Retained,
+            GoalReference("PREPARE_FOR_OUTER_DAMAGE"),
+            resultResponse: null,
+            "MIXED_EVIDENCE_MUST_NOT_APPLY",
+            [confirmed, contrary]);
+
+        var result = TargetSpecificPlaybookAdjuster.Apply(
+            composition,
+            analysis,
+            [mixed]);
+
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Code
+                    == TargetSpecificPlaybookAdjuster
+                        .EvidenceStateMismatchCode
+                && diagnostic.RuleCode == mixed.Code);
+        Assert.DoesNotContain(
+            result.Adjustments,
+            adjustment => adjustment.RuleCode == mixed.Code);
+    }
+
+    [Fact]
+    public void Reviewed_channel_rule_replaces_the_wrong_damage_route()
+    {
+        var (analysis, composition) = FullInputs();
+        var rules = VerifiedTargetPlaybookAdjustmentRules.For(analysis);
+
+        var result = TargetSpecificPlaybookAdjuster.Apply(
+            composition,
+            analysis,
+            rules);
+
+        var replacement = Assert.Single(
+            result.Adjustments,
+            adjustment => adjustment.Action
+                == TargetPlaybookAdjustmentAction.Replaced);
+        Assert.Equal(
+            "REVERSE_YINYANG_ROUTE_INNER_TO_OUTER",
+            replacement.OriginalResponse!.StableCode);
+        Assert.Equal(
+            "DIRECT_YINYANG_ROUTE_OUTER_TO_INNER",
+            replacement.ResultResponse!.StableCode);
+        Assert.Empty(result.Diagnostics);
+    }
+
+    [Fact]
     public void Missing_original_response_cannot_apply_a_reviewed_rule()
     {
         var (analysis, composition) = FullInputs();
@@ -389,7 +449,7 @@ public sealed class TargetSpecificPlaybookAdjusterTests
         var gap = evidence.ExactEvidence.Single(value =>
             value.Kind == TargetPlaybookAdjustmentEvidenceKind.Gap
             && value.Identity
-                == "GAP:NO_VERIFIED_OUTER_DAMAGE_COUNTER").Identity;
+                == "GAP:NO_GUARANTEED_RESET_LOCKOUT").Identity;
         var (original, result, required) = action switch
         {
             TargetPlaybookAdjustmentAction.Added =>
@@ -409,7 +469,7 @@ public sealed class TargetSpecificPlaybookAdjusterTests
             TargetPlaybookAdjustmentAction.Unresolved =>
                 (new TargetPlaybookResponseReference(
                         TargetPlaybookResponseReferenceKind.Gap,
-                        "NO_VERIFIED_OUTER_DAMAGE_COUNTER"),
+                        "NO_GUARANTEED_RESET_LOCKOUT"),
                     null,
                     gap),
             _ => (outer, null, confirmed)

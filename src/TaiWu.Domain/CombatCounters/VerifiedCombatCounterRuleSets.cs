@@ -8,6 +8,9 @@ public static class VerifiedCombatCounterRuleSets
     public static CombatCounterRuleSet GoldenMagicSound { get; } =
         CreateGoldenMagicSound();
 
+    public static CombatCounterRuleSet Epic5TargetFamilies { get; } =
+        CreateEpic5TargetFamilies();
+
     private static CombatCounterRuleSet CreateGoldenMagicSound()
     {
         var catalog = VerifiedCombatEffectCatalogs.GoldenAntiMagic;
@@ -79,7 +82,8 @@ public static class VerifiedCombatCounterRuleSets
                     "REVERSE_FULONG_POWER_REDUCTION",
                     [
                         "POSITIVE_MAGIC_SOUND_MIND_DAMAGE",
-                        "DISTRACTION_MARK_ACCUMULATION"
+                        "DISTRACTION_MARK_ACCUMULATION",
+                        "CONFIGURED_OUTER_DAMAGE_PRESSURE"
                     ],
                     CombatCounterStrength.Mitigation,
                     CombatCounterActivationTiming.ActiveAttack,
@@ -107,6 +111,53 @@ public static class VerifiedCombatCounterRuleSets
             ]);
     }
 
+    private static CombatCounterRuleSet CreateEpic5TargetFamilies()
+    {
+        var catalog = VerifiedCombatEffectCatalogs.Epic5TargetFamilies;
+        return new CombatCounterRuleSet(
+            catalog.GameDataVersion,
+            [
+                new CombatCounterRule(
+                    "DIRECT_WUHUANG_POISON_DEFENSE",
+                    ["CONFIGURED_POISON_APPLICATION"],
+                    CombatCounterStrength.HardCounter,
+                    CombatCounterActivationTiming.ActiveDefense,
+                    Effect(catalog, 282, PracticeDirection.Direct, 180),
+                    [ActiveDefense(282, "direct-wuhuang-active-defense")],
+                    "While this defense is active, direct poisoning is "
+                    + "prevented and enemy-applied poison instead reduces "
+                    + "the player's corresponding poison."),
+                new CombatCounterRule(
+                    "REVERSE_WUHUANG_POISON_DEFENSE",
+                    ["CONFIGURED_POISON_APPLICATION"],
+                    CombatCounterStrength.HardCounter,
+                    CombatCounterActivationTiming.ActiveDefense,
+                    Effect(catalog, 282, PracticeDirection.Reverse, 906),
+                    [ActiveDefense(282, "reverse-wuhuang-active-defense")],
+                    "While this defense is active, direct poisoning is "
+                    + "prevented and enemy-applied poison is applied to "
+                    + "the enemy instead."),
+                new CombatCounterRule(
+                    "DIRECT_YINYANG_ROUTE_OUTER_TO_INNER",
+                    ["CHANNEL_RESISTANCE_ASYMMETRY"],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 687, PracticeDirection.Direct, 697),
+                    requirements: [],
+                    "Routes this skill's direct outer injury through the "
+                    + "target's inner resistance."),
+                new CombatCounterRule(
+                    "REVERSE_YINYANG_ROUTE_INNER_TO_OUTER",
+                    ["CHANNEL_RESISTANCE_ASYMMETRY"],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 687, PracticeDirection.Reverse, 1423),
+                    requirements: [],
+                    "Routes this skill's direct inner injury through the "
+                    + "target's outer resistance.")
+            ]);
+    }
+
     private static SkillActivationRequirement Passive(
         int skillId,
         string evidenceName)
@@ -117,6 +168,14 @@ public static class VerifiedCombatCounterRuleSets
             CombatRequirementCriticality.Hard,
             $"local-rule:{evidenceName}");
     }
+
+    private static SkillActivationRequirement ActiveDefense(
+        int skillId,
+        string evidenceName) => new(
+            skillId,
+            SkillActivationState.ActiveDefense,
+            CombatRequirementCriticality.Hard,
+            $"local-rule:{evidenceName}");
 
     private static CombatEffectCatalogEntry Effect(
         CombatEffectCatalog catalog,

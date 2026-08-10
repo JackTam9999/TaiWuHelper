@@ -101,6 +101,37 @@ public sealed class TargetPlaybookAdjustmentEvidence
         }
     }
 
+    internal static IEnumerable<TargetPlaybookAdjustmentEvidence>
+        FromFacetMeasurementRelations(TargetProfileFacet facet)
+    {
+        if (facet.State != TargetProfileEvidenceState.Confirmed
+            || facet.Value?.Kind
+                != TargetProfileFacetValueKind.Measurements)
+        {
+            yield break;
+        }
+
+        var measurements = facet.Value.Measurements.ToDictionary(
+            value => value.Code,
+            StringComparer.Ordinal);
+        if (!measurements.TryGetValue("OUTER", out var outer)
+            || !measurements.TryGetValue("INNER", out var inner)
+            || outer.Value == inner.Value)
+        {
+            yield break;
+        }
+
+        yield return new TargetPlaybookAdjustmentEvidence(
+            TargetPlaybookAdjustmentEvidenceKind.ProfileFacet,
+            TargetPlaybookAdjustmentEvidenceState.Confirmed,
+            outer.Value > inner.Value
+                ? VerifiedTargetPlaybookAdjustmentRules
+                    .OuterResistanceHigherEvidence
+                : VerifiedTargetPlaybookAdjustmentRules
+                    .InnerResistanceHigherEvidence,
+            facet.Evidence.Select(evidence => evidence.Reference));
+    }
+
     internal static TargetPlaybookAdjustmentEvidence FromThreat(
         AnalyzedTargetThreat threat) => new(
             TargetPlaybookAdjustmentEvidenceKind.Threat,

@@ -14,5 +14,10 @@ public enum CombatEffectMechanic
     IncreaseOwnAttackSkillPower,
     TransferOwnHindranceMarks,
     AmplifyEnemyDamageStates,
-    DrainEnemyRandomTrueQi
+    DrainEnemyRandomTrueQi,
+    PreventOwnDirectPoisonWhileDefending,
+    ReduceOwnCorrespondingPoisonOnEnemyApplication,
+    ReflectEnemyAppliedPoison,
+    RouteOwnOuterDamageThroughEnemyInnerResistance,
+    RouteOwnInnerDamageThroughEnemyOuterResistance
 }

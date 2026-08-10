@@ -11,19 +11,20 @@ namespace TaiWu.Domain.UnitTests.TargetPlaybooks;
 public sealed class TargetCounterPlaybookTests
 {
     [Fact]
-    public void Initial_catalog_delivers_four_versioned_families()
+    public void Initial_catalog_delivers_five_versioned_families()
     {
         var catalog = VerifiedTargetCounterPlaybooks.Initial;
 
         Assert.Equal(
             VerifiedCombatEffectCatalogs.GoldenGameDataVersion,
             catalog.GameDataVersion.Value);
-        Assert.Equal(4, catalog.Archetypes.Length);
-        Assert.Equal(4, catalog.Playbooks.Length);
+        Assert.Equal(5, catalog.Archetypes.Length);
+        Assert.Equal(5, catalog.Playbooks.Length);
         Assert.Equal(
             [
                 "CHANNEL_RESISTANCE_ASYMMETRY",
-                "MIND_RESONANCE_RESET_BASELINE",
+                "DEFEAT_MARK_RESET_OVERLAY",
+                "MIND_RESONANCE_BASELINE",
                 "OUTER_DAMAGE_CONFIGURED",
                 "POISON_APPLICATION_CONFIGURED"
             ],
@@ -47,18 +48,20 @@ public sealed class TargetCounterPlaybookTests
     }
 
     [Fact]
-    public void Baseline_preserves_all_verified_threats_and_counter_rules()
+    public void Mind_baseline_and_reset_overlay_preserve_verified_rules()
     {
         var catalog = VerifiedTargetCounterPlaybooks.Initial;
-        var baseline = Playbook("MIND_RESONANCE_RESET_BASELINE");
+        var baseline = Playbook("MIND_RESONANCE_BASELINE");
         var expectedThreatCodes = VerifiedTargetThreatTaxonomies
             .GoldenMagicSound
             .Threats
+            .Where(threat => threat.Kind != TargetThreatKind.DefeatMarkReset)
             .Select(threat => threat.Code)
             .Order(StringComparer.Ordinal);
         var expectedRules = VerifiedCombatCounterRuleSets
             .GoldenMagicSound
             .Rules
+            .Where(rule => rule.Code != "REVERSE_QILUN_TRUE_QI_DRAIN")
             .OrderBy(rule => rule.Code, StringComparer.Ordinal)
             .ToArray();
 
@@ -97,9 +100,12 @@ public sealed class TargetCounterPlaybookTests
                     option.EvidenceReferences);
             });
 
-        var resetGoal = Assert.Single(
-            baseline.Goals,
-            goal => goal.Code == "PRESSURE_DEFEAT_MARK_RESET");
+        var reset = Playbook("DEFEAT_MARK_RESET_OVERLAY");
+        var resetGoal = Assert.Single(reset.Goals);
+        Assert.Equal("PRESSURE_DEFEAT_MARK_RESET", resetGoal.Code);
+        Assert.Equal(
+            ["REVERSE_QILUN_TRUE_QI_DRAIN"],
+            resetGoal.Options.Select(option => option.Code));
         Assert.Contains(
             resetGoal.KnownGaps,
             gap => gap.Code == "NO_GUARANTEED_RESET_LOCKOUT"
@@ -108,13 +114,15 @@ public sealed class TargetCounterPlaybookTests
     }
 
     [Fact]
-    public void New_families_are_typed_goals_with_explicit_verified_gaps()
+    public void New_families_have_typed_threats_and_verified_options()
     {
         var newFamilies = VerifiedTargetCounterPlaybooks
             .Initial
             .Playbooks
-            .Where(playbook => playbook.Identity.Archetype.Code
-                != "MIND_RESONANCE_RESET_BASELINE")
+            .Where(playbook => playbook.Identity.Archetype.Code is
+                "OUTER_DAMAGE_CONFIGURED"
+                or "CHANNEL_RESISTANCE_ASYMMETRY"
+                or "POISON_APPLICATION_CONFIGURED")
             .ToArray();
 
         Assert.Equal(3, newFamilies.Length);
@@ -124,13 +132,18 @@ public sealed class TargetCounterPlaybookTests
             {
                 var goal = Assert.Single(playbook.Goals);
                 Assert.Single(goal.ProfileFacets);
-                Assert.Empty(goal.Threats);
-                Assert.Empty(goal.Options);
-                var gap = Assert.Single(goal.KnownGaps);
-                Assert.Equal(
-                    TargetCounterPlaybookGapKind.NoVerifiedOption,
-                    gap.Kind);
-                Assert.Equal(["E5-000"], gap.EvidenceReferences);
+                Assert.Single(goal.Threats);
+                Assert.NotEmpty(goal.Options);
+                Assert.DoesNotContain(
+                    goal.KnownGaps,
+                    gap => gap.Kind
+                        == TargetCounterPlaybookGapKind.NoVerifiedOption);
+                Assert.All(
+                    goal.Options,
+                    option => Assert.Contains(
+                        goal.Threats,
+                        threat => option.CounterRule.ThreatCodes.Contains(
+                            threat.Code)));
             });
 
         Assert.Equal(
@@ -213,7 +226,7 @@ public sealed class TargetCounterPlaybookTests
     [Fact]
     public void Goal_and_option_ordering_ignore_source_declaration_order()
     {
-        var baseline = Playbook("MIND_RESONANCE_RESET_BASELINE");
+        var baseline = Playbook("MIND_RESONANCE_BASELINE");
         var reordered = new TargetCounterPlaybook(
             baseline.Identity,
             baseline.Goals.Reverse(),
@@ -241,7 +254,10 @@ public sealed class TargetCounterPlaybookTests
         var reorderedCatalog = new TargetCounterPlaybookCatalog(
             catalog.GameDataVersion,
             catalog.Archetypes.Reverse(),
-            [VerifiedCombatCounterRuleSets.GoldenMagicSound],
+            [
+                VerifiedCombatCounterRuleSets.GoldenMagicSound,
+                VerifiedCombatCounterRuleSets.Epic5TargetFamilies
+            ],
             catalog.Playbooks.Reverse());
         Assert.Equal(
             catalog.Playbooks.Select(playbook => playbook.StableKey),
@@ -330,7 +346,7 @@ public sealed class TargetCounterPlaybookTests
             .Initial
             .Archetypes
             .Single(value => value.Identity.Code
-                == "MIND_RESONANCE_RESET_BASELINE");
+                == "MIND_RESONANCE_BASELINE");
         var playbook = new TargetCounterPlaybook(
             new TargetCounterPlaybookIdentity(
                 definition.Identity,

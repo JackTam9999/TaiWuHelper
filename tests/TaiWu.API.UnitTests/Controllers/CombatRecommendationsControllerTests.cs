@@ -53,8 +53,8 @@ public sealed class CombatRecommendationsControllerTests
         Assert.Contains(
             targetStrategy.Archetypes,
             archetype => archetype.Code
-                    == "MIND_RESONANCE_RESET_BASELINE"
-                && archetype.Title == "心神共鳴與敗北標記重置連鎖");
+                == "MIND_RESONANCE_BASELINE"
+                && archetype.Title == "心神共鳴連鎖");
         var comparison = Assert.IsType<LoadoutComparisonResponse>(
             response.Comparison);
         Assert.Equal(response.SnapshotReference, comparison.SnapshotReference);

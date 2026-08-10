@@ -49,7 +49,7 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.DoesNotContain("Loadout comparison", text);
         Assert.DoesNotContain("Recommended capacity", text);
         Assert.DoesNotContain("Show detailed skill cards", text);
-        Assert.DoesNotContain("MIND_RESONANCE_RESET_BASELINE", text);
+        Assert.DoesNotContain("MIND_RESONANCE_BASELINE", text);
         Assert.DoesNotContain("REVERSE_JINNI_SUPPRESSION", text);
     }
 
@@ -313,7 +313,7 @@ public sealed partial class RecommendationComponentRenderingTests
             ],
             [
                 Archetype(
-                    "MIND_RESONANCE_RESET_BASELINE",
+                    "MIND_RESONANCE_BASELINE",
                     chinese
                         ? "心神共鳴與敗北標記重置連鎖"
                         : "Mind resonance and defeat-reset chain",
