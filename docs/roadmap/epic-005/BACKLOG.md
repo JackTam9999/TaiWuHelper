@@ -71,7 +71,7 @@ Every completed item must:
 
 ### E5-000 — Verify target-profile signals and select the representative matrix
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -85,28 +85,28 @@ Document exact semantics before adding Domain profile or matching contracts.
 
 #### Acceptance criteria
 
-- [ ] The inspected Taiwu and GameData versions are recorded.
-- [ ] Every candidate source field records its owning source, type, unit,
+- [x] The inspected Taiwu and GameData versions are recorded.
+- [x] Every candidate source field records its owning source, type, unit,
       availability, completeness, and source-of-truth precedence.
-- [ ] Weapon and attack-family facts are documented independently from damage,
+- [x] Weapon and attack-family facts are documented independently from damage,
       penetration, defense, poison, mind, recovery, and tempo mechanics.
-- [ ] Every proposed `High` or `Low` classification has a documented threshold,
+- [x] Every proposed `High` or `Low` classification has a documented threshold,
       comparison population, or exact mechanic definition.
-- [ ] Skill names, target names, localized labels, and untyped raw descriptions
+- [x] Skill names, target names, localized labels, and untyped raw descriptions
       are explicitly rejected as mechanical evidence.
-- [ ] The current magic-sound, distraction, resonance, and defeat-reset target
+- [x] The current magic-sound, distraction, resonance, and defeat-reset target
       is recorded as the baseline playbook verification case.
-- [ ] Candidate local or synthetic representatives are identified for physical
+- [x] Candidate local or synthetic representatives are identified for physical
       offense, physical resilience or attrition, and poison or an evidence-
       approved replacement family.
-- [ ] The final delivery matrix contains the existing baseline plus three
+- [x] The final delivery matrix contains the existing baseline plus three
       newly verifiable families; unsupported candidates remain explicit.
-- [ ] The evidence matrix distinguishes fields readable from a stable save,
+- [x] The evidence matrix distinguishes fields readable from a stable save,
       installed configuration, current-screen observation, and unavailable
       runtime-only state.
-- [ ] Before/after fingerprints prove all inspected save, GameData, language,
+- [x] Before/after fingerprints prove all inspected save, GameData, language,
       and other game-owned sources remain byte-for-byte unchanged.
-- [ ] The product contract is updated if the verified delivery families differ
+- [x] The product contract is updated if the verified delivery families differ
       from the candidates in EPIC-005.
 
 #### Evidence when complete
@@ -116,6 +116,26 @@ Document exact semantics before adding Domain profile or matching contracts.
 - A source-field and representative-target matrix with no proprietary data or
   local paths committed.
 - Recorded read-only fingerprint results and discovery commands.
+
+#### Completion evidence
+
+- The evidence gate selected exact outer-damage presence, positive channel-
+  resistance asymmetry, and poison-application presence alongside the existing
+  magic-sound/reset baseline. No first-delivery rule uses `High` or `Low`.
+- The source matrix records saved positive membership, installed static
+  configuration, E3-000 current-screen evidence, base-only character values,
+  unsafe live-runtime paths, field types, raw-unit boundaries, completeness,
+  and precedence.
+- A rejected learned-skill scan proved why learned membership cannot mean
+  active. The corrected equipped-only discovery found opaque local and
+  synthetic representatives without committing character identity or save
+  content.
+- The current-save guarded vertical passed 1/1 with save, runtime, and installed
+  language-source fingerprints unchanged. The equipped-only discovery also
+  reported the save fingerprint unchanged across 8,775 candidates.
+- `EPIC.md` now records the corrected final delivery boundary; unsupported
+  high/low, repeated-hit, penetration, recovery, avoidance, and tempo claims
+  remain explicit.
 
 ## Slice 1: Profile and match contracts
 

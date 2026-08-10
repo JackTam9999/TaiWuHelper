@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Planned |
+| Status | In progress |
 | Milestone | 5 |
 | Target release | TBD |
 | Last updated | 2026-08-10 |
@@ -263,22 +263,24 @@ to be:
 
 ## Initial delivery boundary
 
-E5-000 must select the final representative matrix after inspecting the
-installed version. The intended first delivery is:
+E5-000 inspected the installed version and selected this final representative
+matrix:
 
 1. the already verified mind-damage, distraction, resonance, and defeat-reset
    chain as the baseline reusable playbook;
-2. a high physical-offense family, potentially combining verified physical
-   pressure, penetration, or repeated attacks;
-3. a high physical-resilience or attrition family, using verified defense,
-   avoidance, recovery, or reset facts; and
-4. a poison or ongoing-harm family when versioned evidence is available.
+2. configured outer-damage pressure on a positively identified active attack;
+3. positive, unequal base outer/inner resistance values as an exact channel-
+   resilience asymmetry; and
+4. configured poison application on a positively identified active attack.
 
-If a proposed family cannot pass the evidence gate, it remains explicitly
-unsupported and may be replaced only by another documented family. Epic 5
-still requires the baseline plus three newly verified playbook families; the
-selection change must be recorded in the epic and backlog rather than hidden
-inside implementation.
+The original candidates used `high physical-offense` and `high physical-
+resilience` wording. E5-000 found no justified population or threshold for
+those adjectives. The selected families use exact mechanic predicates instead
+and leave strength, severity, penetration, repeated-hit, recovery, avoidance,
+and tempo rankings explicitly unsupported. The evidence boundary and
+representative matrix are recorded in
+[TARGET-COMBAT-PROFILE.md](../../architecture/TARGET-COMBAT-PROFILE.md) and
+[E5-000-target-archetype-evidence.md](../../scenarios/E5-000-target-archetype-evidence.md).
 
 Weapon-family facets such as 刀 or 拳掌 may be delivered as contextual profile
 facts, but they do not become independent tactical playbooks unless separate

@@ -10,7 +10,7 @@ with the epic that owns them.
 | [EPIC-002: Version-aware skill catalogue and character skill atlas](./epic-002/EPIC.md) | Complete | 2 | [Backlog](./epic-002/BACKLOG.md) |
 | [EPIC-003: Verified target observations and evidence-aware recommendations](./epic-003/EPIC.md) | Complete | 3 | [Backlog](./epic-003/BACKLOG.md) |
 | [EPIC-004: Side-by-side loadout comparison and change planning](./epic-004/EPIC.md) | Complete | 4 | [Backlog](./epic-004/BACKLOG.md) |
-| [EPIC-005: Target archetypes and counter playbooks](./epic-005/EPIC.md) | Planned | 5 | [Backlog](./epic-005/BACKLOG.md) |
+| [EPIC-005: Target archetypes and counter playbooks](./epic-005/EPIC.md) | In progress | 5 | [Backlog](./epic-005/BACKLOG.md) |
 
 ## Shared discovery
 
