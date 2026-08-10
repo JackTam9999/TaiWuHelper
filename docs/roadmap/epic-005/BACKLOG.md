@@ -336,7 +336,7 @@ archetype catalogue independently and deterministically.
 
 ### E5-004 — Define the verified counter-playbook catalogue
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -350,23 +350,23 @@ hard-coding a universal loadout.
 
 #### Acceptance criteria
 
-- [ ] A playbook has a stable archetype/version identity, ordered response
+- [x] A playbook has a stable archetype/version identity, ordered response
       goals, priority, timing, conflict groups, evidence, and known gaps.
-- [ ] Every mechanical goal references typed profile facets or existing typed
+- [x] Every mechanical goal references typed profile facets or existing typed
       threats.
-- [ ] Every counter or mitigation option references an existing verified
+- [x] Every counter or mitigation option references an existing verified
       effect and `CombatCounterRule` or a separately reviewed typed rule.
-- [ ] Raw descriptions and display names may support evidence display but
+- [x] Raw descriptions and display names may support evidence display but
       cannot create a playable option.
-- [ ] A playbook never contains a target character ID or a fixed complete
+- [x] A playbook never contains a target character ID or a fixed complete
       loadout.
-- [ ] The baseline magic-sound/mind playbook preserves all currently verified
+- [x] The baseline magic-sound/mind playbook preserves all currently verified
       threat and counter semantics.
-- [ ] Three newly evidence-approved playbook families are versioned and tested.
-- [ ] Missing or inaccessible response options remain explicit gaps.
-- [ ] Playbook goal and option ordering is deterministic and independent of
+- [x] Three newly evidence-approved playbook families are versioned and tested.
+- [x] Missing or inaccessible response options remain explicit gaps.
+- [x] Playbook goal and option ordering is deterministic and independent of
       source declaration order.
-- [ ] Unit tests cover construction invariants, all delivered families,
+- [x] Unit tests cover construction invariants, all delivered families,
       unsupported versions, gaps, and deterministic ordering.
 
 #### Evidence when complete
@@ -375,6 +375,25 @@ hard-coding a universal loadout.
 - Focused tests linking playbook entries to verified threat/counter/effect
   identities.
 - `docs/architecture/TARGET-COUNTER-PLAYBOOKS.md`.
+
+#### Completion evidence
+
+- `TaiWu.Domain.TargetPlaybooks` provides immutable identities, goals,
+  verified options, typed gaps, exact-version resolution, deterministic
+  ordering, and the initial versioned catalogue.
+- The catalogue registers the baseline and the three E5-000 families. Only
+  the baseline exposes playable options: all six are the exact existing
+  `VerifiedCombatCounterRuleSets.GoldenMagicSound` instances. The new families
+  keep explicit `NoVerifiedOption` gaps rather than guessing 功法 from names or
+  raw descriptions.
+- The baseline retains all four verified threats, the existing strength,
+  direction, activation timing, effect identity, requirements, source
+  evidence, and the non-guaranteed reset-lockout caveat.
+- Focused Domain verification on 2026-08-10: 385 passed, 0 failed, 0 skipped.
+- Full release verification on 2026-08-10: 1,000 total, 991 passed,
+  0 failed, and 9 expected opt-in integration skips.
+- Architecture and catalogue rationale are recorded in
+  [TARGET-COUNTER-PLAYBOOKS.md](../../architecture/TARGET-COUNTER-PLAYBOOKS.md).
 
 ## Slice 4: Composition and recommendation
 
