@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Status | Proposed |
-| Scope | Ongoing product discovery after Epic 4 |
-| Related epics | EPIC-001 through EPIC-004 |
+| Scope | Ongoing product discovery after Epic 5 selection |
+| Related epics | EPIC-001 through EPIC-005 |
 | Last updated | 2026-08-10 |
 
 ## Purpose
@@ -175,7 +175,8 @@ application content.
 
 ### PI-007 — Target archetypes and counter playbooks
 
-**Status:** Proposed as the leading Epic 5 candidate on 2026-08-10.
+**Status:** Promoted to
+[EPIC-005](./epic-005/EPIC.md) on 2026-08-10.
 
 Scale the existing verified target-specific recommendation pipeline by
 classifying each target into one or more evidence-backed combat archetypes.
@@ -186,7 +187,7 @@ defeat-threshold reset at the same time.
 Candidate profile dimensions include:
 
 - attack or weapon family;
-- physical, internal, body, Qi, penetration, or repeated-hit pressure;
+- physical/internal damage, 破體/破氣, penetration, or repeated-hit pressure;
 - physical or internal defense, avoidance, recovery, and reset mechanics;
 - poison, mind-break, distraction-mark, movement, range, weapon, and trick
   disruption; and
@@ -277,17 +278,21 @@ The product owner promoted and completed these discovery ideas:
    [EPIC-004](./epic-004/EPIC.md) on 2026-08-08 and completed with the approved
    two-option design on 2026-08-10.
 
-### Current candidates after Epic 4
+### Active promotion
 
-1. Target archetypes and counter playbooks — leading Epic 5 candidate because
-   it reuses the completed threat, evidence, recommendation, and comparison
-   foundations while expanding target coverage.
-2. Companion role and candidate finder.
-3. Companion development planner.
-4. Village workforce and building management.
-5. Library and book planning, initially assessed as a village-management slice.
-6. Version-aware observation, recommendation, and outcome persistence.
-7. Shareable recommendation card, which may remain a smaller enhancement
+Target archetypes and counter playbooks were promoted to
+[EPIC-005](./epic-005/EPIC.md) on 2026-08-10. Epic 5 reuses the completed
+threat, evidence, recommendation, and comparison foundations while expanding
+target coverage.
+
+### Current candidates after Epic 5 selection
+
+1. Companion role and candidate finder.
+2. Companion development planner.
+3. Village workforce and building management.
+4. Library and book planning, initially assessed as a village-management slice.
+5. Version-aware observation, recommendation, and outcome persistence.
+6. Shareable recommendation card, which may remain a smaller enhancement
    because copy and print foundations already exist.
 
 The companion and settlement ideas intentionally remain separate. They may
