@@ -569,6 +569,17 @@ public sealed class CombatRecommendationsControllerTests
             PracticeDirection.Direct,
             directEffectId: 669,
             reverseEffectId: 1669);
+        var resetSkill = new CombatSkillSnapshot(
+            287,
+            SnapshotValue<string>.Available("Skill 287"),
+            SkillCategory.Assistance,
+            SnapshotValue<int>.Available(1),
+            SnapshotValue<bool>.Available(true),
+            SnapshotValue<PracticeDirection>.Available(
+                PracticeDirection.Reverse),
+            SkillSlotContribution.None,
+            SnapshotValue<int>.Available(185),
+            SnapshotValue<int>.Available(911));
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
                 ConfiguredSavePath,
@@ -600,14 +611,14 @@ public sealed class CombatRecommendationsControllerTests
                 SnapshotValue<string>.Available("Target"),
                 SnapshotValue<int>.Available(52),
                 features: [],
-                [targetSkill],
+                [targetSkill, resetSkill],
                 SnapshotValue<CombatLoadoutSnapshot>.Available(
                     new CombatLoadoutSnapshot(
                         [],
                         [targetSkill.SkillId],
                         [],
                         [],
-                        [])),
+                        [resetSkill.SkillId])),
                 equipment: []),
             [
                 new SnapshotWarning(

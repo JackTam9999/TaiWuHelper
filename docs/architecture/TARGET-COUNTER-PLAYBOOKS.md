@@ -153,12 +153,13 @@ matched archetype and GameData version. It does not say that the current player
 owns, can reverse/direct-practice, can equip, can activate, or can fit an
 option.
 
-E5-005 now composes matched playbooks, surfaces conflicts, and applies exact-
-target adjustments. E5-006 will pass
-their options through the existing access evaluator, slot/capacity feasibility,
+E5-005 composes matched playbooks, surfaces conflicts, and applies exact-target
+adjustments. E5-006 passes only exact-target-confirmed options from that
+composition through the existing access evaluator, slot/capacity feasibility,
 bounded candidate generation, scoring, explanation, manual-plan, and
 comparison pipeline. An inaccessible option becomes a typed gap; it is never
-replaced by a name-similar unverified skill.
+replaced by a name-similar unverified skill. See
+[TARGET-PLAYBOOK-PERSONALIZATION.md](./TARGET-PLAYBOOK-PERSONALIZATION.md).
 
 ## Verification
 

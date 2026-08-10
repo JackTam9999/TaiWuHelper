@@ -67,21 +67,29 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        var threatAnalysis = TargetThreatAnalyzer.Analyze(
+        var requirementContext = CreateBaseRequirementContext(
+            snapshot.Player);
+        var playbookPlan = TargetPlaybookRecommendationPersonalizer.Prepare(
             snapshot,
-            VerifiedTargetThreatRuleSets.GoldenMagicSound);
-        var threats = threatAnalysis.Threats
-            .Select(analysis => analysis.Threat)
+            requirementContext);
+        var recommendationThreats = playbookPlan.EligibleGoals
+            .SelectMany(goal => goal.Threats)
+            .DistinctBy(threat => threat.Code, StringComparer.Ordinal)
+            .OrderBy(threat => threat.Code, StringComparer.Ordinal)
             .ToArray();
         cancellationToken.ThrowIfCancellationRequested();
 
         var generation = CombatLoadoutGenerator.Generate(
             new CombatLoadoutGenerationRequest(
                 snapshot.Player,
-                BuildOptions(snapshot.Player, threats),
-                CreateBaseRequirementContext(snapshot.Player),
+                BuildOptions(snapshot.Player, playbookPlan),
+                requirementContext,
                 snapshot.Player.GenericSlotAllocation));
         cancellationToken.ThrowIfCancellationRequested();
+        var targetPlaybook =
+            TargetPlaybookRecommendationPersonalizer.Complete(
+                playbookPlan,
+                generation);
 
         List<CombatRecommendationStyleResult> styles = [];
         foreach (var policy in Enum.GetValues<RecommendationPolicy>())
@@ -89,19 +97,21 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
             cancellationToken.ThrowIfCancellationRequested();
             styles.Add(
                 BuildStyle(
-                snapshot.Player,
-                threats,
-                generation,
-                policy));
+                    snapshot.Player,
+                    recommendationThreats,
+                    generation,
+                    policy));
         }
 
         return new CombatLoadoutRecommendation(
             snapshot,
-            threatAnalysis,
+            targetPlaybook.Analysis.ThreatAnalysis,
             generation,
             requestedPolicy,
             styles,
-            targetObservation);
+            targetObservation,
+            targetObservationImpact: null,
+            targetPlaybook);
     }
 
     private static CombatRecommendationStyleResult BuildStyle(
@@ -132,19 +142,14 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
 
     private static CombatLoadoutOption[] BuildOptions(
         PlayerCombatSnapshot player,
-        IEnumerable<TargetThreat> threats)
+        TargetPlaybookRecommendationPlan playbookPlan)
     {
-        var threatCodes = threats
-            .Select(threat => threat.Code)
-            .ToHashSet(StringComparer.Ordinal);
         var currentSkillIds = Enum
             .GetValues<SkillCategory>()
             .SelectMany(category => player.EquippedSkills.Get(category))
             .ToHashSet();
-        var counterRules = VerifiedCombatCounterRuleSets
-            .GoldenMagicSound
-            .Rules
-            .Where(rule => rule.ThreatCodes.Any(threatCodes.Contains))
+        var counterRules = playbookPlan.Options
+            .Select(option => option.CounterRule)
             .ToArray();
         var counterSkillIds = counterRules
             .Select(rule => rule.Effect.SkillId)

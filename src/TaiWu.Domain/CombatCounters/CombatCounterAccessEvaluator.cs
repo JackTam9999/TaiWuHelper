@@ -7,7 +7,9 @@ public static class CombatCounterAccessEvaluator
     public static CombatCounterAccessReport Evaluate(
         PlayerCombatSnapshot player,
         CombatRequirementContext requirementContext,
-        CombatCounterRuleSet ruleSet)
+        CombatCounterRuleSet ruleSet,
+        bool allowBreakthrough = false,
+        bool evaluateProposedSelection = false)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(requirementContext);
@@ -18,22 +20,30 @@ public static class CombatCounterAccessEvaluator
                 rule => EvaluateRule(
                     player,
                     requirementContext,
-                    rule)));
+                    rule,
+                    allowBreakthrough,
+                    evaluateProposedSelection)));
     }
 
     private static CombatCounterAccessEvaluation EvaluateRule(
         PlayerCombatSnapshot player,
         CombatRequirementContext requirementContext,
-        CombatCounterRule rule)
+        CombatCounterRule rule,
+        bool allowBreakthrough,
+        bool evaluateProposedSelection)
     {
         var candidateValidation = CombatSkillCandidateValidator.Validate(
             player,
             new CombatSkillCandidate(
                 rule.Effect.SkillId,
-                requiredDirection: rule.RequiredDirection));
+                requiredDirection: rule.RequiredDirection,
+                allowBreakthrough: allowBreakthrough));
+        var evaluatedContext = evaluateProposedSelection
+            ? WithProposedSelection(requirementContext, rule)
+            : requirementContext;
         var requirementEvaluation = CombatRequirementEvaluator.Evaluate(
             rule.Requirements,
-            requirementContext);
+            evaluatedContext);
         List<CombatCounterAccessIssue> issues = [];
 
         issues.AddRange(
@@ -53,6 +63,36 @@ public static class CombatCounterAccessEvaluator
             candidateValidation,
             requirementEvaluation,
             issues);
+    }
+
+    private static CombatRequirementContext WithProposedSelection(
+        CombatRequirementContext source,
+        CombatCounterRule rule)
+    {
+        var equippedSkillIds = source.EquippedSkillIds
+            .Append(rule.Effect.SkillId)
+            .Distinct()
+            .Order()
+            .ToArray();
+        int? activeDefenseSkillId = rule.ActivationTiming
+            == CombatCounterActivationTiming.ActiveDefense
+                ? rule.Effect.SkillId
+                : null;
+        int? activeAgilitySkillId = rule.ActivationTiming
+            == CombatCounterActivationTiming.ActiveAgility
+                ? rule.Effect.SkillId
+                : null;
+        return new CombatRequirementContext(
+            source.EquippedWeaponTypeIds,
+            source.TrickCounts.Select(value =>
+                new CombatTrickCount(value.Key, value.Value)),
+            source.Distance,
+            source.Resources.Select(value =>
+                new CombatResourceAmount(value.Key, value.Value)),
+            source.UnlockedWeaponTypeIds,
+            equippedSkillIds,
+            activeDefenseSkillId,
+            activeAgilitySkillId);
     }
 
     private static void ValidateEffectIdentity(

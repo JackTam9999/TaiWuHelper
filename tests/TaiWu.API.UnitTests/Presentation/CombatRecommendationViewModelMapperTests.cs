@@ -316,6 +316,12 @@ public sealed class CombatRecommendationViewModelMapperTests
             PracticeDirection.Direct,
             directEffectId: 669,
             reverseEffectId: 1669);
+        var resetSkill = Skill(
+            287,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 185,
+            reverseEffectId: 911);
 
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
@@ -353,14 +359,14 @@ public sealed class CombatRecommendationViewModelMapperTests
                 SnapshotValue<string>.Available("Target"),
                 SnapshotValue<int>.Available(52),
                 features: [],
-                [targetSkill],
+                [targetSkill, resetSkill],
                 SnapshotValue<CombatLoadoutSnapshot>.Available(
                     new CombatLoadoutSnapshot(
                         neigongSkillIds: [],
                         attackSkillIds: [targetSkill.SkillId],
                         agilitySkillIds: [],
                         defenseSkillIds: [],
-                        assistanceSkillIds: [])),
+                        assistanceSkillIds: [resetSkill.SkillId])),
                 equipment: []),
             [
                 new SnapshotWarning(

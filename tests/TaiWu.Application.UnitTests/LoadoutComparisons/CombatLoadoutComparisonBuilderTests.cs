@@ -82,9 +82,15 @@ public sealed class CombatLoadoutComparisonBuilderTests
             PracticeDirection.Direct,
             directEffectId: 669,
             reverseEffectId: 1669);
+        var resetSkill = Skill(
+            287,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 185,
+            reverseEffectId: 911);
         var recommendation = await Recommend(Snapshot(
             [counter],
-            [targetSkill],
+            [targetSkill, resetSkill],
             new CombatLoadoutSnapshot([], [], [], [], []),
             SnapshotValue<CombatLoadoutSnapshot>.Available(
                 new CombatLoadoutSnapshot(
@@ -92,7 +98,7 @@ public sealed class CombatLoadoutComparisonBuilderTests
                     [targetSkill.SkillId],
                     [],
                     [],
-                    []))));
+                    [resetSkill.SkillId]))));
 
         var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
 
@@ -204,9 +210,15 @@ public sealed class CombatLoadoutComparisonBuilderTests
             PracticeDirection.Direct,
             directEffectId: 669,
             reverseEffectId: 1669);
+        var reset = Skill(
+            287,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 185,
+            reverseEffectId: 911);
         var recommendation = await Recommend(Snapshot(
             [inner, counter],
-            [target],
+            [target, reset],
             new CombatLoadoutSnapshot([inner.SkillId], [], [], [], []),
             SnapshotValue<CombatLoadoutSnapshot>.Available(
                 new CombatLoadoutSnapshot(
@@ -214,7 +226,7 @@ public sealed class CombatLoadoutComparisonBuilderTests
                     [target.SkillId],
                     [],
                     [],
-                    [])),
+                    [reset.SkillId])),
             budgets: new SlotBudgetSet(
             [
                 new SlotBudget(SkillCategory.Neigong, 1, 6),
@@ -599,9 +611,15 @@ public sealed class CombatLoadoutComparisonBuilderTests
             PracticeDirection.Direct,
             directEffectId: 669,
             reverseEffectId: 1669);
+        var reset = Skill(
+            287,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 185,
+            reverseEffectId: 911);
         return Snapshot(
             [counter],
-            [target],
+            [target, reset],
             new CombatLoadoutSnapshot([], [], [], [], []),
             SnapshotValue<CombatLoadoutSnapshot>.Available(
                 new CombatLoadoutSnapshot(
@@ -609,7 +627,7 @@ public sealed class CombatLoadoutComparisonBuilderTests
                     [target.SkillId],
                     [],
                     [],
-                    [])));
+                    [reset.SkillId])));
     }
 
     private static CombatSnapshot Snapshot(

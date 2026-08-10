@@ -5,6 +5,7 @@ using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.TargetArchetypes;
 using Xunit;
 
 namespace TaiWu.Application.UnitTests.CombatRecommendations;
@@ -40,7 +41,20 @@ public sealed class RecommendCombatLoadoutTests
 
         Assert.Same(snapshot, result.Snapshot);
         Assert.Equal(snapshot.Warnings, result.SnapshotWarnings);
-        Assert.Equal(3, result.ThreatAnalysis.Threats.Length);
+        Assert.Equal(4, result.ThreatAnalysis.Threats.Length);
+        var targetPlaybook = Assert.IsType<TargetPlaybookPersonalization>(
+            result.TargetPlaybook);
+        Assert.Contains(
+            targetPlaybook.Analysis.ArchetypeMatches.Matches,
+            match => match.Definition.Identity.Code
+                    == "MIND_RESONANCE_RESET_BASELINE"
+                && match.State == TargetArchetypeMatchState.Matched);
+        Assert.Equal(4, targetPlaybook.EligibleGoals.Length);
+        Assert.Contains(
+            targetPlaybook.Counters,
+            counter => counter.Option.Effect.SkillId == 604
+                && counter.State
+                    == TargetPlaybookCounterAvailabilityState.Feasible);
         Assert.NotEmpty(result.Generation.Candidates);
         Assert.NotEmpty(result.Scoring.RankedCandidates);
         Assert.True(result.ManualPlan.HasPlan);
@@ -98,6 +112,123 @@ public sealed class RecommendCombatLoadoutTests
     }
 
     [Fact]
+    public async Task Partial_archetype_does_not_supply_playbook_counters()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var counter = Skill(
+            604,
+            SkillCategory.Attack,
+            PracticeDirection.Reverse,
+            directEffectId: 338,
+            reverseEffectId: 1064);
+        var target = Skill(
+            719,
+            SkillCategory.Attack,
+            PracticeDirection.Direct,
+            directEffectId: 669,
+            reverseEffectId: 1669);
+        var snapshot = Snapshot(
+            [counter],
+            [target],
+            new CombatLoadoutSnapshot(
+                [],
+                [counter.SkillId],
+                [],
+                [],
+                []),
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                new CombatLoadoutSnapshot(
+                    [],
+                    [target.SkillId],
+                    [],
+                    [],
+                    [])),
+            warnings: []);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+
+        var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
+
+        var targetPlaybook = Assert.IsType<TargetPlaybookPersonalization>(
+            result.TargetPlaybook);
+        Assert.Contains(
+            targetPlaybook.Analysis.ArchetypeMatches.Matches,
+            match => match.Definition.Identity.Code
+                    == "MIND_RESONANCE_RESET_BASELINE"
+                && match.State == TargetArchetypeMatchState.Partial);
+        Assert.Empty(targetPlaybook.Composition.SourcePlaybooks);
+        Assert.Empty(targetPlaybook.EligibleGoals);
+        Assert.Empty(targetPlaybook.Counters);
+        Assert.NotEmpty(result.Generation.Candidates);
+        Assert.All(
+            result.Generation.Candidates.SelectMany(
+                candidate => candidate.SelectedOptions),
+            option =>
+            {
+                Assert.Null(option.CounterStrength);
+                Assert.Empty(option.ThreatCodes);
+            });
+        Assert.All(
+            result.Scoring.RankedCandidates,
+            candidate => Assert.Equal(
+                100m,
+                candidate.Get(
+                    RecommendationScoreComponentKind.ThreatCoverage)
+                    .Score));
+    }
+
+    [Fact]
+    public async Task Matched_but_unowned_counters_remain_explicit_gaps()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var withPlayerCounter = GoldenSnapshot();
+        var snapshot = Snapshot(
+            playerSkills: [],
+            withPlayerCounter.Target.LearnedSkills.ToArray(),
+            new CombatLoadoutSnapshot([], [], [], [], []),
+            withPlayerCounter.Target.EquippedSkills,
+            warnings: []);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+
+        var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Safe),
+            TestContext.Current.CancellationToken);
+
+        var targetPlaybook = Assert.IsType<TargetPlaybookPersonalization>(
+            result.TargetPlaybook);
+        Assert.Equal(6, targetPlaybook.Counters.Length);
+        Assert.All(
+            targetPlaybook.Counters,
+            counter =>
+            {
+                Assert.Equal(
+                    TargetPlaybookCounterAvailabilityState.Inaccessible,
+                    counter.State);
+                Assert.NotNull(counter.Gap);
+                Assert.False(counter.Access.IsAccessible);
+            });
+        Assert.Equal(7, targetPlaybook.Gaps.Length);
+        Assert.Empty(result.Generation.Candidates);
+        Assert.DoesNotContain(
+            result.Generation.Candidates.SelectMany(
+                candidate => candidate.SelectedOptions),
+            option => option.CounterStrength.HasValue);
+    }
+
+    [Fact]
     public async Task Immediate_breakthrough_is_a_manual_recommendation_step()
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
@@ -113,9 +244,15 @@ public sealed class RecommendCombatLoadoutTests
             PracticeDirection.Direct,
             directEffectId: 669,
             reverseEffectId: 1669);
+        var resetSkill = Skill(
+            287,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 185,
+            reverseEffectId: 911);
         var snapshot = Snapshot(
             [counter],
-            [targetSkill],
+            [targetSkill, resetSkill],
             new CombatLoadoutSnapshot([], [], [], [], []),
             SnapshotValue<CombatLoadoutSnapshot>.Available(
                 new CombatLoadoutSnapshot(
@@ -123,7 +260,7 @@ public sealed class RecommendCombatLoadoutTests
                     [targetSkill.SkillId],
                     [],
                     [],
-                    [])),
+                    [resetSkill.SkillId])),
             warnings: []);
         reader.ReadAsync(
                 Arg.Any<CombatSnapshotReadRequest>(),
@@ -154,10 +291,20 @@ public sealed class RecommendCombatLoadoutTests
         Assert.True(explanation.Direction.RequiresBreakthrough);
         Assert.False(
             explanation.Direction.RequiresManualDirectionChange);
+        var targetPlaybook = Assert.IsType<TargetPlaybookPersonalization>(
+            result.TargetPlaybook);
+        var availability = Assert.Single(
+            targetPlaybook.Counters,
+            value => value.Option.Effect.SkillId == counter.SkillId);
+        Assert.Equal(
+            TargetPlaybookCounterAvailabilityState.Feasible,
+            availability.State);
+        Assert.True(availability.Access.IsAccessible);
+        Assert.Null(availability.Gap);
     }
 
     [Fact]
-    public async Task Confirmed_reset_threat_recommends_reverse_qilun()
+    public async Task Matched_baseline_recommends_reverse_qilun_for_reset()
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
         var qilun = Skill(
@@ -172,12 +319,23 @@ public sealed class RecommendCombatLoadoutTests
             PracticeDirection.Reverse,
             directEffectId: 185,
             reverseEffectId: 911);
+        var magicSound = Skill(
+            719,
+            SkillCategory.Attack,
+            PracticeDirection.Direct,
+            directEffectId: 669,
+            reverseEffectId: 1669);
         var snapshot = Snapshot(
             [qilun],
-            [reset],
+            [magicSound, reset],
             new CombatLoadoutSnapshot([], [], [], [], []),
-            SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
-                "The target loadout is selected during combat preparation."),
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                new CombatLoadoutSnapshot(
+                    [],
+                    [magicSound.SkillId],
+                    [],
+                    [],
+                    [reset.SkillId])),
             warnings: []);
         reader.ReadAsync(
                 Arg.Any<CombatSnapshotReadRequest>(),
@@ -192,7 +350,9 @@ public sealed class RecommendCombatLoadoutTests
                 RecommendationPolicy.Safe),
             TestContext.Current.CancellationToken);
 
-        var threat = Assert.Single(result.ThreatAnalysis.Threats);
+        var threat = Assert.Single(
+            result.ThreatAnalysis.Threats,
+            value => value.Threat.Code == "DEFEAT_MARK_RESET_LOOP");
         Assert.Equal("DEFEAT_MARK_RESET_LOOP", threat.Threat.Code);
         var plan = Assert.IsType<ManualCombatPlan>(result.ManualPlan.Plan);
         Assert.Contains(
@@ -322,9 +482,15 @@ public sealed class RecommendCombatLoadoutTests
             PracticeDirection.Direct,
             directEffectId: 669,
             reverseEffectId: 1669);
+        var resetSkill = Skill(
+            287,
+            SkillCategory.Assistance,
+            PracticeDirection.Reverse,
+            directEffectId: 185,
+            reverseEffectId: 911);
         return Snapshot(
             [playerSkill],
-            [targetSkill],
+            [targetSkill, resetSkill],
             new CombatLoadoutSnapshot([], [], [], [], []),
             SnapshotValue<CombatLoadoutSnapshot>.Available(
                 new CombatLoadoutSnapshot(
@@ -332,7 +498,7 @@ public sealed class RecommendCombatLoadoutTests
                     [targetSkill.SkillId],
                     [],
                     [],
-                    [])),
+                    [resetSkill.SkillId])),
             [
                 new SnapshotWarning(
                     "SOURCE_WARNING",

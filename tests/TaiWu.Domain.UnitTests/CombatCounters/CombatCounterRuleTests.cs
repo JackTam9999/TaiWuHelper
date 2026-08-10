@@ -157,6 +157,25 @@ public sealed class CombatCounterRuleTests
     }
 
     [Fact]
+    public void Proposed_selection_evaluates_equipped_and_active_roles()
+    {
+        var passive = GoldenRule("REVERSE_LAOJUN_MARK_CLEAR");
+        var active = GoldenRule("REVERSE_WANHUA_RESONANCE");
+        var rules = new CombatCounterRuleSet(
+            VerifiedCombatCounterRuleSets.GoldenMagicSound.GameDataVersion,
+            [passive, active]);
+
+        var result = CombatCounterAccessEvaluator.Evaluate(
+            CreatePlayer([CreateSkill(passive), CreateSkill(active)]),
+            CreateContext(),
+            rules,
+            evaluateProposedSelection: true);
+
+        Assert.Equal(2, result.AccessibleCounters.Count());
+        Assert.Empty(result.MissingAccess);
+    }
+
+    [Fact]
     public void Current_profile_directions_report_available_and_missing_rules()
     {
         var rules = VerifiedCombatCounterRuleSets.GoldenMagicSound;

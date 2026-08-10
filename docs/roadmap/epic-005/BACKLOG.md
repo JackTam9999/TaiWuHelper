@@ -458,7 +458,7 @@ player personalization.
 
 ### E5-006 — Personalize playbooks through the existing recommendation engine
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -472,21 +472,21 @@ creating a parallel loadout engine.
 
 #### Acceptance criteria
 
-- [ ] Only matched and exact-target-confirmed mechanical goals can affect
+- [x] Only matched and exact-target-confirmed mechanical goals can affect
       candidate construction or scoring.
-- [ ] Final options still pass ownership, direction, raw-effect, requirement,
+- [x] Final options still pass ownership, direction, raw-effect, requirement,
       capacity, generic-slot, backlash, and active-role hard filters.
-- [ ] Existing bounded search limits and truncation diagnostics remain intact.
-- [ ] Inaccessible counters produce an unresolved gap and are not replaced by
+- [x] Existing bounded search limits and truncation diagnostics remain intact.
+- [x] Inaccessible counters produce an unresolved gap and are not replaced by
       a name-similar or lower-ranked unverified 功法.
-- [ ] Existing policy-score meanings and deterministic tie-breakers remain
+- [x] Existing policy-score meanings and deterministic tie-breakers remain
       unchanged unless a separately documented rule change is approved.
-- [ ] The manual plan, tactical explanation, and Epic 4 comparison agree with
+- [x] The manual plan, tactical explanation, and Epic 4 comparison agree with
       the selected feasible loadout.
-- [ ] Applying or clearing an observation atomically replaces the profile,
+- [x] Applying or clearing an observation atomically replaces the profile,
       matches, playbooks, adjustments, recommendation, and comparison.
-- [ ] The save-only result is reproducible after clearing observations.
-- [ ] Tests prove feasibility rejection, accessible and inaccessible counters,
+- [x] The save-only result is reproducible after clearing observations.
+- [x] Tests prove feasibility rejection, accessible and inaccessible counters,
       target adjustment, deterministic ranking, manual-plan parity, and
       observation lifecycle behavior.
 
@@ -495,6 +495,25 @@ creating a parallel loadout engine.
 - Updated recommendation orchestration and option-building integration.
 - Application and Domain regression tests for all delivered playbooks.
 - Updated candidate-generation and recommendation architecture documentation.
+
+#### Completion evidence
+
+- `TargetPlaybookRecommendationPersonalizer` derives the profile, match set,
+  matched-playbook composition, exact-target adjustments, eligible verified
+  options, and player-access evaluations from the recommendation snapshot.
+- `CombatLoadoutRecommendation.TargetPlaybook` retains eligible goals, exact
+  counter availability, catalogue gaps, and player-specific inaccessible or
+  infeasible gaps with the recommendation that they produced.
+- The existing generator, feasibility validator, policy scorer, explanation,
+  manual plan, and Epic 4 comparison remain the only recommendation path;
+  their bounds, score meanings, and deterministic ordering are unchanged.
+- Observation tests prove apply/repeat/clear replacement across profile,
+  composition, adjustments, recommendation, and comparison fingerprints.
+- Release build on 2026-08-10: succeeded with 0 warnings and 0 errors.
+- Full release verification on 2026-08-10: 1,030 total, 1,021 passed,
+  0 failed, and 9 expected opt-in integration skips.
+- Design and safety boundaries are recorded in
+  [TARGET-PLAYBOOK-PERSONALIZATION.md](../../architecture/TARGET-PLAYBOOK-PERSONALIZATION.md).
 
 ## Slice 5: API vertical
 

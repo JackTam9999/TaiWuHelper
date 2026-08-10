@@ -103,10 +103,14 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             directEffectId: 189,
             reverseEffectId: 915);
         var snapshot = Snapshot(
-            targetSkills: [],
-            targetEquippedSkills:
-                SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
-                    "The target loadout is not persisted."),
+            targetSkills:
+            [
+                TargetSkill(
+                    719,
+                    "Target Art",
+                    directEffectId: 669,
+                    reverseEffectId: 1669)
+            ],
             playerSkills: [qilun]);
         var definition = Definition(
             287,
@@ -156,8 +160,16 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         var second = await workflow.ExecuteAsync(
             observedRequest,
             TestContext.Current.CancellationToken);
+        var cleared = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
 
-        var finding = Assert.Single(first.ThreatAnalysis.Threats);
+        var finding = Assert.Single(
+            first.ThreatAnalysis.Threats,
+            value => value.Threat.Code == "DEFEAT_MARK_RESET_LOOP");
         Assert.Equal("DEFEAT_MARK_RESET_LOOP", finding.Threat.Code);
         var source = Assert.Single(finding.Sources);
         Assert.Equal(TargetThreatSourceKind.ObservedEquipped, source.Kind);
@@ -171,6 +183,36 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         Assert.NotEqual(
             string.Join("|", DecisionFingerprint(saveOnly)),
             string.Join("|", DecisionFingerprint(first)));
+        var savePlaybook = Assert.IsType<TargetPlaybookPersonalization>(
+            saveOnly.TargetPlaybook);
+        var observedPlaybook = Assert.IsType<TargetPlaybookPersonalization>(
+            first.TargetPlaybook);
+        var clearedPlaybook = Assert.IsType<TargetPlaybookPersonalization>(
+            cleared.TargetPlaybook);
+        Assert.NotEqual(
+            savePlaybook.Analysis.Profile.Fingerprint,
+            observedPlaybook.Analysis.Profile.Fingerprint);
+        Assert.NotEqual(
+            savePlaybook.Composition.StableKey,
+            observedPlaybook.Composition.StableKey);
+        Assert.NotEqual(
+            savePlaybook.Adjustments.StableKey,
+            observedPlaybook.Adjustments.StableKey);
+        Assert.Equal(
+            savePlaybook.Analysis.Profile.Fingerprint,
+            clearedPlaybook.Analysis.Profile.Fingerprint);
+        Assert.Equal(
+            savePlaybook.Composition.StableKey,
+            clearedPlaybook.Composition.StableKey);
+        Assert.Equal(
+            savePlaybook.Adjustments.StableKey,
+            clearedPlaybook.Adjustments.StableKey);
+        Assert.Equal(
+            FullResultFingerprint(saveOnly),
+            FullResultFingerprint(cleared));
+        Assert.Equal(
+            ComparisonFingerprint(saveOnly),
+            ComparisonFingerprint(cleared));
         Assert.All(
             first.Styles,
             style => Assert.Equal(
@@ -203,9 +245,16 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 == nameof(ICombatSkillCatalogueRepository.ReplaceAsync));
         var impact = Assert.IsType<TargetObservationRecommendationImpact>(
             first.TargetObservationImpact);
-        var threatImpact = Assert.Single(impact.Threats);
+        var threatImpact = Assert.Single(
+            impact.Threats,
+            value => value.Kind == TargetThreatImpactKind.Added);
         Assert.Equal(TargetThreatImpactKind.Added, threatImpact.Kind);
         Assert.Equal("DEFEAT_MARK_RESET_LOOP", threatImpact.ThreatCode);
+        Assert.All(
+            impact.Threats.Where(value => value != threatImpact),
+            value => Assert.Equal(
+                TargetThreatImpactKind.Unchanged,
+                value.Kind));
         Assert.True(impact.PartialCoverageLeavesUnknown);
         Assert.NotEmpty(impact.FeasibilityChanges);
         Assert.All(
@@ -226,10 +275,14 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
     public async Task Observed_threat_cannot_make_unowned_counter_feasible()
     {
         var snapshot = Snapshot(
-            targetSkills: [],
-            targetEquippedSkills:
-                SnapshotValue<CombatLoadoutSnapshot>.Unavailable(
-                    "The target loadout is not persisted."));
+            targetSkills:
+            [
+                TargetSkill(
+                    719,
+                    "Target Art",
+                    directEffectId: 669,
+                    reverseEffectId: 1669)
+            ]);
         var definition = Definition(
             287,
             "Nine-Colored Cicada Art",
@@ -255,7 +308,12 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 TestContext.Current.CancellationToken);
 
         Assert.Equal(
-            ["DEFEAT_MARK_RESET_LOOP"],
+            [
+                "DEFEAT_MARK_RESET_LOOP",
+                "DISTRACTION_MARK_ACCUMULATION",
+                "MIND_RESONANCE_CASCADE",
+                "POSITIVE_MAGIC_SOUND_MIND_DAMAGE"
+            ],
             result.ThreatAnalysis.Threats.Select(value => value.Threat.Code));
         Assert.Empty(result.Generation.Candidates);
         Assert.Contains(
@@ -425,8 +483,14 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             "Target Art",
             directEffectId: 669,
             reverseEffectId: 1669);
+        var reset = TargetSkill(
+            287,
+            "Nine-Colored Cicada Art",
+            directEffectId: 185,
+            reverseEffectId: 911,
+            direction: PracticeDirection.Reverse);
         var snapshot = Snapshot(
-            targetSkills: [target],
+            targetSkills: [target, reset],
             playerSkills: [counter]);
         var definition = Definition(
             target.SkillId,
@@ -463,7 +527,9 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(saveOnly.Generation.Candidates);
-        Assert.Empty(first.ThreatAnalysis.Threats);
+        Assert.Equal(
+            ["DEFEAT_MARK_RESET_LOOP"],
+            first.ThreatAnalysis.Threats.Select(value => value.Threat.Code));
         Assert.Empty(first.Generation.Candidates);
         Assert.All(
             first.Styles,
@@ -485,8 +551,15 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             ThreatFingerprint(first),
             ThreatFingerprint(second));
         var impact = first.TargetObservationImpact!;
+        Assert.Equal(
+            TargetThreatImpactKind.Unchanged,
+            Assert.Single(
+                impact.Threats,
+                change => change.ThreatCode
+                    == "DEFEAT_MARK_RESET_LOOP").Kind);
         Assert.All(
-            impact.Threats,
+            impact.Threats.Where(change => change.ThreatCode
+                != "DEFEAT_MARK_RESET_LOOP"),
             change => Assert.Equal(
                 TargetThreatImpactKind.Removed,
                 change.Kind));
@@ -843,14 +916,15 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         int skillId,
         string name,
         int? directEffectId = null,
-        int? reverseEffectId = null) => new(
+        int? reverseEffectId = null,
+        PracticeDirection direction = PracticeDirection.Direct) => new(
             skillId,
             SnapshotValue<string>.Available(name),
             SkillCategory.Attack,
             SnapshotValue<int>.Available(2),
             SnapshotValue<bool>.Available(true),
             SnapshotValue<PracticeDirection>.Available(
-                PracticeDirection.Direct),
+                direction),
             new SkillSlotContribution(2, 0, 0, 0, 1),
             SnapshotValue<int>.Available(directEffectId ?? 1000 + skillId),
             SnapshotValue<int>.Available(reverseEffectId ?? 2000 + skillId));

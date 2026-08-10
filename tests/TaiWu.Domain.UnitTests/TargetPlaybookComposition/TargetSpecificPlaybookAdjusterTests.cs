@@ -360,9 +360,9 @@ public sealed class TargetSpecificPlaybookAdjusterTests
         string goalCode) => Assert.Single(
             set.Adjustments,
             adjustment => adjustment.OriginalResponse is
-                {
-                    Kind: TargetPlaybookResponseReferenceKind.Goal
-                }
+            {
+                Kind: TargetPlaybookResponseReferenceKind.Goal
+            }
                 && adjustment.OriginalResponse.StableCode == goalCode);
 
     private static TargetPlaybookAdjustment GapAdjustment(
@@ -370,9 +370,9 @@ public sealed class TargetSpecificPlaybookAdjusterTests
         string gapCode) => Assert.Single(
             set.Adjustments,
             adjustment => adjustment.OriginalResponse is
-                {
-                    Kind: TargetPlaybookResponseReferenceKind.Gap
-                }
+            {
+                Kind: TargetPlaybookResponseReferenceKind.Gap
+            }
                 && adjustment.OriginalResponse.StableCode == gapCode);
 
     private static TargetPlaybookAdjustmentRule Rule(

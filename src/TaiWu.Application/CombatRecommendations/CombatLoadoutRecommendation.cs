@@ -15,9 +15,31 @@ public sealed record CombatLoadoutRecommendation
         IEnumerable<CombatRecommendationStyleResult> styles,
         TargetObservationProcessingResult? targetObservation = null,
         TargetObservationRecommendationImpact? targetObservationImpact = null)
+        : this(
+            snapshot,
+            threatAnalysis,
+            generation,
+            requestedPolicy,
+            styles,
+            targetObservation,
+            targetObservationImpact,
+            targetPlaybook: null)
+    {
+    }
+
+    internal CombatLoadoutRecommendation(
+        CombatSnapshot snapshot,
+        TargetThreatAnalysis threatAnalysis,
+        CombatLoadoutGenerationResult generation,
+        RecommendationPolicy requestedPolicy,
+        IEnumerable<CombatRecommendationStyleResult> styles,
+        TargetObservationProcessingResult? targetObservation,
+        TargetObservationRecommendationImpact? targetObservationImpact,
+        TargetPlaybookPersonalization? targetPlaybook)
     {
         Snapshot = snapshot;
-        ThreatAnalysis = threatAnalysis;
+        ThreatAnalysis = threatAnalysis
+            ?? throw new ArgumentNullException(nameof(threatAnalysis));
         Generation = generation;
         RequestedPolicy = requestedPolicy;
         Styles = [.. styles];
@@ -25,6 +47,7 @@ public sealed record CombatLoadoutRecommendation
             style.Policy == requestedPolicy);
         TargetObservation = targetObservation;
         TargetObservationImpact = targetObservationImpact;
+        TargetPlaybook = targetPlaybook;
     }
 
     public CombatSnapshot Snapshot { get; }
@@ -33,6 +56,8 @@ public sealed record CombatLoadoutRecommendation
         Snapshot.Warnings;
 
     public TargetThreatAnalysis ThreatAnalysis { get; }
+
+    public TargetPlaybookPersonalization? TargetPlaybook { get; }
 
     public CombatLoadoutGenerationResult Generation { get; }
 
@@ -65,7 +90,8 @@ public sealed record CombatLoadoutRecommendation
             RequestedPolicy,
             Styles,
             TargetObservation,
-            impact ?? throw new ArgumentNullException(nameof(impact)));
+            impact ?? throw new ArgumentNullException(nameof(impact)),
+            TargetPlaybook);
     }
 
     public CombatRecommendationScoringResult Scoring =>
