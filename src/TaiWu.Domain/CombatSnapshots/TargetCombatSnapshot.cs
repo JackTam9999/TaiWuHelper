@@ -12,7 +12,9 @@ public sealed record TargetCombatSnapshot
         IEnumerable<CombatSkillSnapshot> learnedSkills,
         SnapshotValue<CombatLoadoutSnapshot> equippedSkills,
         IEnumerable<EquipmentSnapshot> equipment,
-        TargetLoadoutObservation? loadoutObservation = null)
+        TargetLoadoutObservation? loadoutObservation = null,
+        SnapshotValue<TargetChannelResistanceSnapshot>?
+            baseChannelResistance = null)
     {
         if (characterId <= 0)
         {
@@ -106,6 +108,9 @@ public sealed record TargetCombatSnapshot
         }
 
         LoadoutObservation = loadoutObservation;
+        BaseChannelResistance = baseChannelResistance
+            ?? SnapshotValue<TargetChannelResistanceSnapshot>.Unavailable(
+                "Base channel resistance was not captured.");
     }
 
     public int CharacterId { get; }
@@ -123,4 +128,8 @@ public sealed record TargetCombatSnapshot
     public ImmutableArray<EquipmentSnapshot> Equipment { get; }
 
     public TargetLoadoutObservation? LoadoutObservation { get; }
+
+    public SnapshotValue<TargetChannelResistanceSnapshot>
+        BaseChannelResistance
+    { get; }
 }

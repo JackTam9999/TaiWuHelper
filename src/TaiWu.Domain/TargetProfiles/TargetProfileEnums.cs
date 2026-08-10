@@ -24,7 +24,8 @@ public enum TargetProfileEvidenceSourceKind
     CurrentScreenObservation,
     SavedBaseCharacter,
     VerifiedRule,
-    SyntheticFixture
+    SyntheticFixture,
+    SavedLoadoutSource
 }
 
 public enum TargetProfileFacetValueKind

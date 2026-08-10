@@ -7,7 +7,8 @@ public sealed record EquipmentSnapshot
         SnapshotValue<long> instanceId,
         SnapshotValue<int> templateId,
         SnapshotValue<string> displayName,
-        SnapshotValue<EquipmentKind> kind)
+        SnapshotValue<EquipmentKind> kind,
+        SnapshotValue<int>? itemSubtype = null)
     {
         if (slotIndex < 0)
         {
@@ -43,11 +44,31 @@ public sealed record EquipmentSnapshot
                 "Unknown equipment kind.");
         }
 
+        var subtype = itemSubtype
+            ?? SnapshotValue<int>.Unavailable(
+                "Equipment subtype was not captured.");
+        if (subtype.IsAvailable && subtype.Value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(itemSubtype),
+                "An available equipment subtype must be positive.");
+        }
+
+        if (subtype.IsAvailable
+            && kind.IsAvailable
+            && kind.Value != EquipmentKind.Weapon)
+        {
+            throw new ArgumentException(
+                "Only weapon equipment can expose a weapon subtype.",
+                nameof(itemSubtype));
+        }
+
         SlotIndex = slotIndex;
         InstanceId = instanceId;
         TemplateId = templateId;
         DisplayName = displayName;
         Kind = kind;
+        ItemSubtype = subtype;
     }
 
     public int SlotIndex { get; }
@@ -59,4 +80,6 @@ public sealed record EquipmentSnapshot
     public SnapshotValue<string> DisplayName { get; }
 
     public SnapshotValue<EquipmentKind> Kind { get; }
+
+    public SnapshotValue<int> ItemSubtype { get; }
 }

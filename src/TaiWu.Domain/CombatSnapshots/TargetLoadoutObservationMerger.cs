@@ -82,7 +82,8 @@ public static class TargetLoadoutObservationMerger
             learnedSkills,
             equippedSkills,
             snapshot.Target.Equipment,
-            observation);
+            observation,
+            snapshot.Target.BaseChannelResistance);
 
         var warningValues = snapshot.Warnings.ToList();
         if (observation.Coverage.Kind
@@ -266,7 +267,9 @@ public static class TargetLoadoutObservationMerger
             skill.DirectEffectId,
             skill.ReverseEffectId,
             skill.BreakthroughDirections,
-            skill.Element);
+            skill.Element,
+            skill.HasConfiguredOuterDamage,
+            skill.HasConfiguredPoisonApplication);
 
     private static SnapshotValue<CombatLoadoutSnapshot> MergeEquippedSkills(
         SnapshotValue<CombatLoadoutSnapshot> saved,

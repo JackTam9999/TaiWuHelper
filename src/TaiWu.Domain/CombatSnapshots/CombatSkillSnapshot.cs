@@ -14,7 +14,9 @@ public sealed record CombatSkillSnapshot
         SnapshotValue<int> reverseEffectId,
         SnapshotValue<BreakthroughDirectionAvailability>?
             breakthroughDirections = null,
-        SnapshotValue<CombatSkillElement>? element = null)
+        SnapshotValue<CombatSkillElement>? element = null,
+        SnapshotValue<bool>? hasConfiguredOuterDamage = null,
+        SnapshotValue<bool>? hasConfiguredPoisonApplication = null)
     {
         if (skillId < 0)
         {
@@ -80,6 +82,12 @@ public sealed record CombatSkillSnapshot
         Element = element
             ?? SnapshotValue<CombatSkillElement>.Unavailable(
                 "Combat-skill element was not captured.");
+        HasConfiguredOuterDamage = hasConfiguredOuterDamage
+            ?? SnapshotValue<bool>.Unavailable(
+                "Configured outer-damage presence was not captured.");
+        HasConfiguredPoisonApplication = hasConfiguredPoisonApplication
+            ?? SnapshotValue<bool>.Unavailable(
+                "Configured poison-application presence was not captured.");
     }
 
     public int SkillId { get; }
@@ -105,6 +113,10 @@ public sealed record CombatSkillSnapshot
     { get; }
 
     public SnapshotValue<CombatSkillElement> Element { get; }
+
+    public SnapshotValue<bool> HasConfiguredOuterDamage { get; }
+
+    public SnapshotValue<bool> HasConfiguredPoisonApplication { get; }
 
     private static void ValidateEffectId(
         SnapshotValue<int> effectId,

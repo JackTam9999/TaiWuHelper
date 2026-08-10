@@ -186,7 +186,10 @@ internal sealed class TaiwuCombatSnapshotReader(
                 text,
                 warnings),
             equippedSkills,
-            MapEquipment(character.GetEquipment(), text));
+            MapEquipment(character.GetEquipment(), text),
+            baseChannelResistance: MapBaseChannelResistance(
+                character,
+                warnings));
     }
 
     private static List<CombatSkillSnapshot> MapPlayerSkills(
@@ -325,7 +328,51 @@ internal sealed class TaiwuCombatSnapshotReader(
             MapEffectId(item.ReverseEffectID, "reverse", skillId),
             breakthroughDirections,
             CombatSnapshotMapping.MapCombatSkillElement(
-                item.FiveElements));
+                item.FiveElements),
+            SnapshotValue<bool>.Available(
+                item.OuterDamageSteps is { Length: > 0 }
+                && item.OuterDamageSteps.Any(value => value > 0)),
+            SnapshotValue<bool>.Available(item.Poisons.IsNonZero()));
+    }
+
+    private static SnapshotValue<TargetChannelResistanceSnapshot>
+        MapBaseChannelResistance(
+            Character character,
+            List<SnapshotWarning> warnings)
+    {
+        try
+        {
+            var value = character.GetBasePenetrationResists();
+            if (value.Outer > 0 && value.Inner > 0)
+            {
+                return SnapshotValue<TargetChannelResistanceSnapshot>.Available(
+                    new TargetChannelResistanceSnapshot(
+                        value.Outer,
+                        value.Inner));
+            }
+
+            const string reason = "Base outer and inner resistance are not "
+                + "both positive; zero cannot establish an Epic 5 profile "
+                + "value.";
+            warnings.Add(new SnapshotWarning(
+                "TARGET_BASE_CHANNEL_RESISTANCE_UNAVAILABLE",
+                reason));
+            return SnapshotValue<TargetChannelResistanceSnapshot>.Unavailable(
+                reason);
+        }
+        catch (Exception exception)
+            when (exception is InvalidOperationException
+                  or NullReferenceException
+                  or IndexOutOfRangeException)
+        {
+            var reason = "Base channel resistance is unavailable at the "
+                + $"standalone runtime boundary: {exception.GetType().Name}.";
+            warnings.Add(new SnapshotWarning(
+                "TARGET_BASE_CHANNEL_RESISTANCE_UNAVAILABLE",
+                reason));
+            return SnapshotValue<TargetChannelResistanceSnapshot>.Unavailable(
+                reason);
+        }
     }
 
     private static SnapshotValue<InnerPowerStateSnapshot>
@@ -567,10 +614,26 @@ internal sealed class TaiwuCombatSnapshotReader(
                     MapEquipmentName(item, text),
                     SnapshotValue<EquipmentKind>.Available(
                         CombatSnapshotMapping.MapEquipmentKind(
-                            item.ItemType))));
+                            item.ItemType)),
+                    MapEquipmentSubtype(item)));
         }
 
         return result;
+    }
+
+    private static SnapshotValue<int> MapEquipmentSubtype(ItemKey item)
+    {
+        if (item.ItemType != ItemType.Weapon)
+        {
+            return SnapshotValue<int>.Unavailable(
+                "Only weapon equipment has a weapon subtype.");
+        }
+
+        var weapon = Config.Weapon.Instance.GetItem(item.TemplateId);
+        return weapon is not null && weapon.ItemSubType > 0
+            ? SnapshotValue<int>.Available((int)weapon.ItemSubType)
+            : SnapshotValue<int>.Unavailable(
+                $"Weapon template {item.TemplateId} has no positive subtype.");
     }
 
     private static SnapshotValue<string> MapEquipmentName(

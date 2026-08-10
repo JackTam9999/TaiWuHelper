@@ -10,6 +10,7 @@ using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.LoadoutComparisons;
+using TaiWu.Domain.TargetProfiles;
 using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
 using Xunit;
@@ -93,6 +94,14 @@ public sealed class TargetObservationReadOnlyIntegrationTests
             var cleared = await saveOnlyUseCase.ExecuteAsync(
                 saveOnlyRequest,
                 TestContext.Current.CancellationToken);
+            var initialProfile = TargetCombatProfileExtractor.Extract(
+                initial.Snapshot,
+                initial.ThreatAnalysis,
+                VerifiedTargetProfileExtractionRuleSets.Initial);
+            var clearedProfile = TargetCombatProfileExtractor.Extract(
+                cleared.Snapshot,
+                cleared.ThreatAnalysis,
+                VerifiedTargetProfileExtractionRuleSets.Initial);
 
             Assert.Equal(targetCharacterId, first.Snapshot.Target.CharacterId);
             Assert.Equal(
@@ -111,6 +120,22 @@ public sealed class TargetObservationReadOnlyIntegrationTests
                 ComparisonFactSignature(cleared));
             Assert.Null(cleared.TargetObservation);
             Assert.Null(cleared.TargetObservationImpact);
+            Assert.Equal(
+                initialProfile.Fingerprint,
+                clearedProfile.Fingerprint);
+            Assert.All(
+                initial.Snapshot.Target.LearnedSkills,
+                skill =>
+                {
+                    Assert.True(skill.HasConfiguredOuterDamage.IsAvailable);
+                    Assert.True(
+                        skill.HasConfiguredPoisonApplication.IsAvailable);
+                });
+            Assert.DoesNotContain(
+                initialProfile.Diagnostics,
+                diagnostic => diagnostic.Code ==
+                    TargetCombatProfileExtractor
+                        .GameDataVersionUnsupportedCode);
             Assert.Equal(
                 before[savePath].Sha256,
                 first.Snapshot.Metadata.SaveSha256,

@@ -18,11 +18,12 @@ boundary.
 | `CombatSnapshot` | Root containing metadata, one player, one target, and warnings |
 | `CombatSnapshotMetadata` | Save path, SHA-256, capture time, save modified time, and GameData version |
 | `PlayerCombatSnapshot` | Learned skills, equipped loadout, equipment, slot budgets, generic allocation, owned legendary-book cost slots, and current assignments |
-| `TargetCombatSnapshot` | Identity, age, features, learned skills, optionally available equipped loadout, and equipment |
+| `TargetCombatSnapshot` | Identity, age, features, learned skills, optionally available equipped loadout, equipment, accepted target observation, and optionally available positive base channel resistance |
 | `CharacterFeatureSnapshot` | Target feature ID, configured display name, and level |
-| `CombatSkillSnapshot` | Skill identity, category, actual grid cost, mastery, active practice direction, breakthrough-direction availability, slot contribution, and direct/reverse effect IDs |
+| `CombatSkillSnapshot` | Skill identity, category, actual grid cost, mastery, active practice direction, breakthrough-direction availability, slot contribution, direct/reverse effect IDs, and optional configured outer-damage/poison presence facts |
 | `BreakthroughDirectionAvailability` | Whether breakthrough is complete, whether it can be completed now, and which Direct/Reverse outcomes the currently read pages can produce |
 | `CombatLoadoutSnapshot` | Equipped skill IDs separated into all five skill categories |
+| `TargetChannelResistanceSnapshot` | Positive raw base outer/inner resistance values; equality remains valid source data while asymmetry is decided later |
 
 All collection inputs are copied into `ImmutableArray<T>`. Later caller
 mutation cannot change a constructed snapshot.
@@ -82,6 +83,18 @@ branch on `IsAvailable` and preserve the reason.
 This is required for the golden target because the current disk save does not
 contain its equipped skill loadout.
 
+Epic 5 applies the same rule to target-profile source facts. A skill snapshot
+whose static outer-damage or poison configuration was not captured exposes an
+unavailable boolean, not `false`. Equipment without a verified positive weapon
+subtype exposes an unavailable subtype. Base channel resistance is available
+only when both raw base values are positive; zero is unavailable rather than a
+`Low` value.
+
+These source facts do not themselves establish an archetype. Profile
+extraction must separately bind static skill mechanics to accepted current-
+screen or positive saved equipped membership. See
+[Target combat-profile evidence boundary](./TARGET-COMBAT-PROFILE.md).
+
 ### Evidence source
 
 `SnapshotDataSource` distinguishes save data, installed game configuration, a
@@ -101,6 +114,8 @@ UTC time and opaque evidence identity in deterministic order. See
 - Character IDs and skill IDs cannot be invalid.
 - Available grid costs must be greater than zero.
 - Available effect and equipment IDs cannot be negative.
+- Available equipment subtype and base channel-resistance values must be
+  positive.
 - Available slot usage cannot be negative or exceed capacity.
 - Every slot category is present exactly once.
 - Generic slots cannot be allocated more than once.

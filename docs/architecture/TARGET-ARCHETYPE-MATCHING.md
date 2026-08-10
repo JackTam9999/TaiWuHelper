@@ -211,6 +211,41 @@ The evaluator is pure Domain code over immutable input. It reads no save,
 configuration, language file, process, runtime memory, or UI state and exposes
 no mutation or game-control capability.
 
+## E5-003 extraction integration
+
+`TargetCombatProfileAnalyzer` now connects matching to the immutable snapshot
+without changing the E5-002 contract:
+
+```text
+CombatSnapshot
+    + versioned TargetThreatRuleSet
+    -> TargetThreatAnalysis
+    + versioned TargetProfileExtractionRuleSet
+    -> TargetCombatProfile
+    + every supplied TargetArchetypeDefinition
+    -> TargetArchetypeMatchSet
+```
+
+The resulting `TargetCombatProfileAnalysis` retains all three typed products.
+Its constructor requires the match-set profile fingerprint to equal the
+extracted profile fingerprint.
+
+The initial extraction rule is exactly version-bound. Unsupported or missing
+GameData produces an empty diagnostic profile, after which every supplied
+definition still receives an explicit match result. No definition is silently
+omitted and no nearby extraction rule is used.
+
+Matcher input order remains irrelevant. Profile facets, definition predicates,
+match results, and diagnostics are canonical before their fingerprints or
+stable keys are calculated. Repeated extraction of identical save/observation
+facts and rule inputs produces identical profile and match-set identities.
+
+Observation precedence is owned by the existing Epic 3 merge. The analyzer
+consumes only the accepted merged snapshot, retains its typed conflict/stale
+diagnostics, and rebuilds every match from the replacement profile. Clearing
+the observation means analyzing the original save-only snapshot again; no
+mutable match state is retained.
+
 ## Verification
 
 Synthetic Domain tests cover:

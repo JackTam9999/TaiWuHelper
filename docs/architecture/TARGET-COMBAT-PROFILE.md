@@ -128,6 +128,109 @@ The model has no display-name, localized-title, timestamp, or path property.
 Optional unavailable detail—including local diagnostic text—is excluded from
 the fingerprint. Mutable input references are never retained.
 
+## Snapshot projection and extraction
+
+E5-003 extends the immutable combat snapshot with only the raw facts approved
+by E5-000:
+
+| Snapshot fact | Type | Infrastructure source | Boundary |
+|---|---|---|---|
+| Configured outer-damage presence | `CombatSkillSnapshot.HasConfiguredOuterDamage` as `SnapshotValue<bool>` | Positive entry in version-matched `CombatSkillItem.OuterDamageSteps` | Static skill definition only; never proves active use |
+| Configured poison-application presence | `CombatSkillSnapshot.HasConfiguredPoisonApplication` as `SnapshotValue<bool>` | Non-zero version-matched `CombatSkillItem.Poisons` | Static skill definition only; no poison type, rate, stack, duration, or severity claim |
+| Weapon subtype | `EquipmentSnapshot.ItemSubtype` as `SnapshotValue<int>` | Positive `WeaponItem.ItemSubType` joined through saved equipment | Descriptive attack-family context only |
+| Base channel resistance | `TargetCombatSnapshot.BaseChannelResistance` | Standalone-safe `Character.GetBasePenetrationResists()` | Available only when both raw base values are positive; explicitly not live-modified resistance |
+
+Legacy and synthetic snapshots may leave these values unavailable. Optional
+constructor parameters preserve compatibility without substituting `false` or
+zero.
+
+The Infrastructure reader never calls the unsafe live penetration, resistance,
+attack-tendency, recovery, or special-effect paths. A failed or non-positive
+base-resistance read becomes unavailable with a warning.
+
+### Versioned extraction rules
+
+`VerifiedTargetProfileExtractionRuleSets.Initial` is bound to:
+
+| Field | Value |
+|---|---|
+| Profile rule | `E5.PROFILE.1` |
+| GameData | `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a` |
+| Pressure facet | `OUTER_DAMAGE_CONFIGURED` |
+| Resilience facet | `CHANNEL_RESISTANCE_ASYMMETRY` |
+| Control facet | `POISON_APPLICATION_CONFIGURED` |
+| Attack-family prefix | `WEAPON_SUBTYPE:<positive subtype>` |
+
+It also maps the existing typed `MindDamagePressure`,
+`DistractionMarkAccumulation`, `MindResonanceCascade`, and `DefeatMarkReset`
+threat kinds to independent profile facets. It does not interpret a raw effect
+ID or threat description.
+
+Any unavailable or different GameData version produces an empty profile with a
+typed error diagnostic. Extraction does not use nearby versions or retain a
+subset of facets.
+
+### Active-skill binding
+
+Static skill facts affect a profile only after an active binding is established:
+
+1. accepted current-screen observed membership or battle-visible active effect;
+2. otherwise positive saved equipped membership; and
+3. never learned membership alone.
+
+A complete current-screen observation replaces saved active membership. A
+partial sparring, hostile, or story observation adds only its positively
+observed skills and retains saved positive membership. When the same skill is
+present in both, current-screen provenance wins for that binding.
+
+The binding and static definition contribute separate evidence entries. An
+active attack with an unavailable static flag creates an incomplete facet. A
+missing saved loadout with no accepted observation also creates incomplete
+outer-damage and poison facets rather than zero, false, or a negative match.
+
+### Exact facet extraction
+
+- A positively bound attack with `HasConfiguredOuterDamage == true` confirms
+  `OUTER_DAMAGE_CONFIGURED`.
+- A positively bound attack with
+  `HasConfiguredPoisonApplication == true` confirms
+  `POISON_APPLICATION_CONFIGURED`.
+- Positive unequal base outer/inner resistance confirms
+  `CHANNEL_RESISTANCE_ASYMMETRY` with typed `OUTER` and `INNER` measurements.
+- Equal positive resistance produces no asymmetry facet. Unavailable or
+  non-positive evidence never becomes a confirmed measurement.
+- Each positively equipped weapon subtype creates an independent descriptive
+  `AttackFamily` facet. It emits no pressure, resilience, control, or tempo
+  facet.
+- A typed threat facet is confirmed only when at least one threat source is
+  equipped or battle-visible. `LearnedUnequipped` threat sources remain a
+  diagnostic and never create a facet.
+
+### Observation lifecycle and diagnostics
+
+Extraction consumes the already accepted immutable target observation on the
+snapshot. It does not implement competing freshness or merge rules.
+
+Epic 3 warnings for stale, partial, unsupported, precedence-confirmed, and
+save-conflicting observations are retained as typed profile diagnostics. A
+complete observation/save conflict therefore changes the profile source and
+remains explainable. Reapplying the same observation produces the same profile
+fingerprint; clearing it and reusing the original save snapshot reproduces the
+save-only fingerprint.
+
+### Analysis boundary
+
+`TargetCombatProfileAnalyzer.Analyze` performs one pure sequence:
+
+1. analyze typed target threats from the immutable snapshot;
+2. extract the versioned target profile;
+3. evaluate every supplied archetype definition; and
+4. return the threat analysis, profile, and complete match set bound by the
+   same profile fingerprint.
+
+The service has no filesystem, process, GameData, persistence, localization,
+or game-control dependency.
+
 ## Evidence pipeline
 
 ```mermaid

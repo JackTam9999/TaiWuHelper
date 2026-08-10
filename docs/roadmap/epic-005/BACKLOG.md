@@ -265,7 +265,7 @@ match outcome without turning incomplete evidence into `NotMatched`.
 
 ### E5-003 — Build deterministic profile extraction and archetype matching
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -279,26 +279,26 @@ archetype catalogue independently and deterministically.
 
 #### Acceptance criteria
 
-- [ ] Extraction consumes one immutable snapshot, current accepted
+- [x] Extraction consumes one immutable snapshot, current accepted
       observations, versioned profile rules, and typed existing threat facts.
-- [ ] Every emitted facet links to the exact typed evidence that established
+- [x] Every emitted facet links to the exact typed evidence that established
       it.
-- [ ] Source precedence agrees with Epic 3 and preserves stale or conflicting
+- [x] Source precedence agrees with Epic 3 and preserves stale or conflicting
       evidence as diagnostics.
-- [ ] Weapon or attack-family evidence never emits a damage, defense, poison,
+- [x] Weapon or attack-family evidence never emits a damage, defense, poison,
       mind, or tempo facet by implication.
-- [ ] Version mismatch produces typed unsupported results and no partial use of
+- [x] Version mismatch produces typed unsupported results and no partial use of
       nearby rules.
-- [ ] Arbitrary high/low thresholds, localized string matching, and raw effect
+- [x] Arbitrary high/low thresholds, localized string matching, and raw effect
       interpretation are impossible through the production API.
-- [ ] Every applicable archetype definition is evaluated; evaluation does not
+- [x] Every applicable archetype definition is evaluated; evaluation does not
       stop after the first match.
-- [ ] Facets, matches, and diagnostics use stable documented ordering.
-- [ ] Repeated identical extraction and matching produce equivalent
+- [x] Facets, matches, and diagnostics use stable documented ordering.
+- [x] Repeated identical extraction and matching produce equivalent
       fingerprints and results.
-- [ ] Applying the same observation repeatedly is idempotent; clearing it
+- [x] Applying the same observation repeatedly is idempotent; clearing it
       reproduces the save-only profile and matches.
-- [ ] Tests cover all evidence and match states, multi-match, rule reordering,
+- [x] Tests cover all evidence and match states, multi-match, rule reordering,
       version mismatch, observation apply/clear, and determinism.
 
 #### Evidence when complete
@@ -307,6 +307,30 @@ archetype catalogue independently and deterministically.
   selected by the architecture design.
 - Focused Domain/Application tests using synthetic source facts.
 - `docs/architecture/TARGET-ARCHETYPE-MATCHING.md` implementation notes.
+
+#### Completion evidence
+
+- The snapshot now carries optional version-matched configured outer-damage
+  and poison-presence flags, positive weapon subtype, and positive base channel
+  resistance. Missing source data remains unavailable, never false or zero.
+- `E5.PROFILE.1` extracts only the E5-000 exact facets. Current-screen evidence
+  binds active skills before positive saved membership; learned-only skills and
+  learned-only threat sources cannot confirm a facet.
+- Existing typed mind-damage, distraction, resonance, and reset threats map to
+  independent facets without reading names or raw descriptions. Weapon subtype
+  emits only `AttackFamily` context.
+- The extractor consumes the already merged Epic 3 snapshot and retains stale,
+  partial, unsupported, precedence, and save-conflict warnings as profile
+  diagnostics. Reapply and clear tests prove deterministic replacement.
+- `TargetCombatProfileAnalyzer` performs threat analysis, extraction, and every
+  supplied archetype match in one pure immutable flow. Version mismatch emits
+  an empty diagnostic profile and no nearby-rule facts.
+- Domain unit tests passed **374/374**. The solution build completed with zero
+  warnings and errors; the full synthetic/default suite passed **989 total:
+  980 passed, 0 failed, 9 expected opt-in integration skips**.
+- The focused guarded current-save vertical passed **1/1** in about 29 seconds,
+  confirmed mapped configured mechanics and save-only profile repeatability,
+  and left every inspected save, runtime, and language fingerprint unchanged.
 
 ## Slice 3: Counter playbooks
 

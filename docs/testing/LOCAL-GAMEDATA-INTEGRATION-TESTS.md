@@ -107,5 +107,13 @@ observation comparison facts, and proves clearing returns to the save-only
 comparison facts. The existing class-filter command runs both the E3 lifecycle
 and E4 comparison assertions in the same single guarded test.
 
+E5-003 extends that vertical again. Target learned-skill snapshots must expose
+version-matched configured outer-damage and poison-presence facts, and the
+save-only target profile must reproduce the same fingerprint after the
+observation is cleared. The profile version gate must remain supported. The
+2026-08-10 focused current-save run passed 1/1 in about 29 seconds while the
+test's existing `finally` guard confirmed every inspected save, runtime, and
+language source unchanged.
+
 Build output can contain local runtime copies required by GameData. Those files
 remain ignored, are never publish items, and must never be committed.
