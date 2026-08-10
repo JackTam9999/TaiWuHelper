@@ -399,7 +399,7 @@ hard-coding a universal loadout.
 
 ### E5-005 — Compose overlapping playbooks and apply exact-target adjustments
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -413,20 +413,20 @@ player personalization.
 
 #### Acceptance criteria
 
-- [ ] Shared response goals, threat references, and identical counter options
+- [x] Shared response goals, threat references, and identical counter options
       deduplicate by stable identity.
-- [ ] Priority and activation timing resolve only according to documented
+- [x] Priority and activation timing resolve only according to documented
       composition rules.
-- [ ] Incompatible active roles, requirements, timing, or capacity demands
+- [x] Incompatible active roles, requirements, timing, or capacity demands
       remain explicit composition conflicts.
-- [ ] Partial, unsupported, and conflicting archetype matches cannot silently
+- [x] Partial, unsupported, and conflicting archetype matches cannot silently
       contribute a confirmed mechanical goal.
-- [ ] Exact target threats, skills, effects, equipment, observations, and gaps
+- [x] Exact target threats, skills, effects, equipment, observations, and gaps
       can retain, elevate, reduce, add, replace, or leave unresolved a response
       with a typed reason.
-- [ ] A broad archetype cannot override contrary exact-target evidence.
-- [ ] Composition order is deterministic for reordered equivalent inputs.
-- [ ] Tests cover overlapping coverage, priority, timing, true conflicts,
+- [x] A broad archetype cannot override contrary exact-target evidence.
+- [x] Composition order is deterministic for reordered equivalent inputs.
+- [x] Tests cover overlapping coverage, priority, timing, true conflicts,
       exact-target overrides, unsupported matches, and stable diagnostics.
 
 #### Evidence when complete
@@ -434,6 +434,27 @@ player personalization.
 - Pure playbook composer and target-adjustment contracts/services.
 - Domain/Application tests for the full composition state matrix.
 - `docs/architecture/TARGET-PLAYBOOK-COMPOSITION.md`.
+
+#### Completion evidence
+
+- `TargetPlaybookComposer` admits only `Matched` archetypes, resolves exact-
+  version playbooks, merges shared goals, and globally deduplicates threats and
+  verified counter options while retaining source references.
+- Strongest priority and earliest response timing use one documented ordering.
+  Reviewed conflict groups preserve active-role, timing, requirement, and
+  capacity conflicts; the composer does not choose a side.
+- `TargetSpecificPlaybookAdjuster` requires the exact profile fingerprint and
+  match-set key, extracts typed facet/threat/skill/effect/equipment/
+  observation/gap/match evidence, and emits retained, elevated, reduced,
+  added, replaced, or unresolved decisions with typed reasons.
+- Missing, wrong-state, missing-response, and shadowed reviewed rules remain
+  deterministic diagnostics. Explicit contrary evidence overrides the broad
+  automatic decision; absence alone never reduces it.
+- Focused Domain verification on 2026-08-10: 412 passed, 0 failed, 0 skipped.
+- Full release verification on 2026-08-10: 1,027 total, 1,018 passed,
+  0 failed, and 9 expected opt-in integration skips.
+- Composition and adjustment rules are recorded in
+  [TARGET-PLAYBOOK-COMPOSITION.md](../../architecture/TARGET-PLAYBOOK-COMPOSITION.md).
 
 ### E5-006 — Personalize playbooks through the existing recommendation engine
 

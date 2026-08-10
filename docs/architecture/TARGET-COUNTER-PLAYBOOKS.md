@@ -126,8 +126,10 @@ evidence, and a truthful reason why the helper cannot yet choose a 功法.
 | 40 | `PRESSURE_DEFEAT_MARK_RESET` | Critical / equipped passive | `DEFEAT_MARK_RESET_LOOP` | Reverse 七輪 random true-Qi drain mitigation |
 
 Across those goals, every one of the four existing baseline threats and all six
-existing counter rules is retained. Options may appear under multiple goals;
-E5-005 composes and deduplicates them by stable counter identity.
+existing counter rules is retained. Options may appear under multiple goals.
+The composer in
+[TARGET-PLAYBOOK-COMPOSITION.md](TARGET-PLAYBOOK-COMPOSITION.md) deduplicates
+them globally by stable counter identity while retaining every goal reference.
 
 ## Deterministic ordering
 
@@ -151,7 +153,8 @@ matched archetype and GameData version. It does not say that the current player
 owns, can reverse/direct-practice, can equip, can activate, or can fit an
 option.
 
-E5-005 will compose matched playbooks and surface conflicts. E5-006 will pass
+E5-005 now composes matched playbooks, surfaces conflicts, and applies exact-
+target adjustments. E5-006 will pass
 their options through the existing access evaluator, slot/capacity feasibility,
 bounded candidate generation, scoring, explanation, manual-plan, and
 comparison pipeline. An inaccessible option becomes a typed gap; it is never
