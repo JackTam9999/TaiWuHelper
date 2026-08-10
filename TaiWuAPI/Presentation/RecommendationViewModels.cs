@@ -19,7 +19,8 @@ public sealed record CombatRecommendationViewModel(
     IReadOnlyList<RecommendationWarningViewModel> Warnings,
     InnerPowerStateViewModel? InnerPowerState = null,
     TargetObservationImpactViewModel? TargetObservationImpact = null,
-    LoadoutComparisonViewModel? Comparison = null);
+    LoadoutComparisonViewModel? Comparison = null,
+    TargetStrategyViewModel? TargetStrategy = null);
 
 public sealed record TargetObservationImpactViewModel(
     IReadOnlyList<TargetThreatImpactViewModel> Threats,

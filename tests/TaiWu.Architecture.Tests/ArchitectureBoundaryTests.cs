@@ -411,12 +411,23 @@ public sealed partial class ArchitectureBoundaryTests
                 componentRoot,
                 "Recommendations",
                 "LoadoutComparisonMatrix.razor"));
+        var targetStrategy = File.ReadAllText(
+            Path.Combine(
+                componentRoot,
+                "Recommendations",
+                "TargetStrategyPanel.razor"));
+        var styles = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "TaiWuAPI",
+            "wwwroot",
+            "app.css"));
 
         Assert.Contains("OrderByDescending(threat => threat.Severity)", threatPanel);
         Assert.Contains("<ThreatPanel", page);
         Assert.Contains("<LoadoutCategory", page);
         Assert.Contains("<BattlePlan", page);
         Assert.Contains("SelectedThreatReference", page);
+        Assert.Contains("<TargetStrategyPanel", page);
         Assert.Contains("Actual cost", skillCard);
         Assert.Contains("Effective cost", skillCard);
         Assert.Contains("Practice", skillCard);
@@ -425,6 +436,15 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("Skill.Cost.EvidenceReferences", skillCard);
         Assert.Contains("Category.GenericSlots", capacity);
         Assert.Contains("they are not win odds.", comparison);
+        Assert.Contains("href=\"#target-threats-heading\"", targetStrategy);
+        Assert.Contains("<details", targetStrategy);
+        Assert.DoesNotContain("<LoadoutComparisonMatrix", targetStrategy);
+        Assert.DoesNotContain("<LoadoutCategory", targetStrategy);
+        Assert.DoesNotContain("<SkillCard", targetStrategy);
+        Assert.Contains(".target-strategy-panel", styles);
+        Assert.Contains("overflow-wrap: anywhere", styles);
+        Assert.Contains(".target-strategy-grid", styles);
+        Assert.Contains("grid-template-columns: minmax(0, 1fr)", styles);
         Assert.DoesNotContain(">Apply<", page);
     }
 
@@ -1095,6 +1115,7 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SelectThreatAsync(threat.Reference)",
             "() => SelectedReferenceChanged.InvokeAsync(null)",
             "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
+            "() => ThreatSelected.InvokeAsync(threat.Reference)",
             "() => SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout)",
             "() => SetCoverage(TargetLoadoutCoverageKind.PartialLoadout)",
             "() => SetFilter(StoryFilter.All)",

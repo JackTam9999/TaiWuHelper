@@ -1,0 +1,260 @@
+@using TaiWu.Application.CombatRecommendations
+@using TaiWu.Domain.TargetArchetypes
+@using TaiWu.Domain.TargetProfiles
+@using TaiWuAPI.Presentation
+
+<section class="target-strategy-panel"
+         aria-labelledby="target-strategy-heading"
+         data-status="@Strategy.Status">
+    <header class="target-strategy-heading">
+        <div>
+            <p class="eyebrow">@T("Target profile")</p>
+            <h3 id="target-strategy-heading">@T("Reusable response strategy")</h3>
+            <p>@Strategy.Summary</p>
+        </div>
+        <span class="target-strategy-status" role="status">
+            @Strategy.StatusLabel
+        </span>
+    </header>
+
+    <p class="target-strategy-freshness">
+        @T("Snapshot") @Strategy.CapturedAtUtc.ToLocalTime().ToString("g") ·
+        @T("Profile rule") @Strategy.RuleVersion ·
+        @Strategy.EvidenceSourceCount @T("evidence source(s)")
+    </p>
+
+    @if (Strategy.ProfileGroups.Count > 0)
+    {
+        <div class="target-profile-groups"
+             aria-label="@T("Verified target profile facts")">
+            @foreach (var group in Strategy.ProfileGroups)
+            {
+                <section class="@ProfileGroupClass(group.Kind)">
+                    <h4>@group.Label</h4>
+                    <ul>
+                        @foreach (var facet in group.Facets)
+                        {
+                            <li class="@FacetClass(facet.State)">
+                                <span>@facet.DimensionLabel</span>
+                                <strong>@facet.Title</strong>
+                                <small>
+                                    @facet.StateLabel
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        facet.ValueSummary))
+                                    {
+                                        <text> · @facet.ValueSummary</text>
+                                    }
+                                </small>
+                                <small>
+                                    @facet.EvidenceSummary ·
+                                    @facet.EvidenceSourceCount
+                                    @T("source(s)")
+                                </small>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+        </div>
+    }
+
+    <div class="target-strategy-grid">
+        <section aria-labelledby="target-patterns-heading">
+            <h4 id="target-patterns-heading">@T("Target patterns checked")</h4>
+            <ul class="target-archetype-list">
+                @foreach (var archetype in Strategy.Archetypes)
+                {
+                    <li class="@ArchetypeClass(archetype.State)">
+                        <div>
+                            <strong>@archetype.Title</strong>
+                            <span>@archetype.StateLabel</span>
+                        </div>
+                        <small>
+                            @archetype.EvidenceSummary ·
+                            @archetype.VersionSummary
+                        </small>
+                        <details>
+                            <summary>@T("Why this state")</summary>
+                            @if (archetype.SupportingFacts.Count > 0)
+                            {
+                                <p>
+                                    <strong>@T("Supporting facts"):</strong>
+                                    @string.Join(" · ", archetype.SupportingFacts)
+                                </p>
+                            }
+                            @if (archetype.MissingFacts.Count > 0)
+                            {
+                                <p>
+                                    <strong>@T("Missing facts"):</strong>
+                                    @string.Join(" · ", archetype.MissingFacts)
+                                </p>
+                            }
+                            @if (archetype.ExcludingFacts.Count > 0)
+                            {
+                                <p>
+                                    <strong>@T("Contrary facts"):</strong>
+                                    @string.Join(" · ", archetype.ExcludingFacts)
+                                </p>
+                            }
+                            @if (archetype.ConflictingFacts.Count > 0)
+                            {
+                                <p>
+                                    <strong>@T("Conflicting facts"):</strong>
+                                    @string.Join(" · ", archetype.ConflictingFacts)
+                                </p>
+                            }
+                        </details>
+                    </li>
+                }
+            </ul>
+        </section>
+
+        <section aria-labelledby="response-goals-heading">
+            <h4 id="response-goals-heading">@T("Reusable response goals")</h4>
+            @if (Strategy.Goals.Count == 0)
+            {
+                <p class="target-strategy-empty" role="status">
+                    @T("No verified playbook goal is available for this profile state.")
+                </p>
+            }
+            else
+            {
+                <ol class="target-goal-list">
+                    @foreach (var goal in Strategy.Goals)
+                    {
+                        <li>
+                            <div>
+                                <strong>@goal.Title</strong>
+                                <span class="@(goal.IsEligible
+                                    ? "goal-status eligible"
+                                    : "goal-status unresolved")">
+                                    @(goal.IsEligible
+                                        ? T("Confirmed for this target")
+                                        : T("Needs exact confirmation"))
+                                </span>
+                            </div>
+                            <small>@goal.PriorityLabel · @goal.TimingLabel</small>
+
+                            @if (goal.Threats.Count > 0)
+                            {
+                                <div class="target-strategy-links">
+                                    <span>@T("Linked threats")</span>
+                                    @foreach (var threat in goal.Threats)
+                                    {
+                                        <a href="#target-threats-heading"
+                                           @onclick="() => ThreatSelected.InvokeAsync(threat.Reference)">
+                                            @threat.Title
+                                        </a>
+                                    }
+                                </div>
+                            }
+
+                            @if (goal.Counters.Count > 0)
+                            {
+                                <div class="target-strategy-links">
+                                    <span>@T("Verified counters")</span>
+                                    @foreach (var counter in goal.Counters)
+                                    {
+                                        <a href="@($"#{counter.Anchor}")">@counter.Name</a>
+                                    }
+                                </div>
+                            }
+
+                            @foreach (var gap in goal.Gaps)
+                            {
+                                <p class="target-strategy-gap" role="status">
+                                    @gap.Message
+                                </p>
+                            }
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    </div>
+
+    @if (Strategy.Counters.Count > 0)
+    {
+        <details class="target-counter-disclosure">
+            <summary>
+                @T("Verified counter options")
+                <span>@Strategy.Counters.Count</span>
+            </summary>
+            <div class="target-counter-list">
+                @foreach (var counter in Strategy.Counters)
+                {
+                    <article id="@counter.Anchor"
+                             class="@CounterClass(counter.Availability)">
+                        <div>
+                            <a href="@counter.SkillDetailHref">
+                                <strong>@counter.SkillName</strong>
+                            </a>
+                            <span>@counter.AvailabilityLabel</span>
+                        </div>
+                        <small>@counter.DirectionLabel</small>
+                        @if (counter.RequirementSummaries.Count > 0)
+                        {
+                            <ul aria-label="@T("Activation requirements")">
+                                @foreach (var requirement in
+                                    counter.RequirementSummaries)
+                                {
+                                    <li>@requirement</li>
+                                }
+                            </ul>
+                        }
+                        @if (counter.Gap is not null)
+                        {
+                            <p class="target-strategy-gap" role="status">
+                                @counter.Gap.Message
+                            </p>
+                        }
+                    </article>
+                }
+            </div>
+        </details>
+    }
+
+    @foreach (var gap in Strategy.StandaloneGaps)
+    {
+        <p class="target-strategy-gap" role="status">@gap.Message</p>
+    }
+
+    <p class="target-strategy-boundary" role="note">
+        @T("This section explains reusable target strategy. The selected loadout, manual steps, and comparison remain below.")
+    </p>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public TargetStrategyViewModel Strategy { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<string?> ThreatSelected { get; set; }
+
+    [Parameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private string T(string english) => UiText.Get(Language, english);
+
+    private static string ProfileGroupClass(
+        TargetProfileGroupKind kind) => kind switch
+        {
+            TargetProfileGroupKind.Context =>
+                "target-profile-group target-profile-context",
+            TargetProfileGroupKind.Mechanics =>
+                "target-profile-group target-profile-mechanics",
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        };
+
+    private static string FacetClass(
+        TargetProfileEvidenceState state) =>
+        $"target-profile-facet state-{state.ToString().ToLowerInvariant()}";
+
+    private static string ArchetypeClass(
+        TargetArchetypeMatchState state) =>
+        $"target-archetype state-{state.ToString().ToLowerInvariant()}";
+
+    private static string CounterClass(
+        TargetPlaybookCounterAvailabilityState state) =>
+        $"target-counter-card state-{state.ToString().ToLowerInvariant()}";
+}

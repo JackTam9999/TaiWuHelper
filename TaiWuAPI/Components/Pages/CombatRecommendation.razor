@@ -251,6 +251,13 @@
     <section class="result-shell">
         <h2 class="visually-hidden">@T("Recommendation ready")</h2>
 
+        @if (_model.TargetStrategy is not null)
+        {
+            <TargetStrategyPanel Strategy="_model.TargetStrategy"
+                                 Language="Language"
+                                 ThreatSelected="SelectThreat" />
+        }
+
         <div class="style-tabs" role="group" aria-label="@T("Recommendation styles")">
             @foreach (var style in _model.Styles.Where(style =>
                 RecommendationPolicyDisplay.IsVisible(style.Style)))
@@ -560,7 +567,9 @@
                 return;
             }
 
-            _model = CombatRecommendationViewModelMapper.Map(recommendation);
+            _model = CombatRecommendationViewModelMapper.Map(
+                recommendation,
+                Language);
             PopulateObservationSkills(_model);
             _selection.Load(_model, _form.Policy);
             _pageState =
@@ -637,7 +646,9 @@
                 ?? throw new InvalidDataException(
                     "Target observation result is unavailable.");
             _targetObservation.MarkResult(processing.Merge);
-            _model = CombatRecommendationViewModelMapper.Map(recommendation);
+            _model = CombatRecommendationViewModelMapper.Map(
+                recommendation,
+                Language);
             PopulateObservationSkills(_model);
             _selection.Load(_model, _form.Policy);
             _pageState = RecommendationPageState.ForRecommendation(_model);

@@ -1,11 +1,13 @@
 using NSubstitute;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.LoadoutComparisons;
+using TaiWu.Domain.TargetArchetypes;
 using TaiWuAPI.Presentation;
 using Xunit;
 
@@ -40,6 +42,82 @@ public sealed class CombatRecommendationViewModelMapperTests
             "cannot apply",
             model.InformationOnlyNotice,
             StringComparison.OrdinalIgnoreCase);
+        var strategy = Assert.IsType<TargetStrategyViewModel>(
+            model.TargetStrategy);
+        Assert.Equal(TargetStrategyStatus.Available, strategy.Status);
+        Assert.Equal(
+            TargetArchetypeMatchState.Matched,
+            strategy.Archetypes[0].State);
+        Assert.Equal(4, strategy.Goals.Count);
+        Assert.Equal(6, strategy.Counters.Count);
+    }
+
+    [Fact]
+    public async Task Maps_target_strategy_bilingually_with_unique_links()
+    {
+        var recommendation = await RecommendAsync(
+            RecommendationPolicy.Balanced);
+
+        var english = Assert.IsType<TargetStrategyViewModel>(
+            CombatRecommendationViewModelMapper.Map(
+                recommendation,
+                TaiwuLanguage.English).TargetStrategy);
+        var chinese = Assert.IsType<TargetStrategyViewModel>(
+            CombatRecommendationViewModelMapper.Map(
+                recommendation,
+                TaiwuLanguage.Chinese).TargetStrategy);
+
+        Assert.Equal(english.Status, chinese.Status);
+        Assert.Equal(
+            english.Archetypes.Select(value => value.Code),
+            chinese.Archetypes.Select(value => value.Code));
+        Assert.NotEqual(english.StatusLabel, chinese.StatusLabel);
+        Assert.NotEqual(english.Archetypes[0].Title, chinese.Archetypes[0].Title);
+        Assert.NotEqual(english.Goals[0].Title, chinese.Goals[0].Title);
+        Assert.Equal(
+            english.Counters.Select(value => value.Code),
+            chinese.Counters.Select(value => value.Code));
+        Assert.Equal(
+            english.Counters.Count,
+            english.Counters.Select(value => value.Code)
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+        Assert.All(
+            english.Goals.SelectMany(goal => goal.Counters),
+            link => Assert.Contains(
+                english.Counters,
+                counter => counter.Anchor == link.Anchor));
+        Assert.Contains(
+            english.Counters,
+            counter => counter.Availability
+                == TargetPlaybookCounterAvailabilityState.Inaccessible
+                && counter.Gap is not null);
+        Assert.Contains(
+            english.Goals.SelectMany(goal => goal.Threats),
+            threat => threat.Reference.StartsWith(
+                "threat:",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Unsupported_profile_maps_without_a_playbook()
+    {
+        var recommendation = await RecommendAsync(
+            RecommendationPolicy.Safe,
+            gameDataVersion: "9.9.9-unsupported");
+
+        var strategy = Assert.IsType<TargetStrategyViewModel>(
+            CombatRecommendationViewModelMapper.Map(recommendation)
+                .TargetStrategy);
+
+        Assert.Equal(TargetStrategyStatus.Unsupported, strategy.Status);
+        Assert.Empty(strategy.Goals);
+        Assert.Empty(strategy.Counters);
+        Assert.All(
+            strategy.Archetypes,
+            archetype => Assert.Equal(
+                TargetArchetypeMatchState.Unsupported,
+                archetype.State));
     }
 
     [Fact]
@@ -237,13 +315,14 @@ public sealed class CombatRecommendationViewModelMapperTests
     }
 
     private static async Task<CombatLoadoutRecommendation> RecommendAsync(
-        RecommendationPolicy policy)
+        RecommendationPolicy policy,
+        string? gameDataVersion = null)
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
         reader.ReadAsync(
                 Arg.Any<CombatSnapshotReadRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(GoldenSnapshot());
+            .Returns(GoldenSnapshot(gameDataVersion));
         var useCase = new RecommendCombatLoadout(reader);
 
         return await useCase.ExecuteAsync(
@@ -296,7 +375,8 @@ public sealed class CombatRecommendationViewModelMapperTests
         ];
     }
 
-    private static CombatSnapshot GoldenSnapshot()
+    private static CombatSnapshot GoldenSnapshot(
+        string? gameDataVersion = null)
     {
         var jinni = Skill(
             604,
@@ -331,7 +411,9 @@ public sealed class CombatRecommendationViewModelMapperTests
                 SnapshotValue<DateTimeOffset>.Available(
                     DateTimeOffset.Parse("2026-07-30T11:00:00Z")),
                 SnapshotValue<string>.Available(
-                    VerifiedCombatEffectCatalogs.GoldenGameDataVersion)),
+                    gameDataVersion
+                        ?? VerifiedCombatEffectCatalogs
+                            .GoldenGameDataVersion)),
             new PlayerCombatSnapshot(
                 characterId: 21396,
                 SnapshotValue<string>.Available("Taiwu"),

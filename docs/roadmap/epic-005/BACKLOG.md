@@ -584,7 +584,7 @@ clients to reclassify targets or compose playbooks from display strings.
 
 ### E5-008 — Add a compact bilingual archetype and strategy section
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -599,28 +599,28 @@ matrix.
 
 #### Acceptance criteria
 
-- [ ] Dominant matched archetypes appear before partial, unsupported, or
+- [x] Dominant matched archetypes appear before partial, unsupported, or
       conflicting results.
-- [ ] Multiple matches are grouped as one target profile rather than separate
+- [x] Multiple matches are grouped as one target profile rather than separate
       recommendation results.
-- [ ] Attack-family context is visually distinct from verified pressure,
+- [x] Attack-family context is visually distinct from verified pressure,
       resilience, control, and tempo mechanics.
-- [ ] Every match exposes concise evidence and freshness without dumping raw
+- [x] Every match exposes concise evidence and freshness without dumping raw
       diagnostics into the primary view.
-- [ ] Reusable response goals link to existing threat, counter, requirement,
+- [x] Reusable response goals link to existing threat, counter, requirement,
       and evidence detail where available.
-- [ ] Inaccessible counters and unresolved goals remain visible.
-- [ ] The section does not add a new recommendation-policy control or repeat
+- [x] Inaccessible counters and unresolved goals remain visible.
+- [x] The section does not add a new recommendation-policy control or repeat
       the complete loadout comparison.
-- [ ] Loading, no-match, multi-match, partial, unsupported, conflicting,
+- [x] Loading, no-match, multi-match, partial, unsupported, conflicting,
       available, inaccessible-counter, and failure states are rendered.
-- [ ] Traditional Chinese and English copy is complete and stable identities
+- [x] Traditional Chinese and English copy is complete and stable identities
       are never shown as untranslated raw codes when display text exists.
-- [ ] Desktop and narrow layouts expose equivalent facts with no horizontal
+- [x] Desktop and narrow layouts expose equivalent facts with no horizontal
       overflow.
-- [ ] Native headings, lists, buttons, and disclosures provide logical
+- [x] Native headings, lists, buttons, and disclosures provide logical
       keyboard and screen-reader navigation; state never relies on color alone.
-- [ ] Component tests cover the complete state matrix and duplicate-element
+- [x] Component tests cover the complete state matrix and duplicate-element
       regression guards.
 
 #### Evidence when complete
@@ -629,6 +629,9 @@ matrix.
   styles.
 - Component-rendering and localization tests.
 - `docs/roadmap/epic-005/UI-005-target-archetype-strategy.md`.
+- Release verification: build succeeded with zero warnings and errors; 1,043
+  tests total, 1,034 passed, and 9 guarded local-integration tests skipped as
+  expected.
 
 ## Slice 7: Exact-target explanation
 

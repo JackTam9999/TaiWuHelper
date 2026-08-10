@@ -4675,8 +4675,282 @@ select {
     line-height: 1.55;
 }
 
+.target-strategy-panel {
+    display: grid;
+    gap: 20px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(9, 23, 23, 0.72);
+    overflow-wrap: anywhere;
+}
+
+.target-strategy-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.target-strategy-heading h3,
+.target-strategy-grid h4,
+.target-profile-group h4 {
+    margin: 0;
+}
+
+.target-strategy-heading h3 {
+    font-family: Georgia, "Microsoft JhengHei", serif;
+    font-size: 1.45rem;
+    font-weight: 500;
+}
+
+.target-strategy-heading p:not(.eyebrow) {
+    max-width: 72ch;
+    margin: 8px 0 0;
+    color: #c7d2cd;
+    line-height: 1.55;
+}
+
+.target-strategy-status,
+.goal-status,
+.target-archetype > div span,
+.target-counter-card > div span {
+    display: inline-flex;
+    width: fit-content;
+    padding: 3px 8px;
+    border: 1px solid rgba(158, 219, 201, 0.42);
+    border-radius: 999px;
+    color: #b9e9db;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.target-strategy-freshness,
+.target-strategy-boundary {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.target-profile-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 12px;
+}
+
+.target-profile-group {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+}
+
+.target-profile-context {
+    border-left: 4px solid var(--gold);
+    background: rgba(215, 182, 107, 0.08);
+}
+
+.target-profile-mechanics {
+    border-left: 4px solid var(--jade);
+    background: rgba(81, 170, 144, 0.08);
+}
+
+.target-profile-group h4 {
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.target-profile-group ul,
+.target-archetype-list,
+.target-goal-list,
+.target-counter-list,
+.target-counter-card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.target-profile-group ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+    gap: 9px;
+    margin-top: 12px;
+}
+
+.target-profile-facet {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    padding: 11px;
+    border: 1px solid var(--line);
+    background: rgba(4, 14, 14, 0.44);
+}
+
+.target-profile-facet > span,
+.target-profile-facet small,
+.target-archetype small,
+.target-goal-list small,
+.target-counter-card small {
+    color: var(--muted);
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+
+.target-profile-facet.state-incomplete,
+.target-profile-facet.state-unsupported,
+.target-profile-facet.state-conflicting,
+.target-archetype.state-partial,
+.target-archetype.state-unsupported,
+.target-archetype.state-conflicting,
+.target-counter-card.state-inaccessible,
+.target-counter-card.state-infeasible,
+.target-counter-card.state-unresolved {
+    border-style: dashed;
+    border-color: rgba(218, 172, 91, 0.52);
+}
+
+.target-strategy-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 18px;
+}
+
+.target-strategy-grid > section {
+    min-width: 0;
+}
+
+.target-archetype-list,
+.target-goal-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.target-archetype,
+.target-goal-list > li,
+.target-counter-card {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--line);
+    background: rgba(4, 14, 14, 0.44);
+}
+
+.target-archetype.state-matched {
+    border-left: 4px solid var(--jade);
+}
+
+.target-archetype > div,
+.target-goal-list > li > div,
+.target-counter-card > div {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.target-archetype details summary,
+.target-counter-disclosure > summary {
+    color: var(--gold);
+    cursor: pointer;
+    font-weight: 750;
+}
+
+.target-archetype details p {
+    margin: 8px 0 0;
+    color: #c7d2cd;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.goal-status.unresolved {
+    border-color: rgba(218, 172, 91, 0.52);
+    color: #e8cf98;
+}
+
+.target-strategy-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: baseline;
+    font-size: 0.8rem;
+}
+
+.target-strategy-links > span {
+    color: var(--muted);
+    font-weight: 750;
+}
+
+.target-strategy-links a,
+.target-counter-card a {
+    color: var(--gold);
+}
+
+.target-strategy-gap,
+.target-strategy-empty {
+    margin: 0;
+    padding: 9px 11px;
+    border-left: 3px solid var(--warning);
+    color: #ead9bd;
+    background: rgba(111, 76, 35, 0.18);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.target-counter-disclosure {
+    border-top: 1px solid var(--line);
+}
+
+.target-counter-disclosure > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 16px;
+}
+
+.target-counter-disclosure > summary span {
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.target-counter-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.target-counter-card.state-feasible {
+    border-left: 4px solid var(--jade);
+}
+
+.target-counter-card ul {
+    display: grid;
+    gap: 4px;
+    color: #c7d2cd;
+    font-size: 0.78rem;
+}
+
+.target-counter-card li::before {
+    content: "• ";
+    color: var(--jade);
+}
+
+.target-strategy-boundary {
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
 @media (max-width: 900px) {
     .xiangshu-outcome-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .target-strategy-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -4695,6 +4969,24 @@ select {
         padding-top: 10px;
         border-top: 1px solid var(--line);
         text-align: left;
+    }
+
+    .target-strategy-panel {
+        padding: 17px;
+    }
+
+    .target-strategy-heading,
+    .target-archetype > div,
+    .target-goal-list > li > div,
+    .target-counter-card > div {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .target-profile-groups,
+    .target-profile-group ul,
+    .target-counter-list {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 

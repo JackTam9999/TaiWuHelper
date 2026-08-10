@@ -1,5 +1,6 @@
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.LoadoutComparisons;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.LoadoutComparisons;
@@ -13,9 +14,14 @@ public static class CombatRecommendationViewModelMapper
         + "this recommendation.";
 
     public static CombatRecommendationViewModel Map(
-        CombatLoadoutRecommendation recommendation)
+        CombatLoadoutRecommendation recommendation,
+        TaiwuLanguage language = TaiwuLanguage.English)
     {
         ArgumentNullException.ThrowIfNull(recommendation);
+        if (!Enum.IsDefined(language))
+        {
+            throw new ArgumentOutOfRangeException(nameof(language));
+        }
 
         var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
         var snapshotReference = comparison.SnapshotReference.Value;
@@ -81,7 +87,14 @@ public static class CombatRecommendationViewModelMapper
                 skillNames,
                 threats,
                 styles,
-                warnings));
+                warnings),
+            recommendation.TargetPlaybook is null
+                ? null
+                : TargetStrategyViewModelMapper.Map(
+                    recommendation.TargetPlaybook,
+                    recommendation.Snapshot.Metadata.CapturedAtUtc,
+                    language,
+                    threats));
     }
 
     private static LoadoutComparisonViewModel MapComparison(

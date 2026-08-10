@@ -89,7 +89,7 @@ public static class TargetStrategyResponseMapper
         TaiwuLanguage language) => new(
         match.Definition.Identity.Code,
         match.Definition.Identity.Version.Value,
-        TargetStrategyText.Archetype(
+        TargetStrategyUiText.Archetype(
             language,
             match.Definition.Identity.Code),
         match.Definition.ApplicableProfileRuleVersion.Value,
@@ -126,7 +126,7 @@ public static class TargetStrategyResponseMapper
             [.. value.Composition.Goals.Select(goal => new
                 TargetResponseGoalResponse(
                     goal.Code,
-                    TargetStrategyText.Goal(language, goal.Code),
+                    TargetStrategyUiText.Goal(language, goal.Code),
                     goal.Sequence,
                     goal.Priority,
                     goal.ResponseTiming,
@@ -228,7 +228,7 @@ public static class TargetStrategyResponseMapper
         TaiwuLanguage language) => new(
         gap.Code,
         gap.Kind,
-        TargetStrategyText.Gap(language, gap.LocalizedMessageKey),
+        TargetStrategyUiText.Gap(language, gap.LocalizedMessageKey),
         gap.RelatedCounterCode,
         gap.EvidenceReferences);
 
@@ -243,7 +243,7 @@ public static class TargetStrategyResponseMapper
                 MapReference(adjustment.OriginalResponse),
                 MapReference(adjustment.ResultResponse),
                 adjustment.ReasonCode,
-                TargetStrategyText.AdjustmentReason(
+                TargetStrategyUiText.AdjustmentReason(
                     language,
                     adjustment.ReasonCode),
                 [.. adjustment.Evidence.Select(evidence =>
