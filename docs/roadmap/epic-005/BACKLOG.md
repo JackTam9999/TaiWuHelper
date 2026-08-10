@@ -519,7 +519,7 @@ creating a parallel loadout engine.
 
 ### E5-007 — Expose typed target-profile and playbook contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -532,22 +532,22 @@ clients to reclassify targets or compose playbooks from display strings.
 
 #### Acceptance criteria
 
-- [ ] The API exposes profile dimensions, typed values, evidence states,
+- [x] The API exposes profile dimensions, typed values, evidence states,
       provenance, unavailable reasons, and diagnostics.
-- [ ] Archetype results expose stable identities, match state, supporting,
+- [x] Archetype results expose stable identities, match state, supporting,
       missing, excluding, and conflicting facet references.
-- [ ] Playbooks expose response goals, threat/counter references, timing,
+- [x] Playbooks expose response goals, threat/counter references, timing,
       requirements, known gaps, and composition conflicts.
-- [ ] Target-specific adjustments expose stable kinds and reasons.
-- [ ] Response ordering matches Domain/Application ordering.
-- [ ] Localized text is display-only and stable identities remain
+- [x] Target-specific adjustments expose stable kinds and reasons.
+- [x] Response ordering matches Domain/Application ordering.
+- [x] Localized text is display-only and stable identities remain
       language-neutral.
-- [ ] Contracts expose no save path, game path, screenshot path, raw
+- [x] Contracts expose no save path, game path, screenshot path, raw
       proprietary payload, process identifier, persistence command, or
       mutation-capable game type.
-- [ ] Mapper tests cover every evidence, match, conflict, gap, and adjustment
+- [x] Mapper tests cover every evidence, match, conflict, gap, and adjustment
       state in Traditional Chinese and English where text is projected.
-- [ ] API documentation includes complete, partial, unsupported, conflicting,
+- [x] API documentation includes complete, partial, unsupported, conflicting,
       multi-match, and adjusted examples.
 
 #### Evidence when complete
@@ -555,6 +555,30 @@ clients to reclassify targets or compose playbooks from display strings.
 - Epic 5 response contracts and pure mappers under `TaiWuAPI/Contracts`.
 - API and mapper tests.
 - Updated `docs/api/COMBAT-RECOMMENDATIONS.md` and an Epic 5 API design note.
+
+#### Completion evidence
+
+- `CombatRecommendationResponse.TargetStrategy` additively projects the
+  immutable profile, all multi-label match states, deterministic composition,
+  exact-target adjustments, and player-specific counter availability.
+- Typed contracts retain facet values and provenance, match support/missing/
+  exclusion/conflict references, all six combat requirement shapes, playbook
+  gaps/conflicts, all six adjustment actions, and feasibility/access states.
+- English and Traditional Chinese mappers change display text only; stable
+  codes, versions, fingerprints, enums, references, and ordering are shared.
+- Mapper tests cover confirmed/incomplete/unsupported/conflicting profiles,
+  matched/not-matched/partial/unsupported/conflicting archetypes, multi-match
+  composition, player gaps, every adjustment action, and every adjustment
+  evidence kind/state.
+- Architecture verification rejects path, screenshot, process, payload,
+  persistence-command, GameData, snapshot, infrastructure, and mutation-
+  capable signatures in target response contracts.
+- Release build on 2026-08-10: succeeded with 0 warnings and 0 errors.
+- Full release verification on 2026-08-10: 1,035 total, 1,026 passed,
+  0 failed, and 9 expected opt-in integration skips.
+- Contract and state examples are recorded in
+  [TARGET-STRATEGY-API.md](../../architecture/TARGET-STRATEGY-API.md) and
+  [COMBAT-RECOMMENDATIONS.md](../../api/COMBAT-RECOMMENDATIONS.md).
 
 ## Slice 6: Core UI
 

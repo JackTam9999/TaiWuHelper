@@ -56,7 +56,9 @@ public sealed class CombatRecommendationsController(
                 : await RequiredTargetObservationWorkflow().ExecuteAsync(
                     recommendationRequest,
                     cancellationToken);
-            return Ok(CombatRecommendationResponseMapper.Map(recommendation));
+            return Ok(CombatRecommendationResponseMapper.Map(
+                recommendation,
+                request.Language));
         }
         catch (TargetObservationResolutionException exception)
         {

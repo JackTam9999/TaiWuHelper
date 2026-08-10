@@ -253,6 +253,62 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Target_strategy_contract_is_typed_and_information_only()
+    {
+        var contractTypes = typeof(TargetStrategyResponse).Assembly
+            .GetExportedTypes()
+            .Where(type =>
+                type.Namespace
+                    == "TaiWuAPI.Contracts.CombatRecommendations"
+                && type.Name.StartsWith("Target", StringComparison.Ordinal)
+                && type.Name.EndsWith("Response", StringComparison.Ordinal))
+            .ToArray();
+        var forbiddenNameParts = new[]
+        {
+            "SavePath",
+            "GamePath",
+            "Screenshot",
+            "Process",
+            "Command",
+            "Payload",
+            "RawSource",
+            "RawText"
+        };
+        var propertyNames = contractTypes
+            .SelectMany(type => type.GetProperties())
+            .Select(property => property.Name)
+            .ToArray();
+        var signatureTypes = contractTypes
+            .SelectMany(GetPublicSignatureTypes)
+            .Distinct()
+            .ToArray();
+        var forbiddenDomainTypes = new[]
+        {
+            typeof(CombatSnapshot),
+            typeof(PlayerCombatSnapshot),
+            typeof(TargetCombatSnapshot)
+        };
+
+        Assert.NotEmpty(contractTypes);
+        Assert.DoesNotContain(
+            propertyNames,
+            name => forbiddenNameParts.Any(part => name.Contains(
+                part,
+                StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain(signatureTypes, IsGameDataType);
+        Assert.DoesNotContain(
+            signatureTypes,
+            type => forbiddenDomainTypes.Contains(type)
+                || type == typeof(FileInfo)
+                || type == typeof(DirectoryInfo)
+                || type == typeof(Stream)
+                || type == typeof(System.Diagnostics.Process)
+                || type.Namespace?.StartsWith(
+                    "TaiWu.Infrastructure",
+                    StringComparison.Ordinal) == true);
+    }
+
+    [Fact]
     public void Presentation_models_expose_no_GameData_or_game_commands()
     {
         var presentationTypes = typeof(CombatRecommendationViewModel)

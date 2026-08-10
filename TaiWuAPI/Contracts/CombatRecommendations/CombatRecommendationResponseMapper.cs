@@ -1,6 +1,7 @@
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.LoadoutComparisons;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 
@@ -9,9 +10,14 @@ namespace TaiWuAPI.Contracts.CombatRecommendations;
 public static class CombatRecommendationResponseMapper
 {
     public static CombatRecommendationResponse Map(
-        CombatLoadoutRecommendation recommendation)
+        CombatLoadoutRecommendation recommendation,
+        TaiwuLanguage language = TaiwuLanguage.English)
     {
         ArgumentNullException.ThrowIfNull(recommendation);
+        if (!Enum.IsDefined(language))
+        {
+            throw new ArgumentOutOfRangeException(nameof(language));
+        }
 
         var comparison = CombatLoadoutComparisonBuilder.Build(recommendation);
         var snapshotReference = comparison.SnapshotReference.Value;
@@ -42,7 +48,13 @@ public static class CombatRecommendationResponseMapper
             MapTargetObservation(recommendation),
             LoadoutComparisonResponseMapper.Map(
                 comparison,
-                recommendation));
+                recommendation),
+            recommendation.TargetPlaybook is null
+                ? null
+                : TargetStrategyResponseMapper.Map(
+                    recommendation.TargetPlaybook,
+                    recommendation.Snapshot.Player,
+                    language));
     }
 
     private static TargetObservationResponse? MapTargetObservation(

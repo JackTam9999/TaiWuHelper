@@ -132,6 +132,40 @@ and not parse its suffix. See
 [the comparison API contract](../architecture/LOADOUT-COMPARISON-API.md) for
 the complete projection and versioning rules.
 
+### Target profile and strategy
+
+Successful responses also include an additive `targetStrategy` object. It
+projects the exact immutable Epic 5 result rather than asking a client to
+classify the target or rebuild a playbook from display text. It contains:
+
+- typed profile facets, values, measurements, evidence state, provenance,
+  unavailable reasons, conflicts, and diagnostics;
+- every archetype result with stable code/version, match state, and
+  supporting, missing, excluding, or conflicting facet references;
+- the deterministically composed playbook sources, response goals, threat and
+  counter references, timing, typed requirements, conflicts, and known gaps;
+- exact-target adjustments and their typed evidence; and
+- player-specific counter availability, access issues, generation diagnostics,
+  and unresolved gaps.
+
+`code`, version, enum, identity, and evidence-reference fields are stable and
+language-neutral. Only `title`, `message`, `reason`, and other explicit display
+strings change with the request language. A partial, unsupported, conflicting,
+or no-match result remains a typed state and never becomes a fabricated
+playbook.
+
+The response preserves Domain/Application order. In particular, facet,
+archetype, source-playbook, goal, option, gap, adjustment, and availability
+arrays must not be re-sorted by localized text. The contract exposes no save or
+game path, screenshot path, proprietary source text, process identity,
+persistence command, or game-mutation type.
+
+The property is nullable only for additive source compatibility with older
+responses. Recommendations produced by the current Epic 5 pipeline populate
+it. See [the target-strategy API contract](../architecture/TARGET-STRATEGY-API.md)
+for field rules and complete, partial, unsupported, conflicting, multi-match,
+and adjusted examples.
+
 ## Errors
 
 Request validation, invalid observation data, missing save files, and invalid
