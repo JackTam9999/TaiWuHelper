@@ -3,6 +3,7 @@ using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.TargetArchetypes;
+using TaiWu.Domain.TargetPlaybookComposition;
 using TaiWu.Domain.TargetPlaybooks;
 using TaiWu.Domain.TargetProfiles;
 
@@ -54,6 +55,56 @@ internal static class TargetStrategyUiText
         AdjustmentReasons,
         "Exact-target evidence changed this response.",
         "目標精確證據改變了此應對方式。");
+
+    internal static string AdjustmentAction(
+        TaiwuLanguage language,
+        TargetPlaybookAdjustmentAction action) => action switch
+        {
+            TargetPlaybookAdjustmentAction.Retained => Bilingual(
+                language,
+                "Retained",
+                "保留"),
+            TargetPlaybookAdjustmentAction.Elevated => Bilingual(
+                language,
+                "Elevated",
+                "提高"),
+            TargetPlaybookAdjustmentAction.Reduced => Bilingual(
+                language,
+                "Reduced",
+                "降低"),
+            TargetPlaybookAdjustmentAction.Added => Bilingual(
+                language,
+                "Added",
+                "加入"),
+            TargetPlaybookAdjustmentAction.Replaced => Bilingual(
+                language,
+                "Replaced",
+                "取代"),
+            TargetPlaybookAdjustmentAction.Unresolved => Bilingual(
+                language,
+                "Unresolved",
+                "未解決"),
+            _ => throw new ArgumentOutOfRangeException(nameof(action))
+        };
+
+    internal static string AdjustmentEvidenceState(
+        TaiwuLanguage language,
+        TargetPlaybookAdjustmentEvidenceState state) => state switch
+        {
+            TargetPlaybookAdjustmentEvidenceState.Confirmed => Bilingual(
+                language,
+                "Confirmed exact evidence",
+                "已確認的精確證據"),
+            TargetPlaybookAdjustmentEvidenceState.Contrary => Bilingual(
+                language,
+                "Contrary exact evidence",
+                "精確相反證據"),
+            TargetPlaybookAdjustmentEvidenceState.Incomplete => Bilingual(
+                language,
+                "Missing or incomplete evidence",
+                "缺少或不完整的證據"),
+            _ => throw new ArgumentOutOfRangeException(nameof(state))
+        };
 
     internal static string Dimension(
         TaiwuLanguage language,

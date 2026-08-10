@@ -637,7 +637,7 @@ matrix.
 
 ### E5-009 — Explain target-specific adjustments and unresolved gaps
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -650,22 +650,22 @@ player's accessible 功法 produced the final recommendation.
 
 #### Acceptance criteria
 
-- [ ] Retained, elevated, reduced, added, replaced, and unresolved adjustment
+- [x] Retained, elevated, reduced, added, replaced, and unresolved adjustment
       kinds have concise bilingual explanations.
-- [ ] Every adjustment links the relevant archetype goal, exact target fact,
+- [x] Every adjustment links the relevant archetype goal, exact target fact,
       threat, counter candidate, feasibility result, or missing evidence.
-- [ ] The explanation distinguishes target customization from player
+- [x] The explanation distinguishes target customization from player
       feasibility filtering.
-- [ ] A missing counter does not read as a completed mitigation.
-- [ ] A reduced broad risk does not erase exact evidence or historical source
+- [x] A missing counter does not read as a completed mitigation.
+- [x] A reduced broad risk does not erase exact evidence or historical source
       conflicts.
-- [ ] The UI identifies when the final recommendation is unchanged because the
+- [x] The UI identifies when the final recommendation is unchanged because the
       current loadout already satisfies the composed response.
-- [ ] Observation apply/clear updates the explanation together with every
+- [x] Observation apply/clear updates the explanation together with every
       other Epic 5 result.
-- [ ] Presentation does not restate full skill cards, warning lists, manual
+- [x] Presentation does not restate full skill cards, warning lists, manual
       checklist items, or comparison rows.
-- [ ] Mapper and component tests cover each adjustment kind, unchanged result,
+- [x] Mapper and component tests cover each adjustment kind, unchanged result,
       missing counter, and observation lifecycle state.
 
 #### Evidence when complete
@@ -673,6 +673,9 @@ player's accessible 功法 produced the final recommendation.
 - Adjustment explanation mapping and compact Presentation component updates.
 - Focused mapper and rendering tests.
 - Updated UI and playbook-composition documentation.
+- Release verification: build succeeded with zero warnings and errors; 1,047
+  tests total, 1,038 passed, and 9 guarded local-integration tests skipped as
+  expected.
 
 ## Slice 8: Verification and completion
 

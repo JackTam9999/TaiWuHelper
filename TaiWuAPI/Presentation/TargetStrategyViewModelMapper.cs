@@ -15,10 +15,15 @@ public static class TargetStrategyViewModelMapper
         TargetPlaybookPersonalization value,
         DateTimeOffset capturedAtUtc,
         TaiwuLanguage language,
-        IReadOnlyList<ThreatViewModel> threats)
+        IReadOnlyList<ThreatViewModel> threats,
+        IReadOnlyDictionary<int, string> playerSkillNames,
+        IReadOnlyDictionary<int, string> targetSkillNames,
+        bool currentLoadoutAlreadySatisfies)
     {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(threats);
+        ArgumentNullException.ThrowIfNull(playerSkillNames);
+        ArgumentNullException.ThrowIfNull(targetSkillNames);
         if (!Enum.IsDefined(language))
         {
             throw new ArgumentOutOfRangeException(nameof(language));
@@ -56,7 +61,11 @@ public static class TargetStrategyViewModelMapper
                 facets,
                 language))
             .ToArray();
-        var counters = MapCounters(value, language);
+        var evidenceSkillNames = targetSkillNames
+            .Concat(playerSkillNames.Where(pair =>
+                !targetSkillNames.ContainsKey(pair.Key)))
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
+        var counters = MapCounters(value, language, evidenceSkillNames);
         var counterLinks = counters.ToDictionary(
             counter => counter.Code,
             counter => new TargetStrategyCounterLinkViewModel(
@@ -86,6 +95,30 @@ public static class TargetStrategyViewModelMapper
             .Where(gap => !displayedGapKeys.Contains(gap.StableKey))
             .Select(gap => MapGap(gap, language))
             .ToArray();
+        var adjustments = value.Adjustments.Adjustments
+            .Select(adjustment => MapAdjustment(
+                adjustment,
+                facets,
+                archetypes,
+                goals,
+                counters,
+                value.Gaps,
+                threats,
+                evidenceSkillNames,
+                language))
+            .ToArray();
+        var feasibleCounterCount = counters.Count(counter =>
+            counter.Availability
+                == TargetPlaybookCounterAvailabilityState.Feasible);
+        var feasibility = new TargetStrategyFeasibilityViewModel(
+            FeasibilitySummary(
+                counters.Length,
+                feasibleCounterCount,
+                currentLoadoutAlreadySatisfies,
+                language),
+            currentLoadoutAlreadySatisfies,
+            feasibleCounterCount,
+            counters.Length - feasibleCounterCount);
         var matchedCount = archetypes.Count(archetype => archetype.State
             == TargetArchetypeMatchState.Matched);
         var status = StrategyStatus(archetypes);
@@ -108,7 +141,9 @@ public static class TargetStrategyViewModelMapper
             archetypes,
             goals,
             counters,
-            standaloneGaps);
+            standaloneGaps,
+            adjustments,
+            feasibility);
     }
 
     private static TargetProfileFacetSummaryViewModel MapFacet(
@@ -225,7 +260,8 @@ public static class TargetStrategyViewModelMapper
 
     private static TargetCounterSummaryViewModel[] MapCounters(
         TargetPlaybookPersonalization value,
-        TaiwuLanguage language)
+        TaiwuLanguage language,
+        IReadOnlyDictionary<int, string> skillNames)
     {
         var availability = value.Counters.ToDictionary(
             counter => counter.Option.StableKey,
@@ -249,6 +285,11 @@ public static class TargetStrategyViewModelMapper
                         option.CounterRule.RequiredDirection),
                     state,
                     TargetStrategyUiText.Availability(language, state),
+                    CounterFeasibilityExplanation(
+                        current,
+                        state,
+                        skillNames,
+                        language),
                     [.. option.Requirements.Select(requirement =>
                         RequirementSummary(
                             requirement,
@@ -287,6 +328,471 @@ public static class TargetStrategyViewModelMapper
             .Where(option => counters.ContainsKey(option.StableKey))
             .Select(option => counters[option.StableKey])],
         [.. goal.KnownGaps.Select(gap => MapGap(gap, language))]);
+
+    private static TargetAdjustmentExplanationViewModel MapAdjustment(
+        TargetPlaybookAdjustment adjustment,
+        IReadOnlyDictionary<string, TargetProfileFacet> facets,
+        IReadOnlyList<TargetArchetypeSummaryViewModel> archetypes,
+        IReadOnlyList<TargetResponseGoalViewModel> goals,
+        IReadOnlyList<TargetCounterSummaryViewModel> counters,
+        IEnumerable<TargetCounterPlaybookGap> gaps,
+        IReadOnlyList<ThreatViewModel> threats,
+        IReadOnlyDictionary<int, string> skillNames,
+        TaiwuLanguage language)
+    {
+        var gapValues = gaps.ToArray();
+        var original = MapAdjustmentReference(
+            adjustment.OriginalResponse,
+            goals,
+            counters,
+            gapValues,
+            threats,
+            language);
+        var result = MapAdjustmentReference(
+            adjustment.ResultResponse,
+            goals,
+            counters,
+            gapValues,
+            threats,
+            language);
+        return new TargetAdjustmentExplanationViewModel(
+            adjustment.Action,
+            TargetStrategyUiText.AdjustmentAction(
+                language,
+                adjustment.Action),
+            AdjustmentSummary(adjustment.Action, language),
+            TargetStrategyUiText.AdjustmentReason(
+                language,
+                adjustment.ReasonCode),
+            original,
+            result,
+            [.. adjustment.Evidence.Select(evidence =>
+                MapAdjustmentEvidence(
+                    evidence,
+                    facets,
+                    archetypes,
+                    gapValues,
+                    threats,
+                    skillNames,
+                    language))]);
+    }
+
+    private static TargetAdjustmentReferenceViewModel?
+        MapAdjustmentReference(
+            TargetPlaybookResponseReference? response,
+            IReadOnlyList<TargetResponseGoalViewModel> goals,
+            IReadOnlyList<TargetCounterSummaryViewModel> counters,
+            IReadOnlyList<TargetCounterPlaybookGap> gaps,
+            IReadOnlyList<ThreatViewModel> threats,
+            TaiwuLanguage language)
+    {
+        if (response is null)
+        {
+            return null;
+        }
+
+        return response.Kind switch
+        {
+            TargetPlaybookResponseReferenceKind.Goal =>
+                goals.SingleOrDefault(goal => string.Equals(
+                    goal.Code,
+                    response.StableCode,
+                    StringComparison.Ordinal)) is { } goal
+                    ? new TargetAdjustmentReferenceViewModel(
+                        goal.Title,
+                        $"#target-goal-{goal.Code}")
+                    : new TargetAdjustmentReferenceViewModel(
+                        TargetStrategyUiText.Goal(
+                            language,
+                            response.StableCode),
+                        Href: null),
+            TargetPlaybookResponseReferenceKind.Option =>
+                counters.SingleOrDefault(counter => string.Equals(
+                    counter.Code,
+                    response.StableCode,
+                    StringComparison.Ordinal)) is { } counter
+                    ? new TargetAdjustmentReferenceViewModel(
+                        counter.SkillName,
+                        $"#{counter.Anchor}")
+                    : new TargetAdjustmentReferenceViewModel(
+                        TargetStrategyUiText.Bilingual(
+                            language,
+                            "Verified counter option",
+                            "已驗證應對選項"),
+                        Href: null),
+            TargetPlaybookResponseReferenceKind.Gap =>
+                gaps.SingleOrDefault(gap => string.Equals(
+                    gap.Code,
+                    response.StableCode,
+                    StringComparison.Ordinal)) is { } gap
+                    ? new TargetAdjustmentReferenceViewModel(
+                        TargetStrategyUiText.Gap(
+                            language,
+                            gap.LocalizedMessageKey),
+                        $"#target-gap-{gap.Code}")
+                    : new TargetAdjustmentReferenceViewModel(
+                        TargetStrategyUiText.Gap(language, string.Empty),
+                        Href: null),
+            TargetPlaybookResponseReferenceKind.Threat =>
+                threats.SingleOrDefault(threat => string.Equals(
+                    threat.Code,
+                    response.StableCode,
+                    StringComparison.Ordinal)) is { } threat
+                    ? new TargetAdjustmentReferenceViewModel(
+                        threat.Title,
+                        "#target-threats-heading",
+                        threat.Reference)
+                    : new TargetAdjustmentReferenceViewModel(
+                        TargetStrategyUiText.Bilingual(
+                            language,
+                            "Verified target threat",
+                            "已驗證目標威脅"),
+                        Href: null),
+            _ => throw new ArgumentOutOfRangeException(nameof(response))
+        };
+    }
+
+    private static TargetAdjustmentEvidenceViewModel MapAdjustmentEvidence(
+        TargetPlaybookAdjustmentEvidence evidence,
+        IReadOnlyDictionary<string, TargetProfileFacet> facets,
+        IReadOnlyList<TargetArchetypeSummaryViewModel> archetypes,
+        IReadOnlyList<TargetCounterPlaybookGap> gaps,
+        IReadOnlyList<ThreatViewModel> threats,
+        IReadOnlyDictionary<int, string> skillNames,
+        TaiwuLanguage language)
+    {
+        var (title, href, threatReference) = evidence.Kind switch
+        {
+            TargetPlaybookAdjustmentEvidenceKind.ProfileFacet =>
+                FacetEvidence(evidence.Identity, facets, language),
+            TargetPlaybookAdjustmentEvidenceKind.Threat =>
+                ThreatEvidence(evidence.Identity, threats, language),
+            TargetPlaybookAdjustmentEvidenceKind.Skill =>
+                SkillEvidence(evidence.Identity, skillNames, language),
+            TargetPlaybookAdjustmentEvidenceKind.Effect =>
+                EffectEvidence(evidence.Identity, skillNames, language),
+            TargetPlaybookAdjustmentEvidenceKind.Equipment =>
+                FacetSourceEvidence(
+                    evidence.Identity,
+                    facets,
+                    "Equipped-loadout evidence",
+                    "已裝備運功證據",
+                    language),
+            TargetPlaybookAdjustmentEvidenceKind.Observation =>
+                FacetSourceEvidence(
+                    evidence.Identity,
+                    facets,
+                    "Current-screen observation",
+                    "目前畫面觀察",
+                    language),
+            TargetPlaybookAdjustmentEvidenceKind.Gap =>
+                GapEvidence(evidence.Identity, gaps, language),
+            TargetPlaybookAdjustmentEvidenceKind.ArchetypeMatch =>
+                ArchetypeEvidence(evidence.Identity, archetypes, language),
+            _ => throw new ArgumentOutOfRangeException(nameof(evidence))
+        };
+        return new TargetAdjustmentEvidenceViewModel(
+            evidence.Kind,
+            evidence.State,
+            TargetStrategyUiText.AdjustmentEvidenceState(
+                language,
+                evidence.State),
+            title,
+            href,
+            threatReference,
+            evidence.EvidenceReferences.Length);
+    }
+
+    private static (string Title, string? Href, string? ThreatReference)
+        FacetEvidence(
+            string identity,
+            IReadOnlyDictionary<string, TargetProfileFacet> facets,
+            TaiwuLanguage language)
+    {
+        var key = RemovePrefix(identity, "FACET:");
+        if (key is not null && facets.TryGetValue(key, out var facet))
+        {
+            return (
+                TargetStrategyUiText.Facet(language, facet.Identity.Code),
+                $"#profile-facet:{key}",
+                null);
+        }
+
+        return (TargetStrategyUiText.Bilingual(
+            language,
+            "Verified target fact",
+            "已驗證目標特徵"), null, null);
+    }
+
+    private static (string Title, string? Href, string? ThreatReference)
+        ThreatEvidence(
+            string identity,
+            IReadOnlyList<ThreatViewModel> threats,
+            TaiwuLanguage language)
+    {
+        var code = RemovePrefix(identity, "THREAT:");
+        var threat = threats.SingleOrDefault(value => string.Equals(
+            value.Code,
+            code,
+            StringComparison.Ordinal));
+        return threat is null
+            ? (TargetStrategyUiText.Bilingual(
+                language,
+                "Verified target threat",
+                "已驗證目標威脅"), null, null)
+            : (threat.Title, "#target-threats-heading", threat.Reference);
+    }
+
+    private static (string Title, string? Href, string? ThreatReference)
+        SkillEvidence(
+            string identity,
+            IReadOnlyDictionary<int, string> skillNames,
+            TaiwuLanguage language)
+    {
+        var value = RemovePrefix(identity, "SKILL:");
+        return int.TryParse(value, out var skillId)
+            && skillNames.TryGetValue(skillId, out var name)
+                ? (name, $"/skills/{skillId}?context=recommendation", null)
+                : (TargetStrategyUiText.Bilingual(
+                    language,
+                    "Verified target skill",
+                    "已驗證目標功法"), null, null);
+    }
+
+    private static (string Title, string? Href, string? ThreatReference)
+        EffectEvidence(
+            string identity,
+            IReadOnlyDictionary<int, string> skillNames,
+            TaiwuLanguage language)
+    {
+        var parts = identity.Split(':');
+        if (parts.Length >= 2
+            && int.TryParse(parts[1], out var skillId)
+            && skillNames.TryGetValue(skillId, out var name))
+        {
+            return (TargetStrategyUiText.Bilingual(
+                language,
+                $"Verified effect from {name}",
+                $"{name} 的已驗證效果"),
+                $"/skills/{skillId}?context=recommendation",
+                null);
+        }
+
+        return (TargetStrategyUiText.Bilingual(
+            language,
+            "Verified target effect",
+            "已驗證目標效果"), null, null);
+    }
+
+    private static (string Title, string? Href, string? ThreatReference)
+        FacetSourceEvidence(
+            string identity,
+            IReadOnlyDictionary<string, TargetProfileFacet> facets,
+            string english,
+            string chinese,
+            TaiwuLanguage language)
+    {
+        var marker = identity.IndexOf("FACET:", StringComparison.Ordinal);
+        var key = marker < 0
+            ? null
+            : identity[(marker + "FACET:".Length)..];
+        var source = TargetStrategyUiText.Bilingual(
+            language,
+            english,
+            chinese);
+        if (key is not null && facets.TryGetValue(key, out var facet))
+        {
+            return (
+                $"{source} · "
+                    + TargetStrategyUiText.Facet(
+                        language,
+                        facet.Identity.Code),
+                $"#profile-facet:{key}",
+                null);
+        }
+
+        return (source, null, null);
+    }
+
+    private static (string Title, string? Href, string? ThreatReference)
+        GapEvidence(
+            string identity,
+            IReadOnlyList<TargetCounterPlaybookGap> gaps,
+            TaiwuLanguage language)
+    {
+        var code = RemovePrefix(identity, "GAP:");
+        var gap = gaps.SingleOrDefault(value => string.Equals(
+            value.Code,
+            code,
+            StringComparison.Ordinal));
+        return gap is null
+            ? (TargetStrategyUiText.Gap(language, string.Empty), null, null)
+            : (TargetStrategyUiText.Gap(
+                language,
+                gap.LocalizedMessageKey),
+                $"#target-gap-{gap.Code}",
+                null);
+    }
+
+    private static (string Title, string? Href, string? ThreatReference)
+        ArchetypeEvidence(
+            string identity,
+            IReadOnlyList<TargetArchetypeSummaryViewModel> archetypes,
+            TaiwuLanguage language)
+    {
+        var code = RemovePrefix(identity, "ARCHETYPE:");
+        var archetype = archetypes.SingleOrDefault(value => string.Equals(
+            value.Code,
+            code,
+            StringComparison.Ordinal));
+        return archetype is null
+            ? (TargetStrategyUiText.Bilingual(
+                language,
+                "Verified target pattern",
+                "已驗證目標類型"), null, null)
+            : (archetype.Title, $"#target-archetype-{archetype.Code}", null);
+    }
+
+    private static string AdjustmentSummary(
+        TargetPlaybookAdjustmentAction action,
+        TaiwuLanguage language)
+    {
+        return action switch
+        {
+            TargetPlaybookAdjustmentAction.Retained =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "Keep this reusable response for the target.",
+                    "為此目標保留這項可重用應對。"),
+            TargetPlaybookAdjustmentAction.Elevated =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "Raise this reusable response's priority.",
+                    "提高這項可重用應對的優先度。"),
+            TargetPlaybookAdjustmentAction.Reduced =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "Reduce this broad response's priority; exact "
+                        + "contrary evidence remains visible.",
+                    "降低這項廣泛應對的優先度；精確相反證據仍會保留。"),
+            TargetPlaybookAdjustmentAction.Added =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "Add an exact-target response.",
+                    "加入一項精確目標應對。"),
+            TargetPlaybookAdjustmentAction.Replaced =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "Replace the reusable response with an exact-target "
+                        + "response.",
+                    "以精確目標應對取代可重用應對。"),
+            TargetPlaybookAdjustmentAction.Unresolved =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "Leave this response unresolved; this is not "
+                        + "completed mitigation.",
+                    "這項應對仍未解決；這不代表已完成緩解。"),
+            _ => throw new ArgumentOutOfRangeException(nameof(action))
+        };
+    }
+
+    private static string CounterFeasibilityExplanation(
+        TargetPlaybookCounterAvailability? counter,
+        TargetPlaybookCounterAvailabilityState state,
+        IReadOnlyDictionary<int, string> skillNames,
+        TaiwuLanguage language)
+    {
+        if (counter is null)
+        {
+            return TargetStrategyUiText.Bilingual(
+                language,
+                "Exact-target evidence did not make this counter eligible "
+                    + "for player feasibility checks.",
+                "精確目標證據未令此應對功法進入角色可行性檢查。");
+        }
+
+        if (state == TargetPlaybookCounterAvailabilityState.Feasible)
+        {
+            return TargetStrategyUiText.Bilingual(
+                language,
+                "Passed player access checks and fits at least one "
+                    + "generated loadout.",
+                "已通過角色取得條件，並可放入至少一套產生的運功方案。");
+        }
+
+        var reasons = counter.Access.Issues
+            .Select(issue => UiEntityText.UseNames(
+                UiText.Get(language, issue.Reason),
+                skillNames))
+            .Concat(counter.Diagnostics.Select(diagnostic =>
+                UiEntityText.UseNames(
+                    UiText.Get(language, diagnostic.Reason),
+                    skillNames)))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        if (reasons.Length > 0)
+        {
+            return string.Join(" · ", reasons);
+        }
+
+        return state switch
+        {
+            TargetPlaybookCounterAvailabilityState.Inaccessible =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "The player does not currently meet the verified access "
+                        + "requirements.",
+                    "目前角色未符合已驗證的取得條件。"),
+            TargetPlaybookCounterAvailabilityState.Infeasible =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "The counter is accessible but does not fit a generated "
+                        + "legal loadout.",
+                    "角色可取得此功法，但無法放入已產生的合法運功方案。"),
+            TargetPlaybookCounterAvailabilityState.Unresolved =>
+                TargetStrategyUiText.Bilingual(
+                    language,
+                    "Candidate-search limits leave player feasibility "
+                        + "unresolved.",
+                    "候選搜尋限制令角色可行性仍未確定。"),
+            _ => throw new ArgumentOutOfRangeException(nameof(state))
+        };
+    }
+
+    private static string FeasibilitySummary(
+        int counterCount,
+        int feasibleCount,
+        bool currentLoadoutAlreadySatisfies,
+        TaiwuLanguage language)
+    {
+        if (currentLoadoutAlreadySatisfies)
+        {
+            return TargetStrategyUiText.Bilingual(
+                language,
+                "The final recommendation is unchanged because the current "
+                    + "loadout already satisfies the composed response.",
+                "目前運功已滿足合成應對策略，因此最終推薦無需改變。");
+        }
+
+        if (counterCount == 0)
+        {
+            return TargetStrategyUiText.Bilingual(
+                language,
+                "No verified counter reached player feasibility filtering.",
+                "沒有已驗證應對功法進入角色可行性篩選。");
+        }
+
+        return TargetStrategyUiText.Bilingual(
+            language,
+            $"{feasibleCount} of {counterCount} verified counter options "
+                + "pass the current player's feasibility checks.",
+            $"{counterCount} 項已驗證應對功法中，有 {feasibleCount} 項通過目前角色的可行性檢查。");
+    }
+
+    private static string? RemovePrefix(string value, string prefix) =>
+        value.StartsWith(prefix, StringComparison.Ordinal)
+            ? value[prefix.Length..]
+            : null;
 
     private static TargetStrategyGapViewModel MapGap(
         TargetCounterPlaybookGap gap,

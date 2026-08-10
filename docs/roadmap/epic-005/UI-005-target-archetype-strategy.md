@@ -20,8 +20,10 @@ control and comparison. Its order is:
 2. compact profile facts;
 3. all checked archetypes, with matched results first;
 4. one composed list of reusable response goals;
-5. one collapsed, deduplicated counter-option list; and
-6. a boundary reminding the player that the final loadout, manual steps, and
+5. exact-target adjustments with linked evidence;
+6. player-feasibility status and one collapsed, deduplicated counter-option
+   list;
+7. a boundary reminding the player that the final loadout, manual steps, and
    comparison remain in their established sections below.
 
 Multiple matched archetypes therefore become one profile and one composed
@@ -70,6 +72,35 @@ Known playbook gaps remain beside their response goal. Player-specific gaps
 remain beside the corresponding unique counter. The same gap is not repeated
 again as a generic warning.
 
+## Exact-target adjustment and player feasibility
+
+E5-009 keeps two decisions visibly separate:
+
+1. `Exact-target customization` explains how the target changed the reusable
+   goals. Retained, elevated, reduced, added, replaced, and unresolved states
+   each have concise English and Traditional Chinese action text, reason text,
+   and friendly response names.
+2. `Player feasibility` explains whether the current character can access and
+   fit each surviving verified counter into a legal generated loadout.
+
+Adjustment response and evidence links reuse the existing goal, profile fact,
+threat, counter, and skill-detail destinations. Evidence disclosures retain
+confirmed, contrary, and incomplete state text plus their source counts. A
+reduced broad response therefore does not hide the exact contrary fact or a
+source conflict.
+
+An unresolved adjustment or unavailable counter is always described as a
+remaining gap, never as completed mitigation. Counter feasibility reasons use
+the existing typed access and generation diagnostics rather than a new UI
+guess. When the selected proposal has the same skills and generic-slot
+allocation as the current loadout, and all manual changes are retains, the
+panel explicitly says the final recommendation is unchanged because the
+current loadout already satisfies the composed response.
+
+The adjustment area does not repeat skill cards, warnings, manual checklist
+items, battle-plan steps, or comparison rows. Counter details remain the one
+shared feasibility disclosure introduced by E5-008.
+
 ## State ownership
 
 The existing `PageStateNotice` continues to own recommendation loading and
@@ -88,6 +119,9 @@ Once an immutable recommendation exists, `TargetStrategyPanel` renders:
 
 Observation apply/clear rebuilds the whole recommendation view model, so this
 section changes atomically with threats, final recommendation, and comparison.
+The adjustment explanation has no separate mutable state; applying an
+observation replaces the complete mapped strategy and clearing it reproduces
+the save-only rendering.
 
 ## Localization and identity
 
@@ -113,10 +147,15 @@ the narrow layout.
 
 - Presentation mapper tests cover an available verified result, stable
   bilingual identities/order, unique counter links, inaccessible gaps, and an
-  unsupported version with no playbook.
+  unsupported version with no playbook. They also cover mapped adjustment
+  evidence, feasibility reasons, and the unchanged-current-loadout result.
 - Component tests cover multi-match, context/mechanics separation, linked
   threats/counters, inaccessible counters, English/Traditional Chinese copy,
   partial, unsupported, conflicting, and no-match output.
+- Exact-target component tests cover all six action kinds, exact response and
+  evidence links, reduced/conflicting evidence retention, missing-counter
+  wording, target-versus-player separation, unchanged output, and atomic
+  apply/clear rendering.
 - Duplicate guards assert that this component contains no comparison, skill
   card, detailed capacity, or recommendation-policy surface and renders one
   card per unique counter.

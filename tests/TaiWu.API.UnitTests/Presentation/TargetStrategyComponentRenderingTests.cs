@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.Localization;
 using TaiWu.Domain.TargetArchetypes;
+using TaiWu.Domain.TargetPlaybookComposition;
 using TaiWu.Domain.TargetProfiles;
 using TaiWuAPI.Components.Recommendations;
 using TaiWuAPI.Presentation;
@@ -76,9 +77,122 @@ public sealed partial class RecommendationComponentRenderingTests
         Assert.Contains("已驗證應對功法", text);
         Assert.Contains("目前無法取得", text);
         Assert.Contains("裝備為被動功法", text);
+        Assert.Contains("精確目標調整", text);
+        Assert.Contains("角色可行性", text);
+        Assert.Contains("保留", text);
+        Assert.Contains("提高", text);
+        Assert.Contains("降低", text);
+        Assert.Contains("加入", text);
+        Assert.Contains("取代", text);
+        Assert.Contains("未解決", text);
+        Assert.Contains("精確相反證據", text);
+        Assert.Contains("這仍是未解決缺口", text);
         Assert.Contains("本區只說明可重用的目標策略", text);
         Assert.DoesNotContain("Reusable response strategy", text);
         Assert.DoesNotContain("Availability unresolved", text);
+    }
+
+    [Fact]
+    public async Task Target_adjustments_separate_exact_evidence_from_feasibility()
+    {
+        var html = await RenderAsync<TargetStrategyPanel>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetStrategyPanel.Strategy)] = Strategy()
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("Exact-target customization", text);
+        Assert.Contains("Player feasibility", text);
+        Assert.True(
+            text.IndexOf("Exact-target customization", StringComparison.Ordinal)
+            < text.IndexOf("Player feasibility", StringComparison.Ordinal));
+        foreach (var action in Enum.GetValues<TargetPlaybookAdjustmentAction>())
+        {
+            Assert.Contains(
+                $"target-adjustment state-{action.ToString().ToLowerInvariant()}",
+                html);
+        }
+
+        Assert.Contains("href=\"#target-goal-CONTROL_DISTRACTION_MARKS\"", html);
+        Assert.Contains("href=\"#target-threats-heading\"", html);
+        Assert.Contains("href=\"#target-counter-1\"", html);
+        Assert.Contains("Contrary exact evidence", text);
+        Assert.Contains(
+            "Reduced priority does not remove exact evidence or source conflicts.",
+            text);
+        Assert.Contains(
+            "This remains a gap; it is not completed mitigation.",
+            text);
+        Assert.Contains(
+            "The current player has not learned this skill.",
+            text);
+        Assert.DoesNotContain("Show detailed skill cards", text);
+        Assert.DoesNotContain("Manual configuration", text);
+        Assert.DoesNotContain("Loadout comparison", text);
+    }
+
+    [Fact]
+    public async Task Target_adjustment_state_replaces_and_clears_atomically()
+    {
+        var saveOnly = Strategy();
+        var observed = saveOnly with
+        {
+            Adjustments =
+            [
+                saveOnly.Adjustments[0] with
+                {
+                    Action = TargetPlaybookAdjustmentAction.Elevated,
+                    ActionLabel = "Elevated by current observation",
+                    Summary = "Observed exact target response"
+                }
+            ]
+        };
+
+        var before = await RenderAsync<TargetStrategyPanel>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetStrategyPanel.Strategy)] = saveOnly
+            });
+        var applied = await RenderAsync<TargetStrategyPanel>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetStrategyPanel.Strategy)] = observed
+            });
+        var cleared = await RenderAsync<TargetStrategyPanel>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetStrategyPanel.Strategy)] = saveOnly
+            });
+
+        Assert.DoesNotContain("Observed exact target response", before);
+        Assert.Contains("Observed exact target response", applied);
+        Assert.Equal(before, cleared);
+    }
+
+    [Fact]
+    public async Task Target_feasibility_identifies_an_unchanged_current_loadout()
+    {
+        var strategy = Strategy() with
+        {
+            Feasibility = new TargetStrategyFeasibilityViewModel(
+                "The final recommendation is unchanged because the current "
+                    + "loadout already satisfies the composed response.",
+                CurrentLoadoutAlreadySatisfies: true,
+                FeasibleCounterCount: 2,
+                UnavailableCounterCount: 0)
+        };
+
+        var html = await RenderAsync<TargetStrategyPanel>(
+            new Dictionary<string, object?>
+            {
+                [nameof(TargetStrategyPanel.Strategy)] = strategy
+            });
+        var text = VisibleText(html);
+
+        Assert.Contains("final recommendation is unchanged", text);
+        Assert.Contains("Current loadout already satisfies this strategy.", text);
+        Assert.Contains("role=\"status\"", html);
     }
 
     [Theory]
@@ -98,7 +212,13 @@ public sealed partial class RecommendationComponentRenderingTests
             MatchedArchetypeCount = 0,
             Goals = [],
             Counters = [],
-            StandaloneGaps = []
+            StandaloneGaps = [],
+            Adjustments = [],
+            Feasibility = new TargetStrategyFeasibilityViewModel(
+                "No verified counter reached player feasibility filtering.",
+                CurrentLoadoutAlreadySatisfies: false,
+                FeasibleCounterCount: 0,
+                UnavailableCounterCount: 0)
         };
 
         var html = await RenderAsync<TargetStrategyPanel>(
@@ -131,6 +251,9 @@ public sealed partial class RecommendationComponentRenderingTests
                 chinese ? "逆練" : "Reverse practice",
                 TargetPlaybookCounterAvailabilityState.Feasible,
                 chinese ? "目前可用" : "Available now",
+                chinese
+                    ? "已通過角色取得條件及運功可行性檢查。"
+                    : "Passed player access and loadout feasibility checks.",
                 [],
                 Gap: null),
             new TargetCounterSummaryViewModel(
@@ -142,6 +265,9 @@ public sealed partial class RecommendationComponentRenderingTests
                 chinese ? "逆練" : "Reverse practice",
                 TargetPlaybookCounterAvailabilityState.Inaccessible,
                 chinese ? "目前無法取得" : "Not accessible",
+                chinese
+                    ? "目前角色尚未習得此功法。"
+                    : "The current player has not learned this skill.",
                 [chinese ? "裝備為被動功法" : "Equip as a passive"],
                 new TargetStrategyGapViewModel(
                     "PLAYER_COUNTER_INACCESSIBLE",
@@ -227,8 +353,131 @@ public sealed partial class RecommendationComponentRenderingTests
                     [])
             ],
             counters,
-            []);
+            [],
+            Adjustments(chinese, counters[0]),
+            new TargetStrategyFeasibilityViewModel(
+                chinese
+                    ? "2 項已驗證應對功法中，有 1 項通過目前角色的可行性檢查。"
+                    : "1 of 2 verified counter options pass the current "
+                        + "player's feasibility checks.",
+                CurrentLoadoutAlreadySatisfies: false,
+                FeasibleCounterCount: 1,
+                UnavailableCounterCount: 1));
     }
+
+    private static TargetAdjustmentExplanationViewModel[] Adjustments(
+        bool chinese,
+        TargetCounterSummaryViewModel counter)
+    {
+        var goal = new TargetAdjustmentReferenceViewModel(
+            chinese ? "控制失神標記" : "Control distraction marks",
+            "#target-goal-CONTROL_DISTRACTION_MARKS");
+        var threat = new TargetAdjustmentReferenceViewModel(
+            chinese ? "魔音心神傷害" : "Magic-sound mind damage",
+            "#target-threats-heading",
+            "threat:magic-sound");
+        var counterReference = new TargetAdjustmentReferenceViewModel(
+            counter.SkillName,
+            $"#{counter.Anchor}");
+        var confirmed = Evidence(
+            TargetPlaybookAdjustmentEvidenceState.Confirmed,
+            chinese,
+            chinese ? "失神標記控制" : "Distraction-mark control",
+            "#profile-facet:3:DISTRACTION_MARK_CONTROL");
+        var contrary = Evidence(
+            TargetPlaybookAdjustmentEvidenceState.Contrary,
+            chinese,
+            chinese ? "相反的目標特徵" : "Contrary target fact",
+            "#profile-facet:1:OUTER_DAMAGE_CONFIGURED");
+        var incomplete = Evidence(
+            TargetPlaybookAdjustmentEvidenceState.Incomplete,
+            chinese,
+            chinese ? "缺少的精確證據" : "Missing exact evidence",
+            Href: null);
+
+        return
+        [
+            Adjustment(
+                TargetPlaybookAdjustmentAction.Retained,
+                chinese ? "保留" : "Retained",
+                chinese ? "保留此應對。" : "Keep this response.",
+                goal,
+                Result: null,
+                confirmed),
+            Adjustment(
+                TargetPlaybookAdjustmentAction.Elevated,
+                chinese ? "提高" : "Elevated",
+                chinese ? "提高此應對的優先度。" : "Raise this response.",
+                goal,
+                Result: null,
+                confirmed),
+            Adjustment(
+                TargetPlaybookAdjustmentAction.Reduced,
+                chinese ? "降低" : "Reduced",
+                chinese ? "降低此廣泛應對的優先度。" : "Reduce this broad response.",
+                goal,
+                Result: null,
+                contrary),
+            Adjustment(
+                TargetPlaybookAdjustmentAction.Added,
+                chinese ? "加入" : "Added",
+                chinese ? "加入精確目標威脅。" : "Add an exact-target threat.",
+                Original: null,
+                threat,
+                confirmed),
+            Adjustment(
+                TargetPlaybookAdjustmentAction.Replaced,
+                chinese ? "取代" : "Replaced",
+                chinese ? "以可行功法取代原有應對。" : "Replace with a feasible counter.",
+                goal,
+                counterReference,
+                confirmed),
+            Adjustment(
+                TargetPlaybookAdjustmentAction.Unresolved,
+                chinese ? "未解決" : "Unresolved",
+                chinese ? "此緩解仍未完成。" : "This mitigation remains unresolved.",
+                goal,
+                Result: null,
+                incomplete)
+        ];
+    }
+
+    private static TargetAdjustmentExplanationViewModel Adjustment(
+        TargetPlaybookAdjustmentAction action,
+        string label,
+        string summary,
+        TargetAdjustmentReferenceViewModel? Original,
+        TargetAdjustmentReferenceViewModel? Result,
+        TargetAdjustmentEvidenceViewModel evidence) => new(
+        action,
+        label,
+        summary,
+        summary,
+        Original,
+        Result,
+        [evidence]);
+
+    private static TargetAdjustmentEvidenceViewModel Evidence(
+        TargetPlaybookAdjustmentEvidenceState state,
+        bool chinese,
+        string title,
+        string? Href) => new(
+        TargetPlaybookAdjustmentEvidenceKind.ProfileFacet,
+        state,
+        state switch
+        {
+            TargetPlaybookAdjustmentEvidenceState.Confirmed =>
+                chinese ? "已確認的精確證據" : "Confirmed exact evidence",
+            TargetPlaybookAdjustmentEvidenceState.Contrary =>
+                chinese ? "精確相反證據" : "Contrary exact evidence",
+            TargetPlaybookAdjustmentEvidenceState.Incomplete =>
+                chinese ? "缺少或不完整的證據" : "Missing or incomplete evidence",
+            _ => throw new ArgumentOutOfRangeException(nameof(state))
+        },
+        title,
+        Href,
+        ThreatReference: null,
+        SourceCount: 1);
 
     private static TargetProfileFacetSummaryViewModel Facet(
         TargetProfileDimension dimension,

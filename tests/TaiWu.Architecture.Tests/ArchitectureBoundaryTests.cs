@@ -438,9 +438,19 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("they are not win odds.", comparison);
         Assert.Contains("href=\"#target-threats-heading\"", targetStrategy);
         Assert.Contains("<details", targetStrategy);
+        Assert.Contains("Exact-target customization", targetStrategy);
+        Assert.Contains("Player feasibility", targetStrategy);
+        Assert.Contains("adjustment.Evidence", targetStrategy);
+        Assert.Equal(
+            2,
+            Regex.Matches(
+                page,
+                @"CombatRecommendationViewModelMapper\.Map\(").Count);
         Assert.DoesNotContain("<LoadoutComparisonMatrix", targetStrategy);
         Assert.DoesNotContain("<LoadoutCategory", targetStrategy);
         Assert.DoesNotContain("<SkillCard", targetStrategy);
+        Assert.DoesNotContain("<BattlePlan", targetStrategy);
+        Assert.DoesNotContain("<RecommendationWarnings", targetStrategy);
         Assert.Contains(".target-strategy-panel", styles);
         Assert.Contains("overflow-wrap: anywhere", styles);
         Assert.Contains(".target-strategy-grid", styles);
@@ -1115,6 +1125,9 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SelectThreatAsync(threat.Reference)",
             "() => SelectedReferenceChanged.InvokeAsync(null)",
             "() => SelectedReferenceChanged.InvokeAsync(threat.Reference)",
+            "() => ThreatSelected.InvokeAsync(adjustment.OriginalResponse.ThreatReference)",
+            "() => ThreatSelected.InvokeAsync(adjustment.ResultResponse.ThreatReference)",
+            "() => ThreatSelected.InvokeAsync(fact.ThreatReference)",
             "() => ThreatSelected.InvokeAsync(threat.Reference)",
             "() => SetCoverage(TargetLoadoutCoverageKind.CompleteCurrentLoadout)",
             "() => SetCoverage(TargetLoadoutCoverageKind.PartialLoadout)",

@@ -1,5 +1,6 @@
 @using TaiWu.Application.CombatRecommendations
 @using TaiWu.Domain.TargetArchetypes
+@using TaiWu.Domain.TargetPlaybookComposition
 @using TaiWu.Domain.TargetProfiles
 @using TaiWuAPI.Presentation
 
@@ -34,7 +35,8 @@
                     <ul>
                         @foreach (var facet in group.Facets)
                         {
-                            <li class="@FacetClass(facet.State)">
+                            <li id="@facet.Reference"
+                                class="@FacetClass(facet.State)">
                                 <span>@facet.DimensionLabel</span>
                                 <strong>@facet.Title</strong>
                                 <small>
@@ -64,7 +66,8 @@
             <ul class="target-archetype-list">
                 @foreach (var archetype in Strategy.Archetypes)
                 {
-                    <li class="@ArchetypeClass(archetype.State)">
+                    <li id="@($"target-archetype-{archetype.Code}")"
+                        class="@ArchetypeClass(archetype.State)">
                         <div>
                             <strong>@archetype.Title</strong>
                             <span>@archetype.StateLabel</span>
@@ -122,7 +125,7 @@
                 <ol class="target-goal-list">
                     @foreach (var goal in Strategy.Goals)
                     {
-                        <li>
+                        <li id="@($"target-goal-{goal.Code}")">
                             <div>
                                 <strong>@goal.Title</strong>
                                 <span class="@(goal.IsEligible
@@ -162,7 +165,9 @@
 
                             @foreach (var gap in goal.Gaps)
                             {
-                                <p class="target-strategy-gap" role="status">
+                                <p id="@($"target-gap-{gap.Code}")"
+                                   class="target-strategy-gap"
+                                   role="status">
                                     @gap.Message
                                 </p>
                             }
@@ -173,50 +178,204 @@
         </section>
     </div>
 
-    @if (Strategy.Counters.Count > 0)
+    @if (Strategy.Adjustments.Count > 0)
     {
-        <details class="target-counter-disclosure">
-            <summary>
-                @T("Verified counter options")
-                <span>@Strategy.Counters.Count</span>
-            </summary>
-            <div class="target-counter-list">
-                @foreach (var counter in Strategy.Counters)
+        <section class="target-adjustment-section"
+                 aria-labelledby="target-adjustments-heading">
+            <header>
+                <div>
+                    <h4 id="target-adjustments-heading">
+                        @T("Exact-target customization")
+                    </h4>
+                    <p>
+                        @T("These changes refine the reusable goals using exact target evidence.")
+                    </p>
+                </div>
+                <span>@Strategy.Adjustments.Count</span>
+            </header>
+            <ol class="target-adjustment-list">
+                @foreach (var adjustment in Strategy.Adjustments)
                 {
-                    <article id="@counter.Anchor"
-                             class="@CounterClass(counter.Availability)">
-                        <div>
-                            <a href="@counter.SkillDetailHref">
-                                <strong>@counter.SkillName</strong>
-                            </a>
-                            <span>@counter.AvailabilityLabel</span>
+                    <li class="@AdjustmentClass(adjustment.Action)">
+                        <div class="target-adjustment-heading">
+                            <span>@adjustment.ActionLabel</span>
+                            <strong>@adjustment.Summary</strong>
                         </div>
-                        <small>@counter.DirectionLabel</small>
-                        @if (counter.RequirementSummaries.Count > 0)
+                        <p>@adjustment.Reason</p>
+                        @if (adjustment.OriginalResponse is not null
+                            || adjustment.ResultResponse is not null)
                         {
-                            <ul aria-label="@T("Activation requirements")">
-                                @foreach (var requirement in
-                                    counter.RequirementSummaries)
+                            <div class="target-adjustment-responses">
+                                @if (adjustment.OriginalResponse is not null)
                                 {
-                                    <li>@requirement</li>
+                                    <span>@T("Original response")</span>
+                                    @if (adjustment.OriginalResponse.Href is null)
+                                    {
+                                        <strong>
+                                            @adjustment.OriginalResponse.Title
+                                        </strong>
+                                    }
+                                    else if (adjustment.OriginalResponse
+                                        .ThreatReference is null)
+                                    {
+                                        <a href="@adjustment.OriginalResponse.Href">
+                                            @adjustment.OriginalResponse.Title
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a href="@adjustment.OriginalResponse.Href"
+                                           @onclick="() => ThreatSelected.InvokeAsync(adjustment.OriginalResponse.ThreatReference)">
+                                            @adjustment.OriginalResponse.Title
+                                        </a>
+                                    }
+                                }
+                                @if (adjustment.ResultResponse is not null)
+                                {
+                                    <span>@T("Final response")</span>
+                                    @if (adjustment.ResultResponse.Href is null)
+                                    {
+                                        <strong>
+                                            @adjustment.ResultResponse.Title
+                                        </strong>
+                                    }
+                                    else if (adjustment.ResultResponse
+                                        .ThreatReference is null)
+                                    {
+                                        <a href="@adjustment.ResultResponse.Href">
+                                            @adjustment.ResultResponse.Title
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a href="@adjustment.ResultResponse.Href"
+                                           @onclick="() => ThreatSelected.InvokeAsync(adjustment.ResultResponse.ThreatReference)">
+                                            @adjustment.ResultResponse.Title
+                                        </a>
+                                    }
+                                }
+                            </div>
+                        }
+                        <details>
+                            <summary>@T("Exact evidence")</summary>
+                            <ul class="target-adjustment-evidence">
+                                @foreach (var fact in adjustment.Evidence)
+                                {
+                                    <li class="@EvidenceClass(fact.State)">
+                                        <div>
+                                            @if (fact.Href is null)
+                                            {
+                                                <strong>@fact.Title</strong>
+                                            }
+                                            else if (fact.ThreatReference
+                                                is null)
+                                            {
+                                                <a href="@fact.Href">
+                                                    @fact.Title
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="@fact.Href"
+                                                   @onclick="() => ThreatSelected.InvokeAsync(fact.ThreatReference)">
+                                                    @fact.Title
+                                                </a>
+                                            }
+                                            <span>@fact.StateLabel</span>
+                                        </div>
+                                        <small>
+                                            @fact.SourceCount
+                                            @T("evidence source(s)")
+                                        </small>
+                                    </li>
                                 }
                             </ul>
-                        }
-                        @if (counter.Gap is not null)
+                        </details>
+                        @if (adjustment.Action
+                            == TargetPlaybookAdjustmentAction.Reduced)
                         {
-                            <p class="target-strategy-gap" role="status">
-                                @counter.Gap.Message
+                            <p class="target-adjustment-note" role="note">
+                                @T("Reduced priority does not remove exact evidence or source conflicts.")
                             </p>
                         }
-                    </article>
+                        @if (adjustment.Action
+                            == TargetPlaybookAdjustmentAction.Unresolved)
+                        {
+                            <p class="target-strategy-gap" role="status">
+                                @T("This remains a gap; it is not completed mitigation.")
+                            </p>
+                        }
+                    </li>
                 }
-            </div>
-        </details>
+            </ol>
+        </section>
     }
+
+    <section class="target-feasibility-section"
+             aria-labelledby="target-feasibility-heading">
+        <h4 id="target-feasibility-heading">@T("Player feasibility")</h4>
+        <p>@Strategy.Feasibility.Summary</p>
+        @if (Strategy.Feasibility.CurrentLoadoutAlreadySatisfies)
+        {
+            <p class="target-current-loadout" role="status">
+                @T("Current loadout already satisfies this strategy.")
+            </p>
+        }
+        @if (Strategy.Counters.Count > 0)
+        {
+            <details class="target-counter-disclosure">
+                <summary>
+                    @T("Verified counter options")
+                    <span>
+                        @Strategy.Feasibility.FeasibleCounterCount /
+                        @Strategy.Counters.Count
+                    </span>
+                </summary>
+                <div class="target-counter-list">
+                    @foreach (var counter in Strategy.Counters)
+                    {
+                        <article id="@counter.Anchor"
+                                 class="@CounterClass(counter.Availability)">
+                            <div>
+                                <a href="@counter.SkillDetailHref">
+                                    <strong>@counter.SkillName</strong>
+                                </a>
+                                <span>@counter.AvailabilityLabel</span>
+                            </div>
+                            <small>@counter.DirectionLabel</small>
+                            <p class="target-counter-feasibility">
+                                @counter.FeasibilityExplanation
+                            </p>
+                            @if (counter.RequirementSummaries.Count > 0)
+                            {
+                                <ul aria-label="@T("Activation requirements")">
+                                    @foreach (var requirement in
+                                        counter.RequirementSummaries)
+                                    {
+                                        <li>@requirement</li>
+                                    }
+                                </ul>
+                            }
+                            @if (counter.Gap is not null)
+                            {
+                                <p id="@($"target-gap-{counter.Gap.Code}")"
+                                   class="target-strategy-gap"
+                                   role="status">
+                                    @counter.Gap.Message
+                                </p>
+                            }
+                        </article>
+                    }
+                </div>
+            </details>
+        }
+    </section>
 
     @foreach (var gap in Strategy.StandaloneGaps)
     {
-        <p class="target-strategy-gap" role="status">@gap.Message</p>
+        <p id="@($"target-gap-{gap.Code}")"
+           class="target-strategy-gap"
+           role="status">@gap.Message</p>
     }
 
     <p class="target-strategy-boundary" role="note">
@@ -257,4 +416,12 @@
     private static string CounterClass(
         TargetPlaybookCounterAvailabilityState state) =>
         $"target-counter-card state-{state.ToString().ToLowerInvariant()}";
+
+    private static string AdjustmentClass(
+        TargetPlaybookAdjustmentAction action) =>
+        $"target-adjustment state-{action.ToString().ToLowerInvariant()}";
+
+    private static string EvidenceClass(
+        TargetPlaybookAdjustmentEvidenceState state) =>
+        $"state-{state.ToString().ToLowerInvariant()}";
 }

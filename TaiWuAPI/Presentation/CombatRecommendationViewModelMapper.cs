@@ -94,7 +94,38 @@ public static class CombatRecommendationViewModelMapper
                     recommendation.TargetPlaybook,
                     recommendation.Snapshot.Metadata.CapturedAtUtc,
                     language,
-                    threats));
+                    threats,
+                    skillNames,
+                    targetSkillNames,
+                    CurrentLoadoutAlreadySatisfiesStrategy(
+                        recommendation)));
+    }
+
+    private static bool CurrentLoadoutAlreadySatisfiesStrategy(
+        CombatLoadoutRecommendation recommendation)
+    {
+        var targetPlaybook = recommendation.TargetPlaybook;
+        var plan = recommendation.SelectedStyle.ManualPlan.Plan;
+        if (targetPlaybook is null
+            || targetPlaybook.EligibleGoals.IsEmpty
+            || !targetPlaybook.Counters.Any(counter => counter.IsFeasible)
+            || plan is null
+            || plan.LoadoutChanges.Any(change =>
+                change.Kind != ManualLoadoutChangeKind.Retain))
+        {
+            return false;
+        }
+
+        var player = recommendation.Snapshot.Player;
+        var proposal = plan.SelectedRecommendation.Candidate
+            .FeasibleLoadout.Proposal;
+        var sameSkills = Enum.GetValues<SkillCategory>().All(category =>
+            player.EquippedSkills.Get(category)
+                .Order()
+                .SequenceEqual(proposal.Skills.Get(category).Order()));
+        return sameSkills
+            && player.GenericSlotAllocation
+                == proposal.GenericSlotAllocation;
     }
 
     private static LoadoutComparisonViewModel MapComparison(

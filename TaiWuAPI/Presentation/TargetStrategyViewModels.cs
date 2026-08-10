@@ -1,5 +1,6 @@
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Domain.TargetArchetypes;
+using TaiWu.Domain.TargetPlaybookComposition;
 using TaiWu.Domain.TargetProfiles;
 
 namespace TaiWuAPI.Presentation;
@@ -31,7 +32,9 @@ public sealed record TargetStrategyViewModel(
     IReadOnlyList<TargetArchetypeSummaryViewModel> Archetypes,
     IReadOnlyList<TargetResponseGoalViewModel> Goals,
     IReadOnlyList<TargetCounterSummaryViewModel> Counters,
-    IReadOnlyList<TargetStrategyGapViewModel> StandaloneGaps)
+    IReadOnlyList<TargetStrategyGapViewModel> StandaloneGaps,
+    IReadOnlyList<TargetAdjustmentExplanationViewModel> Adjustments,
+    TargetStrategyFeasibilityViewModel Feasibility)
 {
     public bool IsMultiMatch => MatchedArchetypeCount > 1;
 
@@ -94,9 +97,39 @@ public sealed record TargetCounterSummaryViewModel(
     string DirectionLabel,
     TargetPlaybookCounterAvailabilityState Availability,
     string AvailabilityLabel,
+    string FeasibilityExplanation,
     IReadOnlyList<string> RequirementSummaries,
     TargetStrategyGapViewModel? Gap);
 
 public sealed record TargetStrategyGapViewModel(
     string Code,
     string Message);
+
+public sealed record TargetAdjustmentExplanationViewModel(
+    TargetPlaybookAdjustmentAction Action,
+    string ActionLabel,
+    string Summary,
+    string Reason,
+    TargetAdjustmentReferenceViewModel? OriginalResponse,
+    TargetAdjustmentReferenceViewModel? ResultResponse,
+    IReadOnlyList<TargetAdjustmentEvidenceViewModel> Evidence);
+
+public sealed record TargetAdjustmentReferenceViewModel(
+    string Title,
+    string? Href,
+    string? ThreatReference = null);
+
+public sealed record TargetAdjustmentEvidenceViewModel(
+    TargetPlaybookAdjustmentEvidenceKind Kind,
+    TargetPlaybookAdjustmentEvidenceState State,
+    string StateLabel,
+    string Title,
+    string? Href,
+    string? ThreatReference,
+    int SourceCount);
+
+public sealed record TargetStrategyFeasibilityViewModel(
+    string Summary,
+    bool CurrentLoadoutAlreadySatisfies,
+    int FeasibleCounterCount,
+    int UnavailableCounterCount);

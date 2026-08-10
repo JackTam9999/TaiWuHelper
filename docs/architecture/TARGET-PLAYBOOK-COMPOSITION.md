@@ -173,6 +173,28 @@ The reusable playbook cannot override exact evidence:
 This permits a broad archetype to suggest a response while preserving a typed,
 explainable exact-target correction before player personalization.
 
+## Presentation explanation contract
+
+E5-009 maps the immutable adjustment set without reinterpreting its mechanics.
+The Presentation layer:
+
+- localizes all six action kinds and the reviewed reason code;
+- resolves response references to the existing goal, threat, counter, gap, or
+  skill destinations when that entity is present;
+- maps typed profile, archetype, threat, skill, effect, equipment,
+  observation, and gap evidence to friendly links while retaining
+  `Confirmed`, `Contrary`, or `Incomplete` state and source count;
+- keeps `Reduced` contrary evidence visible instead of treating the broad risk
+  as erased; and
+- describes `Unresolved` as an incomplete mitigation rather than a successful
+  counter.
+
+This exact-target explanation is rendered before the separate player-
+feasibility section. Access failures and complete-loadout rejection remain
+owned by `TargetPlaybookRecommendationPersonalizer` and the existing
+feasibility/generation pipeline. The UI does not infer feasibility from an
+adjustment or rewrite an inaccessible counter as resolved.
+
 ## Determinism
 
 Composition canonicalizes playbooks, goals, threats, options, sources,
@@ -202,3 +224,7 @@ Focused Domain tests cover:
   diagnostics;
 - stale profile/match rejection; and
 - deterministic results for reordered catalogues and reviewed rules.
+
+Presentation coverage additionally renders every action kind, friendly linked
+evidence, unresolved-gap wording, and retained contrary evidence without
+duplicating loadout, warning, checklist, or comparison details.

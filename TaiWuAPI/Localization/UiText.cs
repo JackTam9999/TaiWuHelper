@@ -749,6 +749,19 @@ public static class UiText
             ["Verified counters"] = "已驗證應對功法",
             ["Verified counter options"] = "已驗證應對選項",
             ["Activation requirements"] = "生效需求",
+            ["Exact-target customization"] = "精確目標調整",
+            ["These changes refine the reusable goals using exact target evidence."] =
+                "以下調整使用目標精確證據細化可重用應對目標。",
+            ["Original response"] = "原有應對",
+            ["Final response"] = "最終應對",
+            ["Exact evidence"] = "精確證據",
+            ["Reduced priority does not remove exact evidence or source conflicts."] =
+                "降低優先度不會移除精確證據或來源衝突。",
+            ["This remains a gap; it is not completed mitigation."] =
+                "這仍是未解決缺口，並不代表已完成緩解。",
+            ["Player feasibility"] = "角色可行性",
+            ["Current loadout already satisfies this strategy."] =
+                "目前運功已滿足此策略。",
             ["This section explains reusable target strategy. The selected loadout, manual steps, and comparison remain below."] =
                 "本區只說明可重用的目標策略；所選運功、手動步驟與比較仍列於下方。",
             ["Target analysis"] = "目標分析",

@@ -8,6 +8,7 @@ using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.LoadoutComparisons;
 using TaiWu.Domain.TargetArchetypes;
+using TaiWu.Domain.TargetPlaybookComposition;
 using TaiWuAPI.Presentation;
 using Xunit;
 
@@ -50,6 +51,8 @@ public sealed class CombatRecommendationViewModelMapperTests
             strategy.Archetypes[0].State);
         Assert.Equal(4, strategy.Goals.Count);
         Assert.Equal(6, strategy.Counters.Count);
+        Assert.NotEmpty(strategy.Adjustments);
+        Assert.NotEmpty(strategy.Feasibility.Summary);
     }
 
     [Fact]
@@ -97,6 +100,55 @@ public sealed class CombatRecommendationViewModelMapperTests
             threat => threat.Reference.StartsWith(
                 "threat:",
                 StringComparison.Ordinal));
+        Assert.Equal(
+            english.Adjustments.Select(value => value.Action),
+            chinese.Adjustments.Select(value => value.Action));
+        Assert.All(
+            english.Adjustments,
+            adjustment =>
+            {
+                Assert.False(string.IsNullOrWhiteSpace(adjustment.ActionLabel));
+                Assert.False(string.IsNullOrWhiteSpace(adjustment.Summary));
+                Assert.False(string.IsNullOrWhiteSpace(adjustment.Reason));
+                Assert.NotEmpty(adjustment.Evidence);
+                Assert.All(
+                    adjustment.Evidence,
+                    evidence =>
+                    {
+                        Assert.False(string.IsNullOrWhiteSpace(evidence.Title));
+                        Assert.False(string.IsNullOrWhiteSpace(
+                            evidence.StateLabel));
+                        Assert.True(evidence.SourceCount > 0);
+                    });
+            });
+        Assert.Contains(
+            english.Adjustments.SelectMany(value => value.Evidence),
+            evidence => evidence.Href is not null);
+        Assert.All(
+            english.Counters,
+            counter => Assert.False(string.IsNullOrWhiteSpace(
+                counter.FeasibilityExplanation)));
+        Assert.NotEqual(
+            english.Feasibility.Summary,
+            chinese.Feasibility.Summary);
+    }
+
+    [Fact]
+    public async Task Maps_unchanged_result_when_current_loadout_already_fits()
+    {
+        var recommendation = await RecommendAsync(
+            RecommendationPolicy.Safe,
+            currentLoadoutAlreadyFits: true);
+
+        var strategy = Assert.IsType<TargetStrategyViewModel>(
+            CombatRecommendationViewModelMapper.Map(recommendation)
+                .TargetStrategy);
+
+        Assert.True(strategy.Feasibility.CurrentLoadoutAlreadySatisfies);
+        Assert.Contains(
+            "final recommendation is unchanged",
+            strategy.Feasibility.Summary,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -113,6 +165,7 @@ public sealed class CombatRecommendationViewModelMapperTests
         Assert.Equal(TargetStrategyStatus.Unsupported, strategy.Status);
         Assert.Empty(strategy.Goals);
         Assert.Empty(strategy.Counters);
+        Assert.Empty(strategy.Adjustments);
         Assert.All(
             strategy.Archetypes,
             archetype => Assert.Equal(
@@ -316,13 +369,16 @@ public sealed class CombatRecommendationViewModelMapperTests
 
     private static async Task<CombatLoadoutRecommendation> RecommendAsync(
         RecommendationPolicy policy,
-        string? gameDataVersion = null)
+        string? gameDataVersion = null,
+        bool currentLoadoutAlreadyFits = false)
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
         reader.ReadAsync(
                 Arg.Any<CombatSnapshotReadRequest>(),
                 Arg.Any<CancellationToken>())
-            .Returns(GoldenSnapshot(gameDataVersion));
+            .Returns(GoldenSnapshot(
+                gameDataVersion,
+                currentLoadoutAlreadyFits));
         var useCase = new RecommendCombatLoadout(reader);
 
         return await useCase.ExecuteAsync(
@@ -376,7 +432,8 @@ public sealed class CombatRecommendationViewModelMapperTests
     }
 
     private static CombatSnapshot GoldenSnapshot(
-        string? gameDataVersion = null)
+        string? gameDataVersion = null,
+        bool currentLoadoutAlreadyFits = false)
     {
         var jinni = Skill(
             604,
@@ -420,7 +477,9 @@ public sealed class CombatRecommendationViewModelMapperTests
                 [jinni, laojun],
                 new CombatLoadoutSnapshot(
                     neigongSkillIds: [],
-                    attackSkillIds: [],
+                    attackSkillIds: currentLoadoutAlreadyFits
+                        ? [jinni.SkillId]
+                        : [],
                     agilitySkillIds: [],
                     defenseSkillIds: [],
                     assistanceSkillIds: [laojun.SkillId]),
@@ -428,7 +487,10 @@ public sealed class CombatRecommendationViewModelMapperTests
                 new SlotBudgetSet(
                 [
                     new SlotBudget(SkillCategory.Neigong, 0, 6),
-                    new SlotBudget(SkillCategory.Attack, 0, 3),
+                    new SlotBudget(
+                        SkillCategory.Attack,
+                        currentLoadoutAlreadyFits ? 1 : 0,
+                        3),
                     new SlotBudget(SkillCategory.Agility, 0, 2),
                     new SlotBudget(SkillCategory.Defense, 0, 2),
                     new SlotBudget(SkillCategory.Assistance, 1, 2)
