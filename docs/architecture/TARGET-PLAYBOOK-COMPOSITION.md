@@ -68,6 +68,14 @@ The composed strategy also exposes one global option per counter code and one
 global threat per threat code. A counter appearing under several goals remains
 one candidate with several goal references.
 
+`CombatCounterRule.ThreatCodes` describes the complete verified capability of
+a counter, not the threats present on every target. Contextual coverage is the
+ordinal intersection of that capability with the threats on the selected
+source goals. Goal-level API options therefore reference only threats owned by
+that goal, while recommendation candidates reference only threats owned by
+currently eligible source goals. Unrelated capabilities never become claimed
+coverage, explanation caveats, or dangling threat references.
+
 These rules resolve only priority and response timing. They do not resolve a
 mechanical incompatibility.
 

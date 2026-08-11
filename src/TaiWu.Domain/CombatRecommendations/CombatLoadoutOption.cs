@@ -121,9 +121,27 @@ public sealed record CombatLoadoutOption
         CombatCounterRule rule,
         bool isCurrentlyEquipped,
         bool allowDirectionChange = false,
-        bool allowBreakthrough = false)
+        bool allowBreakthrough = false,
+        IEnumerable<string>? applicableThreatCodes = null)
     {
         ArgumentNullException.ThrowIfNull(rule);
+        var threatCodes = applicableThreatCodes?.ToArray()
+            ?? rule.ThreatCodes.ToArray();
+        if (threatCodes.Except(
+                rule.ThreatCodes,
+                StringComparer.Ordinal).Any())
+        {
+            throw new ArgumentException(
+                "Applicable threats must belong to the counter rule.",
+                nameof(applicableThreatCodes));
+        }
+
+        if (threatCodes.Length == 0)
+        {
+            throw new ArgumentException(
+                "A verified counter must address a target threat.",
+                nameof(applicableThreatCodes));
+        }
 
         return new CombatLoadoutOption(
             new CombatSkillCandidate(
@@ -132,7 +150,7 @@ public sealed record CombatLoadoutOption
                 allowDirectionChange: allowDirectionChange,
                 allowBreakthrough: allowBreakthrough),
             rule.Requirements,
-            rule.ThreatCodes,
+            threatCodes,
             isCurrentlyEquipped,
             rule.Effect.SourceReference,
             rule.Strength,

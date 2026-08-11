@@ -254,7 +254,17 @@ public sealed class TargetStrategyResponseMapperTests
         Assert.Single(multipleResponse.Playbook.Gaps);
         Assert.All(
             multipleResponse.Playbook.Goals,
-            goal => Assert.True(goal.IsEligible));
+            goal =>
+            {
+                Assert.True(goal.IsEligible);
+                Assert.All(
+                    goal.Options,
+                    option => Assert.Subset(
+                        goal.ThreatReferences.ToHashSet(
+                            StringComparer.Ordinal),
+                        option.ThreatReferences.ToHashSet(
+                            StringComparer.Ordinal)));
+            });
     }
 
     [Fact]

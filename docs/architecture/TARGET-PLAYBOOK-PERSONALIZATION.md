@@ -30,6 +30,11 @@ but it cannot manufacture a playable option.
 ## Existing engine remains authoritative
 
 Eligible verified counter rules become ordinary `CombatLoadoutOption` values.
+Each option carries only the intersection between the rule's verified threat
+capabilities and the currently eligible source goals. A shared counter can
+therefore serve several archetypes without claiming that threats from an
+unmatched or reduced family are present. The factory rejects an empty scope or
+a threat not owned by the verified rule.
 The existing `CombatLoadoutGenerator` remains responsible for:
 
 - learned-skill ownership and mastery;

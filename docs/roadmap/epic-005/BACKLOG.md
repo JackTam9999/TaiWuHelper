@@ -734,10 +734,10 @@ Run the full automated and guarded local verification matrix, audit every Epic
 
 #### Completion evidence
 
-- Remediated Release build: zero warnings and zero errors.
-- Default Release matrix: 1,053 total; 1,044 passed; 0 failed; 9 expected
+- Completion-audit Release build: zero warnings and zero errors.
+- Default Release matrix: 1,058 total; 1,049 passed; 0 failed; 9 expected
   opt-in integration skips.
-- Focused layers: Domain 417/417, Application 138/138, Infrastructure unit
+- Focused layers: Domain 421/421, Application 139/139, Infrastructure unit
   132/132, API/Presentation 276/276, and Architecture 80/80.
 - Guarded current-save vertical: 1 passed, 0 failed, 0 skipped; every
   registered family evaluated and every inspected source unchanged.
@@ -746,7 +746,8 @@ Run the full automated and guarded local verification matrix, audit every Epic
   English/Traditional Chinese 390 by 844 layout matrix remains valid.
 - The original technical completion claim was reopened by independent review
   because the three new families were gap-only. E5-011 records the completed
-  remediation; the product-owner decision remains open.
+  remediation. E5-012 records the completion refactor and final code audit;
+  the product-owner decision remains open.
 
 ### E5-011 — Deliver playable family counters and reusable overlays
 
@@ -802,6 +803,47 @@ exact channel-resistance evidence affect production recommendations.
   traced to a missing typed comparison threat. The complete threat inventory
   and a poison-family Presentation regression test close that path without
   recording the target identity.
+
+### E5-012 — Scope shared counters to the selected target threats
+
+**Status:** Complete
+
+**Priority:** P0
+
+**Estimate:** S
+
+**Dependencies:** E5-006, E5-007, E5-011 completion review
+
+Close the cross-family correctness gap found during the final Epic 5 audit. A
+verified counter rule may address several threats, but one matched family must
+not claim threats that exist only in another family.
+
+#### Acceptance criteria
+
+- [x] A composed counter derives contextual threat coverage from the selected
+      source goals and the rule's verified threat capabilities.
+- [x] Recommendation candidates carry only threats from currently eligible
+      source goals.
+- [x] A verified-rule option rejects empty contextual coverage and threats not
+      owned by that rule.
+- [x] Goal-level API options reference only threats exposed by their containing
+      goal.
+- [x] An outer-only target using shared reverse 伏龍刀法 claims only configured
+      outer-damage coverage and emits no caveat for absent mind threats.
+- [x] Domain, Application, API, formatting, build, and full Release tests pass.
+
+#### Completion evidence
+
+- `ComposedTargetCounterOption.ApplicableThreatCodes` is the shared Domain
+  projection used by recommendation generation and API mapping.
+- Domain tests cover selected-goal intersection plus invalid and empty verified
+  scopes. Application and API regressions cover the outer-only candidate and
+  goal-reference integrity.
+- [E5-012 completion refactor review](../../reviews/E5-012-contextual-counter-scope.md).
+- Release build: zero warnings and zero errors. Default matrix: 1,058 total;
+  1,049 passed; 0 failed; 9 expected opt-in integration skips.
+- `dotnet format TaiWu.slnx --no-restore --verify-no-changes` and
+  `git diff --check` pass on the final worktree.
 
 ## Future work outside Epic 5
 

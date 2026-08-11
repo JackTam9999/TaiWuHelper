@@ -136,7 +136,7 @@ public static class TargetStrategyResponseMapper
                     [.. goal.Threats.Select(threat =>
                         ThreatReference(threat.Code))],
                     [.. goal.Options.Select(option =>
-                        MapOption(option, player))],
+                        MapOption(option, goal, player))],
                     goal.ConflictGroups,
                     goal.EvidenceReferences,
                     [.. goal.KnownGaps.Select(gap =>
@@ -159,6 +159,7 @@ public static class TargetStrategyResponseMapper
 
     private static TargetCounterOptionResponse MapOption(
         ComposedTargetCounterOption option,
+        ComposedTargetResponseGoal goal,
         PlayerCombatSnapshot player)
     {
         var skill = player.LearnedSkills.SingleOrDefault(value =>
@@ -173,7 +174,8 @@ public static class TargetStrategyResponseMapper
             option.Effect.RawEffectId,
             option.Strength,
             option.ActivationTiming,
-            [.. option.CounterRule.ThreatCodes.Select(ThreatReference)],
+            [.. option.ApplicableThreatCodes([goal])
+                .Select(ThreatReference)],
             [.. option.Requirements.Select(MapRequirement)],
             option.SourcePlaybookKeys,
             option.SourceGoalCodes,

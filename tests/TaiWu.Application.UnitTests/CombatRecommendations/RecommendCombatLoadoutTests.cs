@@ -289,6 +289,59 @@ public sealed class RecommendCombatLoadoutTests
     }
 
     [Fact]
+    public async Task Outer_family_scopes_shared_fulong_to_present_threat()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var fulong = Skill(
+            624,
+            SkillCategory.Attack,
+            PracticeDirection.Reverse,
+            directEffectId: 508,
+            reverseEffectId: 1234);
+        var outerAttack = ConfiguredAttack(
+            710,
+            PracticeDirection.Direct,
+            directEffectId: 1000,
+            reverseEffectId: 1001,
+            poison: false,
+            outer: true);
+        var snapshot = Snapshot(
+            [fulong],
+            [outerAttack],
+            new CombatLoadoutSnapshot([], [], [], [], []),
+            SnapshotValue<CombatLoadoutSnapshot>.Available(
+                new CombatLoadoutSnapshot(
+                    [],
+                    [outerAttack.SkillId],
+                    [],
+                    [],
+                    [])),
+            warnings: []);
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(snapshot);
+
+        var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
+            new RecommendCombatLoadoutRequest(
+                snapshot.Metadata.SavePath,
+                snapshot.Target.CharacterId,
+                RecommendationPolicy.Balanced),
+            TestContext.Current.CancellationToken);
+
+        var selected = Assert.Single(
+            result.SelectedStyle.ManualPlan.Plan!
+                .SelectedRecommendation.Candidate.SelectedOptions,
+            option => option.Candidate.SkillId == fulong.SkillId);
+        Assert.Equal(
+            ["CONFIGURED_OUTER_DAMAGE_PRESSURE"],
+            selected.ThreatCodes);
+        Assert.DoesNotContain(
+            result.Explanation!.Caveats,
+            caveat => caveat.Code == "THREAT_DETAILS_UNAVAILABLE");
+    }
+
+    [Fact]
     public async Task Immediate_breakthrough_is_a_manual_recommendation_step()
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
@@ -646,7 +699,8 @@ public sealed class RecommendCombatLoadoutTests
         PracticeDirection direction,
         int directEffectId,
         int reverseEffectId,
-        bool poison)
+        bool poison,
+        bool outer = false)
     {
         return new CombatSkillSnapshot(
             skillId,
@@ -659,7 +713,7 @@ public sealed class RecommendCombatLoadoutTests
             SnapshotValue<int>.Available(directEffectId),
             SnapshotValue<int>.Available(reverseEffectId),
             hasConfiguredOuterDamage:
-                SnapshotValue<bool>.Available(false),
+                SnapshotValue<bool>.Available(outer),
             hasConfiguredPoisonApplication:
                 SnapshotValue<bool>.Available(poison));
     }

@@ -48,6 +48,25 @@ public sealed class ComposedTargetCounterOption
 
     public ImmutableArray<string> ConflictGroups { get; }
 
+    public ImmutableArray<string> ApplicableThreatCodes(
+        IEnumerable<ComposedTargetResponseGoal> goals)
+    {
+        ArgumentNullException.ThrowIfNull(goals);
+        var sourceGoals = SourceGoalCodes.ToHashSet(StringComparer.Ordinal);
+        var verifiedThreats = CounterRule.ThreatCodes.ToHashSet(
+            StringComparer.Ordinal);
+        return
+        [
+            .. goals
+                .Where(goal => sourceGoals.Contains(goal.Code))
+                .SelectMany(goal => goal.Threats)
+                .Select(threat => threat.Code)
+                .Where(verifiedThreats.Contains)
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal)
+        ];
+    }
+
     internal string ContentKey => TargetProfileText.Stable(
         StableKey,
         TargetProfileText.StableCollection(SourcePlaybookKeys),

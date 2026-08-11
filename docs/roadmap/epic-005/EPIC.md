@@ -5,7 +5,7 @@
 | Status | In progress |
 | Milestone | 5 |
 | Target release | TBD |
-| Last updated | 2026-08-10 |
+| Last updated | 2026-08-11 |
 
 ## Summary
 
@@ -464,12 +464,17 @@ independent review found that all three new families identified a target
 problem but supplied no playable 功法. E5-011 closes that gap with exact
 version-gated outer-damage, channel-routing, and poison counters; splits the
 reusable mind/resonance response from the defeat-reset overlay; and wires
-reviewed exact-target replacement into production. The
+reviewed exact-target replacement into production. E5-012 then closes a
+cross-family reporting defect by scoping each shared counter to threats from
+the selected source goals in recommendation and API output. The
 [pre-remediation automated](../../reviews/E5-010-automated-verification.md),
 [pre-remediation manual](../../reviews/E5-010-manual-verification.md), and
-[remediation](../../reviews/E5-011-playbook-remediation.md) reviews retain the
-full audit trail. Epic 5 remains `In progress` until the product owner reviews
-the remediated result and records the final completion decision.
+[remediation](../../reviews/E5-011-playbook-remediation.md) reviews, together
+with the
+[completion refactor review](../../reviews/E5-012-contextual-counter-scope.md),
+retain the full audit trail. Epic 5 is technically ready but remains
+`In progress` until the product owner reviews the result and records the final
+completion decision.
 
 ## Delivery reference
 

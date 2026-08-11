@@ -148,7 +148,7 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
             .GetValues<SkillCategory>()
             .SelectMany(category => player.EquippedSkills.Get(category))
             .ToHashSet();
-        var counterRules = playbookPlan.Options
+        var counterOptions = playbookPlan.Options
             .GroupBy(option => option.CounterRule.Effect.SkillId)
             .Select(group => group
                 .OrderByDescending(option => playbookPlan.Access.Evaluations
@@ -157,21 +157,23 @@ public sealed class RecommendCombatLoadout(ICombatSnapshotReader reader)
                         option.CounterRule)).IsAccessible)
                 .ThenByDescending(option => option.Strength)
                 .ThenBy(option => option.StableKey, StringComparer.Ordinal)
-                .First()
-                .CounterRule)
-            .OrderBy(rule => rule.Effect.SkillId)
+                .First())
+            .OrderBy(option => option.CounterRule.Effect.SkillId)
             .ToArray();
-        var counterSkillIds = counterRules
-            .Select(rule => rule.Effect.SkillId)
+        var counterSkillIds = counterOptions
+            .Select(option => option.CounterRule.Effect.SkillId)
             .ToHashSet();
 
         return
         [
-            .. counterRules.Select(rule =>
+            .. counterOptions.Select(option =>
                 CombatLoadoutOption.FromCounterRule(
-                    rule,
-                    currentSkillIds.Contains(rule.Effect.SkillId),
-                    allowBreakthrough: true)),
+                    option.CounterRule,
+                    currentSkillIds.Contains(
+                        option.CounterRule.Effect.SkillId),
+                    allowBreakthrough: true,
+                    applicableThreatCodes: option.ApplicableThreatCodes(
+                        playbookPlan.EligibleGoals))),
             .. currentSkillIds
                 .Except(counterSkillIds)
                 .Order()

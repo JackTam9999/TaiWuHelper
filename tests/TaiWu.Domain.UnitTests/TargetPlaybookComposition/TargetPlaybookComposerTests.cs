@@ -269,6 +269,30 @@ public sealed class TargetPlaybookComposerTests
     }
 
     [Fact]
+    public void Shared_counter_reports_only_threats_from_selected_goals()
+    {
+        var composition = Compose(TargetPlaybookFixture.FullAnalysis());
+        var fulong = Assert.Single(
+            composition.Options,
+            option => option.StableKey
+                == "REVERSE_FULONG_POWER_REDUCTION");
+        var outerGoal = Assert.Single(
+            composition.Goals,
+            goal => goal.Code == "PREPARE_FOR_OUTER_DAMAGE");
+
+        Assert.Equal(
+            ["CONFIGURED_OUTER_DAMAGE_PRESSURE"],
+            fulong.ApplicableThreatCodes([outerGoal]));
+        Assert.Equal(
+            [
+                "CONFIGURED_OUTER_DAMAGE_PRESSURE",
+                "DISTRACTION_MARK_ACCUMULATION",
+                "POSITIVE_MAGIC_SOUND_MIND_DAMAGE"
+            ],
+            fulong.ApplicableThreatCodes(composition.Goals));
+    }
+
+    [Fact]
     public void Equivalent_reordered_catalogues_produce_the_same_composition()
     {
         var analysis = TargetPlaybookFixture.FullAnalysis();
