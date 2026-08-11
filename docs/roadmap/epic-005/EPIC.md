@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress |
+| Status | Complete |
 | Milestone | 5 |
 | Target release | TBD |
 | Last updated | 2026-08-11 |
@@ -421,7 +421,7 @@ The workflow must present these states explicitly:
       language source remains byte-for-byte unchanged.
 - [x] No file, process, screenshot, automation, persistence, or game-control
       capability is introduced.
-- [ ] The product owner records the Epic 5 completion decision.
+- [x] The product owner records the Epic 5 completion decision.
 
 ## Success measures
 
@@ -472,9 +472,9 @@ the selected source goals in recommendation and API output. The
 [remediation](../../reviews/E5-011-playbook-remediation.md) reviews, together
 with the
 [completion refactor review](../../reviews/E5-012-contextual-counter-scope.md),
-retain the full audit trail. Epic 5 is technically ready but remains
-`In progress` until the product owner reviews the result and records the final
-completion decision.
+retain the full audit trail. On 2026-08-11, the product owner accepted the
+remediated and refactored result and approved Epic 5 for completion and merge
+to `master`. Epic 5 is complete.
 
 ## Delivery reference
 

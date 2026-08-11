@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Complete — technically ready for product-owner acceptance |
+| Status | Complete — accepted by product owner |
 | Evidence date | 2026-08-11 |
 | Epic | [EPIC-005](../roadmap/epic-005/EPIC.md) |
 | Backlog item | [E5-012](../roadmap/epic-005/BACKLOG.md#e5-012--scope-shared-counters-to-the-selected-target-threats) |
@@ -58,9 +58,10 @@ source-preserving guarded result; E5-012 changes only contextual threat
 projection and adds synthetic cross-layer regression coverage for that exact
 shape.
 
-## Remaining decision
+## Completion decision
 
 No unresolved code or evidence finding remains inside Epic 5's defined scope.
-The only unchecked acceptance item is the explicit product-owner completion
-decision. Broader target families and the companion, village, library, and
-resource-management ideas remain separate future epics.
+On 2026-08-11, the product owner accepted the remediated and refactored result
+and approved Epic 5 for completion and merge to `master`. Broader target
+families and the companion, village, library, and resource-management ideas
+remain separate future epics.

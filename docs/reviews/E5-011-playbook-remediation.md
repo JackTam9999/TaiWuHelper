@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Complete — awaiting product-owner review |
+| Status | Complete — accepted by product owner |
 | Evidence date | 2026-08-10 |
 | Epic | [EPIC-005](../roadmap/epic-005/EPIC.md) |
 | Backlog item | [E5-011](../roadmap/epic-005/BACKLOG.md#e5-011--deliver-playable-family-counters-and-reusable-overlays) |

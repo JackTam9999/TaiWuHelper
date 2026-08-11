@@ -682,7 +682,7 @@ player's accessible 功法 produced the final recommendation.
 
 ### E5-010 — Verify archetype reuse, safety, and determinism
 
-**Status:** Remediated — awaiting product-owner decision
+**Status:** Complete
 
 **Priority:** P1
 
@@ -724,7 +724,7 @@ Run the full automated and guarded local verification matrix, audit every Epic
 - [x] Deferred clustering, persistence, screenshot assistance, outcome
       learning, broader target coverage, companions, village, and library work
       remain explicit future work.
-- [ ] The product owner records the Epic 5 completion decision.
+- [x] The product owner records the Epic 5 completion decision.
 
 #### Evidence when complete
 
@@ -747,7 +747,8 @@ Run the full automated and guarded local verification matrix, audit every Epic
 - The original technical completion claim was reopened by independent review
   because the three new families were gap-only. E5-011 records the completed
   remediation. E5-012 records the completion refactor and final code audit;
-  the product-owner decision remains open.
+  the product owner accepted the result for completion and merge to `master`
+  on 2026-08-11.
 
 ### E5-011 — Deliver playable family counters and reusable overlays
 
