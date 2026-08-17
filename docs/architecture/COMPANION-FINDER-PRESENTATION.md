@@ -32,6 +32,10 @@ values for semantic Razor markup. It does not call a role evaluator, ranking
 builder, shortlist builder, merit comparer, source reader, or catalogue
 repository.
 
+The mapper retains the typed snapshot-read, enrichment, and catalogue statuses
+from that response. It also uses the response's exact candidate-universe
+eligible count; it never substitutes ranked/tied suitability for eligibility.
+
 Comparison is the only additional projection. It calls
 `CompanionRoleComparisonBuilder.Compare` with the two exact entries already
 owned by the immutable shortlist. It neither rereads a source nor reconstructs
@@ -80,6 +84,12 @@ changed revision, and safe read failure. Candidate sections retain ranked,
 tied, incomplete, unsupported, conflicting, and ineligible labels with visible
 reasons. Missing scores render `Unavailable`, never zero or blank.
 
+Partial source projection and catalogue enrichment are independent notices.
+Every supported enrichment/catalogue combination has distinct bilingual
+guidance for missing, stale, rebuilding, unsupported, read failure, repository
+failure, corruption, or candidate-partial evidence. Typed statuses remain on
+the view model and rendered result; a generic Boolean does not replace them.
+
 The page uses native radios, select, text input, checkboxes, buttons, and
 details. Result tables use scoped column and row headers. The same DOM changes
 to heading-led cards below the 960-pixel finder-container boundary; there is no
@@ -96,8 +106,9 @@ horizontal overflow.
 ## Verification
 
 Presentation mapper tests cover bilingual role and discipline mapping, every
-candidate and source state, score warnings, counts, filtering, comparison,
-missing display text, and ID hiding. Rendered-component tests cover native
+candidate and source state, exact universe eligibility, score warnings, typed
+snapshot/enrichment/catalogue states, filtering, comparison, missing display
+text, and ID hiding. Rendered-component tests cover native
 semantics, focus targets, state copy, tie cues, responsive single-DOM markup,
 and absent mutation actions. Architecture tests enforce the route, navigation,
 one explicit read action, no second evaluation path, no raw-ID rendering, and

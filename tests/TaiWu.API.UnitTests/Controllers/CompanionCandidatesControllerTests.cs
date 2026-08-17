@@ -72,12 +72,16 @@ public sealed class CompanionCandidatesControllerTests
             TaiwuLanguage.English);
 
         Assert.Equal(CompanionFinderStatus.Complete, response.Status);
+        Assert.Equal(
+            CompanionCandidateSnapshotReadStatus.Complete,
+            response.Source!.SnapshotReadStatus);
         Assert.Equal(Sha, response.Source!.SaveFingerprint);
         Assert.Equal(CombatSkillCatalogueStatus.Current, response.Source.CatalogueStatus);
         Assert.NotNull(response.Source.CatalogueSource);
         Assert.Equal("MARTIAL_DISCIPLINE_APTITUDE", response.Role!.Identity);
         Assert.Contains("not a universal ranking", response.Role.ScoreLimitation);
         Assert.Equal(2, response.Counts!.Total);
+        Assert.Equal(2, response.Counts.Eligible);
         Assert.Equal(2, response.Counts.Visible);
         Assert.Equal(["companion-candidate:2", "companion-candidate:1"],
             response.Candidates.Select(item => item.Reference));
@@ -137,6 +141,34 @@ public sealed class CompanionCandidatesControllerTests
     }
 
     [Fact]
+    public async Task Eligible_count_uses_candidate_universe_not_role_rankability()
+    {
+        var result = await Execute(
+            Workflow(Snapshot([
+                Profile(1, score: 90),
+                Profile(2),
+                Profile(
+                    3,
+                    universeState: CandidateUniverseState.Incomplete),
+                Profile(
+                    4,
+                    score: 99,
+                    universeState: CandidateUniverseState.Ineligible)
+            ])),
+            Request());
+
+        var response = CompanionFinderResponseMapper.Map(
+            result,
+            TaiwuLanguage.English);
+
+        Assert.Equal(4, response.Counts!.Total);
+        Assert.Equal(2, response.Counts.Eligible);
+        Assert.Equal(1, response.Counts.Ranked);
+        Assert.Equal(2, response.Counts.Incomplete);
+        Assert.Equal(1, response.Counts.Ineligible);
+    }
+
+    [Fact]
     public async Task Partial_catalogue_result_retains_ranked_candidates_and_typed_enrichment()
     {
         var snapshot = Snapshot([Profile(1, score: 70)]);
@@ -151,6 +183,7 @@ public sealed class CompanionCandidatesControllerTests
         Assert.Equal(CompanionFinderStatus.Partial, response.Status);
         Assert.Equal(CompanionCandidateEnrichmentStatus.CatalogueStale, response.Enrichment!.Status);
         Assert.Equal(CompanionCandidateEnrichmentState.CatalogueStale, Assert.Single(response.Candidates).Enrichment.State);
+        Assert.Equal(1, response.Counts!.Eligible);
         Assert.Equal(1, response.Counts!.Ranked);
     }
 
@@ -518,9 +551,11 @@ public sealed class CompanionCandidatesControllerTests
     private static CandidateProfile Profile(
         int characterId,
         short? score = null,
-        IEnumerable<CandidateProfileFact>? facts = null) => new(
+        IEnumerable<CandidateProfileFact>? facts = null,
+        CandidateUniverseState universeState =
+            CandidateUniverseState.Eligible) => new(
             new CandidateIdentity(characterId),
-            CandidateUniverseState.Eligible,
+            universeState,
             Versions(),
             (facts ?? (score.HasValue ? [ScoreFact(score.Value)] : []))
                 .Concat(MembershipFacts()),

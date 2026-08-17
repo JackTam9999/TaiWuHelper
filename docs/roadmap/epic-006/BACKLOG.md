@@ -733,9 +733,9 @@ localhost-only HTTP endpoints and pure response mappers.
 - English and Traditional Chinese change only mapped display text. OpenAPI
   response metadata and property descriptions state that totals are role-local,
   not universal rankings, probabilities, or action recommendations.
-- Twenty API cases and two architecture checks cover role discovery, controller
-  behavior, mapping, localization parity, serialization, public types, every
-  response state, and no re-ranking.
+- Twenty-two focused API cases and two architecture checks cover role
+  discovery, controller behavior, mapping, localization parity, serialization,
+  public types, every response state, and no re-ranking.
 
 ## Slice 7: Core UI
 
@@ -794,7 +794,7 @@ reasons without introducing a second evaluation path in Presentation.
 
 - `/companions` Razor page, reusable candidate-result component, pure
   Presentation mapper/view models, helper-session interaction state, and the
-  enum-backed 94-key bilingual copy catalogue.
+  enum-backed 114-key bilingual copy catalogue.
 - Bilingual candidate and location descriptors captured inside the existing
   one-pass save projection, plus a path-free installed discipline-label source;
   all display values remain outside evaluation profiles and fingerprints.
@@ -808,6 +808,9 @@ reasons without introducing a second evaluation path in Presentation.
   [Traditional Chinese narrow result](../../reviews/assets/epic-006/companion-finder-zh-narrow.png),
   and [narrow candidate-card](../../reviews/assets/epic-006/companion-finder-zh-narrow-candidates.png)
   captures; no real save value, identity, fingerprint, or local path is stored.
+  These PNGs are retained as historical responsive-layout evidence; the
+  corrected fixture and executable Razor rendering tests own current eligible-
+  count and typed-state semantics.
 
 ## Slice 8: Verification and completion
 
@@ -866,12 +869,12 @@ architecture rules, performance checks, and guarded read-only local scenarios.
 - Three guarded Release integration scenarios, including two repeated complete
   role workflows and all installed discipline-language sources; every guarded
   save/runtime/source file remained byte-for-byte unchanged.
-- Release build with zero warnings/errors, 1,223 default tests, formatter and
+- Release build with zero warnings/errors, 1,238 default tests, formatter and
   link checks, architecture capability scans, and clean diff validation.
 
 ### E6-012 — Validate representative roles and close Epic 6
 
-**Status:** Planned
+**Status:** Awaiting product-owner decision
 
 **Priority:** P1
 
@@ -885,24 +888,24 @@ Record remaining limitations and obtain the explicit completion decision.
 
 #### Acceptance criteria
 
-- [ ] Every delivered role is manually checked against at least one privacy-
+- [x] Every delivered role is manually checked against at least one privacy-
       safe local or redacted representative scenario.
-- [ ] Candidate-universe membership and eligibility are checked independently
+- [x] Candidate-universe membership and eligibility are checked independently
       from target lookup.
-- [ ] Hard requirements, score components, ties, strengths, weaknesses,
+- [x] Hard requirements, score components, ties, strengths, weaknesses,
       tradeoffs, and missing evidence agree across source facts, Domain,
       Application, API, and UI.
-- [ ] At least one incomplete, unsupported, or conflicting candidate remains
+- [x] At least one incomplete, unsupported, or conflicting candidate remains
       visibly unranked rather than receiving an invented low score.
-- [ ] English and Traditional Chinese desktop and narrow layouts preserve fact
+- [x] English and Traditional Chinese desktop and narrow layouts preserve fact
       parity, readable order, keyboard operation, and non-color status cues.
-- [ ] Performance remains within the E6-000 budget on the representative save.
-- [ ] Save, GameData, language, and other inspected fingerprints remain
+- [x] Performance remains within the E6-000 budget on the representative save.
+- [x] Save, GameData, language, and other inspected fingerprints remain
       unchanged.
-- [ ] Companion development, village assignment, library planning,
+- [x] Companion development, village assignment, library planning,
       persistence, export, automation, and game control are confirmed absent.
-- [ ] All Epic 6 acceptance criteria have linked implementation or evidence.
-- [ ] Remaining unsupported roles or mechanics become explicit future backlog
+- [x] All Epic 6 acceptance criteria have linked implementation or evidence.
+- [x] Remaining unsupported roles or mechanics become explicit future backlog
       candidates rather than partially implemented rules.
 - [ ] The product owner records the Epic 6 completion decision.
 
@@ -912,6 +915,23 @@ Record remaining limitations and obtain the explicit completion decision.
 - Reviewed English and Traditional Chinese captures using synthetic or
   redacted content.
 - Product-owner completion decision in `EPIC.md` and the roadmap index.
+
+#### Evidence ready for decision
+
+- [Representative manual verification](../../reviews/E6-012-manual-verification.md)
+  covering both live role families and both languages without recording local
+  identity or value data.
+- Four authoritative representative API responses retained exact semantic
+  parity across localization and one stable save revision.
+- Observed cold `27.929` seconds and warm `3`/`1`/`1` milliseconds, within the
+  E6-000 budgets; two subsequent expanded E6-011 integration runs each
+  completed all three guarded scenarios in about 24 seconds with no changes.
+- Candidate-universe source inspection, synthetic unavailable/tie UI review,
+  cross-layer traceability, scope audit, and explicit deferred-mechanics list.
+- Independent closure review findings were corrected: exact universe-eligible
+  counts replace rankability counts, Presentation retains specific snapshot,
+  enrichment, and catalogue states, and the read-only guard includes all eight
+  bilingual name/map packs inspected during candidate display projection.
 
 ## Future work outside Epic 6
 

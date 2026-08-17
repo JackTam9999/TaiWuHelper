@@ -21,6 +21,12 @@ No real character identity, candidate value, save fingerprint, source
 fingerprint, proprietary source text, or local machine path is present in this
 report or its captures.
 
+> **Closure correction:** the PNG captures below predate the independent E6-012
+> review and retain the former rankability-based eligible tile. They remain
+> historical layout evidence only. The corrected synthetic fixture reports all
+> four candidate-universe-eligible profiles, while current mapper and Razor
+> rendering tests prove exact eligibility and typed partial/catalogue states.
+
 ## Live route verification
 
 The live page returned its expected title and `/companions` route. Its initial
@@ -85,6 +91,11 @@ inertness, complete bilingual copy, responsive single-DOM classes, and raw-ID
 hiding. Architecture checks forbid a Presentation evaluation path and any
 save-write, persistence, process, screenshot, upload, input-automation, or
 game-control dependency.
+
+The closure correction additionally renders the production Razor result for
+every supported snapshot/enrichment/catalogue state and checks distinct
+bilingual recovery guidance. It also proves that universe eligibility remains
+independent of rankability in both API and Presentation summaries.
 
 ## Automated result
 

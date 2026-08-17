@@ -68,13 +68,15 @@ Complete, partial, empty, and invalid-comparison responses use the typed
 
 - finder state and stable failure identity where applicable;
 - deterministic semantic finder fingerprint;
-- snapshot capture time, save fingerprint, GameData version, profile mapping,
-  discipline catalogue, and fingerprint-schema versions;
+- snapshot capture time and exact complete/partial read status, save
+  fingerprint, GameData version, profile mapping, discipline catalogue, and
+  fingerprint-schema versions;
 - catalogue status and installed catalogue source fingerprints;
 - selected stable role, role/evaluation versions, typed discipline, localized
   purpose, and score limitation;
-- unfiltered counts for total, ranked, tied, ineligible, incomplete,
-  unsupported, and conflicting candidates plus visible filtered count;
+- unfiltered counts for total, exact candidate-universe eligible, ranked,
+  tied, ineligible, incomplete, unsupported, and conflicting candidates plus
+  visible filtered count;
 - every canonical candidate entry and the references visible in the selected
   view;
 - optional comparison over two entries from the same result; and
@@ -83,6 +85,11 @@ Complete, partial, empty, and invalid-comparison responses use the typed
 Filters affect only `visibleCandidateReferences`. They do not remove canonical
 candidate responses or change scores, ranks, ties, counts, comparison facts, or
 the finder fingerprint.
+
+`counts.eligible` is not `ranked + tied` and is not inferred as
+`total - ineligible`. It counts only profiles whose typed candidate-universe
+state is `Eligible`; role evidence may still leave one of those candidates
+incomplete, unsupported, conflicting, or otherwise unranked.
 
 ### Candidate evidence
 
@@ -150,6 +157,12 @@ English and Traditional Chinese mapping changes only display strings. Stable
 role, candidate, requirement, field, diagnostic, evidence, source, outcome,
 score, order, rank, tie, and fingerprint values remain identical.
 
+Presentation retains the API's exact snapshot-read, enrichment, and catalogue
+statuses. It maps supported combinations to distinct bilingual recovery
+guidance for candidate-partial, catalogue missing, installed sources missing,
+stale, rebuilding, unsupported, source-read failure, repository failure, and
+corrupt states rather than collapsing them into one generic partial notice.
+
 Candidate display name, location name, role purpose, score warning, evidence
 explanation, and discipline label are presentation values. Missing display
 text is nullable in the API and becomes a localized unavailable label in the
@@ -164,10 +177,11 @@ recommendations.
 
 ## Verification
 
-Twenty-one focused API cases cover bilingual role discovery, complete mapping,
+Twenty-two focused API cases cover bilingual role discovery, complete mapping,
 source versions, score components, facts, conflicts, enrichment, comparison,
-partial catalogue evidence, localized candidate display context, language
-parity, route shape, validation, every HTTP source state, cancellation,
+exact candidate-universe counts, partial catalogue evidence, localized
+candidate display context, language parity, route shape, validation, every
+HTTP source state, cancellation,
 serialization safety, and public contract types. Architecture checks forbid
 local/mutation types and prevent the controller or mapper from evaluating or
 ranking.

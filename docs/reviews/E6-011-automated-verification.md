@@ -12,9 +12,15 @@
 
 The complete Epic 6 technical vertical passes its synthetic, cross-layer,
 architecture, Release, and guarded local checks. The default non-integration
-matrix contains 1,223 passing tests. The three focused companion integration
+matrix contains 1,238 passing tests. The three focused companion integration
 scenarios also pass against the configured representative save and installed
 sources.
+
+An independent closure review then identified three evidence/parity gaps. The
+verified result now counts exact candidate-universe eligibility separately
+from role rankability, carries snapshot, enrichment, and catalogue states into
+Presentation with distinct bilingual recovery guidance, and fingerprints all
+eight bilingual name/map sources read by candidate display projection.
 
 No local path, save or candidate identity, exact candidate value, proprietary
 source text, or source fingerprint is recorded here. Test output contains only
@@ -28,8 +34,8 @@ typed states, aggregate counts, timing limits, and guarded-file counts.
 | Both roles | Martial and life-skill synthetic positive, ineligible, incomplete, unsupported, conflicting, and tied matrices | Passed, 2 role cases |
 | Application | One coherent source chain, filter/comparison identity, cancellation, partial catalogue states, changed-revision rebuild | Passed |
 | Infrastructure | One archive-session call site, complete aggregate mapping, bilingual display isolation, no per-candidate reopen | Passed |
-| API | Typed HTTP states, localization parity, nullable unavailable values, comparison, serialization and public-contract safety | Passed |
-| Presentation | Same immutable result through the API mapper, complete bilingual states, filtering, comparison, focus, native semantics, no raw IDs | Passed |
+| API | Typed HTTP and snapshot states, exact universe-eligible count, localization parity, nullable unavailable values, comparison, serialization and public-contract safety | Passed |
+| Presentation | Same immutable result through the API mapper, exact snapshot/enrichment/catalogue states, distinct bilingual recovery guidance, filtering, comparison, focus, native semantics, no raw IDs | Passed |
 | Architecture | No mutation-capable GameData, persistence, process, screenshot, upload, input, or game-control path; one evaluation path | Passed |
 | Browser | English desktop and Traditional Chinese narrow fact parity with no document overflow or console error | Passed in [E6-010 review](./E6-010-companion-finder-ui.md) |
 
@@ -78,11 +84,14 @@ The integration assertions enforce the E6-000 product budgets directly:
 - one archive-session projection per request; and
 - no archive reopen per candidate.
 
-The full class completed in about 31 seconds in one Release process. Before and
+The expanded full class completed in about 24 seconds in each of two repeated
+Release runs. Before and
 after states compare length, last-write time, and SHA-256 for the configured
 save, runtime assemblies, catalogue configuration, combat/special-effect/book
-language sources, and all four martial/life discipline language sources. Every
-guarded file remained identical.
+language sources, all four martial/life discipline language sources, and the
+Traditional Chinese and English `Name`, `MapState`, `MapArea`, and `MapBlock`
+language packs used for display projection. Every guarded file remained
+identical.
 
 ## Release and default matrix
 
@@ -91,9 +100,9 @@ guarded file remained identical.
 | Domain | 493 | 0 | 0 |
 | Application | 178 | 0 | 0 |
 | Infrastructure | 145 | 0 | 0 |
-| Architecture | 93 | 0 | 0 |
-| API and Presentation | 314 | 0 | 0 |
-| **Total** | **1,223** | **0** | **0** |
+| Architecture | 94 | 0 | 0 |
+| API and Presentation | 328 | 0 | 0 |
+| **Total** | **1,238** | **0** | **0** |
 
 The Release solution build completes with zero warnings and zero errors.
 `dotnet format --verify-no-changes`, changed-document link validation,
@@ -116,10 +125,10 @@ repository leak/capability scans, and `git diff --check` pass.
 | One bounded archive read | Snapshot reader call-site architecture test, Infrastructure unit tests, guarded local scenario | Verified |
 | Coherent save/catalogue/GameData/rule identity | Finder source-chain constructors and Application revision tests | Verified |
 | Filters and localization preserve identity | Finder, response, mapper, and session-state tests | Verified |
-| API and UI state parity | Shared API mapper, Presentation mapper, rendered tests, no-reranking architecture checks | Verified |
+| API and UI state parity | Shared API mapper, exact universe-eligibility count, typed snapshot/enrichment/catalogue view models, exhaustive rendered state guidance, and no-reranking architecture checks | Verified |
 | Bilingual responsive keyboard-native UI | [E6-010 browser review](./E6-010-companion-finder-ui.md) and rendered semantics tests | Verified |
-| Required automated state coverage | 1,223-test matrix plus 3 guarded integration cases | Verified |
-| Game-owned bytes unchanged | Expanded before/after guarded integration set | Verified |
+| Required automated state coverage | 1,238-test matrix plus 3 guarded integration cases | Verified |
+| Game-owned bytes unchanged | Expanded before/after guarded integration set, including all eight candidate-display name/map language packs | Verified |
 | No mutation, persistence, process, screenshot, or input capability | Epic 6 architecture suites | Verified |
 | Every criterion has linked evidence | This table | Verified |
 | Product-owner completion decision | Owned by E6-012 | Pending explicit input |

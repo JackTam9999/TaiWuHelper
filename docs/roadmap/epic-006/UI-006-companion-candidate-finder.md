@@ -99,7 +99,7 @@ qualification, or rank.
 ├ Results — Synthetic martial discipline ─ Snapshot current ───────────────┤
 │ Score = saved base qualification for this discipline only.               │
 │ Not current attainment, success probability, or universal companion rank.│
-│ Considered 4 · Ranked 3 · Needs review 1 · Ineligible 0                  │
+│ Considered 4 · Eligible 4 · Ranked 1 · Tied 2 · Needs review 1          │
 │ Show: (●) All (○) Ranked (○) Needs review (○) Ineligible  Name: [      ] │
 ├ Rank │ Candidate          │ Base qualification │ State       │ Compare ┤
 │ 1    │ Synthetic Person A │ 90                 │ Ranked      │ [ ]     │
@@ -174,6 +174,10 @@ Ranked and tied candidates appear first in canonical order. `Needs review`
 groups incomplete, unsupported, and conflicting candidates under separate
 state subheadings. `Ineligible` is last. Sections with zero entries show their
 count in the summary and may omit an empty body.
+
+`Eligible` is the exact candidate-universe state, not a synonym for ranked or
+tied. An eligible candidate whose role evidence is incomplete remains in the
+eligible count and the needs-review section without receiving a score.
 
 No candidate receives a winner crown, best-person badge, percentage bar,
 quality grade, green/red worth indicator, or cross-role comparison.
@@ -287,7 +291,7 @@ focus on the equivalent control whenever it still exists.
 | Loading | Busy status, information-only notice, no mixed old/new active result | Atomic success or failure |
 | Available ranked result | Role, discipline, score warning, counts, ranked/tied rows | Filter, compare, or request another role |
 | One eligible candidate | Rank 1 with no claim that comparison proved superiority | Review or run another discipline |
-| No eligible candidate | Zero ranked count and honest state sections | Review reasons or refresh stable save |
+| No eligible candidate | Zero eligible count and honest universe-state sections | Review reasons or refresh stable save |
 | Explicit tie | Shared rank plus visible tied text | Compare tied candidates |
 | Ineligible candidate | Failed hard gate and evidence summary; no score | Review only |
 | Incomplete candidate | Missing required fact and no zero fallback | Refresh only when source may become available |
@@ -297,6 +301,10 @@ focus on the equivalent control whenever it still exists.
 | Comparison ready | Two candidates from one result and exact relative state | Clear or change selection |
 | Save changed during read | Discarded result and stable-save retry guidance | Retry after save stabilizes |
 | Missing configured save | Configuration guidance without raw path | Configure trusted save and retry |
+| Partial snapshot | Exact partial source status and affected-candidate guidance | Review unranked entries or retry a stable read |
+| Catalogue missing or installed sources missing | Exact missing state and source-specific guidance | Restore trusted sources or rebuild, then retry |
+| Catalogue stale or rebuilding | Exact stale/rebuilding state, never old values | Refresh or wait for rebuild, then retry |
+| Catalogue unsupported, unreadable, unavailable, or corrupt | Exact typed failure and distinct recovery guidance | Correct the named source/catalogue condition before retrying |
 | Read/calculation failure | Safe error summary with no exception or old active result | Retry or correct configuration |
 | Previous draft/result mismatch | Inert `Previous result` label | Submit the new draft or restore matching controls |
 
@@ -379,8 +387,9 @@ manually in the game.
 ## Verification evidence
 
 - Presentation mapper tests cover every candidate and evaluation state, exact
-  score warning, ties, filters, counts, comparison outcomes, missing display
-  values, and raw-ID hiding.
+  universe eligibility, typed snapshot/enrichment/catalogue status, score
+  warning, ties, filters, counts, comparison outcomes, missing display values,
+  and raw-ID hiding.
 - Rendered-component tests cover native role/discipline controls, loading,
   stable-save retry, one-candidate, empty, tied, needs-review, ineligible,
   comparison, previous-result, focus-target, and bilingual states.

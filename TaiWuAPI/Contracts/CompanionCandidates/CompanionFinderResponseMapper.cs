@@ -76,6 +76,7 @@ public static class CompanionFinderResponseMapper
             result.Fingerprint,
             new CompanionFinderSourceResponse(
                 result.SourceIdentity.SnapshotCapturedAtUtc,
+                result.SnapshotReadStatus!.Value,
                 versions.SaveSha256,
                 versions.GameDataVersion,
                 versions.ProfileMappingVersion,
@@ -89,6 +90,9 @@ public static class CompanionFinderResponseMapper
                 result.Enrichment.CatalogueStatus),
             new CompanionShortlistCountsResponse(
                 shortlist.Counts.Total,
+                shortlist.Entries.Count(entry =>
+                    entry.Evaluation.Profile.UniverseState
+                        == CandidateUniverseState.Eligible),
                 shortlist.Counts.Ranked,
                 shortlist.Counts.Tied,
                 shortlist.Counts.Ineligible,

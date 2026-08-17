@@ -99,7 +99,27 @@ public enum CompanionFinderUiTextKey
     ResultSummary = 90,
     DecisiveStrengths = 91,
     MaterialLimitations = 92,
-    RequirementEvidence = 93
+    RequirementEvidence = 93,
+    EnrichmentCurrentTitle = 94,
+    EnrichmentCurrentMessage = 95,
+    CandidateEvidencePartialTitle = 96,
+    CandidateEvidencePartialMessage = 97,
+    CatalogueMissingTitle = 98,
+    CatalogueMissingMessage = 99,
+    CatalogueSourcesMissingTitle = 100,
+    CatalogueSourcesMissingMessage = 101,
+    CatalogueStaleTitle = 102,
+    CatalogueStaleMessage = 103,
+    CatalogueRebuildingTitle = 104,
+    CatalogueRebuildingMessage = 105,
+    CatalogueUnsupportedTitle = 106,
+    CatalogueUnsupportedMessage = 107,
+    CatalogueSourceReadFailedTitle = 108,
+    CatalogueSourceReadFailedMessage = 109,
+    CatalogueRepositoryFailedTitle = 110,
+    CatalogueRepositoryFailedMessage = 111,
+    CatalogueCorruptTitle = 112,
+    CatalogueCorruptMessage = 113
 }
 
 public static class CompanionFinderUiText
@@ -291,8 +311,8 @@ public static class CompanionFinderUiText
                 ("This stable snapshot contained no non-Taiwu current-group profiles to evaluate.",
                  "此穩定快照中沒有可評估的非太吾隊伍成員。"),
             CompanionFinderUiTextKey.PartialMessage =>
-                ("Some source or catalogue evidence is unavailable. Ranked facts remain exact; affected candidates stay visibly unranked.",
-                 "部分來源或目錄證據無法取得。已排名數值仍為精確值；受影響的人選會明確維持未排名。"),
+                ("Some candidate fields could not be read from this stable snapshot. Ranked facts remain exact; affected candidates stay visibly unranked.",
+                 "此穩定快照中的部分人選欄位無法讀取。已排名數值仍為精確值；受影響的人選會明確維持未排名。"),
             CompanionFinderUiTextKey.ConfirmedEvidence =>
                 ("Saved base value confirmed", "已確認存檔基礎值"),
             CompanionFinderUiTextKey.MissingEvidence =>
@@ -317,6 +337,56 @@ public static class CompanionFinderUiText
                 ("Material limitations", "重要限制"),
             CompanionFinderUiTextKey.RequirementEvidence =>
                 ("Requirement evidence", "條件證據"),
+            CompanionFinderUiTextKey.EnrichmentCurrentTitle =>
+                ("Catalogue evidence current", "目錄證據目前有效"),
+            CompanionFinderUiTextKey.EnrichmentCurrentMessage =>
+                ("The installed catalogue and candidate evidence match this stable snapshot.",
+                 "已安裝目錄與人選證據皆符合此穩定快照。"),
+            CompanionFinderUiTextKey.CandidateEvidencePartialTitle =>
+                ("Some candidate evidence is incomplete", "部分人選證據不完整"),
+            CompanionFinderUiTextKey.CandidateEvidencePartialMessage =>
+                ("Review candidates marked as needing review. Unavailable evidence was not treated as a negative or a zero.",
+                 "請檢查標示為需檢查的人選；無法取得的證據不會被當作否定或零值。"),
+            CompanionFinderUiTextKey.CatalogueMissingTitle =>
+                ("Local catalogue missing", "缺少本機目錄"),
+            CompanionFinderUiTextKey.CatalogueMissingMessage =>
+                ("Rebuild the local catalogue from the trusted installed game sources, then run the search again.",
+                 "請從受信任的已安裝遊戲來源重建本機目錄，再重新搜尋。"),
+            CompanionFinderUiTextKey.CatalogueSourcesMissingTitle =>
+                ("Installed catalogue sources missing", "缺少已安裝的目錄來源"),
+            CompanionFinderUiTextKey.CatalogueSourcesMissingMessage =>
+                ("Check that the supported game installation and bilingual source files are available, then retry.",
+                 "請確認支援的遊戲安裝與雙語來源檔案皆可取得，再重試。"),
+            CompanionFinderUiTextKey.CatalogueStaleTitle =>
+                ("Local catalogue is stale", "本機目錄已過期"),
+            CompanionFinderUiTextKey.CatalogueStaleMessage =>
+                ("The installed sources no longer match the local catalogue. Refresh the catalogue and run the search again.",
+                 "已安裝來源已不符合本機目錄；請更新目錄後重新搜尋。"),
+            CompanionFinderUiTextKey.CatalogueRebuildingTitle =>
+                ("Catalogue rebuild in progress", "目錄正在重建"),
+            CompanionFinderUiTextKey.CatalogueRebuildingMessage =>
+                ("Wait for the catalogue rebuild to finish, then retry this search.",
+                 "請等待目錄重建完成，再重試此搜尋。"),
+            CompanionFinderUiTextKey.CatalogueUnsupportedTitle =>
+                ("Catalogue version unsupported", "不支援此目錄版本"),
+            CompanionFinderUiTextKey.CatalogueUnsupportedMessage =>
+                ("The installed game data is outside the verified catalogue mapping. Use a supported source version before retrying.",
+                 "已安裝的遊戲資料不在已驗證目錄對應範圍內；請改用支援的來源版本後重試。"),
+            CompanionFinderUiTextKey.CatalogueSourceReadFailedTitle =>
+                ("Could not read catalogue sources", "無法讀取目錄來源"),
+            CompanionFinderUiTextKey.CatalogueSourceReadFailedMessage =>
+                ("Check access to the trusted installed game sources, then retry without using the incomplete catalogue evidence.",
+                 "請檢查受信任遊戲來源的存取狀態，再重試；不要使用不完整的目錄證據。"),
+            CompanionFinderUiTextKey.CatalogueRepositoryFailedTitle =>
+                ("Local catalogue unavailable", "本機目錄無法使用"),
+            CompanionFinderUiTextKey.CatalogueRepositoryFailedMessage =>
+                ("Restart the helper and retry. If the state remains, rebuild the local catalogue from trusted installed sources.",
+                 "請重新啟動助手後重試；若狀態持續，請從受信任的已安裝來源重建本機目錄。"),
+            CompanionFinderUiTextKey.CatalogueCorruptTitle =>
+                ("Local catalogue is corrupt", "本機目錄已損壞"),
+            CompanionFinderUiTextKey.CatalogueCorruptMessage =>
+                ("Rebuild the local catalogue from trusted installed sources before using catalogue-dependent evidence.",
+                 "使用依賴目錄的證據前，請先從受信任的已安裝來源重建本機目錄。"),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(key),
                 key,

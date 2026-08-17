@@ -310,6 +310,24 @@ share character, skill, evidence, and comparison primitives, but each needs a
 different objective model and should not be combined into one unbounded
 optimizer epic.
 
+### Epic 6 deferred companion mechanics
+
+Epic 6 deliberately leaves these as evidence-gated future candidates rather
+than partial role rules:
+
+| Candidate | Future evidence needed | Current boundary |
+|---|---|---|
+| Current modified qualification and attainment | Standalone-safe or explicitly live special-effect context with versioned provenance | Saved base aptitude only |
+| General combat-support role | Party synergy, timing, teammate commands, survivability, and composition mechanics | Qualification and learned skills do not prove support value |
+| Martial-art teaching role | Relationship, interaction, teachability, book/content, and live-context rules | No teaching claim |
+| Recruitable-prospect role | Recruitment availability, relationship thresholds, dialogue/event, travel, and party-capacity rules | Current group members only |
+| Inheritance or long-term potential | Verified growth, transfer, age-horizon, and development rules | Continue under PI-009 |
+| Settlement/work role | Villager availability, assignment, building, resource, and output rules | Continue under PI-010 |
+
+Names, locations, age, learned skills, raw descriptions, and nearby APIs remain
+insufficient evidence for any of these mechanics. A future promotion must
+define a separate source decision and objective contract before implementation.
+
 ## Discovery questions
 
 - Which target details can be reliably observed in the current game UI?

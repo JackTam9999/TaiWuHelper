@@ -102,6 +102,7 @@ public sealed record CompanionFinderFailureResponse(
 
 public sealed record CompanionFinderSourceResponse(
     DateTimeOffset SnapshotCapturedAtUtc,
+    CompanionCandidateSnapshotReadStatus SnapshotReadStatus,
     string SaveFingerprint,
     string GameDataVersion,
     string ProfileMappingVersion,
@@ -136,6 +137,7 @@ public sealed record CompanionEnrichmentSummaryResponse(
 
 public sealed record CompanionShortlistCountsResponse(
     int Total,
+    int Eligible,
     int Ranked,
     int Tied,
     int Ineligible,

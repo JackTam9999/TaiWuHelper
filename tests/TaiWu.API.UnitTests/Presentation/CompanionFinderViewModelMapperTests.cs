@@ -1,4 +1,5 @@
 using TaiWu.Application.CompanionCandidates;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
@@ -56,7 +57,7 @@ public sealed class CompanionFinderViewModelMapperTests
             "Synthetic martial discipline");
 
         Assert.Equal(9, model.Counts.Total);
-        Assert.Equal(3, model.Counts.Eligible);
+        Assert.Equal(8, model.Counts.Eligible);
         Assert.Equal(1, model.Counts.Ranked);
         Assert.Equal(2, model.Counts.Tied);
         Assert.Equal(5, model.Counts.NeedsReview);
@@ -65,6 +66,16 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Equal(1, model.Counts.Unsupported);
         Assert.Equal(1, model.Counts.Conflicting);
         Assert.Contains("not current attainment", model.ScoreLimitation);
+        Assert.Equal(
+            CompanionCandidateSnapshotReadStatus.Complete,
+            model.SnapshotReadStatus);
+        Assert.Equal(
+            CompanionCandidateEnrichmentStatus.Complete,
+            model.Enrichment.Status);
+        Assert.Equal(
+            CombatSkillCatalogueStatus.Current,
+            model.Enrichment.CatalogueStatus);
+        Assert.False(model.Enrichment.NeedsAttention);
 
         var first = Assert.Single(model.Candidates, value =>
             value.DisplayName == "Synthetic Person A");
@@ -97,6 +108,105 @@ public sealed class CompanionFinderViewModelMapperTests
             value.EvidenceLabel == "Evidence no longer current");
         Assert.Contains(unranked, value =>
             value.EvidenceLabel == "Evidence conflicts");
+    }
+
+    [Fact]
+    public async Task Partial_snapshot_state_remains_typed_separately_from_current_enrichment()
+    {
+        var result = await CompanionFinderTestData.ResultAsync(
+            partialSnapshot: true);
+
+        var model = CompanionFinderViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            "Synthetic martial discipline");
+
+        Assert.True(model.IsPartial);
+        Assert.Equal(
+            CompanionCandidateSnapshotReadStatus.Partial,
+            model.SnapshotReadStatus);
+        Assert.Equal(
+            CompanionCandidateEnrichmentStatus.Complete,
+            model.Enrichment.Status);
+        Assert.False(model.Enrichment.NeedsAttention);
+    }
+
+    [Theory]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.Complete,
+        CombatSkillCatalogueStatus.Current,
+        false,
+        "Catalogue evidence current")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.Partial,
+        CombatSkillCatalogueStatus.Current,
+        true,
+        "Some candidate evidence is incomplete")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueMissing,
+        CombatSkillCatalogueStatus.Missing,
+        true,
+        "Local catalogue missing")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueMissing,
+        CombatSkillCatalogueStatus.MissingSources,
+        true,
+        "Installed catalogue sources missing")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueStale,
+        CombatSkillCatalogueStatus.Stale,
+        true,
+        "Local catalogue is stale")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueRebuilding,
+        CombatSkillCatalogueStatus.Rebuilding,
+        true,
+        "Catalogue rebuild in progress")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueUnsupported,
+        CombatSkillCatalogueStatus.UnsupportedVersion,
+        true,
+        "Catalogue version unsupported")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueFailed,
+        CombatSkillCatalogueStatus.SourceReadFailed,
+        true,
+        "Could not read catalogue sources")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueFailed,
+        CombatSkillCatalogueStatus.RepositoryFailed,
+        true,
+        "Local catalogue unavailable")]
+    [InlineData(
+        CompanionCandidateEnrichmentStatus.CatalogueFailed,
+        CombatSkillCatalogueStatus.Corrupt,
+        true,
+        "Local catalogue is corrupt")]
+    public void Enrichment_and_catalogue_states_remain_typed_and_actionable(
+        CompanionCandidateEnrichmentStatus status,
+        CombatSkillCatalogueStatus catalogueStatus,
+        bool needsAttention,
+        string expectedEnglishTitle)
+    {
+        var english = CompanionFinderViewModelMapper.MapEnrichment(
+            status,
+            catalogueStatus,
+            TaiwuLanguage.English);
+        var chinese = CompanionFinderViewModelMapper.MapEnrichment(
+            status,
+            catalogueStatus,
+            TaiwuLanguage.Chinese);
+
+        Assert.Equal(status, english.Status);
+        Assert.Equal(catalogueStatus, english.CatalogueStatus);
+        Assert.Equal(needsAttention, english.NeedsAttention);
+        Assert.Equal(expectedEnglishTitle, english.Title);
+        Assert.False(string.IsNullOrWhiteSpace(english.Message));
+        Assert.Equal(status, chinese.Status);
+        Assert.Equal(catalogueStatus, chinese.CatalogueStatus);
+        Assert.Equal(needsAttention, chinese.NeedsAttention);
+        Assert.NotEqual(english.Title, chinese.Title);
+        Assert.NotEqual(english.Message, chinese.Message);
     }
 
     [Fact]

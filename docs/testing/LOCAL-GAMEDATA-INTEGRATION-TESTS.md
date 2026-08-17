@@ -130,7 +130,8 @@ dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.Int
 
 The three tests enforce the 30-second cold and 2-second warm budgets, repeat
 both verified role families, and compare the save, runtime, catalogue, combat,
-special-effect, legendary-book, and discipline-language source fingerprints
-before and after. They never print a path, hash, candidate identity, or exact
-candidate value. The non-proprietary outcome is recorded in
+special-effect, legendary-book, discipline-language, and bilingual candidate
+name/map source fingerprints before and after. They never print a path, hash,
+candidate identity, or exact candidate value. The non-proprietary outcome is
+recorded in
 [`E6-011-automated-verification.md`](../reviews/E6-011-automated-verification.md).

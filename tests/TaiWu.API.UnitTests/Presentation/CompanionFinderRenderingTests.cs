@@ -6,6 +6,7 @@ using Microsoft.JSInterop;
 using NSubstitute;
 using System.Net;
 using System.Text.RegularExpressions;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.Localization;
 using TaiWu.API.UnitTests.Controllers;
@@ -38,7 +39,7 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Synthetic martial discipline", text);
         Assert.Contains("Scores compare saved base qualification", text);
         Assert.Contains("Considered 9", text);
-        Assert.Contains("Eligible 3", text);
+        Assert.Contains("Eligible 8", text);
         Assert.Contains("Needs review 5", text);
         Assert.Contains("Incomplete 3", text);
         Assert.Contains("Synthetic Person A", text);
@@ -81,7 +82,7 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("範例武學類別", text);
         Assert.Contains("分數只比較所選類別的存檔基礎資質", text);
         Assert.Contains("共計 9", text);
-        Assert.Contains("符合資格 3", text);
+        Assert.Contains("符合資格 8", text);
         Assert.Contains("需檢查 5", text);
         Assert.Contains("資料不完整 3", text);
         Assert.Contains("範例人物甲", text);
@@ -92,6 +93,85 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("證據已非最新", text);
         Assert.Contains("姓名與位置只供顯示，不會改變資格", text);
         Assert.DoesNotContain("31001", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Every_noncurrent_enrichment_state_renders_its_typed_action()
+    {
+        var result = await CompanionFinderTestData.ResultAsync();
+        var baseModel = CompanionFinderViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            "Synthetic martial discipline");
+        var states = new[]
+        {
+            (CompanionCandidateEnrichmentStatus.Partial,
+                CombatSkillCatalogueStatus.Current),
+            (CompanionCandidateEnrichmentStatus.CatalogueMissing,
+                CombatSkillCatalogueStatus.Missing),
+            (CompanionCandidateEnrichmentStatus.CatalogueMissing,
+                CombatSkillCatalogueStatus.MissingSources),
+            (CompanionCandidateEnrichmentStatus.CatalogueStale,
+                CombatSkillCatalogueStatus.Stale),
+            (CompanionCandidateEnrichmentStatus.CatalogueRebuilding,
+                CombatSkillCatalogueStatus.Rebuilding),
+            (CompanionCandidateEnrichmentStatus.CatalogueUnsupported,
+                CombatSkillCatalogueStatus.UnsupportedVersion),
+            (CompanionCandidateEnrichmentStatus.CatalogueFailed,
+                CombatSkillCatalogueStatus.SourceReadFailed),
+            (CompanionCandidateEnrichmentStatus.CatalogueFailed,
+                CombatSkillCatalogueStatus.RepositoryFailed),
+            (CompanionCandidateEnrichmentStatus.CatalogueFailed,
+                CombatSkillCatalogueStatus.Corrupt)
+        };
+
+        foreach (var (status, catalogueStatus) in states)
+        {
+            var enrichment = CompanionFinderViewModelMapper.MapEnrichment(
+                status,
+                catalogueStatus,
+                TaiwuLanguage.English);
+            var model = baseModel with
+            {
+                Enrichment = enrichment,
+                IsPartial = true
+            };
+            var html = await RenderResultsAsync(
+                model,
+                new CompanionFinderInteractionState(),
+                comparison: null,
+                TaiwuLanguage.English);
+            var text = VisibleText(html);
+
+            Assert.Contains($"data-enrichment-status=\"{status}\"", html);
+            Assert.Contains(
+                $"data-catalogue-status=\"{catalogueStatus}\"",
+                html);
+            Assert.Contains(enrichment.Title, text);
+            Assert.Contains(enrichment.Message, text);
+        }
+    }
+
+    [Fact]
+    public async Task Partial_snapshot_renders_separate_typed_source_guidance()
+    {
+        var result = await CompanionFinderTestData.ResultAsync(
+            partialSnapshot: true);
+        var model = CompanionFinderViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            "Synthetic martial discipline");
+
+        var html = await RenderResultsAsync(
+            model,
+            new CompanionFinderInteractionState(),
+            comparison: null,
+            TaiwuLanguage.English);
+        var text = VisibleText(html);
+
+        Assert.Contains("data-snapshot-status=\"Partial\"", html);
+        Assert.Contains("Some candidate fields could not be read", text);
+        Assert.DoesNotContain("data-enrichment-status", html);
     }
 
     [Fact]

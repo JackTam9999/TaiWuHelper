@@ -173,6 +173,31 @@ public sealed class CompanionFinderPresentationSafetyTests
                 || type == typeof(System.Diagnostics.Process));
     }
 
+    [Fact]
+    public void Companion_non_interference_guard_covers_every_display_language_source()
+    {
+        var root = FindRepositoryRoot();
+        var integration = File.ReadAllText(Path.Combine(
+            root,
+            "tests",
+            "TaiWu.Infrastructure.IntegrationTests",
+            "CompanionCandidateSnapshotIntegrationTests.cs"));
+
+        Assert.Contains("DisplayLanguagePaths(paths)", integration);
+        Assert.True(
+            CountOccurrences(integration, "DisplayLanguagePaths(paths)") >= 3);
+        foreach (var fileName in new[]
+                 {
+                     "Name_language.txt",
+                     "MapState_language.txt",
+                     "MapArea_language.txt",
+                     "MapBlock_language.txt"
+                 })
+        {
+            Assert.Contains(fileName, integration);
+        }
+    }
+
     private static IEnumerable<Type> PublicSignatureTypes(Type type)
     {
         yield return type;

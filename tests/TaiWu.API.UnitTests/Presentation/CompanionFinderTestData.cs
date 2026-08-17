@@ -12,14 +12,17 @@ internal static class CompanionFinderTestData
     internal const string Sha =
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-    internal static async Task<CompanionFinderResult> ResultAsync()
+    internal static async Task<CompanionFinderResult> ResultAsync(
+        bool partialSnapshot = false)
     {
         var snapshot = Snapshot();
         var reader = Substitute.For<ICompanionCandidateSnapshotReader>();
         reader.ReadAsync(
                 CompanionCandidateSnapshotReadRequest.Current,
                 Arg.Any<CancellationToken>())
-            .Returns(CompanionCandidateSnapshotReadResult.Complete(snapshot));
+            .Returns(partialSnapshot
+                ? CompanionCandidateSnapshotReadResult.Partial(snapshot)
+                : CompanionCandidateSnapshotReadResult.Complete(snapshot));
         var identity = CatalogueIdentity();
         var source = Substitute.For<ICombatSkillDefinitionSource>();
         source.ReadAsync(Arg.Any<CancellationToken>()).Returns(

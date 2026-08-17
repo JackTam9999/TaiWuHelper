@@ -1,5 +1,6 @@
 @using System.Globalization
 @using Microsoft.JSInterop
+@using TaiWu.Application.CompanionCandidates
 @using TaiWu.Domain.CompanionRoles
 @using TaiWuAPI.Presentation
 @inject IJSRuntime JS
@@ -39,11 +40,24 @@
         <span>@Model.ScoreLimitation</span>
     </div>
 
-    @if (Model.IsPartial)
+    @if (Model.SnapshotReadStatus == CompanionCandidateSnapshotReadStatus.Partial)
     {
-        <div class="companion-partial-notice" role="status">
+        <div class="companion-partial-notice"
+             role="status"
+             data-snapshot-status="@Model.SnapshotReadStatus">
             <strong>@Text(CompanionFinderUiTextKey.PartialResult)</strong>
             <span>@Text(CompanionFinderUiTextKey.PartialMessage)</span>
+        </div>
+    }
+
+    @if (Model.Enrichment.NeedsAttention)
+    {
+        <div class="companion-partial-notice"
+             role="status"
+             data-enrichment-status="@Model.Enrichment.Status"
+             data-catalogue-status="@Model.Enrichment.CatalogueStatus">
+            <strong>@Model.Enrichment.Title</strong>
+            <span>@Model.Enrichment.Message</span>
         </div>
     }
 

@@ -1,4 +1,5 @@
 using TaiWu.Application.CompanionCandidates;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
 
@@ -36,6 +37,13 @@ public sealed record CompanionFinderCountsViewModel(
     int Unsupported,
     int Conflicting);
 
+public sealed record CompanionFinderEnrichmentViewModel(
+    CompanionCandidateEnrichmentStatus Status,
+    CombatSkillCatalogueStatus CatalogueStatus,
+    string Title,
+    string Message,
+    bool NeedsAttention);
+
 public sealed record CompanionCandidateGateViewModel(
     string Outcome,
     string Explanation,
@@ -64,6 +72,8 @@ public sealed record CompanionFinderViewModel(
     string RolePurpose,
     string ScoreLimitation,
     DateTimeOffset SnapshotCapturedAtUtc,
+    CompanionCandidateSnapshotReadStatus SnapshotReadStatus,
+    CompanionFinderEnrichmentViewModel Enrichment,
     CompanionFinderCountsViewModel Counts,
     IReadOnlyList<CompanionCandidateViewModel> Candidates,
     bool IsPartial,

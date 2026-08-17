@@ -21,13 +21,6 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
     public async Task Candidate_snapshot_is_one_revision_repeatable_bounded_and_read_only()
     {
         var savePath = RequireSavePath();
-        var guardedPaths = new[]
-        {
-            savePath,
-            Path.Combine(AppContext.BaseDirectory, "GameData.dll"),
-            Path.Combine(AppContext.BaseDirectory, "GameData.Shared.dll")
-        };
-        var before = await CaptureAsync(guardedPaths);
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -38,6 +31,23 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
         services.AddSingleton<IConfiguration>(configuration);
         services.AddTaiwuInfrastructure();
         using var provider = services.BuildServiceProvider();
+        var paths = provider
+            .GetRequiredService<ITaiwuCatalogueSourcePathProvider>()
+            .Resolve()
+            .Paths;
+        Assert.NotNull(paths);
+        var guardedPaths = new[]
+            {
+                savePath,
+                Path.Combine(AppContext.BaseDirectory, "GameData.dll"),
+                Path.Combine(AppContext.BaseDirectory, "GameData.Shared.dll")
+            }
+            .Concat(DisplayLanguagePaths(paths))
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        Assert.All(guardedPaths, path => Assert.True(File.Exists(path)));
+        var before = await CaptureAsync(guardedPaths);
         var reader = provider.GetRequiredService<ICompanionCandidateSnapshotReader>();
 
         var coldWatch = Stopwatch.StartNew();
@@ -120,16 +130,23 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
             .Paths;
         Assert.NotNull(paths);
         var guardedPaths = new[]
-        {
-            savePath,
-            paths.GameDataConfigurationAssembly,
-            paths.TraditionalChineseCombatSkillLanguage,
-            paths.EnglishCombatSkillLanguage,
-            paths.TraditionalChineseSpecialEffectLanguage,
-            paths.EnglishSpecialEffectLanguage,
-            paths.TraditionalChineseLegendaryBookSlotLanguage,
-            paths.EnglishLegendaryBookSlotLanguage
-        };
+            {
+                savePath,
+                Path.Combine(AppContext.BaseDirectory, "GameData.dll"),
+                Path.Combine(AppContext.BaseDirectory, "GameData.Shared.dll"),
+                paths.GameDataConfigurationAssembly,
+                paths.TraditionalChineseCombatSkillLanguage,
+                paths.EnglishCombatSkillLanguage,
+                paths.TraditionalChineseSpecialEffectLanguage,
+                paths.EnglishSpecialEffectLanguage,
+                paths.TraditionalChineseLegendaryBookSlotLanguage,
+                paths.EnglishLegendaryBookSlotLanguage
+            }
+            .Concat(DisplayLanguagePaths(paths))
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        Assert.All(guardedPaths, path => Assert.True(File.Exists(path)));
         var before = await CaptureAsync(guardedPaths);
         var snapshotResult = await provider
             .GetRequiredService<ICompanionCandidateSnapshotReader>()
@@ -198,10 +215,6 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
             .Resolve()
             .Paths;
         Assert.NotNull(paths);
-        var traditionalDirectory = Path.GetDirectoryName(
-            paths.TraditionalChineseCombatSkillLanguage)!;
-        var englishDirectory = Path.GetDirectoryName(
-            paths.EnglishCombatSkillLanguage)!;
         var guardedPaths = new[]
             {
                 savePath,
@@ -214,11 +227,20 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 paths.EnglishSpecialEffectLanguage,
                 paths.TraditionalChineseLegendaryBookSlotLanguage,
                 paths.EnglishLegendaryBookSlotLanguage,
-                Path.Combine(traditionalDirectory, "CombatSkillType_language.txt"),
-                Path.Combine(englishDirectory, "CombatSkillType_language.txt"),
-                Path.Combine(traditionalDirectory, "LifeSkillType_language.txt"),
-                Path.Combine(englishDirectory, "LifeSkillType_language.txt")
+                Path.Combine(
+                    Path.GetDirectoryName(paths.TraditionalChineseCombatSkillLanguage)!,
+                    "CombatSkillType_language.txt"),
+                Path.Combine(
+                    Path.GetDirectoryName(paths.EnglishCombatSkillLanguage)!,
+                    "CombatSkillType_language.txt"),
+                Path.Combine(
+                    Path.GetDirectoryName(paths.TraditionalChineseCombatSkillLanguage)!,
+                    "LifeSkillType_language.txt"),
+                Path.Combine(
+                    Path.GetDirectoryName(paths.EnglishCombatSkillLanguage)!,
+                    "LifeSkillType_language.txt")
             }
+            .Concat(DisplayLanguagePaths(paths))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -352,6 +374,25 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
             value.EnglishName,
             value.TraditionalChineseLocation,
             value.EnglishLocation));
+
+    private static IEnumerable<string> DisplayLanguagePaths(
+        TaiwuCatalogueSourcePaths paths)
+    {
+        var directories = new[]
+        {
+            Path.GetDirectoryName(paths.TraditionalChineseCombatSkillLanguage)!,
+            Path.GetDirectoryName(paths.EnglishCombatSkillLanguage)!
+        };
+        var fileNames = new[]
+        {
+            "Name_language.txt",
+            "MapState_language.txt",
+            "MapArea_language.txt",
+            "MapBlock_language.txt"
+        };
+        return directories.SelectMany(directory =>
+            fileNames.Select(fileName => Path.Combine(directory, fileName)));
+    }
 
     private static string RequireSavePath()
     {
