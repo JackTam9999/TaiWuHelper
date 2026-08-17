@@ -98,3 +98,7 @@ dotnet test
 - [Product roadmap index](docs/roadmap/README.md)
 - [EPIC-001: Target-specific combat-skill recommendations](docs/roadmap/epic-001/EPIC.md)
 - [EPIC-002: Version-aware skill catalogue and character skill atlas](docs/roadmap/epic-002/EPIC.md)
+- [EPIC-003: Verified target observations and evidence-aware recommendations](docs/roadmap/epic-003/EPIC.md)
+- [EPIC-004: Side-by-side loadout comparison and change planning](docs/roadmap/epic-004/EPIC.md)
+- [EPIC-005: Target archetypes and counter playbooks](docs/roadmap/epic-005/EPIC.md)
+- [EPIC-006: Evidence-aware companion role and candidate finder](docs/roadmap/epic-006/EPIC.md)

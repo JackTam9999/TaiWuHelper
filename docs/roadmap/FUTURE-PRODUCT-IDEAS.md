@@ -3,9 +3,9 @@
 | Field | Value |
 |---|---|
 | Status | Proposed |
-| Scope | Ongoing product discovery after Epic 5 selection |
-| Related epics | EPIC-001 through EPIC-005 |
-| Last updated | 2026-08-10 |
+| Scope | Ongoing product discovery after Epic 6 selection |
+| Related epics | EPIC-001 through EPIC-006 |
+| Last updated | 2026-08-17 |
 
 ## Purpose
 
@@ -213,6 +213,13 @@ training, and win-probability claims remain outside the initial epic.
 
 ### PI-008 — Companion role and candidate finder
 
+**Status:** Promoted to
+[EPIC-006](./epic-006/EPIC.md) on 2026-08-17.
+
+The promoted boundary covers evidence-aware role selection and candidate
+comparison. Companion development remains PI-009, while settlement work
+remains PI-010 rather than becoming a companion-finder role.
+
 Find suitable 同道 candidates for a player-selected role or objective rather
 than claiming that one character is universally best. Possible objectives
 include a combat role, teaching or inheritance value, a particular life-skill
@@ -277,22 +284,25 @@ The product owner promoted and completed these discovery ideas:
 3. Side-by-side loadout comparison — promoted to
    [EPIC-004](./epic-004/EPIC.md) on 2026-08-08 and completed with the approved
    two-option design on 2026-08-10.
+4. Target archetypes and counter playbooks — promoted to
+   [EPIC-005](./epic-005/EPIC.md) on 2026-08-10 and completed after remediation
+   and product-owner approval on 2026-08-11.
 
 ### Active promotion
 
-Target archetypes and counter playbooks were promoted to
-[EPIC-005](./epic-005/EPIC.md) on 2026-08-10. Epic 5 reuses the completed
-threat, evidence, recommendation, and comparison foundations while expanding
-target coverage.
+The companion role and candidate finder was promoted to
+[EPIC-006](./epic-006/EPIC.md) on 2026-08-17. Epic 6 reuses stable character,
+catalogue, progress, evidence, comparison, localization, and accessibility
+foundations while introducing an objective-specific companion-selection
+domain.
 
-### Current candidates after Epic 5 selection
+### Current candidates after Epic 6 selection
 
-1. Companion role and candidate finder.
-2. Companion development planner.
-3. Village workforce and building management.
-4. Library and book planning, initially assessed as a village-management slice.
-5. Version-aware observation, recommendation, and outcome persistence.
-6. Shareable recommendation card, which may remain a smaller enhancement
+1. Companion development planner.
+2. Village workforce and building management.
+3. Library and book planning, initially assessed as a village-management slice.
+4. Version-aware observation, recommendation, and outcome persistence.
+5. Shareable recommendation card, which may remain a smaller enhancement
    because copy and print foundations already exist.
 
 The companion and settlement ideas intentionally remain separate. They may
@@ -318,8 +328,6 @@ optimizer epic.
   the first archetype playbooks?
 - How should overlapping playbooks resolve conflicting counters, timing, and
   category or universal-slot pressure?
-- Which player-selected roles make companion comparison useful, and which
-  character fields are reliable enough to rank for each role?
 - Which development opportunities can be represented as verified steps rather
   than speculative advice?
 - Which village assignments, buildings, resource constraints, and worker
