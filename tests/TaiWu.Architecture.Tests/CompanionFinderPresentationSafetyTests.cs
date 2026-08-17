@@ -104,11 +104,13 @@ public sealed class CompanionFinderPresentationSafetyTests
             "TaiWuAPI",
             "Presentation",
             "CompanionFinderInteractionState.cs"));
-        var mapper = File.ReadAllText(Path.Combine(
-            root,
-            "TaiWuAPI",
-            "Presentation",
-            "CompanionFinderViewModelMapper.cs"));
+        var mapper = string.Join(
+            Environment.NewLine,
+            Directory.GetFiles(
+                    Path.Combine(root, "TaiWuAPI", "Presentation"),
+                    "CompanionFinderViewModelMapper*.cs")
+                .Order(StringComparer.Ordinal)
+                .Select(File.ReadAllText));
         var combined = string.Join(Environment.NewLine, component, interaction, mapper);
 
         Assert.Contains("State.SetFilter(filter)", component);
