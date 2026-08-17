@@ -2,24 +2,21 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-003 |
+| Status | Implemented for E6-003 and E6-006 |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
-| Backlog item | [E6-003](../roadmap/epic-006/BACKLOG.md#e6-003--define-versioned-role-definitions-and-evaluation-rules) |
+| Backlog items | [E6-003](../roadmap/epic-006/BACKLOG.md#e6-003--define-versioned-role-definitions-and-evaluation-rules), [E6-006](../roadmap/epic-006/BACKLOG.md#e6-006--evaluate-role-suitability-and-rank-comparable-candidates) |
 | Product contract | [Companion role evaluation and shortlist contract](./COMPANION-ROLE-EVALUATION-CONTRACT.md) |
 | Profile contract | [Companion-candidate source boundary](./COMPANION-CANDIDATE-SOURCES.md) |
 
 ## Purpose and boundary
 
 E6-003 turns the accepted role semantics into presentation-neutral Domain
-definitions and a pure single-candidate evaluator. It establishes one
-authoritative path for eligibility gates, required fact availability,
-provenance compatibility, normalization, weighting, contribution, total, and
-exact merit comparison.
-
-This slice does not assign shortlist rank, competition rank, or `Ranked` and
-`Tied` collection states. E6-006 will build those multi-candidate operations
-over immutable E6-003 evaluations. It must not reimplement role gates or score
-arithmetic.
+definitions and a pure single-candidate evaluator. E6-006 adds the pure
+multi-candidate ranking operation over those immutable evaluations. Together
+they establish one authoritative path for eligibility gates, required fact
+availability, provenance compatibility, normalization, weighting,
+contribution, total, exact merit comparison, typed exclusions, competition
+rank, and ties.
 
 E6-005 supporting enrichment is documented in the
 [companion-candidate enrichment architecture](./COMPANION-CANDIDATE-ENRICHMENT.md).
@@ -46,9 +43,16 @@ The `TaiWu.Domain.CompanionRoles` namespace contains:
 - `CompanionRoleScoreComponent`, which retains the raw value, normalized
   value, direction-aware weighted contribution, and evidence;
 - `CompanionRoleEvaluation`, which retains role, profile, discipline, gates,
-  components, role-local total, outcome identity, and fingerprint; and
+  components, role-local total, outcome identity, and fingerprint;
 - `CompanionRoleMeritComparer`, which compares only rankable evaluations from
-  the same exact role definition and discipline.
+  the same exact role definition and discipline;
+- `CompanionRoleCandidateRanking`, which retains one immutable evaluation,
+  its `Ranked`, `Tied`, `Ineligible`, `Incomplete`, `Unsupported`, or
+  `Conflicting` state, and a nullable competition rank;
+- `CompanionRoleRanking`, which retains the exact definition, discipline,
+  canonically ordered ranked and unranked collections, and fingerprint; and
+- `CompanionRoleShortlistBuilder`, which evaluates every unique candidate once
+  and constructs those validated ranking contracts without re-scoring.
 
 All collections are copied and canonically ordered. Definitions reject blank
 or path-shaped stable identities, invalid enums, empty or duplicate version
@@ -137,6 +141,29 @@ location are not merit tie breakers. E6-006 may order equal-score entries by
 stable candidate ID only after it preserves the explicit tie and shared rank.
 Evaluations from different roles or disciplines return `NotComparable`.
 
+## Multi-candidate ranking algorithm
+
+`CompanionRoleShortlistBuilder.EvaluateAndRank` copies the supplied candidate
+universe, rejects null or duplicate character identities and mixed source
+versions, canonicalizes it by stable character ID, and calls
+`CompanionRoleEvaluator.Evaluate` exactly once per profile. It then:
+
+1. takes only `Rankable` evaluations into merit grouping;
+2. groups by exact decimal total and orders groups by descending total;
+3. assigns competition rank using the number of preceding candidates, so
+   score groups of sizes `1, 2, 1` receive ranks `1, 2, 2, 4`;
+4. marks a one-member score group `Ranked` and a multi-member group `Tied`;
+5. uses character ID only for canonical ordering inside an established group;
+   and
+6. maps every unranked evaluation to its exact `Ineligible`, `Incomplete`,
+   `Unsupported`, or `Conflicting` candidate state with no rank or total.
+
+`CompanionRoleRanking` independently validates every definition, discipline,
+and candidate source-version identity, unique candidate identity, state
+mapping, score group, tie marker, and competition rank before exposing
+immutable arrays. A hard-gate failure can therefore never enter a numeric rank,
+and a display-order stabilizer can never change merit.
+
 ## Deterministic identity
 
 A definition fingerprint includes:
@@ -151,9 +178,11 @@ A definition fingerprint includes:
 
 An evaluation fingerprint additionally includes the definition fingerprint,
 candidate-profile fingerprint, selected discipline, state, evaluated gates,
-components, total, and outcome identity. It therefore changes with semantic
-source, rule, fact, or evidence changes and remains stable across equivalent
-input enumeration order. Neither fingerprint contains localized text, local
+components, total, and outcome identity. A ranking fingerprint includes the
+definition, discipline, canonical candidate order, each exact evaluation
+fingerprint, typed ranking state, and competition rank. These identities change
+with semantic source, rule, fact, evidence, or rank changes and remain stable
+across equivalent input enumeration order. None contains localized text, local
 paths, exception text, or capture timestamps.
 
 ## Dependency and safety boundary
@@ -168,20 +197,24 @@ valid definitions, invalid versions, weights, ranges and duplicates, every
 candidate and evidence gate outcome, missing facts, stale and conflicting
 facts, provenance mismatch, out-of-range facts, higher- and lower-is-better
 arithmetic, exact ties, cross-role non-comparability, and deterministic rule
-and evaluation fingerprints.
+and evaluation fingerprints. Fifteen E6-006 cases additionally cover
+competition ranks, canonical tie order, all typed exclusions, hard-gate
+precedence, both verified roles, complete component evidence, score extremes,
+irrelevant optional-field absence, unsupported disciplines, semantic
+fingerprint changes, deterministic reruns, unsupported and mixed source
+versions, duplicate candidates, and the empty candidate universe.
 
-## E6-006 handoff
+## E6-007 handoff
 
-The shortlist evaluator must:
+The explanation and comparison model must:
 
-1. resolve one verified role definition;
-2. call `CompanionRoleEvaluator.Evaluate` exactly once per immutable candidate
-   profile for the selected discipline;
-3. retain every returned unranked state and gate reason unchanged;
-4. rank only `Rankable` evaluations by descending direction-aware total;
-5. preserve equal totals as explicit ties with competition ranking; and
-6. use stable candidate ID only to canonicalize entries inside an already
-   established tie group.
+1. consume one immutable `CompanionRoleRanking` without re-evaluating facts;
+2. retain definition, discipline, total source count, rank, tie, and exclusion
+   identities unchanged;
+3. derive strengths, limitations, and comparison rows from existing gates,
+   components, facts, and evidence references; and
+4. keep filtering, presentation, and localized display values outside merit
+   and ranking fingerprints.
 
 It must not rescore raw facts, infer unavailable values, substitute another
 version, or compare totals across role or discipline identities.

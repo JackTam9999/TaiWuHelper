@@ -57,6 +57,16 @@ public enum CompanionRoleMeritComparison
     NotComparable = 3
 }
 
+public enum CompanionRoleCandidateRankingState
+{
+    Ranked = 0,
+    Tied = 1,
+    Ineligible = 2,
+    Incomplete = 3,
+    Unsupported = 4,
+    Conflicting = 5
+}
+
 public enum CompanionRoleDefinitionResolutionState
 {
     Supported = 0,

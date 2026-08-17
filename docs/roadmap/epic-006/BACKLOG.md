@@ -475,7 +475,7 @@ would otherwise reopen the archive repeatedly.
 
 ### E6-006 — Evaluate role suitability and rank comparable candidates
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -490,23 +490,23 @@ shortlist.
 
 #### Acceptance criteria
 
-- [ ] Eligibility is evaluated before hard requirements and scoring.
-- [ ] A failed hard requirement produces an explicit unranked result and cannot
+- [x] Eligibility is evaluated before hard requirements and scoring.
+- [x] A failed hard requirement produces an explicit unranked result and cannot
       be overcome by score components.
-- [ ] Missing required evidence produces incomplete or unsupported evaluation,
+- [x] Missing required evidence produces incomplete or unsupported evaluation,
       never a numeric penalty.
-- [ ] Every component retains rule identity, source evidence, normalized value,
+- [x] Every component retains rule identity, source evidence, normalized value,
       weight, contribution, and explanation identity.
-- [ ] Total score arithmetic is bounded, deterministic, and validated.
-- [ ] Equal evaluations remain explicit ties until documented stable tie
+- [x] Total score arithmetic is bounded, deterministic, and validated.
+- [x] Equal evaluations remain explicit ties until documented stable tie
       breakers apply.
-- [ ] Character ID or localized name may stabilize display ordering only after
+- [x] Character ID or localized name may stabilize display ordering only after
       semantic rank and tie status are established; neither changes merit.
-- [ ] Ranked, tied, ineligible, incomplete, unsupported, and conflicting
+- [x] Ranked, tied, ineligible, incomplete, unsupported, and conflicting
       results remain distinct.
-- [ ] Identical candidate profiles, role versions, and rule versions produce
+- [x] Identical candidate profiles, role versions, and rule versions produce
       equivalent components, diagnostics, ordering, and fingerprints.
-- [ ] Unit tests cover every approved role, hard-gate failure, missing optional
+- [x] Unit tests cover every approved role, hard-gate failure, missing optional
       and required evidence, extremes, ties, unsupported versions, conflicts,
       and deterministic reruns.
 
@@ -515,6 +515,28 @@ shortlist.
 - Pure Domain evaluator, result contracts, and shortlist builder.
 - Domain unit tests using synthetic candidate profiles only.
 - Updated `docs/architecture/COMPANION-ROLE-EVALUATION.md`.
+
+#### Completion evidence
+
+- `CompanionRoleShortlistBuilder` copies and validates one candidate universe,
+  evaluates every unique profile exactly once through the E6-003 evaluator,
+  and never reads or scores an enrichment display value.
+- Exact decimal totals form descending merit groups. Competition ranks skip
+  after ties (`1, 2, 2, 4`), ties remain explicit, and character ID only
+  canonicalizes entries after the semantic score group is fixed.
+- `CompanionRoleCandidateRanking` retains `Ranked`, `Tied`, `Ineligible`,
+  `Incomplete`, `Unsupported`, or `Conflicting` independently of presentation.
+  Every exclusion retains the original evaluation, gates, reasons, and evidence
+  with no fabricated total or rank.
+- `CompanionRoleRanking` validates exact role-definition and discipline
+  compatibility, one exact candidate source-version set, unique candidate
+  identity, ranking states, score groups, and competition ranks, then
+  fingerprints the canonical semantic result.
+- Fifteen new pure Domain cases cover both verified roles, ordered hard gates,
+  required and irrelevant optional evidence, exact components, extremes, ties,
+  all exclusions, unsupported inputs, source-version comparability,
+  deterministic reruns, semantic changes, duplicate identities, and an empty
+  candidate universe.
 
 ## Slice 5: Shortlist and comparison
 
