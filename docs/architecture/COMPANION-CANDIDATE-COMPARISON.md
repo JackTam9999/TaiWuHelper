@@ -7,6 +7,7 @@
 | Backlog item | [E6-007](../roadmap/epic-006/BACKLOG.md#e6-007--build-evidence-aware-shortlist-and-candidate-comparison-explanations) |
 | Role evaluation | [Companion role definition and evaluation](./COMPANION-ROLE-EVALUATION.md) |
 | Product contract | [Companion role evaluation and shortlist contract](./COMPANION-ROLE-EVALUATION-CONTRACT.md) |
+| Application workflow | [Companion finder Application architecture](./COMPANION-FINDER-APPLICATION.md) |
 
 ## Purpose and boundary
 
@@ -150,10 +151,11 @@ direction-aware contribution reuse, missing and conflicting evidence, every
 status filter, confirmed and unavailable location evidence, invalid selections,
 equivalent reruns, and an empty shortlist.
 
-## E6-008 handoff
+## E6-008 Application integration
 
-The Application workflow must build one ranking and one shortlist from the
-same immutable candidate snapshot and return their exact source/version
-identity. Requests may select a view and comparison, but those operations must
-continue to reference the authoritative shortlist and may not re-read a save,
-re-evaluate a profile, or change ranking identity.
+E6-008 implements the
+[companion finder Application workflow](./COMPANION-FINDER-APPLICATION.md). It
+builds one ranking and one shortlist from the same immutable candidate snapshot
+and returns their exact source/version identity. Filter and comparison
+selections continue to reference the authoritative shortlist and do not re-read
+a save, re-evaluate a profile, or change ranking identity.

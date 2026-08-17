@@ -198,12 +198,12 @@ valid definitions, invalid versions, weights, ranges and duplicates, every
 candidate and evidence gate outcome, missing facts, stale and conflicting
 facts, provenance mismatch, out-of-range facts, higher- and lower-is-better
 arithmetic, exact ties, cross-role non-comparability, and deterministic rule
-and evaluation fingerprints. Fifteen E6-006 cases additionally cover
+and evaluation fingerprints. Sixteen E6-006 cases additionally cover
 competition ranks, canonical tie order, all typed exclusions, hard-gate
 precedence, both verified roles, complete component evidence, score extremes,
 irrelevant optional-field absence, unsupported disciplines, semantic
 fingerprint changes, deterministic reruns, unsupported and mixed source
-versions, duplicate candidates, and the empty candidate universe.
+versions, duplicate candidates, cancellation, and the empty candidate universe.
 
 ## E6-007 shortlist and comparison
 

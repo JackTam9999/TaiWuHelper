@@ -282,6 +282,22 @@ public sealed class CompanionRoleShortlistBuilderTests
         Assert.Equal(first.Fingerprint, repeated.Fingerprint);
     }
 
+    [Fact]
+    public void Evaluation_loop_honors_cancellation_after_candidate_copy()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var profiles = CancelAfterEnumeration(
+            [Profile(1, value: 70), Profile(2, value: 90)],
+            cancellation);
+
+        Assert.Throws<OperationCanceledException>(() =>
+            CompanionRoleShortlistBuilder.EvaluateAndRank(
+                VerifiedCompanionRoleDefinitions.MartialDisciplineAptitude,
+                MartialDiscipline(),
+                profiles,
+                cancellation.Token));
+    }
+
     private const string Sha =
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
@@ -394,4 +410,16 @@ public sealed class CompanionRoleShortlistBuilderTests
     private static int[] CandidateIds(
         IEnumerable<CompanionRoleCandidateRanking> candidates) =>
         [.. candidates.Select(item => item.Evaluation.Profile.Identity.CharacterId)];
+
+    private static IEnumerable<CandidateProfile> CancelAfterEnumeration(
+        IEnumerable<CandidateProfile> profiles,
+        CancellationTokenSource cancellation)
+    {
+        foreach (var profile in profiles)
+        {
+            yield return profile;
+        }
+
+        cancellation.Cancel();
+    }
 }

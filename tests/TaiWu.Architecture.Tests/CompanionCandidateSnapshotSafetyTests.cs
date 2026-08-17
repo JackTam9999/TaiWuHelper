@@ -3,6 +3,7 @@ using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.GameData;
 using TaiWu.Domain.CompanionCandidates;
+using TaiWu.Domain.CompanionRoles;
 using TaiWu.Infrastructure;
 using Xunit;
 
@@ -167,6 +168,63 @@ public sealed class CompanionCandidateSnapshotSafetyTests
             typeof(CompanionCandidateEnrichment)
                 .GetProperty(nameof(CompanionCandidateEnrichment.Profile))!
                 .PropertyType);
+    }
+
+    [Fact]
+    public void Companion_finder_request_is_bounded_path_free_and_information_only()
+    {
+        var properties = typeof(CompanionFinderRequest).GetProperties();
+        Assert.All(properties, property => Assert.False(property.CanWrite));
+        Assert.DoesNotContain(
+            properties,
+            property => property.Name.Contains("Path", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains("Definition", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains("Expression", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains("Command", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(
+            [
+                typeof(string),
+                typeof(string),
+                typeof(CandidateDisciplineDomain),
+                typeof(short),
+                typeof(CompanionRoleShortlistFilter),
+                typeof(int?),
+                typeof(int?)
+            ],
+            Assert.Single(typeof(CompanionFinderRequest).GetConstructors())
+                .GetParameters()
+                .Select(parameter => parameter.ParameterType));
+    }
+
+    [Fact]
+    public void Companion_finder_has_one_snapshot_path_and_no_second_evaluation_path()
+    {
+        var constructorTypes = Assert.Single(typeof(FindCompanionCandidates).GetConstructors())
+            .GetParameters()
+            .Select(parameter => parameter.ParameterType)
+            .ToArray();
+        Assert.Equal(
+            [
+                typeof(ICompanionCandidateSnapshotReader),
+                typeof(ICombatSkillDefinitionSource),
+                typeof(ICombatSkillCatalogueRepository)
+            ],
+            constructorTypes);
+
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "TaiWu.Application",
+            "CompanionCandidates",
+            "FindCompanionCandidates.cs"));
+        Assert.Equal(1, CountOccurrences(source, "snapshotReader.ReadAsync("));
+        Assert.Equal(1, CountOccurrences(source, "CompanionRoleShortlistBuilder.EvaluateAndRank("));
+        Assert.Equal(1, CountOccurrences(source, "CompanionRoleShortlistFactory.Create("));
+        Assert.Equal(1, CountOccurrences(source, "CompanionRoleComparisonBuilder.Compare("));
+        Assert.Contains("cancellationToken", source);
+        Assert.DoesNotContain("CompanionRoleEvaluator.Evaluate(", source);
+        Assert.DoesNotContain("File.", source);
+        Assert.DoesNotContain("Process.", source);
     }
 
     private static IEnumerable<Type> PublicSignatureTypes(Type type)

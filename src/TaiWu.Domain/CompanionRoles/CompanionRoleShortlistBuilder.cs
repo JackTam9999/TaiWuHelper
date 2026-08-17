@@ -7,7 +7,8 @@ public static class CompanionRoleShortlistBuilder
     public static CompanionRoleRanking EvaluateAndRank(
         CompanionRoleDefinition definition,
         CandidateDisciplineIdentity discipline,
-        IEnumerable<CandidateProfile> profiles)
+        IEnumerable<CandidateProfile> profiles,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(discipline);
@@ -32,14 +33,18 @@ public static class CompanionRoleShortlistBuilder
                 nameof(profiles));
         }
 
-        var evaluations = candidates
-            .OrderBy(item => item.Identity.CharacterId)
-            .Select(profile => CompanionRoleEvaluator.Evaluate(
+        var evaluations = new List<CompanionRoleEvaluation>(candidates.Length);
+        foreach (var profile in candidates.OrderBy(item => item.Identity.CharacterId))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            evaluations.Add(CompanionRoleEvaluator.Evaluate(
                 definition,
                 profile,
-                discipline))
-            .ToArray();
-        var entries = new List<CompanionRoleCandidateRanking>(evaluations.Length);
+                discipline));
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var entries = new List<CompanionRoleCandidateRanking>(evaluations.Count);
         var competitionRank = 1;
         foreach (var scoreGroup in evaluations
                      .Where(item => item.State == CompanionRoleEvaluationState.Rankable)

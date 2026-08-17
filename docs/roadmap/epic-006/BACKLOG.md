@@ -532,11 +532,11 @@ shortlist.
   compatibility, one exact candidate source-version set, unique candidate
   identity, ranking states, score groups, and competition ranks, then
   fingerprints the canonical semantic result.
-- Fifteen new pure Domain cases cover both verified roles, ordered hard gates,
+- Sixteen pure Domain cases cover both verified roles, ordered hard gates,
   required and irrelevant optional evidence, exact components, extremes, ties,
   all exclusions, unsupported inputs, source-version comparability,
-  deterministic reruns, semantic changes, duplicate identities, and an empty
-  candidate universe.
+  deterministic reruns, semantic changes, duplicate identities, cancellation,
+  and an empty candidate universe.
 
 ## Slice 5: Shortlist and comparison
 
@@ -609,7 +609,7 @@ missing evidence without re-scoring in the UI.
 
 ### E6-008 — Orchestrate one coherent companion-finder result
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -623,23 +623,23 @@ and one immutable source revision.
 
 #### Acceptance criteria
 
-- [ ] Requests accept a stable role identity and bounded product filters but no
+- [x] Requests accept a stable role identity and bounded product filters but no
       filesystem path, raw rule definition, arbitrary expression, or game
       command.
-- [ ] Unknown roles, unsupported role versions, invalid filters, and invalid
+- [x] Unknown roles, unsupported role versions, invalid filters, and invalid
       comparison selections fail with typed results.
-- [ ] One workflow result binds save fingerprint, GameData version, catalogue
+- [x] One workflow result binds save fingerprint, GameData version, catalogue
       version, profile mapping version, role version, and evaluation version.
-- [ ] A save revision change triggers a complete new result rather than mixing
+- [x] A save revision change triggers a complete new result rather than mixing
       candidate facts from two revisions.
-- [ ] Catalogue and progress failures preserve candidate-source evidence and
+- [x] Catalogue and progress failures preserve candidate-source evidence and
       return honest partial or unavailable states where permitted.
-- [ ] Filters are applied after authoritative evaluation and retain original
+- [x] Filters are applied after authoritative evaluation and retain original
       counts and result identity.
-- [ ] Cancellation reaches source projection and expensive evaluation loops.
-- [ ] Repeated equivalent requests return semantically equivalent immutable
+- [x] Cancellation reaches source projection and expensive evaluation loops.
+- [x] Repeated equivalent requests return semantically equivalent immutable
       results.
-- [ ] Tests cover success, empty, partial, unsupported, stale, conflict,
+- [x] Tests cover success, empty, partial, unsupported, stale, conflict,
       changed-revision, cancellation, filter, and comparison states.
 
 #### Evidence when complete
@@ -647,6 +647,29 @@ and one immutable source revision.
 - Application use case and request/result contracts.
 - Application unit tests with substituted read-only ports.
 - `docs/architecture/COMPANION-FINDER-APPLICATION.md`.
+
+#### Completion evidence
+
+- The immutable request accepts one stable role/version, typed discipline,
+  bounded status filter, and optional pair of positive distinct comparison IDs.
+  It exposes no path, raw definition, expression, sorting policy, or command.
+- Validation and exact role resolution precede one path-free snapshot call.
+  The workflow then enriches the returned snapshot, evaluates its unchanged
+  profiles once, constructs one shortlist, and only then applies view and
+  comparison selections.
+- Authoritative results require one reference-identical snapshot, enrichment,
+  ranking, shortlist, view, and optional comparison chain. Source identity binds
+  save, GameData, catalogue, mapping, role, evaluation, and discipline versions.
+- Missing, stale, rebuilding, unsupported, corrupt, and failed catalogue states
+  retain snapshot evidence in a `Partial` result because version-1 role scores
+  do not depend on catalogue display enrichment. No progress fact is invented.
+- The authoritative fingerprint excludes capture time, filter, comparison, and
+  localization state. A changed save revision rebuilds the entire result and
+  changes the fingerprint without mixing profile revisions.
+- Cancellation reaches the source and per-candidate loop. Nineteen focused
+  Application cases and two architecture checks cover the request, state map,
+  source chain, partial evidence, filters, comparisons, deterministic reruns,
+  cancellation, and changed-revision rebuild.
 
 ### E6-009 — Expose typed companion-finder API contracts
 
