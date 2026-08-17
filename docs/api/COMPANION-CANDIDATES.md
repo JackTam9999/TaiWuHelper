@@ -89,6 +89,8 @@ the finder fingerprint.
 Each candidate response retains:
 
 - stable candidate reference and character ID;
+- optional localized display name and location name sourced from the same
+  guarded snapshot, with no raw-ID fallback;
 - typed ranking and evaluation states, competition rank, and nullable total;
 - ordered hard requirements, outcomes, stable reasons, localized explanation,
   and evidence references;
@@ -148,6 +150,13 @@ English and Traditional Chinese mapping changes only display strings. Stable
 role, candidate, requirement, field, diagnostic, evidence, source, outcome,
 score, order, rank, tie, and fingerprint values remain identical.
 
+Candidate display name, location name, role purpose, score warning, evidence
+explanation, and discipline label are presentation values. Missing display
+text is nullable in the API and becomes a localized unavailable label in the
+Blazor UI; a character ID or discipline type is never substituted into visible
+copy. Display descriptors do not enter profile, shortlist, or finder
+fingerprints.
+
 Controller response metadata documents every supported HTTP state. Score
 limitation and nullable total properties carry descriptions stating that scores
 are role-local evidence, not universal rankings, probabilities, or action
@@ -155,9 +164,10 @@ recommendations.
 
 ## Verification
 
-Twenty focused API cases cover bilingual role discovery, complete mapping,
+Twenty-one focused API cases cover bilingual role discovery, complete mapping,
 source versions, score components, facts, conflicts, enrichment, comparison,
-partial catalogue evidence, language parity, route shape, validation, every
-HTTP source state, cancellation, serialization safety, and public contract
-types. Two architecture checks forbid local/mutation types and prevent the
-controller or mapper from evaluating or ranking.
+partial catalogue evidence, localized candidate display context, language
+parity, route shape, validation, every HTTP source state, cancellation,
+serialization safety, and public contract types. Architecture checks forbid
+local/mutation types and prevent the controller or mapper from evaluating or
+ranking.

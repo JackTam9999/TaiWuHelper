@@ -22,6 +22,13 @@ public enum CompanionFinderStatus
     Failed = 11
 }
 
+public interface IFindCompanionCandidates
+{
+    Task<CompanionFinderResult> ExecuteAsync(
+        CompanionFinderRequest request,
+        CancellationToken cancellationToken = default);
+}
+
 public sealed class CompanionFinderRequest
 {
     public CompanionFinderRequest(

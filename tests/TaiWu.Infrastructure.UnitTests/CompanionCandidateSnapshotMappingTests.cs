@@ -166,6 +166,7 @@ public sealed class CompanionCandidateSnapshotMappingTests
         var reader = new TaiwuCompanionCandidateSnapshotReader(
             readSession: null!,
             new MissingSavePathProvider(),
+            new TaiwuGameTextResolver(),
             TimeProvider.System);
 
         var result = await reader.ReadAsync(

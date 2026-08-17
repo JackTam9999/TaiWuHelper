@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>E6-010 synthetic companion finder review</title>
+    <link rel="stylesheet" href="../../../TaiWuAPI/wwwroot/app.css">
+    <style>
+        [hidden] { display: none !important; }
+        .review-fixture-note {
+            margin: 18px 0 0;
+            padding: 10px 14px;
+            border: 1px dashed rgba(215, 182, 107, 0.5);
+            color: #e7d6ad;
+            background: rgba(215, 182, 107, 0.08);
+            font-size: 0.78rem;
+        }
+        #en-results,
+        #zh-results,
+        #zh-ranked { scroll-margin-top: 145px; }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <header class="app-header">
+        <a class="brand" href="#en" aria-label="TaiWu Helper home">
+            <span class="brand-mark" aria-hidden="true">太</span>
+            <span><strong>TaiWu Helper</strong><small>Review fixture</small></span>
+        </a>
+        <nav class="primary-navigation" aria-label="Primary navigation">
+            <a href="#">Combat</a>
+            <a href="#">Skill atlas</a>
+            <a class="active" href="#en">Companion finder</a>
+        </nav>
+        <div class="language-switcher" aria-label="Language">
+            <a href="#en">EN</a>
+            <a href="#zh">中</a>
+        </div>
+    </header>
+
+    <p class="review-fixture-note">
+        Synthetic review data only · no character, save, name, value, or rank shown here is real.
+    </p>
+
+    <main id="en-review" data-language="en">
+        <section class="companion-hero">
+            <div>
+                <p class="eyebrow">Current group · one discipline</p>
+                <h1>Companion finder</h1>
+                <p class="hero-copy">Select one verified aptitude objective, then review an evidence-preserving shortlist from one stable save snapshot.</p>
+            </div>
+            <div class="boundary-card" role="note">
+                <strong>Information only</strong>
+                <span>TaiWu Helper reads the configured save. It cannot recruit, train, move, equip, assign, or otherwise change anyone or the game.</span>
+            </div>
+        </section>
+
+        <p class="companion-boundary" role="note">Candidate boundary: living companions in the current Taiwu group only.</p>
+
+        <section class="companion-controls" aria-labelledby="en-controls">
+            <div class="section-heading"><div><p class="eyebrow">Role family</p><h2 id="en-controls">Select comparison objective</h2></div></div>
+            <div class="companion-objective-grid">
+                <fieldset class="companion-role-options">
+                    <legend>Role family</legend>
+                    <label><input type="radio" name="en-role" checked><span><strong>Martial discipline aptitude</strong><small>Compare exact saved base aptitude for one martial discipline.</small></span></label>
+                    <label><input type="radio" name="en-role"><span><strong>Life-skill discipline aptitude</strong><small>Compare exact saved base aptitude for one life-skill discipline.</small></span></label>
+                </fieldset>
+                <label class="companion-discipline-control"><span>Discipline</span><select><option>Synthetic martial discipline</option></select></label>
+                <div class="companion-find-action"><button class="primary-button" type="button">Find candidates</button><small>One explicit read-only search.</small></div>
+            </div>
+            <div class="companion-role-purpose" role="note"><strong>Martial discipline aptitude</strong><span>Exact saved base aptitude for this selected discipline.</span><span>Not current attainment, success probability, or universal companion quality.</span></div>
+        </section>
+
+        <section class="companion-result-region">
+            <section class="companion-result-shell" aria-labelledby="en-results">
+                <div class="section-heading companion-result-heading">
+                    <div><p class="eyebrow">Result</p><h2 id="en-results">Synthetic martial discipline · Martial discipline aptitude</h2><p>Compare exact saved base aptitude for this selected martial discipline.</p></div>
+                    <span class="companion-freshness">Snapshot current</span>
+                </div>
+                <div class="companion-score-notice" role="note"><strong>How to read the score</strong><span>Scores compare saved base qualification within this selected discipline only. They are not current attainment, success probability, or universal companion quality.</span></div>
+                <div class="companion-result-meta"><span>Snapshot captured</span><strong>Synthetic timestamp</strong></div>
+                <dl class="companion-counts" aria-label="Result summary">
+                    <div><dt>Considered</dt><dd>4</dd></div><div><dt>Eligible</dt><dd>3</dd></div><div><dt>Ranked</dt><dd>1</dd></div><div><dt>Tied</dt><dd>2</dd></div><div><dt>Needs review</dt><dd>1</dd></div><div><dt>Ineligible</dt><dd>0</dd></div><div><dt>Incomplete</dt><dd>1</dd></div><div><dt>Unsupported</dt><dd>0</dd></div><div><dt>Conflicting</dt><dd>0</dd></div>
+                </dl>
+                <section class="companion-result-controls" aria-labelledby="en-filters">
+                    <h3 id="en-filters">Filter candidates</h3>
+                    <div class="companion-filter-grid">
+                        <fieldset class="companion-status-filter"><legend>Show candidates</legend><label><input type="radio" name="en-filter" checked>All</label><label><input type="radio" name="en-filter">Ranked</label><label><input type="radio" name="en-filter">Needs review</label><label><input type="radio" name="en-filter">Ineligible</label></fieldset>
+                        <label class="companion-name-filter"><span>Filter visible names</span><input value="" autocomplete="off"></label>
+                    </div>
+                    <p class="companion-visible-count">Showing 4 of 4 candidates. Unfiltered counts and ranks are unchanged.</p>
+                    <p class="companion-comparison-limit">Two candidates selected. Clear or deselect one to choose another.</p>
+                </section>
+                <section class="companion-candidate-section" aria-labelledby="en-ranked"><h3 id="en-ranked">Ranked and tied</h3>
+                    <table class="companion-candidate-table">
+                        <thead><tr><th scope="col">Rank</th><th scope="col">Candidate</th><th scope="col">Saved base qualification</th><th scope="col">State</th><th scope="col">Evidence</th><th scope="col">Compare</th></tr></thead>
+                        <tbody>
+                            <tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">Rank</span><strong>Rank 1</strong></td><th scope="row"><span class="companion-mobile-label">Candidate</span><strong class="companion-candidate-name">Synthetic Person A</strong><span class="companion-location">Location: Synthetic settlement</span></th><td><span class="companion-mobile-label">Saved base qualification</span><strong>90</strong></td><td><span class="companion-mobile-label">State</span><span class="companion-state-label ranked">Ranked</span></td><td><span class="companion-mobile-label">Evidence</span>Saved base value confirmed</td><td><span class="companion-mobile-label">Compare</span><label class="companion-compare-control"><input type="checkbox" disabled><span>Select for comparison · Synthetic Person A</span></label></td></tr>
+                            <tr class="companion-candidate-detail-row"><td colspan="6"><div class="companion-candidate-details"><section><h4>Decisive strengths</h4><ul><li>Higher exact qualification for this role.</li></ul></section><section><h4>Material limitations</h4><ul><li>No current-attainment evidence requested.</li></ul></section><section><h4>Requirement evidence</h4><ul><li><strong>Passed:</strong> Living current-group membership confirmed.</li></ul></section></div></td></tr>
+                            <tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">Rank</span><strong aria-label="Tied at rank 2">Rank 2 · Tied</strong></td><th scope="row"><span class="companion-mobile-label">Candidate</span><strong class="companion-candidate-name">Synthetic Person B</strong><span class="companion-location">Location: Synthetic valley</span></th><td><span class="companion-mobile-label">Saved base qualification</span><strong>75</strong></td><td><span class="companion-mobile-label">State</span><span class="companion-state-label ranked">Tied</span></td><td><span class="companion-mobile-label">Evidence</span>Saved base value confirmed</td><td><span class="companion-mobile-label">Compare</span><label class="companion-compare-control"><input type="checkbox" checked><span>Selected for comparison · Synthetic Person B</span></label></td></tr>
+                            <tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">Rank</span><strong aria-label="Tied at rank 2">Rank 2 · Tied</strong></td><th scope="row"><span class="companion-mobile-label">Candidate</span><strong class="companion-candidate-name">Synthetic Person C</strong><span class="companion-location">Location: Synthetic valley</span></th><td><span class="companion-mobile-label">Saved base qualification</span><strong>75</strong></td><td><span class="companion-mobile-label">State</span><span class="companion-state-label ranked">Tied</span></td><td><span class="companion-mobile-label">Evidence</span>Saved base value confirmed</td><td><span class="companion-mobile-label">Compare</span><label class="companion-compare-control"><input type="checkbox" checked><span>Selected for comparison · Synthetic Person C</span></label></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+                <section class="companion-candidate-section" aria-labelledby="en-review-list"><h3 id="en-review-list">Needs review</h3>
+                    <table class="companion-candidate-table"><thead><tr><th scope="col">Rank</th><th scope="col">Candidate</th><th scope="col">Saved base qualification</th><th scope="col">State</th><th scope="col">Evidence</th><th scope="col">Compare</th></tr></thead><tbody><tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">Rank</span><strong>Unavailable</strong></td><th scope="row"><span class="companion-mobile-label">Candidate</span><strong class="companion-candidate-name">Synthetic Person D</strong><span class="companion-location">Location: Unavailable</span></th><td><span class="companion-mobile-label">Saved base qualification</span><strong>Unavailable</strong></td><td><span class="companion-mobile-label">State</span><span class="companion-state-label needs-review">Incomplete</span></td><td><span class="companion-mobile-label">Evidence</span>Required saved value is missing</td><td><span class="companion-mobile-label">Compare</span><label class="companion-compare-control"><input type="checkbox" disabled><span>Select for comparison · Synthetic Person D</span></label></td></tr></tbody></table>
+                </section>
+                <section class="companion-comparison" aria-labelledby="en-comparison">
+                    <div class="section-heading compact-heading"><div><p class="eyebrow">Comparison ready</p><h3 id="en-comparison">Comparison</h3></div><button class="secondary-button" type="button">Clear comparison</button></div>
+                    <p class="companion-comparison-outcome"><strong>Relative result:</strong> Equal for this role</p>
+                    <table class="companion-comparison-table"><thead><tr><th scope="col">Evidence</th><th scope="col">Synthetic Person B</th><th scope="col">Synthetic Person C</th></tr></thead><tbody><tr><th scope="row">Eligibility</th><td><span class="companion-mobile-label">Synthetic Person B</span>Eligible</td><td><span class="companion-mobile-label">Synthetic Person C</span>Eligible</td></tr><tr><th scope="row">Saved base qualification</th><td><span class="companion-mobile-label">Synthetic Person B</span>75</td><td><span class="companion-mobile-label">Synthetic Person C</span>75</td></tr><tr><th scope="row">Rank</th><td><span class="companion-mobile-label">Synthetic Person B</span>Rank 2 · Tied</td><td><span class="companion-mobile-label">Synthetic Person C</span>Rank 2 · Tied</td></tr></tbody></table>
+                    <p>Review and make any choice manually in the game.</p>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <main id="zh-review" data-language="zh" hidden>
+        <section class="companion-hero">
+            <div><p class="eyebrow">目前隊伍 · 單一類別</p><h1>同道人選比較</h1><p class="hero-copy">選擇一項已驗證的資質目標，再查看由單一穩定存檔快照產生、保留證據狀態的人選清單。</p></div>
+            <div class="boundary-card" role="note"><strong>僅供參考</strong><span>太吾助手只會讀取已設定的存檔；不能招募、訓練、移動、裝備、指派或以其他方式改變人物或遊戲。</span></div>
+        </section>
+        <p class="companion-boundary" role="note">人選範圍：僅限目前太吾隊伍中仍在世的同道。</p>
+        <section class="companion-controls" aria-labelledby="zh-controls">
+            <div class="section-heading"><div><p class="eyebrow">目標類型</p><h2 id="zh-controls">選擇比較目標</h2></div></div>
+            <div class="companion-objective-grid"><fieldset class="companion-role-options"><legend>目標類型</legend><label><input type="radio" name="zh-role" checked><span><strong>武學資質</strong><small>依所選武學類別的存檔基礎資質精確值，比較目前同道。</small></span></label><label><input type="radio" name="zh-role"><span><strong>技藝資質</strong><small>依所選技藝類別的存檔基礎資質精確值，比較目前同道。</small></span></label></fieldset><label class="companion-discipline-control"><span>類別</span><select><option>範例武學類別</option></select></label><div class="companion-find-action"><button class="primary-button" type="button">查找人選</button><small>一次明確的唯讀搜尋。</small></div></div>
+            <div class="companion-role-purpose" role="note"><strong>武學資質</strong><span>依所選武學類別的存檔基礎資質精確值比較。</span><span>並非目前造詣、成功機率或人物的整體價值。</span></div>
+        </section>
+        <section class="companion-result-region"><section class="companion-result-shell" aria-labelledby="zh-results">
+            <div class="section-heading companion-result-heading"><div><p class="eyebrow">結果</p><h2 id="zh-results">範例武學類別 · 武學資質</h2><p>依所選武學類別的存檔基礎資質精確值，比較目前同道。</p></div><span class="companion-freshness">快照為最新狀態</span></div>
+            <div class="companion-score-notice" role="note"><strong>如何解讀分數</strong><span>分數只比較所選類別的存檔基礎資質，並非目前造詣、成功機率或人物的整體價值。</span></div>
+            <div class="companion-result-meta"><span>快照時間</span><strong>範例時間</strong></div>
+            <dl class="companion-counts" aria-label="結果摘要"><div><dt>共計</dt><dd>4</dd></div><div><dt>符合資格</dt><dd>3</dd></div><div><dt>已排序</dt><dd>1</dd></div><div><dt>並列</dt><dd>2</dd></div><div><dt>需檢查</dt><dd>1</dd></div><div><dt>不符合資格</dt><dd>0</dd></div><div><dt>資料不完整</dt><dd>1</dd></div><div><dt>目前不支援</dt><dd>0</dd></div><div><dt>資料衝突</dt><dd>0</dd></div></dl>
+            <section class="companion-result-controls" aria-labelledby="zh-filters"><h3 id="zh-filters">篩選人選</h3><div class="companion-filter-grid"><fieldset class="companion-status-filter"><legend>顯示人選</legend><label><input type="radio" name="zh-filter" checked>全部</label><label><input type="radio" name="zh-filter">已排序</label><label><input type="radio" name="zh-filter">需檢查</label><label><input type="radio" name="zh-filter">不符合資格</label></fieldset><label class="companion-name-filter"><span>篩選顯示名稱</span><input value=""></label></div><p class="companion-visible-count">顯示 4／4 位人選；未篩選數量與名次維持不變。</p><p class="companion-comparison-limit">已選取兩位人選；請清除或取消一位再選擇。</p></section>
+            <section class="companion-candidate-section" aria-labelledby="zh-ranked"><h3 id="zh-ranked">已排序與並列</h3><table class="companion-candidate-table"><thead><tr><th scope="col">名次</th><th scope="col">人選</th><th scope="col">存檔基礎資質</th><th scope="col">狀態</th><th scope="col">證據</th><th scope="col">比較</th></tr></thead><tbody>
+                <tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">名次</span><strong>第 1 名</strong></td><th scope="row"><span class="companion-mobile-label">人選</span><strong class="companion-candidate-name">範例人物甲</strong><span class="companion-location">位置：範例聚落</span></th><td><span class="companion-mobile-label">存檔基礎資質</span><strong>90</strong></td><td><span class="companion-mobile-label">狀態</span><span class="companion-state-label ranked">已排序</span></td><td><span class="companion-mobile-label">證據</span>存檔基礎值已確認</td><td><span class="companion-mobile-label">比較</span><label class="companion-compare-control"><input type="checkbox" disabled><span>選取作比較 · 範例人物甲</span></label></td></tr>
+                <tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">名次</span><strong aria-label="並列第 2 名">並列第 2 名</strong></td><th scope="row"><span class="companion-mobile-label">人選</span><strong class="companion-candidate-name">範例人物乙</strong><span class="companion-location">位置：範例山谷</span></th><td><span class="companion-mobile-label">存檔基礎資質</span><strong>75</strong></td><td><span class="companion-mobile-label">狀態</span><span class="companion-state-label ranked">並列</span></td><td><span class="companion-mobile-label">證據</span>存檔基礎值已確認</td><td><span class="companion-mobile-label">比較</span><label class="companion-compare-control"><input type="checkbox" checked><span>已選取作比較 · 範例人物乙</span></label></td></tr>
+                <tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">名次</span><strong aria-label="並列第 2 名">並列第 2 名</strong></td><th scope="row"><span class="companion-mobile-label">人選</span><strong class="companion-candidate-name">範例人物丙</strong><span class="companion-location">位置：範例山谷</span></th><td><span class="companion-mobile-label">存檔基礎資質</span><strong>75</strong></td><td><span class="companion-mobile-label">狀態</span><span class="companion-state-label ranked">並列</span></td><td><span class="companion-mobile-label">證據</span>存檔基礎值已確認</td><td><span class="companion-mobile-label">比較</span><label class="companion-compare-control"><input type="checkbox" checked><span>已選取作比較 · 範例人物丙</span></label></td></tr>
+            </tbody></table></section>
+            <section class="companion-candidate-section" aria-labelledby="zh-review-list"><h3 id="zh-review-list">需檢查</h3><table class="companion-candidate-table"><thead><tr><th scope="col">名次</th><th scope="col">人選</th><th scope="col">存檔基礎資質</th><th scope="col">狀態</th><th scope="col">證據</th><th scope="col">比較</th></tr></thead><tbody><tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">名次</span><strong>無法使用</strong></td><th scope="row"><span class="companion-mobile-label">人選</span><strong class="companion-candidate-name">範例人物丁</strong><span class="companion-location">位置：無法使用</span></th><td><span class="companion-mobile-label">存檔基礎資質</span><strong>無法使用</strong></td><td><span class="companion-mobile-label">狀態</span><span class="companion-state-label needs-review">資料不完整</span></td><td><span class="companion-mobile-label">證據</span>缺少必要的存檔數值</td><td><span class="companion-mobile-label">比較</span><label class="companion-compare-control"><input type="checkbox" disabled><span>選取作比較 · 範例人物丁</span></label></td></tr></tbody></table></section>
+            <section class="companion-comparison" aria-labelledby="zh-comparison"><div class="section-heading compact-heading"><div><p class="eyebrow">比較已就緒</p><h3 id="zh-comparison">比較</h3></div><button class="secondary-button" type="button">清除比較</button></div><p class="companion-comparison-outcome"><strong>相對結果：</strong>此目標相同</p><table class="companion-comparison-table"><thead><tr><th scope="col">證據</th><th scope="col">範例人物乙</th><th scope="col">範例人物丙</th></tr></thead><tbody><tr><th scope="row">資格</th><td><span class="companion-mobile-label">範例人物乙</span>符合資格</td><td><span class="companion-mobile-label">範例人物丙</span>符合資格</td></tr><tr><th scope="row">存檔基礎資質</th><td><span class="companion-mobile-label">範例人物乙</span>75</td><td><span class="companion-mobile-label">範例人物丙</span>75</td></tr><tr><th scope="row">名次</th><td><span class="companion-mobile-label">範例人物乙</span>並列第 2 名</td><td><span class="companion-mobile-label">範例人物丙</span>並列第 2 名</td></tr></tbody></table><p>請自行在遊戲中檢查並作出選擇。</p></section>
+        </section></section>
+    </main>
+</div>
+<script>
+    function showLanguage() {
+        const language = location.hash.startsWith('#zh') ? 'zh' : 'en';
+        document.documentElement.lang = language === 'zh' ? 'zh-Hant' : 'en';
+        document.querySelectorAll('[data-language]').forEach(element => {
+            element.hidden = element.dataset.language !== language;
+        });
+    }
+    addEventListener('hashchange', showLanguage);
+    showLanguage();
+</script>
+</body>
+</html>

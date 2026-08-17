@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted design — implementation planned |
+| Status | Accepted design — implemented and verified |
 | Epic | [EPIC-006](./EPIC.md) |
 | Backlog items | [E6-001](./BACKLOG.md#e6-001--define-role-evaluation-shortlist-and-ui-semantics), [E6-010](./BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui) |
 | Primary surface | Dedicated local Blazor page at `/companions` |
@@ -376,17 +376,27 @@ settlement, save-write, process, screenshot, upload, export, automation, or
 input-control action. It gives information for the player to review and act on
 manually in the game.
 
-## Planned verification
+## Verification evidence
 
 - Presentation mapper tests cover every candidate and evaluation state, exact
-  score warning, ties, filters, counts, comparison outcomes, and ID hiding.
-- Component tests cover role/discipline controls, loading, stable-save retry,
-  one-candidate, empty, tied, needs-review, ineligible, comparison, and previous-
-  result states.
-- English and Traditional Chinese render tests prove equivalent facts and
-  accessible names.
-- Architecture tests require the dedicated route and navigation entry, native
-  controls, one explicit read action, responsive layouts, and absence of game-
-  control verbs or handlers.
-- Browser verification covers desktop and narrow widths, keyboard traversal,
-  live announcements, focus replacement, wrapping, and horizontal overflow.
+  score warning, ties, filters, counts, comparison outcomes, missing display
+  values, and raw-ID hiding.
+- Rendered-component tests cover native role/discipline controls, loading,
+  stable-save retry, one-candidate, empty, tied, needs-review, ineligible,
+  comparison, previous-result, focus-target, and bilingual states.
+- Architecture tests require the dedicated route and navigation entry, one
+  explicit source action, the single-DOM responsive layout, and absence of a
+  Presentation evaluation, persistence, process, upload, input, or game-control
+  path.
+- Browser review found no console errors and verified the live `/companions`
+  route before any save read. The synthetic 1,440 by 900 English result had
+  equal document scroll and client widths. The 390 by 844 Traditional Chinese
+  result had equal 375-pixel content widths and exposed the same semantic table
+  facts as labelled cards.
+- The captures contain only synthetic names, locations, values, timestamp, and
+  ranks:
+  [English desktop result](../../reviews/assets/epic-006/companion-finder-en-desktop.png),
+  [Traditional Chinese narrow result](../../reviews/assets/epic-006/companion-finder-zh-narrow.png),
+  and [Traditional Chinese candidate cards](../../reviews/assets/epic-006/companion-finder-zh-narrow-candidates.png).
+- Full browser observations and artifact provenance are recorded in the
+  [E6-010 review](../../reviews/E6-010-companion-finder-ui.md).

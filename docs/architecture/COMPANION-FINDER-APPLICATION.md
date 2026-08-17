@@ -155,3 +155,11 @@ transport input into `CompanionFinderRequest`, calls this use case once, and
 maps the immutable result without recomputing a candidate state, score, rank,
 explanation, filter, or comparison. Response types omit local paths, raw
 catalogue definitions, and mutation-capable handles.
+
+## E6-010 Presentation integration
+
+E6-010 implements the dedicated
+[companion finder Presentation](./COMPANION-FINDER-PRESENTATION.md). Its mapper
+projects this immutable result without evaluating or ranking again. Filters,
+localized display text, responsive layout, and the two-candidate helper-session
+selection remain outside the authoritative result and fingerprint.

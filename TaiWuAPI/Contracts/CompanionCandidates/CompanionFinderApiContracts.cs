@@ -147,6 +147,8 @@ public sealed record CompanionShortlistCountsResponse(
 public sealed record CompanionCandidateResponse(
     string Reference,
     int CharacterId,
+    string? DisplayName,
+    string? LocationName,
     CompanionRoleCandidateRankingState RankingState,
     string RankingStateLabel,
     int? CompetitionRank,

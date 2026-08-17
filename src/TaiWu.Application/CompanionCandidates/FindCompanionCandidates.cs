@@ -8,6 +8,7 @@ public sealed class FindCompanionCandidates(
     ICompanionCandidateSnapshotReader snapshotReader,
     ICombatSkillDefinitionSource definitionSource,
     ICombatSkillCatalogueRepository catalogueRepository)
+    : IFindCompanionCandidates
 {
     public async Task<CompanionFinderResult> ExecuteAsync(
         CompanionFinderRequest request,

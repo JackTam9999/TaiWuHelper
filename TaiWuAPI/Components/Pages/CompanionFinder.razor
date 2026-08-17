@@ -1,0 +1,452 @@
+@page "/companions"
+@implements IAsyncDisposable
+@using Microsoft.JSInterop
+@using TaiWu.Application.CompanionCandidates
+@using TaiWu.Domain.CompanionCandidates
+@using TaiWuAPI.Presentation
+@inject IFindCompanionCandidates FindCandidates
+@inject ICompanionDisciplineDisplaySource DisciplineDisplaySource
+@inject IJSRuntime JS
+@inject ILogger<CompanionFinder> Logger
+
+<PageTitle>TaiWu Helper · @Text(CompanionFinderUiTextKey.PageTitle)</PageTitle>
+
+<section class="companion-hero">
+    <div>
+        <p class="eyebrow">@Text(CompanionFinderUiTextKey.Eyebrow)</p>
+        <h1>@Text(CompanionFinderUiTextKey.PageTitle)</h1>
+        <p class="hero-copy">@Text(CompanionFinderUiTextKey.HeroCopy)</p>
+    </div>
+    <div class="boundary-card" role="note">
+        <strong>@Text(CompanionFinderUiTextKey.InformationOnly)</strong>
+        <span>@Text(CompanionFinderUiTextKey.InformationNotice)</span>
+    </div>
+</section>
+
+<p class="companion-boundary" role="note">
+    @Text(CompanionFinderUiTextKey.CandidateBoundary)
+</p>
+
+<section class="companion-controls"
+         aria-labelledby="companion-controls-heading"
+         aria-busy="@_isLoading.ToString().ToLowerInvariant()">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">@Text(CompanionFinderUiTextKey.RoleFamily)</p>
+            <h2 id="companion-controls-heading">
+                @Text(CompanionFinderUiTextKey.SelectObjective)
+            </h2>
+        </div>
+        @if (_isLoading)
+        {
+            <span class="working-status" role="status">
+                @Text(CompanionFinderUiTextKey.FindingCandidates)
+            </span>
+        }
+    </div>
+
+    @if (_disciplineDisplay?.Status
+        == CompanionDisciplineDisplayStatus.Unavailable)
+    {
+        <section class="message-card page-state problem-state"
+                 role="alert">
+            <div>
+                <strong>@Text(CompanionFinderUiTextKey.DisciplineSourceUnavailable)</strong>
+                <p>@Text(CompanionFinderUiTextKey.DisciplineSourceUnavailableMessage)</p>
+            </div>
+            <button type="button"
+                    class="secondary-button"
+                    @onclick="LoadDisciplineLabelsAsync"
+                    disabled="@_labelsBusy">
+                @Text(CompanionFinderUiTextKey.RetryLabels)
+            </button>
+        </section>
+    }
+
+    <div class="companion-objective-grid">
+        <fieldset class="companion-role-options">
+            <legend>@Text(CompanionFinderUiTextKey.RoleFamily)</legend>
+            @foreach (var role in RoleOptions)
+            {
+                <label>
+                    <input id="@RoleControlId(role.Domain)"
+                           type="radio"
+                           name="companion-role-family"
+                           checked="@(_draftDomain == role.Domain)"
+                           @onchange="() => SetRole(role.Domain)"
+                           disabled="@(_isLoading || !LabelsAvailable)" />
+                    <span>
+                        <strong>@role.Label</strong>
+                        <small>@role.Purpose</small>
+                    </span>
+                </label>
+            }
+        </fieldset>
+
+        <label class="companion-discipline-control"
+               for="companion-discipline-select">
+            <span>@Text(CompanionFinderUiTextKey.Discipline)</span>
+            <select id="companion-discipline-select"
+                    value="@SelectedDisciplineKey"
+                    @onchange="SetDiscipline"
+                    disabled="@(_isLoading || !_draftDomain.HasValue || !LabelsAvailable)">
+                <option value="">@Text(CompanionFinderUiTextKey.ChooseDiscipline)</option>
+                @foreach (var option in CurrentDisciplineOptions)
+                {
+                    <option value="@OptionKey(option)"
+                            disabled="@(!option.NameAvailable)">
+                        @option.DisplayName
+                    </option>
+                }
+            </select>
+        </label>
+
+        <div class="companion-find-action">
+            <button type="button"
+                    class="primary-button"
+                    @onclick="FindAsync"
+                    disabled="@(!CanFind)">
+                @(_isLoading
+                    ? Text(CompanionFinderUiTextKey.FindingCandidates)
+                    : Text(CompanionFinderUiTextKey.FindCandidates))
+            </button>
+            <small>@Text(CompanionFinderUiTextKey.SelectRoleAndDiscipline)</small>
+        </div>
+    </div>
+
+    @if (CurrentRole is not null)
+    {
+        <div class="companion-role-purpose" role="note">
+            <strong>@CurrentRole.Label</strong>
+            <span>@CurrentRole.Purpose</span>
+            <span>@CurrentRole.ScoreLimitation</span>
+        </div>
+    }
+</section>
+
+<section class="companion-result-region"
+         aria-live="polite"
+         aria-busy="@_isLoading.ToString().ToLowerInvariant()">
+    @if (_isLoading)
+    {
+        <section class="message-card page-state" role="status">
+            <div>
+                <strong>@Text(CompanionFinderUiTextKey.ReadingTitle)</strong>
+                <p>@Text(CompanionFinderUiTextKey.ReadingMessage)</p>
+            </div>
+        </section>
+    }
+    else if (_notice is not null)
+    {
+        <section id="companion-error-summary"
+                 class="message-card page-state problem-state"
+                 role="alert"
+                 tabindex="-1">
+            <div>
+                <strong>@_notice.Title</strong>
+                <p>@_notice.Message</p>
+            </div>
+            @if (_notice.CanRetry && DraftValid)
+            {
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="FindAsync">
+                    @Text(CompanionFinderUiTextKey.RetryRead)
+                </button>
+            }
+        </section>
+    }
+    else if (_model is not null)
+    {
+        <CompanionCandidateResults Model="_model"
+                                   State="_interaction"
+                                   Comparison="_comparison"
+                                   IsPrevious="IsPreviousResult"
+                                   ComparisonChanged="RebuildComparison" />
+    }
+</section>
+
+@code {
+    private readonly CompanionFinderInteractionState _interaction = new();
+    private CompanionDisciplineDisplayResult? _disciplineDisplay;
+    private CandidateDisciplineDomain? _draftDomain;
+    private short? _draftDisciplineType;
+    private CandidateDisciplineDomain? _submittedDomain;
+    private short? _submittedDisciplineType;
+    private CompanionFinderResult? _result;
+    private CompanionFinderViewModel? _model;
+    private CompanionComparisonViewModel? _comparison;
+    private CompanionFinderNoticeViewModel? _notice;
+    private CancellationTokenSource? _requestCancellation;
+    private bool _isLoading;
+    private bool _labelsBusy;
+    private string? _pendingFocusId;
+    private TaiwuLanguage _mappedLanguage;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<CompanionFinderRoleOptionViewModel> RoleOptions =>
+        CompanionFinderViewModelMapper.MapRoles(Language);
+
+    private CompanionFinderRoleOptionViewModel? CurrentRole =>
+        _draftDomain.HasValue
+            ? RoleOptions.Single(value => value.Domain == _draftDomain.Value)
+            : null;
+
+    private IReadOnlyList<CompanionDisciplineOptionViewModel>
+        CurrentDisciplineOptions => _disciplineDisplay is null
+            ? []
+            : [.. CompanionFinderViewModelMapper.MapDisciplines(
+                    _disciplineDisplay,
+                    Language)
+                .Where(value => value.Domain == _draftDomain)];
+
+    private bool LabelsAvailable =>
+        _disciplineDisplay?.Status is
+            CompanionDisciplineDisplayStatus.Complete
+            or CompanionDisciplineDisplayStatus.Partial;
+
+    private bool DraftValid => CurrentRole is not null
+        && _draftDisciplineType.HasValue
+        && CurrentDisciplineOptions.Any(value =>
+            value.Type == _draftDisciplineType.Value
+            && value.NameAvailable);
+
+    private bool CanFind => DraftValid && !_isLoading && !_labelsBusy;
+
+    private bool IsPreviousResult => _model is not null
+        && (_draftDomain != _submittedDomain
+            || _draftDisciplineType != _submittedDisciplineType);
+
+    private string SelectedDisciplineKey =>
+        _draftDisciplineType.HasValue
+            ? OptionKey(CurrentDisciplineOptions.Single(value =>
+                value.Type == _draftDisciplineType.Value))
+            : string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDisciplineLabelsAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_result is not null
+            && _result.HasAuthoritativeResult
+            && _mappedLanguage != Language)
+        {
+            MapCurrentResult();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocusId is null)
+        {
+            return;
+        }
+
+        var focusId = _pendingFocusId;
+        _pendingFocusId = null;
+        try
+        {
+            await JS.InvokeVoidAsync("taiwuHelper.focusElement", focusId);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private async Task LoadDisciplineLabelsAsync()
+    {
+        _labelsBusy = true;
+        try
+        {
+            _disciplineDisplay = await DisciplineDisplaySource.ReadAsync();
+            if (_draftDomain.HasValue
+                && _draftDisciplineType.HasValue
+                && CurrentDisciplineOptions.All(value =>
+                    value.Type != _draftDisciplineType.Value
+                    || !value.NameAvailable))
+            {
+                _draftDisciplineType = null;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _disciplineDisplay = new CompanionDisciplineDisplayResult(
+                CompanionDisciplineDisplayStatus.Unavailable,
+                disciplines: [],
+                "DISCIPLINE_LANGUAGE_READ_CANCELLED");
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Companion discipline display labels could not be read.");
+            _disciplineDisplay = new CompanionDisciplineDisplayResult(
+                CompanionDisciplineDisplayStatus.Unavailable,
+                disciplines: [],
+                "DISCIPLINE_LANGUAGE_READ_FAILED");
+        }
+        finally
+        {
+            _labelsBusy = false;
+        }
+    }
+
+    private void SetRole(CandidateDisciplineDomain domain)
+    {
+        if (_draftDomain == domain)
+        {
+            return;
+        }
+
+        _draftDomain = domain;
+        _draftDisciplineType = null;
+    }
+
+    private void SetDiscipline(ChangeEventArgs args)
+    {
+        var key = args.Value?.ToString();
+        _draftDisciplineType = string.IsNullOrWhiteSpace(key)
+            ? null
+            : CurrentDisciplineOptions.Single(value =>
+                OptionKey(value) == key).Type;
+    }
+
+    private async Task FindAsync()
+    {
+        if (!CanFind)
+        {
+            return;
+        }
+
+        var role = CurrentRole!;
+        var disciplineType = _draftDisciplineType!.Value;
+        _requestCancellation?.Cancel();
+        _requestCancellation?.Dispose();
+        _requestCancellation = new CancellationTokenSource();
+        _isLoading = true;
+        _notice = null;
+        _result = null;
+        _model = null;
+        _comparison = null;
+        _interaction.Reset();
+        try
+        {
+            var result = await FindCandidates.ExecuteAsync(
+                new CompanionFinderRequest(
+                    role.Identity,
+                    role.Version,
+                    role.Domain,
+                    disciplineType),
+                _requestCancellation.Token);
+            if (result.HasAuthoritativeResult)
+            {
+                _result = result;
+                _submittedDomain = role.Domain;
+                _submittedDisciplineType = disciplineType;
+                MapCurrentResult();
+                _pendingFocusId = "companion-result-heading";
+            }
+            else
+            {
+                _notice = CompanionFinderViewModelMapper.MapFailure(
+                    result.Status,
+                    Language);
+                _pendingFocusId = "companion-error-summary";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _notice = new CompanionFinderNoticeViewModel(
+                CompanionFinderNoticeStatus.Cancelled,
+                Text(CompanionFinderUiTextKey.CancelledTitle),
+                Text(CompanionFinderUiTextKey.CancelledMessage),
+                CanRetry: true);
+            _pendingFocusId = "companion-error-summary";
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Companion finder failed safely.");
+            _notice = CompanionFinderViewModelMapper.MapFailure(
+                CompanionFinderStatus.Failed,
+                Language);
+            _pendingFocusId = "companion-error-summary";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void MapCurrentResult()
+    {
+        if (_result is null || !_submittedDisciplineType.HasValue)
+        {
+            return;
+        }
+
+        var disciplineName = CompanionFinderViewModelMapper.MapDisciplines(
+                _disciplineDisplay!,
+                Language)
+            .Single(value => value.Domain == _submittedDomain
+                && value.Type == _submittedDisciplineType)
+            .DisplayName;
+        _model = CompanionFinderViewModelMapper.Map(
+            _result,
+            Language,
+            disciplineName);
+        _mappedLanguage = Language;
+        RebuildComparison();
+    }
+
+    private void RebuildComparison()
+    {
+        if (_result is null || _model is null || !_interaction.ComparisonReady)
+        {
+            _comparison = null;
+            return;
+        }
+
+        _comparison = CompanionFinderViewModelMapper.MapComparison(
+            _result,
+            _model,
+            _interaction.SelectedCharacterIds[0],
+            _interaction.SelectedCharacterIds[1],
+            Language);
+    }
+
+    private static string RoleControlId(CandidateDisciplineDomain domain) =>
+        domain switch
+        {
+            CandidateDisciplineDomain.Martial => "companion-role-martial",
+            CandidateDisciplineDomain.LifeSkill => "companion-role-life-skill",
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(domain),
+                domain,
+                "Unknown discipline domain.")
+        };
+
+    private static string OptionKey(
+        CompanionDisciplineOptionViewModel option)
+    {
+        var family = option.Domain == CandidateDisciplineDomain.Martial
+            ? "martial"
+            : "life-skill";
+        var letter = (char)('a' + option.Type);
+        return $"{family}-{letter}";
+    }
+
+    private string Text(CompanionFinderUiTextKey key) =>
+        CompanionFinderUiText.Get(Language, key);
+
+    public ValueTask DisposeAsync()
+    {
+        _requestCancellation?.Cancel();
+        _requestCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

@@ -4,5 +4,11 @@ window.taiwuHelper = {
     },
     printRecommendation: function () {
         window.print();
+    },
+    focusElement: function (id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.focus();
+        }
     }
 };

@@ -350,6 +350,39 @@ public sealed class CompanionCandidatesControllerTests
     }
 
     [Fact]
+    public async Task Candidate_display_context_localizes_without_changing_evaluation_facts()
+    {
+        var profile = Profile(7, score: 82);
+        var display = new CompanionCandidateDisplay(
+            profile.Identity,
+            "範例人物",
+            "Synthetic Person",
+            "範例地點",
+            "Synthetic Place");
+        var result = await Execute(
+            Workflow(Snapshot([profile], [display])),
+            Request());
+
+        var english = CompanionFinderResponseMapper.Map(
+            result,
+            TaiwuLanguage.English);
+        var chinese = CompanionFinderResponseMapper.Map(
+            result,
+            TaiwuLanguage.Chinese);
+        var englishCandidate = Assert.Single(english.Candidates);
+        var chineseCandidate = Assert.Single(chinese.Candidates);
+
+        Assert.Equal("Synthetic Person", englishCandidate.DisplayName);
+        Assert.Equal("Synthetic Place", englishCandidate.LocationName);
+        Assert.Equal("範例人物", chineseCandidate.DisplayName);
+        Assert.Equal("範例地點", chineseCandidate.LocationName);
+        Assert.Equal(englishCandidate.CharacterId, chineseCandidate.CharacterId);
+        Assert.Equal(englishCandidate.RankingState, chineseCandidate.RankingState);
+        Assert.Equal(englishCandidate.TotalScore, chineseCandidate.TotalScore);
+        Assert.Equal(english.Fingerprint, chinese.Fingerprint);
+    }
+
+    [Fact]
     public void Api_contracts_expose_no_infrastructure_game_or_reflection_types()
     {
         var types = typeof(CompanionFinderResponse).Assembly.GetExportedTypes()
@@ -472,13 +505,15 @@ public sealed class CompanionCandidatesControllerTests
             new string(hash, 64));
 
     private static CompanionCandidateSnapshot Snapshot(
-        IEnumerable<CandidateProfile> profiles) => new(
+        IEnumerable<CandidateProfile> profiles,
+        IEnumerable<CompanionCandidateDisplay>? displays = null) => new(
             DateTimeOffset.Parse("2026-08-17T12:00:00Z"),
             Versions(),
             profiles,
             [],
             [],
-            []);
+            [],
+            displays);
 
     private static CandidateProfile Profile(
         int characterId,

@@ -1135,6 +1135,8 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SetFilter(StoryFilter.Completed)",
             "() => SetFilter(StoryFilter.InProgress)",
             "() => SetFilter(StoryFilter.NotCompleted)",
+            "() => SetFilter(filter)",
+            "() => SetRole(role.Domain)",
             "() => SetDifferencesOnly(false)",
             "() => SetDifferencesOnly(true)",
             "() => SetLanguage(TaiwuLanguage.Chinese)",
@@ -1143,6 +1145,7 @@ public sealed partial class ArchitectureBoundaryTests
             "() => State.RemoveSkill(skill.SkillId)",
             "() => Toggle(item.Reference)",
             "() => ToggleObservationSkill(skill.SkillId)",
+            "() => ToggleComparisonAsync(candidate.CharacterId)",
             "ApplyAsync",
             "ApplyFiltersAsync",
             "args => ChangeDirection(skill.SkillId, args)",
@@ -1151,9 +1154,12 @@ public sealed partial class ArchitectureBoundaryTests
             "ClearAsync",
             "ClearFiltersAsync",
             "ClearProgressCacheAsync",
+            "ClearComparisonAsync",
             "CopyAsync",
+            "FindAsync",
             "GetRecommendationAsync",
             "LoadAsync",
+            "LoadDisciplineLabelsAsync",
             "NextPageAsync",
             "PreviousPageAsync",
             "PrintAsync",
@@ -1163,6 +1169,7 @@ public sealed partial class ArchitectureBoundaryTests
             "Review",
             "SearchAsync",
             "SearchTargetsAsync",
+            "SetDiscipline",
             "ToggleEnabled"
         }.Order(StringComparer.Ordinal);
 

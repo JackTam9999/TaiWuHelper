@@ -91,7 +91,11 @@ public static class DependencyInjection
             new TaiwuCompanionCandidateSnapshotReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
+                provider.GetRequiredService<TaiwuGameTextResolver>(),
                 TimeProvider.System));
+        services.AddSingleton<ICompanionDisciplineDisplaySource>(provider =>
+            new TaiwuCompanionDisciplineDisplaySource(
+                provider.GetRequiredService<ITaiwuCatalogueSourcePathProvider>()));
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<IRegionStoryProgressReader>(provider =>
             new TaiwuRegionStoryProgressReader(

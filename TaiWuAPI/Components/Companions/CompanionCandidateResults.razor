@@ -1,0 +1,455 @@
+@using System.Globalization
+@using Microsoft.JSInterop
+@using TaiWu.Domain.CompanionRoles
+@using TaiWuAPI.Presentation
+@inject IJSRuntime JS
+
+<section class="companion-result-shell"
+         aria-labelledby="companion-result-heading"
+         @attributes="ResultAttributes">
+    @if (IsPrevious)
+    {
+        <div class="companion-previous-notice" role="status">
+            <strong>@Text(CompanionFinderUiTextKey.PreviousResult)</strong>
+            <span>@Text(CompanionFinderUiTextKey.PreviousResultMessage)</span>
+        </div>
+    }
+
+    <div class="section-heading companion-result-heading">
+        <div>
+            <p class="eyebrow">
+                @(IsPrevious
+                    ? Text(CompanionFinderUiTextKey.PreviousResult)
+                    : Text(CompanionFinderUiTextKey.Result))
+            </p>
+            <h2 id="companion-result-heading" tabindex="-1">
+                @Model.DisciplineName · @Model.RoleLabel
+            </h2>
+            <p>@Model.RolePurpose</p>
+        </div>
+        <span class="companion-freshness">
+            @(Model.IsPartial
+                ? Text(CompanionFinderUiTextKey.PartialResult)
+                : Text(CompanionFinderUiTextKey.SnapshotCurrent))
+        </span>
+    </div>
+
+    <div class="companion-score-notice" role="note">
+        <strong>@Text(CompanionFinderUiTextKey.ScoreHeading)</strong>
+        <span>@Model.ScoreLimitation</span>
+    </div>
+
+    @if (Model.IsPartial)
+    {
+        <div class="companion-partial-notice" role="status">
+            <strong>@Text(CompanionFinderUiTextKey.PartialResult)</strong>
+            <span>@Text(CompanionFinderUiTextKey.PartialMessage)</span>
+        </div>
+    }
+
+    <div class="companion-result-meta">
+        <span>@Text(CompanionFinderUiTextKey.SnapshotCaptured)</span>
+        <strong>@FormatSnapshot(Model.SnapshotCapturedAtUtc)</strong>
+    </div>
+
+    <dl class="companion-counts"
+        aria-label="@Text(CompanionFinderUiTextKey.ResultSummary)">
+        <div><dt>@Text(CompanionFinderUiTextKey.Considered)</dt><dd>@Model.Counts.Total</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.Eligible)</dt><dd>@Model.Counts.Eligible</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.Ranked)</dt><dd>@Model.Counts.Ranked</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.Tied)</dt><dd>@Model.Counts.Tied</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.NeedsReview)</dt><dd>@Model.Counts.NeedsReview</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.Ineligible)</dt><dd>@Model.Counts.Ineligible</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.Incomplete)</dt><dd>@Model.Counts.Incomplete</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.Unsupported)</dt><dd>@Model.Counts.Unsupported</dd></div>
+        <div><dt>@Text(CompanionFinderUiTextKey.Conflicting)</dt><dd>@Model.Counts.Conflicting</dd></div>
+    </dl>
+
+    @if (Model.IsEmpty)
+    {
+        <div class="companion-empty-state" role="status">
+            <strong>@Text(CompanionFinderUiTextKey.EmptyTitle)</strong>
+            <span>@Text(CompanionFinderUiTextKey.EmptyMessage)</span>
+        </div>
+    }
+    else
+    {
+        <section class="companion-result-controls"
+                 aria-labelledby="companion-filter-heading">
+            <h3 id="companion-filter-heading">
+                @Text(CompanionFinderUiTextKey.Filters)
+            </h3>
+            <div class="companion-filter-grid">
+                <fieldset class="companion-status-filter">
+                    <legend>@Text(CompanionFinderUiTextKey.ShowCandidates)</legend>
+                    @foreach (var filter in Enum.GetValues<CompanionRoleShortlistFilter>())
+                    {
+                        <label>
+                            <input type="radio"
+                                   name="companion-status-filter"
+                                   checked="@(State.Filter == filter)"
+                                   @onchange="() => SetFilter(filter)"
+                                   disabled="@IsPrevious" />
+                            <span>@CompanionFinderUiText.FilterLabel(Language, filter)</span>
+                        </label>
+                    }
+                </fieldset>
+                <label class="companion-name-filter" for="companion-name-filter">
+                    <span>@Text(CompanionFinderUiTextKey.FilterVisibleNames)</span>
+                    <input id="companion-name-filter"
+                           value="@State.NameQuery"
+                           @oninput="SetNameQuery"
+                           autocomplete="off"
+                           disabled="@IsPrevious" />
+                </label>
+            </div>
+            <p class="companion-visible-count" aria-live="polite">
+                @VisibleCountMessage
+            </p>
+            @if (State.ComparisonReady)
+            {
+                <p class="companion-comparison-limit">
+                    @Text(CompanionFinderUiTextKey.ComparisonLimit)
+                </p>
+            }
+        </section>
+
+        @if (VisibleCandidates.Count == 0)
+        {
+            <div class="companion-empty-state" role="status">
+                @Text(CompanionFinderUiTextKey.NoVisibleCandidates)
+            </div>
+        }
+        else
+        {
+            @foreach (var section in Enum.GetValues<CompanionCandidateSection>())
+            {
+                var candidates = VisibleCandidates
+                    .Where(value => value.Section == section)
+                    .ToArray();
+                if (candidates.Length > 0)
+                {
+                    <section class="companion-candidate-section"
+                             aria-labelledby="@SectionHeadingId(section)">
+                        <h3 id="@SectionHeadingId(section)">@SectionTitle(section)</h3>
+                        <table class="companion-candidate-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">@Text(CompanionFinderUiTextKey.Rank)</th>
+                                    <th scope="col">@Text(CompanionFinderUiTextKey.Candidate)</th>
+                                    <th scope="col">@Text(CompanionFinderUiTextKey.SavedBaseQualification)</th>
+                                    <th scope="col">@Text(CompanionFinderUiTextKey.State)</th>
+                                    <th scope="col">@Text(CompanionFinderUiTextKey.Evidence)</th>
+                                    <th scope="col">@Text(CompanionFinderUiTextKey.Compare)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var candidate in candidates)
+                                {
+                                    <tr class="companion-candidate-main-row">
+                                        <td data-label="@Text(CompanionFinderUiTextKey.Rank)">
+                                            <span class="companion-mobile-label" aria-hidden="true">
+                                                @Text(CompanionFinderUiTextKey.Rank)
+                                            </span>
+                                            <strong aria-label="@candidate.RankLabel">@candidate.RankLabel</strong>
+                                        </td>
+                                        <th scope="row" data-label="@Text(CompanionFinderUiTextKey.Candidate)">
+                                            <span class="companion-mobile-label" aria-hidden="true">
+                                                @Text(CompanionFinderUiTextKey.Candidate)
+                                            </span>
+                                            <strong class="companion-candidate-name">@candidate.DisplayName</strong>
+                                            <span class="companion-location">
+                                                @Text(CompanionFinderUiTextKey.Location): @candidate.LocationName
+                                            </span>
+                                        </th>
+                                        <td data-label="@Text(CompanionFinderUiTextKey.SavedBaseQualification)">
+                                            <span class="companion-mobile-label" aria-hidden="true">
+                                                @Text(CompanionFinderUiTextKey.SavedBaseQualification)
+                                            </span>
+                                            <strong>@candidate.ScoreLabel</strong>
+                                        </td>
+                                        <td data-label="@Text(CompanionFinderUiTextKey.State)">
+                                            <span class="companion-mobile-label" aria-hidden="true">
+                                                @Text(CompanionFinderUiTextKey.State)
+                                            </span>
+                                            <span class="companion-state-label @StateClass(candidate)">
+                                                @candidate.RankingStateLabel
+                                            </span>
+                                        </td>
+                                        <td data-label="@Text(CompanionFinderUiTextKey.Evidence)">
+                                            <span class="companion-mobile-label" aria-hidden="true">
+                                                @Text(CompanionFinderUiTextKey.Evidence)
+                                            </span>
+                                            @candidate.EvidenceLabel
+                                        </td>
+                                        <td data-label="@Text(CompanionFinderUiTextKey.Compare)">
+                                            <span class="companion-mobile-label" aria-hidden="true">
+                                                @Text(CompanionFinderUiTextKey.Compare)
+                                            </span>
+                                            <label class="companion-compare-control"
+                                                   for="@ComparisonControlId(candidate.CharacterId)">
+                                                <input id="@ComparisonControlId(candidate.CharacterId)"
+                                                       type="checkbox"
+                                                       checked="@State.IsSelected(candidate.CharacterId)"
+                                                       disabled="@(IsPrevious || !State.CanSelect(candidate.CharacterId))"
+                                                       @onchange="() => ToggleComparisonAsync(candidate.CharacterId)" />
+                                                <span>
+                                                    @(State.IsSelected(candidate.CharacterId)
+                                                        ? Text(CompanionFinderUiTextKey.SelectedForComparison)
+                                                        : Text(CompanionFinderUiTextKey.SelectForComparison))
+                                                    · @candidate.DisplayName
+                                                </span>
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr class="companion-candidate-detail-row">
+                                        <td colspan="6">
+                                            <div class="companion-candidate-details">
+                                                @if (candidate.Strengths.Count > 0)
+                                                {
+                                                    <section>
+                                                        <h4>@Text(CompanionFinderUiTextKey.DecisiveStrengths)</h4>
+                                                        <ul>
+                                                            @foreach (var strength in candidate.Strengths)
+                                                            {
+                                                                <li>@strength</li>
+                                                            }
+                                                        </ul>
+                                                    </section>
+                                                }
+                                                @if (candidate.Limitations.Count > 0)
+                                                {
+                                                    <section>
+                                                        <h4>@Text(CompanionFinderUiTextKey.MaterialLimitations)</h4>
+                                                        <ul>
+                                                            @foreach (var limitation in candidate.Limitations)
+                                                            {
+                                                                <li>@limitation</li>
+                                                            }
+                                                        </ul>
+                                                    </section>
+                                                }
+                                                <section>
+                                                    <h4>@Text(CompanionFinderUiTextKey.RequirementEvidence)</h4>
+                                                    <ul>
+                                                        @foreach (var gate in candidate.Gates)
+                                                        {
+                                                            <li>
+                                                                <strong>@gate.Outcome:</strong>
+                                                                @gate.Explanation
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </section>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </section>
+                }
+            }
+        }
+
+        <p class="visually-hidden" aria-live="polite">
+            @(State.ComparisonReady
+                ? Text(CompanionFinderUiTextKey.ComparisonReady)
+                : string.Empty)
+        </p>
+
+        @if (Comparison is not null)
+        {
+            <section class="companion-comparison"
+                     aria-labelledby="companion-comparison-heading">
+                <div class="section-heading compact-heading">
+                    <div>
+                        <p class="eyebrow">@Text(CompanionFinderUiTextKey.ComparisonReady)</p>
+                        <h3 id="companion-comparison-heading">
+                            @Text(CompanionFinderUiTextKey.Comparison)
+                        </h3>
+                    </div>
+                    <button type="button"
+                            class="secondary-button"
+                            @onclick="ClearComparisonAsync"
+                            disabled="@IsPrevious">
+                        @Text(CompanionFinderUiTextKey.ClearComparison)
+                    </button>
+                </div>
+                <p class="companion-comparison-outcome">
+                    <strong>@Text(CompanionFinderUiTextKey.RelativeResult):</strong>
+                    @Comparison.Outcome
+                </p>
+                <table class="companion-comparison-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">@Text(CompanionFinderUiTextKey.Evidence)</th>
+                            <th scope="col">@Comparison.FirstCandidateName</th>
+                            <th scope="col">@Comparison.SecondCandidateName</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fact in Comparison.Facts)
+                        {
+                            <tr>
+                                <th scope="row">@fact.Label</th>
+                                <td>
+                                    <span class="companion-mobile-label" aria-hidden="true">
+                                        @Comparison.FirstCandidateName
+                                    </span>
+                                    @fact.FirstValue
+                                </td>
+                                <td>
+                                    <span class="companion-mobile-label" aria-hidden="true">
+                                        @Comparison.SecondCandidateName
+                                    </span>
+                                    @fact.SecondValue
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <p>@Text(CompanionFinderUiTextKey.ReviewManually)</p>
+            </section>
+        }
+    }
+
+    <details class="companion-evidence-scope">
+        <summary>@Text(CompanionFinderUiTextKey.EvidenceAndScope)</summary>
+        <p>@Text(CompanionFinderUiTextKey.EvidenceAndScopeMessage)</p>
+        <p>@Text(CompanionFinderUiTextKey.CandidateBoundary)</p>
+        <p>@Text(CompanionFinderUiTextKey.InformationNotice)</p>
+    </details>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public CompanionFinderViewModel Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public CompanionFinderInteractionState State { get; set; } = null!;
+
+    [Parameter]
+    public CompanionComparisonViewModel? Comparison { get; set; }
+
+    [Parameter]
+    public bool IsPrevious { get; set; }
+
+    [Parameter]
+    public EventCallback ComparisonChanged { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyDictionary<string, object>? ResultAttributes =>
+        IsPrevious
+            ? new Dictionary<string, object>
+            {
+                ["aria-disabled"] = "true",
+                ["inert"] = string.Empty
+            }
+            : null;
+
+    private IReadOnlyList<CompanionCandidateViewModel> VisibleCandidates =>
+        State.VisibleCandidates(Model);
+
+    private string VisibleCountMessage => Language switch
+    {
+        TaiwuLanguage.English =>
+            $"Showing {VisibleCandidates.Count} of {Model.Counts.Total} candidates. Unfiltered counts and ranks are unchanged.",
+        TaiwuLanguage.Chinese =>
+            $"顯示 {VisibleCandidates.Count}／{Model.Counts.Total} 位人選；未篩選數量與名次維持不變。",
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(Language),
+            Language,
+            "Unknown UI language.")
+    };
+
+    private void SetFilter(CompanionRoleShortlistFilter filter)
+    {
+        State.SetFilter(filter);
+    }
+
+    private void SetNameQuery(ChangeEventArgs args)
+    {
+        State.SetNameQuery(args.Value?.ToString());
+    }
+
+    private async Task ToggleComparisonAsync(int characterId)
+    {
+        State.ToggleComparison(Model, characterId);
+        await ComparisonChanged.InvokeAsync();
+    }
+
+    private async Task ClearComparisonAsync()
+    {
+        var previous = State.ClearComparison();
+        await ComparisonChanged.InvokeAsync();
+        if (previous.Count > 0)
+        {
+            await JS.InvokeVoidAsync(
+                "taiwuHelper.focusElement",
+                ComparisonControlId(previous[0]));
+        }
+    }
+
+    private string ComparisonControlId(int characterId)
+    {
+        for (var index = 0; index < Model.Candidates.Count; index++)
+        {
+            if (Model.Candidates[index].CharacterId == characterId)
+            {
+                return $"companion-compare-{index}";
+            }
+        }
+
+        throw new ArgumentOutOfRangeException(
+            nameof(characterId),
+            characterId,
+            "The candidate is not in this presentation model.");
+    }
+
+    private string SectionHeadingId(CompanionCandidateSection section) =>
+        section switch
+        {
+            CompanionCandidateSection.Ranked => "companion-ranked-heading",
+            CompanionCandidateSection.NeedsReview => "companion-review-heading",
+            CompanionCandidateSection.Ineligible => "companion-ineligible-heading",
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(section),
+                section,
+                "Unknown candidate section.")
+        };
+
+    private string SectionTitle(CompanionCandidateSection section) => Text(
+        section switch
+        {
+            CompanionCandidateSection.Ranked =>
+                CompanionFinderUiTextKey.RankedCandidates,
+            CompanionCandidateSection.NeedsReview =>
+                CompanionFinderUiTextKey.NeedsReviewCandidates,
+            CompanionCandidateSection.Ineligible =>
+                CompanionFinderUiTextKey.IneligibleCandidates,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(section),
+                section,
+                "Unknown candidate section.")
+        });
+
+    private static string StateClass(CompanionCandidateViewModel candidate) =>
+        candidate.Section switch
+        {
+            CompanionCandidateSection.Ranked => "ranked",
+            CompanionCandidateSection.NeedsReview => "needs-review",
+            CompanionCandidateSection.Ineligible => "ineligible",
+            _ => string.Empty
+        };
+
+    private static string FormatSnapshot(DateTimeOffset value) =>
+        value.ToUniversalTime().ToString(
+            "yyyy-MM-dd HH:mm 'UTC'",
+            CultureInfo.InvariantCulture);
+
+    private string Text(CompanionFinderUiTextKey key) =>
+        CompanionFinderUiText.Get(Language, key);
+}

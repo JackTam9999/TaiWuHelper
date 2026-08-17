@@ -741,7 +741,7 @@ localhost-only HTTP endpoints and pure response mappers.
 
 ### E6-010 — Deliver the bilingual accessible companion-finder UI
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -755,31 +755,31 @@ reasons without introducing a second evaluation path in Presentation.
 
 #### Acceptance criteria
 
-- [ ] The page follows `UI-006-companion-candidate-finder.md` and the shared UI
+- [x] The page follows `UI-006-companion-candidate-finder.md` and the shared UI
       presentation guidelines.
-- [ ] Role selection precedes ranking and clearly states the objective and
+- [x] Role selection precedes ranking and clearly states the objective and
       limitations.
-- [ ] The summary distinguishes total considered, eligible, ranked, tied,
+- [x] The summary distinguishes total considered, eligible, ranked, tied,
       ineligible, incomplete, unsupported, and conflicting candidates.
-- [ ] Shortlist entries show rank or tie, role-local score when available,
+- [x] Shortlist entries show rank or tie, role-local score when available,
       decisive strengths, material limitations, evidence state, and verified
       availability or location.
-- [ ] The comparison view exposes the same immutable evaluation components and
+- [x] The comparison view exposes the same immutable evaluation components and
       hard gates without recalculation.
-- [ ] Filters disclose the unfiltered result count and do not change score or
+- [x] Filters disclose the unfiltered result count and do not change score or
       rank facts.
-- [ ] Missing, stale, rebuilding, partial, unsupported, conflicting, empty,
+- [x] Missing, stale, rebuilding, partial, unsupported, conflicting, empty,
       loading, cancelled, and failed states have actionable information-only
       messages.
-- [ ] Score labels state that values are role-local and are neither universal
+- [x] Score labels state that values are role-local and are neither universal
       rankings nor success probabilities.
-- [ ] Traditional Chinese and English copy is complete and uses stable
+- [x] Traditional Chinese and English copy is complete and uses stable
       identity-backed localization.
-- [ ] Narrow layouts preserve fact parity without horizontal dependence; wide
+- [x] Narrow layouts preserve fact parity without horizontal dependence; wide
       layouts do not force assistive technology through duplicated content.
-- [ ] Headings, landmarks, table or list semantics, labels, focus order,
+- [x] Headings, landmarks, table or list semantics, labels, focus order,
       expanded states, status announcements, and non-color cues are tested.
-- [ ] Presentation types cannot recruit, train, move, equip, assign, persist,
+- [x] Presentation types cannot recruit, train, move, equip, assign, persist,
       upload, automate input, or mutate game state.
 
 #### Evidence when complete
@@ -789,6 +789,25 @@ reasons without introducing a second evaluation path in Presentation.
 - Completed `docs/roadmap/epic-006/UI-006-companion-candidate-finder.md`.
 - English and Traditional Chinese desktop and narrow-screen review captures
   using synthetic or redacted data.
+
+#### Completion evidence
+
+- `/companions` Razor page, reusable candidate-result component, pure
+  Presentation mapper/view models, helper-session interaction state, and the
+  enum-backed 94-key bilingual copy catalogue.
+- Bilingual candidate and location descriptors captured inside the existing
+  one-pass save projection, plus a path-free installed discipline-label source;
+  all display values remain outside evaluation profiles and fingerprints.
+- Mapper, rendering, API, Infrastructure, and architecture coverage for every
+  visible state, immutable comparison, native semantics, single-DOM responsive
+  rendering, no raw-ID fallback, and no Presentation mutation path.
+- [Presentation architecture](../../architecture/COMPANION-FINDER-PRESENTATION.md),
+  updated [API contract](../../api/COMPANION-CANDIDATES.md), and
+  [browser review](../../reviews/E6-010-companion-finder-ui.md).
+- Synthetic [English desktop](../../reviews/assets/epic-006/companion-finder-en-desktop.png),
+  [Traditional Chinese narrow result](../../reviews/assets/epic-006/companion-finder-zh-narrow.png),
+  and [narrow candidate-card](../../reviews/assets/epic-006/companion-finder-zh-narrow-candidates.png)
+  captures; no real save value, identity, fingerprint, or local path is stored.
 
 ## Slice 8: Verification and completion
 

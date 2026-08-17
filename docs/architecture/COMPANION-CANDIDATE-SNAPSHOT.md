@@ -16,8 +16,10 @@ approved raw profile fact from one immutable configured-save revision. It adds
 one path-free Application read port and one configured-path-only
 Infrastructure adapter over the existing guarded archive session.
 
-The adapter does not enrich catalogue facts, evaluate roles, rank candidates,
-or produce player-visible names. Those operations remain later Epic 6 slices.
+The adapter does not enrich catalogue facts, evaluate roles, or rank
+candidates. E6-010 extends the same one-pass archive projection with optional
+bilingual display descriptors for candidate name and location; those values
+remain outside role profiles and every semantic identity.
 
 ## Application port
 
@@ -55,6 +57,7 @@ messages are sanitized and never contain exception or filesystem detail.
 - exact GameData, profile-mapping, discipline-catalogue, and fingerprint-
   schema versions;
 - candidate profiles in stable character-ID order;
+- optional bilingual candidate display descriptors keyed by character ID;
 - typed candidate omissions;
 - typed expected standalone-runtime warnings; and
 - typed candidate or result diagnostics.
@@ -63,6 +66,11 @@ Every profile must carry the same `CandidateProfileSourceVersions` value as
 the snapshot. Constructors defensively copy, sort, reject nulls, reject
 duplicate candidate and diagnostic identities, and reject mixed source
 revisions. No local path crosses the port.
+
+Display descriptors are accepted only for identities present in the snapshot.
+They are presentation context, not profile facts: they cannot affect universe
+membership, eligibility, evaluation, ranking, tie order, comparison, or any
+profile, shortlist, or finder fingerprint.
 
 ## Trusted source and one-pass session
 
@@ -80,8 +88,10 @@ One request contains exactly one call to
 4. excludes the Taiwu player identity;
 5. enumerates remaining IDs in stable numeric order;
 6. reads each current object and all approved raw facts;
-7. maps each candidate independently to an immutable Domain profile; and
-8. returns one atomic snapshot.
+7. resolves optional Chinese and English name and location text inside the same
+   archive callback;
+8. maps each candidate independently to an immutable Domain profile; and
+9. returns one atomic snapshot.
 
 The adapter never invokes the existing single-character atlas reader, never
 opens an archive inside the candidate loop, and never stores candidate data.
@@ -89,6 +99,22 @@ The session's process-wide lock and before/after source guard apply to the
 whole aggregate projection. `TaiwuArchiveChangedException` is a typed internal
 session failure so the adapter can return `ChangedRevision` without matching
 exception text.
+
+## Display descriptor isolation
+
+Candidate and location labels use the existing version-aware game-text
+resolver while the guarded archive projection is already open. Chinese and
+English are captured together so changing helper language never rereads the
+save. Raw `Name_` and `SurName_` tokens, numeric IDs, paths, and source text do
+not become fallback display values; unavailable labels remain a typed display
+condition for Presentation to localize safely.
+
+`TaiwuCompanionDisciplineDisplaySource` separately reads the installed 14
+martial and 16 life-skill language entries. It exposes stable typed discipline
+identities plus bilingual labels and a `Complete`, `Partial`, or `Unavailable`
+state. It never accepts a caller path and never enters the candidate archive
+session. Discipline text is also display-only and excluded from role and
+finder fingerprints.
 
 ## Candidate-universe mapping
 
@@ -171,8 +197,9 @@ control, recruitment, equipment, movement, or assignment path.
 ## Verification
 
 Synthetic tests cover immutable Application contracts, mixed revisions,
-duplicates, valid profiles, missing characters, living and membership states,
-short qualification buffers, invalid identity sets, deterministic mapping,
+duplicates, valid profiles, display-identity validation, bilingual discipline
+resources, missing characters, living and membership states, short
+qualification buffers, invalid identity sets, deterministic mapping,
 dependency injection, unavailable configuration, cancellation/session guards,
 and architecture safety.
 

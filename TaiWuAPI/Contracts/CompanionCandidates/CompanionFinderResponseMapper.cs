@@ -58,10 +58,14 @@ public static class CompanionFinderResponseMapper
         var shortlist = result.Shortlist!;
         var enrichmentByCharacter = result.Enrichment!.Candidates.ToDictionary(
             item => item.Profile.Identity.CharacterId);
+        var displayByCharacter = result.Snapshot!.Displays.ToDictionary(
+            item => item.Identity.CharacterId);
         var candidates = shortlist.Entries
             .Select(entry => MapCandidate(
                 entry,
                 enrichmentByCharacter[entry.Evaluation.Profile.Identity.CharacterId],
+                displayByCharacter.GetValueOrDefault(
+                    entry.Evaluation.Profile.Identity.CharacterId),
                 language))
             .ToArray();
         var diagnostics = MapRootDiagnostics(result, language);
@@ -120,6 +124,7 @@ public static class CompanionFinderResponseMapper
     private static CompanionCandidateResponse MapCandidate(
         CompanionRoleShortlistEntry entry,
         CompanionCandidateEnrichment enrichment,
+        CompanionCandidateDisplay? display,
         TaiwuLanguage language)
     {
         var evaluation = entry.Evaluation;
@@ -134,6 +139,8 @@ public static class CompanionFinderResponseMapper
         return new CompanionCandidateResponse(
             CandidateReference(evaluation.Profile.Identity.CharacterId),
             evaluation.Profile.Identity.CharacterId,
+            DisplayName(display, language),
+            LocationName(display, language),
             entry.Candidate.State,
             CompanionFinderApiText.RankingState(language, entry.Candidate.State),
             entry.Candidate.CompetitionRank,
@@ -166,6 +173,30 @@ public static class CompanionFinderResponseMapper
                     CompanionFinderApiText.Diagnostic(language, diagnostic.Code),
                     CandidateReference(evaluation.Profile.Identity.CharacterId))) ]);
     }
+
+    private static string? DisplayName(
+        CompanionCandidateDisplay? display,
+        TaiwuLanguage language) => language switch
+        {
+            TaiwuLanguage.Chinese => display?.TraditionalChineseName,
+            TaiwuLanguage.English => display?.EnglishName,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(language),
+                language,
+                "Unknown Taiwu language.")
+        };
+
+    private static string? LocationName(
+        CompanionCandidateDisplay? display,
+        TaiwuLanguage language) => language switch
+        {
+            TaiwuLanguage.Chinese => display?.TraditionalChineseLocation,
+            TaiwuLanguage.English => display?.EnglishLocation,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(language),
+                language,
+                "Unknown Taiwu language.")
+        };
 
     private static CompanionGateResponse MapGate(
         CompanionRoleGateEvaluation gate,

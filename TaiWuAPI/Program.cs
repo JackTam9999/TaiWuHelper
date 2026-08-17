@@ -45,7 +45,7 @@ builder.Services.AddScoped<
     IResolveTargetSkillSelection,
     ResolveTargetSkillSelection>();
 builder.Services.AddScoped<IFindTargets, FindTargets>();
-builder.Services.AddScoped<FindCompanionCandidates>();
+builder.Services.AddScoped<IFindCompanionCandidates, FindCompanionCandidates>();
 builder.Services.AddScoped<TaiwuLanguageState>();
 builder.Services.AddTaiwuInfrastructure();
 builder.Services

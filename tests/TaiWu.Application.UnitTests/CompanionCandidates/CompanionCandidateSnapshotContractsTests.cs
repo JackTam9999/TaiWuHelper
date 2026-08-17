@@ -102,6 +102,91 @@ public sealed class CompanionCandidateSnapshotContractsTests
     }
 
     [Fact]
+    public void Snapshot_keeps_bilingual_display_context_outside_profile_identity()
+    {
+        var versions = Versions();
+        var profile = Profile(2, versions);
+        var display = new CompanionCandidateDisplay(
+            profile.Identity,
+            "範例人物",
+            "Synthetic Person",
+            "範例地點",
+            "Synthetic Place");
+        var snapshot = new CompanionCandidateSnapshot(
+            DateTimeOffset.UtcNow,
+            versions,
+            [profile],
+            [],
+            [],
+            [],
+            [display]);
+
+        Assert.Same(display, Assert.Single(snapshot.Displays));
+        Assert.Equal("Synthetic Person", display.EnglishName);
+        Assert.Equal("範例地點", display.TraditionalChineseLocation);
+        Assert.DoesNotContain(
+            typeof(CompanionCandidateDisplay).GetProperties(),
+            property => property.Name.Contains("Score", StringComparison.Ordinal)
+                || property.Name.Contains("Rank", StringComparison.Ordinal)
+                || property.Name.Contains("Eligible", StringComparison.Ordinal));
+        Assert.Throws<ArgumentException>(() => new CompanionCandidateSnapshot(
+            DateTimeOffset.UtcNow,
+            versions,
+            [profile],
+            [],
+            [],
+            [],
+            [display, display]));
+        Assert.Throws<ArgumentException>(() => new CompanionCandidateSnapshot(
+            DateTimeOffset.UtcNow,
+            versions,
+            [profile],
+            [],
+            [],
+            [],
+            [new CompanionCandidateDisplay(
+                new CandidateIdentity(3),
+                "其他人物",
+                "Other Person",
+                null,
+                null)]));
+    }
+
+    [Fact]
+    public void Discipline_display_contracts_preserve_typed_order_and_state()
+    {
+        var life = new CompanionDisciplineDisplayName(
+            new CandidateDisciplineIdentity(
+                CandidateDisciplineDomain.LifeSkill,
+                1),
+            "弈棋",
+            "Strategy Games");
+        var martial = new CompanionDisciplineDisplayName(
+            new CandidateDisciplineIdentity(
+                CandidateDisciplineDomain.Martial,
+                0),
+            "內功",
+            "Internal Arts");
+        var result = new CompanionDisciplineDisplayResult(
+            CompanionDisciplineDisplayStatus.Complete,
+            [life, martial]);
+
+        Assert.Equal([martial, life], result.Disciplines);
+        Assert.Null(result.FailureIdentity);
+        Assert.Throws<ArgumentException>(() =>
+            new CompanionDisciplineDisplayResult(
+                CompanionDisciplineDisplayStatus.Complete,
+                [new CompanionDisciplineDisplayName(
+                    martial.Discipline,
+                    "內功",
+                    englishName: null)]));
+        Assert.Throws<ArgumentException>(() =>
+            new CompanionDisciplineDisplayResult(
+                CompanionDisciplineDisplayStatus.Unavailable,
+                disciplines: []));
+    }
+
+    [Fact]
     public void Read_result_enforces_success_and_failure_payloads()
     {
         var snapshot = new CompanionCandidateSnapshot(

@@ -2,6 +2,7 @@ using GameData.Domains;
 using GameData.Domains.Character;
 using System.Diagnostics;
 using TaiWu.Application.CompanionCandidates;
+using TaiWu.Application.Localization;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
 
@@ -10,6 +11,7 @@ namespace TaiWu.Infrastructure.SaveGames;
 internal sealed class TaiwuCompanionCandidateSnapshotReader(
     TaiwuArchiveReadSession readSession,
     ITaiwuSaveFilePathProvider saveFilePathProvider,
+    TaiwuGameTextResolver gameTextResolver,
     TimeProvider timeProvider) : ICompanionCandidateSnapshotReader
 {
     public async Task<CompanionCandidateSnapshotReadResult> ReadAsync(
@@ -48,6 +50,7 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                         context,
                         gameDataVersion,
                         timeProvider.GetUtcNow(),
+                        gameTextResolver,
                         token),
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -86,6 +89,7 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
         TaiwuArchiveReadContext context,
         string gameDataVersion,
         DateTimeOffset capturedAt,
+        TaiwuGameTextResolver textResolver,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -99,7 +103,14 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
         var omissions = new List<CompanionCandidateOmission>();
         var warnings = new List<CompanionCandidateSnapshotWarning>();
         var diagnostics = new List<CompanionCandidateSnapshotDiagnostic>();
+        var displays = new List<CompanionCandidateDisplay>();
         var partial = false;
+        var traditionalChinese = textResolver.CreateContext(
+            context.SaveFilePath,
+            TaiwuLanguage.Chinese);
+        var english = textResolver.CreateContext(
+            context.SaveFilePath,
+            TaiwuLanguage.English);
 
         if (context.LoadWarning is not null)
         {
@@ -142,6 +153,10 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                 var raw = ReadCandidate(characterId, cancellationToken);
                 var mapped = CompanionCandidateSnapshotMapping.Map(raw, versions);
                 profiles.Add(mapped.Profile);
+                displays.Add(ReadDisplay(
+                    mapped.Profile.Identity,
+                    traditionalChinese,
+                    english));
                 diagnostics.AddRange(mapped.Diagnostics);
                 partial |= mapped.IsPartial;
             }
@@ -165,7 +180,8 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
             profiles,
             omissions,
             warnings,
-            diagnostics);
+            diagnostics,
+            displays);
         return new CompanionCandidateProjection(snapshot, partial);
     }
 
@@ -267,6 +283,51 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
             baseLifeSkillQualifications: null,
             learnedLifeSkillIdentities: null,
             failureIdentity: "CANDIDATE_CHARACTER_MISSING");
+
+    private static CompanionCandidateDisplay ReadDisplay(
+        CandidateIdentity identity,
+        TaiwuGameTextContext traditionalChinese,
+        TaiwuGameTextContext english)
+    {
+        try
+        {
+            if (!DomainManager.Character.TryGetElement_Objects(
+                    identity.CharacterId,
+                    out Character character))
+            {
+                return new CompanionCandidateDisplay(
+                    identity,
+                    traditionalChineseName: null,
+                    englishName: null,
+                    traditionalChineseLocation: null,
+                    englishLocation: null);
+            }
+
+            var location = character.GetLocation();
+            return new CompanionCandidateDisplay(
+                identity,
+                SafeName(traditionalChinese.ResolveCharacterName(character)),
+                SafeName(english.ResolveCharacterName(character)),
+                traditionalChinese.ResolveLocationName(location),
+                english.ResolveLocationName(location));
+        }
+        catch (Exception exception) when (IsCandidateMappingFailure(exception))
+        {
+            return new CompanionCandidateDisplay(
+                identity,
+                traditionalChineseName: null,
+                englishName: null,
+                traditionalChineseLocation: null,
+                englishLocation: null);
+        }
+    }
+
+    private static string? SafeName(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+        || value.Contains("Name_", StringComparison.Ordinal)
+        || value.Contains("SurName_", StringComparison.Ordinal)
+            ? null
+            : value.Trim();
 
     private static CompanionCandidateSnapshotWarning MapWarning(
         TaiwuArchiveLoadWarning warning)

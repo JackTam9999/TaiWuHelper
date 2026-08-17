@@ -9,7 +9,7 @@ namespace TaiWuAPI.Controllers;
 [ApiController]
 [Route("api/companion-candidates")]
 public sealed class CompanionCandidatesController(
-    FindCompanionCandidates findCompanionCandidates) : ControllerBase
+    IFindCompanionCandidates findCompanionCandidates) : ControllerBase
 {
     public const int ClientClosedRequestStatusCode = 499;
 

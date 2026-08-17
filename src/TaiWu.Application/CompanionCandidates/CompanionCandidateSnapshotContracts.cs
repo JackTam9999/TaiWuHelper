@@ -137,7 +137,8 @@ public sealed class CompanionCandidateSnapshot
         IEnumerable<CandidateProfile> profiles,
         IEnumerable<CompanionCandidateOmission> omissions,
         IEnumerable<CompanionCandidateSnapshotWarning> warnings,
-        IEnumerable<CompanionCandidateSnapshotDiagnostic> diagnostics)
+        IEnumerable<CompanionCandidateSnapshotDiagnostic> diagnostics,
+        IEnumerable<CompanionCandidateDisplay>? displays = null)
     {
         SourceVersions = sourceVersions ?? throw new ArgumentNullException(nameof(sourceVersions));
         CapturedAtUtc = capturedAt.ToUniversalTime();
@@ -157,12 +158,21 @@ public sealed class CompanionCandidateSnapshot
             item => item.StableKey,
             "Snapshot diagnostics cannot contain null or duplicate entries.",
             nameof(diagnostics));
+        Displays = CopyDisplays(displays ?? []);
 
         if (Profiles.Any(profile => profile.SourceVersions != SourceVersions))
         {
             throw new ArgumentException(
                 "Every candidate profile must share the snapshot source versions.",
                 nameof(profiles));
+        }
+
+        if (Displays.Any(display => Profiles.All(profile =>
+                profile.Identity.CharacterId != display.Identity.CharacterId)))
+        {
+            throw new ArgumentException(
+                "Candidate display entries must reference snapshot profiles.",
+                nameof(displays));
         }
     }
 
@@ -177,6 +187,8 @@ public sealed class CompanionCandidateSnapshot
     public ImmutableArray<CompanionCandidateSnapshotWarning> Warnings { get; }
 
     public ImmutableArray<CompanionCandidateSnapshotDiagnostic> Diagnostics { get; }
+
+    public ImmutableArray<CompanionCandidateDisplay> Displays { get; }
 
     private static ImmutableArray<CandidateProfile> CopyProfiles(
         IEnumerable<CandidateProfile> profiles)
@@ -209,6 +221,23 @@ public sealed class CompanionCandidateSnapshot
         }
 
         return [.. copied.OrderBy(stableKey, StringComparer.Ordinal)];
+    }
+
+    private static ImmutableArray<CompanionCandidateDisplay> CopyDisplays(
+        IEnumerable<CompanionCandidateDisplay> displays)
+    {
+        ArgumentNullException.ThrowIfNull(displays);
+        var copied = displays.ToImmutableArray();
+        if (copied.Any(item => item is null)
+            || copied.GroupBy(item => item.Identity.CharacterId)
+                .Any(group => group.Count() > 1))
+        {
+            throw new ArgumentException(
+                "Snapshot display entries cannot contain null or duplicate candidate identities.",
+                nameof(displays));
+        }
+
+        return [.. copied.OrderBy(item => item.Identity.CharacterId)];
     }
 }
 
