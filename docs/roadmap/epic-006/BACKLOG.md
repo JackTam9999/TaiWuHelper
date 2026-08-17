@@ -542,7 +542,7 @@ shortlist.
 
 ### E6-007 — Build evidence-aware shortlist and candidate comparison explanations
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -556,24 +556,24 @@ missing evidence without re-scoring in the UI.
 
 #### Acceptance criteria
 
-- [ ] The shortlist retains selected role identity, rule version, source
+- [x] The shortlist retains selected role identity, rule version, source
       identity, unfiltered counts, ranked entries, ties, exclusions, and
       diagnostics.
-- [ ] Every ranked entry explains its strongest contributions and material
+- [x] Every ranked entry explains its strongest contributions and material
       limitations using existing evaluation components.
-- [ ] Ineligible or unranked candidates retain exact reasons when exposed.
-- [ ] Comparing two candidates uses the same immutable role evaluations and
+- [x] Ineligible or unranked candidates retain exact reasons when exposed.
+- [x] Comparing two candidates uses the same immutable role evaluations and
       does not create a second ranking path.
-- [ ] Comparison rows use stable field or rule identity and show both value and
+- [x] Comparison rows use stable field or rule identity and show both value and
       evidence state.
-- [ ] Decisive differences, equal facts, missing evidence, hard-gate outcomes,
+- [x] Decisive differences, equal facts, missing evidence, hard-gate outcomes,
       and genuine tradeoffs remain distinguishable.
-- [ ] Location or availability is displayed only when E6-000-approved evidence
+- [x] Location or availability is displayed only when E6-000-approved evidence
       supports it.
-- [ ] Filters do not mutate evaluations, scores, ties, or the source shortlist.
-- [ ] Explanations never recommend unverified recruitment, training, travel,
+- [x] Filters do not mutate evaluations, scores, ties, or the source shortlist.
+- [x] Explanations never recommend unverified recruitment, training, travel,
       equipment, or assignment actions.
-- [ ] Unit tests cover top results, ties, exclusions, incomplete evidence,
+- [x] Unit tests cover top results, ties, exclusions, incomplete evidence,
       filtered views, comparisons, and equivalent reruns.
 
 #### Evidence when complete
@@ -581,6 +581,29 @@ missing evidence without re-scoring in the UI.
 - Domain or Application shortlist and comparison contracts and builders.
 - Focused unit tests.
 - `docs/architecture/COMPANION-CANDIDATE-COMPARISON.md`.
+
+#### Completion evidence
+
+- `CompanionRoleShortlist` retains the exact ranking, definition, discipline,
+  candidate source versions, canonical entries, ranked and excluded views, all
+  six typed state counts, profile and semantic diagnostics, and a deterministic
+  fingerprint.
+- Ranked explanations point to existing score-component objects for strongest
+  contribution, declared score scope, and exact ties. Excluded explanations
+  point to the exact existing non-passing gate and outcome identity.
+- `CompanionRoleComparison` selects two exact shortlist entries and creates one
+  stable row per existing dimension. Confirmed values and evidence states remain
+  visible, while comparisons involving unranked or conflicting evidence never
+  invent a score difference.
+- Comparison advantage uses existing direction-aware component contributions,
+  so normalization, weighting, totals, and ranking are not recalculated.
+  Conflict, unavailable, tradeoff, advantage, and equality remain distinct.
+- Status filters return views over the original entry objects and retain all
+  unfiltered counts. Confirmed current-save location evidence is separated from
+  stale or unavailable location facts without affecting merit.
+- Seventeen focused Domain cases cover counts, ties, exclusions, explanations,
+  direction-aware comparison outcomes, filters, location evidence, invalid
+  selections, deterministic reruns, and an empty shortlist.
 
 ## Slice 6: Application and API vertical
 

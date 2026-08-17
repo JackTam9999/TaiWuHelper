@@ -67,6 +67,48 @@ public enum CompanionRoleCandidateRankingState
     Conflicting = 5
 }
 
+public enum CompanionRoleExplanationKind
+{
+    StrongestContribution = 0,
+    MaterialLimitation = 1,
+    ExactTie = 2,
+    Exclusion = 3
+}
+
+public enum CompanionRoleShortlistDiagnosticSeverity
+{
+    Information = 0,
+    Warning = 1
+}
+
+public enum CompanionRoleShortlistFilter
+{
+    All = 0,
+    Ranked = 1,
+    NeedsReview = 2,
+    Ineligible = 3
+}
+
+public enum CompanionRoleComparisonEvidenceState
+{
+    Confirmed = 0,
+    Missing = 1,
+    Incomplete = 2,
+    Unsupported = 3,
+    Stale = 4,
+    Conflicting = 5
+}
+
+public enum CompanionRoleComparisonOutcome
+{
+    FirstAdvantage = 0,
+    SecondAdvantage = 1,
+    Equal = 2,
+    Unavailable = 3,
+    Conflicting = 4,
+    Tradeoff = 5
+}
+
 public enum CompanionRoleDefinitionResolutionState
 {
     Supported = 0,

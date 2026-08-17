@@ -2,11 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-003 and E6-006 |
+| Status | Implemented for E6-003, E6-006, and E6-007 |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
-| Backlog items | [E6-003](../roadmap/epic-006/BACKLOG.md#e6-003--define-versioned-role-definitions-and-evaluation-rules), [E6-006](../roadmap/epic-006/BACKLOG.md#e6-006--evaluate-role-suitability-and-rank-comparable-candidates) |
+| Backlog items | [E6-003](../roadmap/epic-006/BACKLOG.md#e6-003--define-versioned-role-definitions-and-evaluation-rules), [E6-006](../roadmap/epic-006/BACKLOG.md#e6-006--evaluate-role-suitability-and-rank-comparable-candidates), [E6-007](../roadmap/epic-006/BACKLOG.md#e6-007--build-evidence-aware-shortlist-and-candidate-comparison-explanations) |
 | Product contract | [Companion role evaluation and shortlist contract](./COMPANION-ROLE-EVALUATION-CONTRACT.md) |
 | Profile contract | [Companion-candidate source boundary](./COMPANION-CANDIDATE-SOURCES.md) |
+| Shortlist and comparison | [Companion candidate shortlist and comparison](./COMPANION-CANDIDATE-COMPARISON.md) |
 
 ## Purpose and boundary
 
@@ -204,17 +205,25 @@ irrelevant optional-field absence, unsupported disciplines, semantic
 fingerprint changes, deterministic reruns, unsupported and mixed source
 versions, duplicate candidates, and the empty candidate universe.
 
-## E6-007 handoff
+## E6-007 shortlist and comparison
 
-The explanation and comparison model must:
+E6-007 implements the explanation and comparison model described in
+[Companion candidate shortlist and comparison](./COMPANION-CANDIDATE-COMPARISON.md).
+The model:
 
-1. consume one immutable `CompanionRoleRanking` without re-evaluating facts;
-2. retain definition, discipline, total source count, rank, tie, and exclusion
+1. consumes one immutable `CompanionRoleRanking` without re-evaluating facts;
+2. retains definition, discipline, total source count, rank, tie, and exclusion
    identities unchanged;
-3. derive strengths, limitations, and comparison rows from existing gates,
+3. derives strengths, limitations, and comparison rows from existing gates,
    components, facts, and evidence references; and
-4. keep filtering, presentation, and localized display values outside merit
+4. keeps filtering, presentation, and localized display values outside merit
    and ranking fingerprints.
 
 It must not rescore raw facts, infer unavailable values, substitute another
 version, or compare totals across role or discipline identities.
+
+## E6-008 handoff
+
+The Application workflow must resolve the role, project and enrich one
+snapshot, build one ranking and shortlist, and apply view/comparison selections
+without creating another evaluation or source-read path.
