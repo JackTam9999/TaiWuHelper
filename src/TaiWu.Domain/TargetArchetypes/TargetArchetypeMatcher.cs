@@ -140,7 +140,8 @@ public static class TargetArchetypeMatcher
                         predicate));
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidOperationException(
+                        $"Unknown predicate evaluation '{evaluation}'.");
             }
         }
 
@@ -188,7 +189,8 @@ public static class TargetArchetypeMatcher
                 case PredicateEvaluation.Contradicted:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidOperationException(
+                        $"Unknown predicate evaluation '{evaluation}'.");
             }
         }
 
@@ -253,9 +255,12 @@ public static class TargetArchetypeMatcher
                     facet.Value!.Equals(predicate.ExpectedValue)
                         ? PredicateEvaluation.Satisfied
                         : PredicateEvaluation.Contradicted,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new InvalidOperationException(
+                    "Unknown target-archetype predicate operator "
+                    + $"'{predicate.Operator}'.")
             },
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new InvalidOperationException(
+                $"Unknown target-profile evidence state '{facet.State}'.")
         };
     }
 

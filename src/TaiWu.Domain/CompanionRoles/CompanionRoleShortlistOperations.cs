@@ -186,10 +186,8 @@ public static class CompanionRoleComparisonBuilder
                 CompanionRoleComparisonEvidenceState.Stale,
             CompanionCapabilitySummaryState.Conflicting =>
                 CompanionRoleComparisonEvidenceState.Conflicting,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(summary),
-                summary.State,
-                "Unknown capability summary state.")
+            _ => throw new InvalidOperationException(
+                $"Unknown capability summary state '{summary.State}'.")
         };
         var scaledBreadth = summary.BreadthIndex.GetValueOrDefault() * 100m;
         if (state == CompanionRoleComparisonEvidenceState.Confirmed

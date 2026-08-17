@@ -240,7 +240,8 @@
         CombatSkillStudyDetailGroup.Outline => T("Common page"),
         CombatSkillStudyDetailGroup.Direct => T("Direct page"),
         CombatSkillStudyDetailGroup.Reverse => T("Reverse page"),
-        _ => T("Page")
+        _ => throw new InvalidOperationException(
+            $"Unknown study-detail group '{group}'.")
     };
 
     private string CandidateKind(CombatSkillPageSourceCandidate candidate) =>

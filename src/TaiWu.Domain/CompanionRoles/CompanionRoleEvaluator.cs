@@ -225,10 +225,8 @@ public static class CompanionRoleEvaluator
             {
                 CompanionRoleScoreDirection.HigherIsBetter => normalized.Value,
                 CompanionRoleScoreDirection.LowerIsBetter => -normalized.Value,
-                _ => throw new ArgumentOutOfRangeException(
-                    nameof(dimension),
-                    dimension.Direction,
-                    "Unknown score direction.")
+                _ => throw new InvalidOperationException(
+                    $"Unknown score direction '{dimension.Direction}'.")
             };
             var contribution = checked(directionalValue * dimension.Weight);
             components.Add(new CompanionRoleScoreComponent(

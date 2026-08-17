@@ -155,6 +155,10 @@ public sealed class UiTextTests
                 "正在搜尋目錄……"
             },
             {
+                "Page",
+                "第"
+            },
+            {
                 "The supported game UI does not expose the opponent's "
                 + "loadout for hostile or story characters. No hidden "
                 + "loadout input will be requested.",

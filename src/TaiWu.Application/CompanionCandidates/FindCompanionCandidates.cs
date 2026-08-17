@@ -156,7 +156,10 @@ public sealed class FindCompanionCandidates(
                 request.DisciplineType);
             if (!Enum.IsDefined(request.Filter))
             {
-                throw new ArgumentOutOfRangeException(nameof(request.Filter));
+                throw new ArgumentOutOfRangeException(
+                    nameof(request),
+                    request.Filter,
+                    "Unknown shortlist filter.");
             }
 
             var hasFirst = request.FirstComparisonCharacterId.HasValue;
@@ -209,10 +212,9 @@ public sealed class FindCompanionCandidates(
                 (null, null, CompanionFinderResult.Failed(
                     CompanionFinderStatus.UnsupportedRoleVersion,
                     resolution.DiagnosticIdentity)),
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(resolution),
-                resolution.State,
-                "Unknown role-definition resolution state.")
+            _ => throw new InvalidOperationException(
+                "Unknown role-definition resolution state "
+                + $"'{resolution.State}'.")
         };
     }
 

@@ -102,9 +102,7 @@ public sealed class CompanionFinderInteractionState
                 candidate.Section == CompanionCandidateSection.NeedsReview,
             CompanionRoleShortlistFilter.Ineligible =>
                 candidate.Section == CompanionCandidateSection.Ineligible,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(Filter),
-                Filter,
-                "Unknown shortlist filter.")
+            _ => throw new InvalidOperationException(
+                $"Unknown shortlist filter '{Filter}'.")
         };
 }
