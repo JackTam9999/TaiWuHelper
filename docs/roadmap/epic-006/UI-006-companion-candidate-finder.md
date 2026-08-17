@@ -93,7 +93,7 @@ qualification, or rank.
 ```text
 ┌ Companion finder ─ INFORMATION ONLY ─────────────────────────────────────┐
 │ Reads the configured save. TaiWu Helper cannot recruit or change anyone. │
-│ Candidate boundary: living members of the current Taiwu group only.      │
+│ Boundary: saved group roster excluding Taiwu; evidence sets eligibility. │
 ├ Role: (●) Martial discipline aptitude  (○) Life-skill discipline aptitude│
 │ Discipline: [ Synthetic martial discipline ▼ ]  [ Find candidates ]      │
 ├ Results — Synthetic martial discipline ─ Snapshot current ───────────────┤
@@ -162,7 +162,7 @@ At 960 CSS pixels or wider, the ranked section uses a semantic table with:
 - candidate name as the row header;
 - visible rank or tie text;
 - exact saved base qualification or localized unavailable state;
-- evaluation state text;
+- ranking state text, with the exact evaluation state retained for comparison;
 - concise evidence summary; and
 - one labelled comparison-selection checkbox.
 
@@ -178,6 +178,15 @@ count in the summary and may omit an empty body.
 `Eligible` is the exact candidate-universe state, not a synonym for ranked or
 tied. An eligible candidate whose role evidence is incomplete remains in the
 eligible count and the needs-review section without receiving a score.
+The visible boundary includes the saved non-Taiwu group roster; membership and
+living-state agreement are hard eligibility evidence, so a confirmed nonliving
+roster member remains visible as ineligible rather than disappearing from the
+candidate universe.
+
+Requirement evidence preserves each gate's stable identity, ordered requirement
+kind, typed field when applicable, exact outcome, reason identity, and localized
+explanation. The UI labels repeated field gates by requirement purpose so fact
+confirmation and provenance compatibility remain distinguishable.
 
 No candidate receives a winner crown, best-person badge, percentage bar,
 quality grade, green/red worth indicator, or cross-role comparison.
@@ -320,7 +329,7 @@ All visible copy is resource-backed. These terms define the intended meaning:
 | life-skill role | Life-skill discipline aptitude | 技藝資質 |
 | discipline | Discipline | 類別 |
 | find action | Find candidates | 查找人選 |
-| current-group boundary | Current Taiwu group only | 僅限目前太吾隊伍 |
+| saved-group boundary | Saved group roster excluding Taiwu; evidence determines eligibility | 存檔隊伍名冊不含太吾本人；證據決定資格 |
 | saved base qualification | Saved base qualification | 存檔基礎資質 |
 | ranked | Ranked | 已排序 |
 | tied | Tied | 並列 |
@@ -388,8 +397,8 @@ manually in the game.
 
 - Presentation mapper tests cover every candidate and evaluation state, exact
   universe eligibility, typed snapshot/enrichment/catalogue status, score
-  warning, ties, filters, counts, comparison outcomes, missing display values,
-  and raw-ID hiding.
+  warning, identifiable typed hard gates, ties, filters, counts, comparison
+  outcomes, missing display values, and raw-ID hiding.
 - Rendered-component tests cover native role/discipline controls, loading,
   stable-save retry, one-candidate, empty, tied, needs-review, ineligible,
   comparison, previous-result, focus-target, and bilingual states.

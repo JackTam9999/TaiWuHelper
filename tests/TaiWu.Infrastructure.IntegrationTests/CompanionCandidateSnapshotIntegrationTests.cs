@@ -8,6 +8,7 @@ using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
 using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
+using TaiWu.Infrastructure.SaveGames;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -31,18 +32,13 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
         services.AddSingleton<IConfiguration>(configuration);
         services.AddTaiwuInfrastructure();
         using var provider = services.BuildServiceProvider();
-        var paths = provider
-            .GetRequiredService<ITaiwuCatalogueSourcePathProvider>()
-            .Resolve()
-            .Paths;
-        Assert.NotNull(paths);
         var guardedPaths = new[]
             {
                 savePath,
                 Path.Combine(AppContext.BaseDirectory, "GameData.dll"),
                 Path.Combine(AppContext.BaseDirectory, "GameData.Shared.dll")
             }
-            .Concat(DisplayLanguagePaths(paths))
+            .Concat(TaiwuGameTextResolver.CompanionDisplayLanguagePaths(savePath))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -142,7 +138,7 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 paths.TraditionalChineseLegendaryBookSlotLanguage,
                 paths.EnglishLegendaryBookSlotLanguage
             }
-            .Concat(DisplayLanguagePaths(paths))
+            .Concat(TaiwuGameTextResolver.CompanionDisplayLanguagePaths(savePath))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -240,7 +236,7 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                     Path.GetDirectoryName(paths.EnglishCombatSkillLanguage)!,
                     "LifeSkillType_language.txt")
             }
-            .Concat(DisplayLanguagePaths(paths))
+            .Concat(TaiwuGameTextResolver.CompanionDisplayLanguagePaths(savePath))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -374,25 +370,6 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
             value.EnglishName,
             value.TraditionalChineseLocation,
             value.EnglishLocation));
-
-    private static IEnumerable<string> DisplayLanguagePaths(
-        TaiwuCatalogueSourcePaths paths)
-    {
-        var directories = new[]
-        {
-            Path.GetDirectoryName(paths.TraditionalChineseCombatSkillLanguage)!,
-            Path.GetDirectoryName(paths.EnglishCombatSkillLanguage)!
-        };
-        var fileNames = new[]
-        {
-            "Name_language.txt",
-            "MapState_language.txt",
-            "MapArea_language.txt",
-            "MapBlock_language.txt"
-        };
-        return directories.SelectMany(directory =>
-            fileNames.Select(fileName => Path.Combine(directory, fileName)));
-    }
 
     private static string RequireSavePath()
     {

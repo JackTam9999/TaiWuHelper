@@ -248,8 +248,13 @@
                                                     <ul>
                                                         @foreach (var gate in candidate.Gates)
                                                         {
-                                                            <li>
-                                                                <strong>@gate.Outcome:</strong>
+                                                            <li data-requirement-order="@gate.Order"
+                                                                data-requirement-identity="@gate.RequirementIdentity"
+                                                                data-requirement-kind="@gate.Kind"
+                                                                data-requirement-field="@gate.Field"
+                                                                data-gate-outcome="@gate.Outcome"
+                                                                data-reason-identity="@gate.ReasonIdentity">
+                                                                <strong>@gate.RequirementLabel · @gate.OutcomeLabel:</strong>
                                                                 @gate.Explanation
                                                             </li>
                                                         }

@@ -45,7 +45,14 @@ public sealed record CompanionFinderEnrichmentViewModel(
     bool NeedsAttention);
 
 public sealed record CompanionCandidateGateViewModel(
-    string Outcome,
+    int Order,
+    string RequirementIdentity,
+    CompanionRoleRequirementKind Kind,
+    CandidateProfileField? Field,
+    string RequirementLabel,
+    CompanionRoleGateOutcome Outcome,
+    string OutcomeLabel,
+    string ReasonIdentity,
     string Explanation,
     bool Passed);
 
@@ -56,6 +63,8 @@ public sealed record CompanionCandidateViewModel(
     CompanionCandidateSection Section,
     CompanionRoleCandidateRankingState RankingState,
     string RankingStateLabel,
+    CompanionRoleEvaluationState EvaluationState,
+    string EvaluationStateLabel,
     int? CompetitionRank,
     string RankLabel,
     decimal? RoleLocalScore,

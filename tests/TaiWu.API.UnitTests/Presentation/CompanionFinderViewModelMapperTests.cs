@@ -83,9 +83,35 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Equal("90", first.ScoreLabel);
         Assert.Equal("Saved base value confirmed", first.EvidenceLabel);
         Assert.Equal("Synthetic Place A", first.LocationName);
+        Assert.Equal(CompanionRoleEvaluationState.Rankable, first.EvaluationState);
+        Assert.Equal("Rankable", first.EvaluationStateLabel);
         Assert.NotEmpty(first.Strengths);
         Assert.NotEmpty(first.Limitations);
         Assert.All(first.Gates, gate => Assert.True(gate.Passed));
+        Assert.Equal(
+            Enum.GetValues<CompanionRoleEvaluationState>()
+                .OrderBy(value => value),
+            model.Candidates.Select(value => value.EvaluationState)
+                .Distinct()
+                .OrderBy(value => value));
+        var universeGate = Assert.Single(first.Gates, gate =>
+            gate.Kind == CompanionRoleRequirementKind.CandidateUniverseEligible);
+        Assert.Equal(1, universeGate.Order);
+        Assert.Equal("CANDIDATE_UNIVERSE_ELIGIBLE", universeGate.RequirementIdentity);
+        Assert.Null(universeGate.Field);
+        Assert.Equal("Candidate-universe eligibility", universeGate.RequirementLabel);
+        Assert.Equal(CompanionRoleGateOutcome.Passed, universeGate.Outcome);
+        Assert.Equal("Passed", universeGate.OutcomeLabel);
+        Assert.False(string.IsNullOrWhiteSpace(universeGate.ReasonIdentity));
+        var qualificationGates = first.Gates.Where(gate =>
+            gate.Field == CandidateProfileField.BaseMartialQualification).ToArray();
+        Assert.Equal(2, qualificationGates.Length);
+        Assert.Equal(2, qualificationGates.Select(gate =>
+            gate.RequirementIdentity).Distinct(StringComparer.Ordinal).Count());
+        Assert.Contains(qualificationGates, gate =>
+            gate.Kind == CompanionRoleRequirementKind.RequiredFactConfirmed);
+        Assert.Contains(qualificationGates, gate =>
+            gate.Kind == CompanionRoleRequirementKind.FactProvenanceCompatible);
 
         var tied = model.Candidates.Where(value =>
             value.RankingState == CompanionRoleCandidateRankingState.Tied)
@@ -227,17 +253,40 @@ public sealed class CompanionFinderViewModelMapperTests
             english.Candidates.Select(value => (
                 value.CharacterId,
                 value.RankingState,
+                value.EvaluationState,
                 value.CompetitionRank,
                 value.RoleLocalScore)),
             chinese.Candidates.Select(value => (
                 value.CharacterId,
                 value.RankingState,
+                value.EvaluationState,
                 value.CompetitionRank,
                 value.RoleLocalScore)));
         Assert.Equal("Synthetic Person A", english.Candidates[0].DisplayName);
         Assert.Equal("範例人物甲", chinese.Candidates[0].DisplayName);
         Assert.Equal("Synthetic Place A", english.Candidates[0].LocationName);
         Assert.Equal("範例地點甲", chinese.Candidates[0].LocationName);
+        Assert.NotEqual(
+            english.Candidates[0].EvaluationStateLabel,
+            chinese.Candidates[0].EvaluationStateLabel);
+        Assert.Equal(
+            english.Candidates[0].Gates.Select(gate => (
+                gate.Order,
+                gate.RequirementIdentity,
+                gate.Kind,
+                gate.Field,
+                gate.Outcome,
+                gate.ReasonIdentity)),
+            chinese.Candidates[0].Gates.Select(gate => (
+                gate.Order,
+                gate.RequirementIdentity,
+                gate.Kind,
+                gate.Field,
+                gate.Outcome,
+                gate.ReasonIdentity)));
+        Assert.NotEqual(
+            english.Candidates[0].Gates[0].RequirementLabel,
+            chinese.Candidates[0].Gates[0].RequirementLabel);
         Assert.Contains("整體價值", chinese.ScoreLimitation);
     }
 
@@ -261,6 +310,13 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Equal("Synthetic Person C", comparison.SecondCandidateName);
         Assert.Equal("Equal confirmed evidence", comparison.Outcome);
         Assert.Contains(comparison.Facts, value =>
+            value.Label == "Evaluation state"
+            && value.FirstValue == "Rankable"
+            && value.SecondValue == "Rankable");
+        Assert.DoesNotContain(comparison.Facts, value =>
+            value.Label == "Evaluation state"
+            && (value.FirstValue == "Tied" || value.SecondValue == "Tied"));
+        Assert.Contains(comparison.Facts, value =>
             value.Label == "Saved base qualification"
             && value.FirstValue == "75"
             && value.SecondValue == "75");
@@ -270,7 +326,12 @@ public sealed class CompanionFinderViewModelMapperTests
             && value.SecondValue == "Tied at rank 2");
         Assert.Contains(comparison.Facts, value =>
             value.Label == "Hard gates"
-            && value.FirstValue.Contains("Passed", StringComparison.Ordinal));
+            && value.FirstValue.Contains(
+                "Candidate-universe eligibility — Passed",
+                StringComparison.Ordinal)
+            && value.FirstValue.Contains(
+                "Required saved base martial qualification evidence — Passed",
+                StringComparison.Ordinal));
     }
 
     [Fact]

@@ -53,6 +53,20 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Decisive strengths", text);
         Assert.Contains("Material limitations", text);
         Assert.Contains("Requirement evidence", text);
+        Assert.Contains("Candidate-universe eligibility · Passed", text);
+        Assert.Contains(
+            "Required saved base martial qualification evidence · Passed",
+            text);
+        Assert.Contains("data-requirement-order=\"1\"", html);
+        Assert.Contains(
+            "data-requirement-identity=\"CANDIDATE_UNIVERSE_ELIGIBLE\"",
+            html);
+        Assert.Contains("data-requirement-kind=\"CandidateUniverseEligible\"", html);
+        Assert.Contains("data-requirement-field=\"BaseMartialQualification\"", html);
+        Assert.Contains("data-gate-outcome=\"Passed\"", html);
+        Assert.Contains(
+            "data-reason-identity=\"CANDIDATE_UNIVERSE_ELIGIBLE\"",
+            html);
         Assert.Contains("scope=\"col\"", html);
         Assert.Contains("scope=\"row\"", html);
         Assert.Contains("type=\"radio\"", html);
@@ -208,6 +222,10 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Synthetic Person B 75", text);
         Assert.Contains("Synthetic Person C 75", text);
         Assert.Contains("Hard gates", text);
+        Assert.Contains("Evaluation state", text);
+        Assert.Equal(
+            2,
+            Regex.Matches(html, @">\s*Rankable\s*<").Count);
         Assert.Contains("Clear comparison", text);
         Assert.Contains("disabled", html);
         Assert.DoesNotContain("31002", html, StringComparison.Ordinal);
@@ -253,7 +271,12 @@ public sealed partial class CompanionFinderRenderingTests
         var text = VisibleText(html);
 
         Assert.Contains("Companion finder", text);
-        Assert.Contains("living members of the current Taiwu group only", text);
+        Assert.Contains(
+            "current saved Taiwu group roster excluding the Taiwu player",
+            text);
+        Assert.Contains(
+            "Membership and living-state evidence determine eligibility",
+            text);
         Assert.Contains("Martial discipline aptitude", text);
         Assert.Contains("Life-skill discipline aptitude", text);
         Assert.Contains("Choose a discipline", text);

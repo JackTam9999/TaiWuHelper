@@ -1,4 +1,5 @@
 using TaiWu.Application.Localization;
+using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
 
 namespace TaiWuAPI.Localization;
@@ -39,6 +40,43 @@ public static class CompanionFinderApiText
             CompanionRoleCandidateRankingState.Unsupported => Localized(language, "Unsupported", "不支援"),
             CompanionRoleCandidateRankingState.Conflicting => Localized(language, "Conflicting evidence", "證據衝突"),
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, "Unknown candidate-ranking state.")
+        };
+
+    public static string EvaluationState(
+        TaiwuLanguage language,
+        CompanionRoleEvaluationState state) => state switch
+        {
+            CompanionRoleEvaluationState.Rankable => Localized(language, "Rankable", "可排名"),
+            CompanionRoleEvaluationState.Ineligible => Localized(language, "Ineligible", "不符合資格"),
+            CompanionRoleEvaluationState.Incomplete => Localized(language, "Incomplete evidence", "證據不完整"),
+            CompanionRoleEvaluationState.Unsupported => Localized(language, "Unsupported", "不支援"),
+            CompanionRoleEvaluationState.Conflicting => Localized(language, "Conflicting evidence", "證據衝突"),
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, "Unknown role-evaluation state.")
+        };
+
+    public static string GateRequirement(
+        TaiwuLanguage language,
+        CompanionRoleRequirementKind kind,
+        CandidateProfileField? field) => kind switch
+        {
+            CompanionRoleRequirementKind.CandidateUniverseEligible =>
+                Localized(language, "Candidate-universe eligibility", "候選範圍資格"),
+            CompanionRoleRequirementKind.SourceVersionsSupported =>
+                Localized(language, "Supported source versions", "受支援的來源版本"),
+            CompanionRoleRequirementKind.DisciplineSupported =>
+                Localized(language, "Supported discipline", "受支援的類別"),
+            CompanionRoleRequirementKind.RequiredFactConfirmed => Localized(
+                language,
+                $"Required {FieldLabel(language, field)} evidence",
+                $"必要的{FieldLabel(language, field)}證據"),
+            CompanionRoleRequirementKind.FactProvenanceCompatible => Localized(
+                language,
+                $"{FieldLabel(language, field)} source compatibility",
+                $"{FieldLabel(language, field)}來源相容性"),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(kind),
+                kind,
+                "Unknown role-requirement kind.")
         };
 
     public static string GateOutcome(
@@ -154,6 +192,27 @@ public static class CompanionFinderApiText
             language,
             $"Evidence is unavailable ({code}).",
             $"證據目前不可用（{code}）。");
+
+    private static string FieldLabel(
+        TaiwuLanguage language,
+        CandidateProfileField? field) => field switch
+        {
+            CandidateProfileField.BaseMartialQualification => Localized(
+                language,
+                "saved base martial qualification",
+                "存檔基礎武學資質"),
+            CandidateProfileField.BaseLifeSkillQualification => Localized(
+                language,
+                "saved base life-skill qualification",
+                "存檔基礎技藝資質"),
+            null => throw new ArgumentException(
+                "This requirement kind needs a candidate-profile field.",
+                nameof(field)),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(field),
+                field,
+                "The candidate-profile field has no requirement label.")
+        };
 
     private static string Localized(
         TaiwuLanguage language,

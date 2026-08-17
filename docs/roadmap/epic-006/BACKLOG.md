@@ -869,7 +869,7 @@ architecture rules, performance checks, and guarded read-only local scenarios.
 - Three guarded Release integration scenarios, including two repeated complete
   role workflows and all installed discipline-language sources; every guarded
   save/runtime/source file remained byte-for-byte unchanged.
-- Release build with zero warnings/errors, 1,238 default tests, formatter and
+- Release build with zero warnings/errors, 1,239 default tests, formatter and
   link checks, architecture capability scans, and clean diff validation.
 
 ### E6-012 — Validate representative roles and close Epic 6
@@ -925,13 +925,20 @@ Record remaining limitations and obtain the explicit completion decision.
   parity across localization and one stable save revision.
 - Observed cold `27.929` seconds and warm `3`/`1`/`1` milliseconds, within the
   E6-000 budgets; two subsequent expanded E6-011 integration runs each
-  completed all three guarded scenarios in about 24 seconds with no changes.
+  completed all three guarded scenarios in about 24 seconds with no changes,
+  and the fresh saved-installation-path correction run passed 3 of 3 in
+  `27.846` seconds.
 - Candidate-universe source inspection, synthetic unavailable/tie UI review,
   cross-layer traceability, scope audit, and explicit deferred-mechanics list.
 - Independent closure review findings were corrected: exact universe-eligible
   counts replace rankability counts, Presentation retains specific snapshot,
   enrichment, and catalogue states, and the read-only guard includes all eight
   bilingual name/map packs inspected during candidate display projection.
+- Fresh re-review corrections make the visible boundary match the saved
+  non-Taiwu roster universe, derive those eight guard paths from the same
+  configured-save production locator as display reads, and retain exact
+  evaluation plus identifiable ordered gate semantics through Presentation and
+  comparison.
 
 ## Future work outside Epic 6
 

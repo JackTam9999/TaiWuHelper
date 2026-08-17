@@ -22,10 +22,12 @@ fingerprint, proprietary source text, or local machine path is present in this
 report or its captures.
 
 > **Closure correction:** the PNG captures below predate the independent E6-012
-> review and retain the former rankability-based eligible tile. They remain
-> historical layout evidence only. The corrected synthetic fixture reports all
-> four candidate-universe-eligible profiles, while current mapper and Razor
-> rendering tests prove exact eligibility and typed partial/catalogue states.
+> reviews and retain the former rankability-based eligible tile plus the former
+> living-only boundary wording. They remain historical layout evidence only.
+> The corrected synthetic fixture reports all four candidate-universe-eligible
+> profiles and describes the full saved non-Taiwu roster universe, while current
+> mapper and Razor rendering tests prove exact eligibility, evaluation/gate
+> semantics, and typed partial/catalogue states.
 
 ## Live route verification
 
@@ -33,7 +35,7 @@ The live page returned its expected title and `/companions` route. Its initial
 accessibility snapshot exposed:
 
 - skip link, banner, primary navigation, language group, and main landmark;
-- information-only and current-group-boundary notes;
+- information-only and candidate-universe-boundary notes;
 - one labelled role-family group with two native radios;
 - one native labelled discipline select; and
 - one disabled native Find button with visible enabling guidance.

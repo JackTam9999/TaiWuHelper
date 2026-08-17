@@ -182,19 +182,32 @@ public sealed class CompanionFinderPresentationSafetyTests
             "tests",
             "TaiWu.Infrastructure.IntegrationTests",
             "CompanionCandidateSnapshotIntegrationTests.cs"));
+        var resolver = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "TaiWu.Infrastructure",
+            "SaveGames",
+            "TaiwuGameTextResolver.cs"));
 
-        Assert.Contains("DisplayLanguagePaths(paths)", integration);
+        Assert.Contains(
+            "TaiwuGameTextResolver.CompanionDisplayLanguagePaths(savePath)",
+            integration);
         Assert.True(
-            CountOccurrences(integration, "DisplayLanguagePaths(paths)") >= 3);
+            CountOccurrences(
+                integration,
+                "TaiwuGameTextResolver.CompanionDisplayLanguagePaths(savePath)")
+            >= 3);
+        Assert.DoesNotContain("DisplayLanguagePaths(paths)", integration);
+        Assert.Contains("FindLanguageDirectory(saveFilePath, language)", resolver);
         foreach (var fileName in new[]
                  {
-                     "Name_language.txt",
-                     "MapState_language.txt",
-                     "MapArea_language.txt",
-                     "MapBlock_language.txt"
+                     "\"Name\"",
+                     "\"MapState\"",
+                     "\"MapArea\"",
+                     "\"MapBlock\""
                  })
         {
-            Assert.Contains(fileName, integration);
+            Assert.Contains(fileName, resolver);
         }
     }
 

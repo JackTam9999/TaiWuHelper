@@ -143,8 +143,8 @@ public static class CompanionFinderUiText
                 ("TaiWu Helper reads the configured save. It cannot recruit, train, move, equip, assign, or otherwise change anyone or the game.",
                  "太吾助手只會讀取已設定的存檔；不能招募、訓練、移動、裝備、指派或以其他方式改變人物或遊戲。"),
             CompanionFinderUiTextKey.CandidateBoundary =>
-                ("Candidate boundary: living members of the current Taiwu group only.",
-                 "人選範圍：僅限目前太吾隊伍中仍在世的同道。"),
+                ("Candidate boundary: the current saved Taiwu group roster excluding the Taiwu player. Membership and living-state evidence determine eligibility.",
+                 "人選範圍：目前存檔中的太吾隊伍名冊（不含太吾本人）；隊伍成員與在世狀態的證據決定是否符合資格。"),
             CompanionFinderUiTextKey.SelectObjective =>
                 ("Select the comparison objective", "選擇比較目標"),
             CompanionFinderUiTextKey.RoleFamily =>

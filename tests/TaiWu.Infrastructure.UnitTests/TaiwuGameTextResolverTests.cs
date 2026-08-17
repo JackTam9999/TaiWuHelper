@@ -96,6 +96,43 @@ public sealed class TaiwuGameTextResolverTests
                 "GivenName_999"));
     }
 
+    [Fact]
+    public async Task Companion_display_paths_follow_the_configured_save_installation()
+    {
+        await using var fixture = await LanguageFixture.CreateAsync();
+
+        var paths = TaiwuGameTextResolver.CompanionDisplayLanguagePaths(
+            fixture.SavePath);
+
+        Assert.Equal(8, paths.Count);
+        Assert.Equal(8, paths.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.All(paths, path => Assert.StartsWith(
+            fixture.RootPath,
+            Path.GetFullPath(path),
+            StringComparison.OrdinalIgnoreCase));
+        Assert.All(
+            new[] { "Language_EN", "Language_CNH" },
+            language => Assert.Equal(
+                4,
+                paths.Count(path => path.Contains(
+                    language,
+                    StringComparison.OrdinalIgnoreCase))));
+        Assert.All(
+            new[]
+            {
+                "Name_language.txt",
+                "MapState_language.txt",
+                "MapArea_language.txt",
+                "MapBlock_language.txt"
+            },
+            fileName => Assert.Equal(
+                2,
+                paths.Count(path => string.Equals(
+                    Path.GetFileName(path),
+                    fileName,
+                    StringComparison.OrdinalIgnoreCase))));
+    }
+
     private sealed class LanguageFixture : IAsyncDisposable
     {
         private LanguageFixture(string rootPath, string savePath)

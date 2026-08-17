@@ -8,6 +8,9 @@ namespace TaiWu.Infrastructure.SaveGames;
 
 internal sealed class TaiwuGameTextResolver
 {
+    private static readonly string[] CompanionDisplayPacks =
+        ["Name", "MapState", "MapArea", "MapBlock"];
+
     private readonly ConcurrentDictionary<
         string,
         IReadOnlyDictionary<string, string>> _catalogs =
@@ -23,6 +26,14 @@ internal sealed class TaiwuGameTextResolver
             FindLanguageDirectory(saveFilePath, language),
             language);
     }
+
+    internal static IReadOnlyList<string> CompanionDisplayLanguagePaths(
+        string saveFilePath) =>
+        [.. Enum.GetValues<TaiwuLanguage>()
+            .SelectMany(language => CompanionDisplayPacks.Select(pack =>
+                Path.Combine(
+                    FindLanguageDirectory(saveFilePath, language),
+                    $"{pack}_language.txt")))];
 
     internal string Resolve(
         string languageDirectory,

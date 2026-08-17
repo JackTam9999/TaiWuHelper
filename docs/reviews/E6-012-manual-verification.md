@@ -131,7 +131,12 @@ legendary-book, discipline, candidate-name, and candidate-map language sources
 before and after all three read scenarios. Its expanded version completed in
 about 24 seconds in each of two repeated Release runs. Every inspected file,
 including both language variants of `Name`, `MapState`, `MapArea`, and
-`MapBlock`, retained the same length, last-write time, and SHA-256.
+`MapBlock`, retained the same length, last-write time, and SHA-256. The guard
+now obtains those eight paths from the same configured-save-derived production
+locator as candidate display projection; catalogue configuration cannot redirect
+the guard to a different game installation. A fresh post-correction Release run
+passed all three guarded scenarios in `27.846` seconds without recording the
+selected archive's name or path.
 
 ## Deferred mechanics and future backlog
 
@@ -157,7 +162,8 @@ generic comparison model is not presented as proof of an undelivered role.
 
 ## Independent review correction result
 
-The three P1 findings from the independent Epic 6 closure review are resolved:
+The three P1 findings from the first independent Epic 6 closure review are
+resolved:
 
 1. exact candidate-universe eligibility is counted independently of ranking;
 2. Presentation retains and renders exact snapshot, enrichment, and catalogue
@@ -165,7 +171,18 @@ The three P1 findings from the independent Epic 6 closure review are resolved:
 3. every candidate-display name/map language pack is included in all relevant
    before/after non-interference guards.
 
-The corrected Release matrix passes 1,238 non-integration tests with zero
+A fresh independent re-review found and drove three further corrections:
+
+1. candidate-boundary copy now describes the saved non-Taiwu roster as the
+   universe and membership/living-state evidence as eligibility gates, so a
+   confirmed nonliving roster member is not incorrectly described as excluded;
+2. display-language guard paths come from the exact production save-derived
+   locator instead of the independently configurable catalogue source; and
+3. Presentation retains exact evaluation state and identifiable ordered gate
+   identity/kind/field/outcome/reason semantics, and comparison renders the
+   evaluation label rather than relabelling ranking state.
+
+The corrected Release matrix passes 1,239 non-integration tests with zero
 failures and the guarded local class passes 3 of 3. The solution build has zero
 warnings and errors; formatter and repository validation also pass.
 

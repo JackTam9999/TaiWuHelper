@@ -206,8 +206,8 @@ public static class CompanionFinderViewModelMapper
         {
             new(
                 Text(language, CompanionFinderUiTextKey.EvaluationState),
-                first.RankingStateLabel,
-                second.RankingStateLabel),
+                first.EvaluationStateLabel,
+                second.EvaluationStateLabel),
             new(
                 Text(language, CompanionFinderUiTextKey.HardGates),
                 GateSummary(first, language),
@@ -303,6 +303,10 @@ public static class CompanionFinderViewModelMapper
             Section(candidate.RankingState),
             candidate.RankingState,
             candidate.RankingStateLabel,
+            candidate.EvaluationState,
+            CompanionFinderApiText.EvaluationState(
+                language,
+                candidate.EvaluationState),
             candidate.CompetitionRank,
             RankLabel(
                 candidate.RankingState,
@@ -318,7 +322,17 @@ public static class CompanionFinderViewModelMapper
             limitations,
             [.. candidate.Gates.Select(gate =>
                 new CompanionCandidateGateViewModel(
+                    gate.Order,
+                    gate.RequirementIdentity,
+                    gate.Kind,
+                    gate.Field,
+                    CompanionFinderApiText.GateRequirement(
+                        language,
+                        gate.Kind,
+                        gate.Field),
+                    gate.Outcome,
                     gate.OutcomeLabel,
+                    gate.ReasonIdentity,
                     gate.Explanation,
                     gate.Outcome == CompanionRoleGateOutcome.Passed))]);
     }
@@ -399,7 +413,8 @@ public static class CompanionFinderViewModelMapper
         : string.Join(
             "; ",
             candidate.Gates.Select(value =>
-                $"{value.Outcome}: {value.Explanation}"));
+                $"{value.RequirementLabel} — {value.OutcomeLabel}: "
+                + value.Explanation));
 
     private static string ComparisonValue(
         CompanionRoleComparisonValue value,

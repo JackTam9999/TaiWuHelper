@@ -12,7 +12,7 @@
 
 The complete Epic 6 technical vertical passes its synthetic, cross-layer,
 architecture, Release, and guarded local checks. The default non-integration
-matrix contains 1,238 passing tests. The three focused companion integration
+matrix contains 1,239 passing tests. The three focused companion integration
 scenarios also pass against the configured representative save and installed
 sources.
 
@@ -21,6 +21,16 @@ verified result now counts exact candidate-universe eligibility separately
 from role rankability, carries snapshot, enrichment, and catalogue states into
 Presentation with distinct bilingual recovery guidance, and fingerprints all
 eight bilingual name/map sources read by candidate display projection.
+
+A fresh independent re-review then found three remaining semantic/evidence
+gaps. The visible candidate boundary now states that the saved non-Taiwu roster
+is the universe and membership/living evidence determines eligibility. The
+integration guard obtains all eight display-language paths from the same
+save-derived production locator used by the reader, so an unrelated catalogue
+installation cannot be fingerprinted in their place. Presentation now retains
+the exact evaluation state and each gate's order, stable identity, typed kind,
+typed field, exact outcome, and reason identity; comparison and requirement
+labels are derived from those semantics rather than the ranking label.
 
 No local path, save or candidate identity, exact candidate value, proprietary
 source text, or source fingerprint is recorded here. Test output contains only
@@ -33,9 +43,9 @@ typed states, aggregate counts, timing limits, and guarded-file counts.
 | Domain | Candidate/profile immutability, evidence states, hard gates before score, exact components, ties, exclusions, shortlist, comparison, explanations, fingerprints | Passed |
 | Both roles | Martial and life-skill synthetic positive, ineligible, incomplete, unsupported, conflicting, and tied matrices | Passed, 2 role cases |
 | Application | One coherent source chain, filter/comparison identity, cancellation, partial catalogue states, changed-revision rebuild | Passed |
-| Infrastructure | One archive-session call site, complete aggregate mapping, bilingual display isolation, no per-candidate reopen | Passed |
+| Infrastructure | One archive-session call site, complete aggregate mapping, bilingual display isolation, saved-installation display guard, no per-candidate reopen | Passed |
 | API | Typed HTTP and snapshot states, exact universe-eligible count, localization parity, nullable unavailable values, comparison, serialization and public-contract safety | Passed |
-| Presentation | Same immutable result through the API mapper, exact snapshot/enrichment/catalogue states, distinct bilingual recovery guidance, filtering, comparison, focus, native semantics, no raw IDs | Passed |
+| Presentation | Same immutable result through the API mapper, exact evaluation/snapshot/enrichment/catalogue states, identifiable typed gates, distinct bilingual recovery guidance, filtering, comparison, focus, native semantics, no raw IDs | Passed |
 | Architecture | No mutation-capable GameData, persistence, process, screenshot, upload, input, or game-control path; one evaluation path | Passed |
 | Browser | English desktop and Traditional Chinese narrow fact parity with no document overflow or console error | Passed in [E6-010 review](./E6-010-companion-finder-ui.md) |
 
@@ -90,8 +100,15 @@ after states compare length, last-write time, and SHA-256 for the configured
 save, runtime assemblies, catalogue configuration, combat/special-effect/book
 language sources, all four martial/life discipline language sources, and the
 Traditional Chinese and English `Name`, `MapState`, `MapArea`, and `MapBlock`
-language packs used for display projection. Every guarded file remained
-identical.
+language packs used for display projection. Those eight display paths are
+resolved from the configured save by the same production helper that creates
+the reader's language contexts, independent of catalogue-source configuration.
+Every guarded file remained identical.
+
+After the saved-installation path correction, a fresh Release run passed all
+three guarded scenarios in `27.846` seconds. It selected a compatible local
+archive by file type without recording its name or path; every newly
+save-derived display-language guard remained unchanged.
 
 ## Release and default matrix
 
@@ -99,10 +116,10 @@ identical.
 |---|---:|---:|---:|
 | Domain | 493 | 0 | 0 |
 | Application | 178 | 0 | 0 |
-| Infrastructure | 145 | 0 | 0 |
+| Infrastructure | 146 | 0 | 0 |
 | Architecture | 94 | 0 | 0 |
 | API and Presentation | 328 | 0 | 0 |
-| **Total** | **1,238** | **0** | **0** |
+| **Total** | **1,239** | **0** | **0** |
 
 The Release solution build completes with zero warnings and zero errors.
 `dotnet format --verify-no-changes`, changed-document link validation,
@@ -125,10 +142,10 @@ repository leak/capability scans, and `git diff --check` pass.
 | One bounded archive read | Snapshot reader call-site architecture test, Infrastructure unit tests, guarded local scenario | Verified |
 | Coherent save/catalogue/GameData/rule identity | Finder source-chain constructors and Application revision tests | Verified |
 | Filters and localization preserve identity | Finder, response, mapper, and session-state tests | Verified |
-| API and UI state parity | Shared API mapper, exact universe-eligibility count, typed snapshot/enrichment/catalogue view models, exhaustive rendered state guidance, and no-reranking architecture checks | Verified |
+| API and UI state parity | Shared API mapper, exact universe-eligibility/evaluation states, identifiable typed gates, typed snapshot/enrichment/catalogue view models, exhaustive rendered state guidance, and no-reranking architecture checks | Verified |
 | Bilingual responsive keyboard-native UI | [E6-010 browser review](./E6-010-companion-finder-ui.md) and rendered semantics tests | Verified |
-| Required automated state coverage | 1,238-test matrix plus 3 guarded integration cases | Verified |
-| Game-owned bytes unchanged | Expanded before/after guarded integration set, including all eight candidate-display name/map language packs | Verified |
+| Required automated state coverage | 1,239-test matrix plus 3 guarded integration cases | Verified |
+| Game-owned bytes unchanged | Expanded before/after guarded integration set, including all eight save-derived candidate-display name/map language packs | Verified |
 | No mutation, persistence, process, screenshot, or input capability | Epic 6 architecture suites | Verified |
 | Every criterion has linked evidence | This table | Verified |
 | Product-owner completion decision | Owned by E6-012 | Pending explicit input |
