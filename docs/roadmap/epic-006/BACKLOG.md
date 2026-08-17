@@ -343,7 +343,7 @@ scored dimensions, normalization, weighting, and tie breaking explicit.
 
 ### E6-004 — Project a one-pass read-only candidate snapshot
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -357,27 +357,27 @@ save revision through one bounded archive session.
 
 #### Acceptance criteria
 
-- [ ] The Application owns immutable request and result contracts; the port is
+- [x] The Application owns immutable request and result contracts; the port is
       explicitly read-only.
-- [ ] Infrastructure reads only the configured trusted save path and accepts no
+- [x] Infrastructure reads only the configured trusted save path and accepts no
       caller-provided filesystem path.
-- [ ] One request opens and projects the archive once instead of invoking a
+- [x] One request opens and projects the archive once instead of invoking a
       single-character archive workflow for each candidate.
-- [ ] Candidate identity, universe state, eligibility inputs, role inputs,
+- [x] Candidate identity, universe state, eligibility inputs, role inputs,
       availability, and location use only sources approved by E6-000.
-- [ ] The snapshot records save fingerprint, captured time, GameData version,
+- [x] The snapshot records save fingerprint, captured time, GameData version,
       mapping version, load warnings, omissions, and diagnostics.
-- [ ] A character-level mapping failure cannot fabricate facts or corrupt other
+- [x] A character-level mapping failure cannot fabricate facts or corrupt other
       candidates; its typed omission or incomplete state remains visible.
-- [ ] Cancellation is observed during large candidate enumeration.
-- [ ] Enumeration and mapping order do not determine stable output order.
-- [ ] Save missing, read failure, unsupported version, expected standalone
+- [x] Cancellation is observed during large candidate enumeration.
+- [x] Enumeration and mapping order do not determine stable output order.
+- [x] Save missing, read failure, unsupported version, expected standalone
       runtime boundary, partial result, and changed-revision states are typed.
-- [ ] No mutable GameData, reflection, archive, or infrastructure type crosses
+- [x] No mutable GameData, reflection, archive, or infrastructure type crosses
       the port.
-- [ ] Infrastructure tests cover representative states and prove the reader has
+- [x] Infrastructure tests cover representative states and prove the reader has
       no write, process, network, input, or game-control path.
-- [ ] Guarded local integration records before and after fingerprints and meets
+- [x] Guarded local integration records before and after fingerprints and meets
       the E6-000 performance budget.
 
 #### Evidence when complete
@@ -386,6 +386,26 @@ save revision through one bounded archive session.
 - One-pass adapter and focused mappings under `TaiWu.Infrastructure/SaveGames`.
 - Unit, architecture, and opt-in guarded integration tests.
 - `docs/architecture/COMPANION-CANDIDATE-SNAPSHOT.md`.
+
+#### Completion evidence
+
+- The path-free Application request and immutable typed result expose complete,
+  partial, save-unavailable, unsupported-version, changed-revision, and safe
+  read-failure states without an Infrastructure or GameData type.
+- The configured-path-only adapter performs exactly one aggregate
+  `TaiwuArchiveReadSession.ReadAsync` call and maps each roster candidate
+  independently with cancellation and canonical ordering.
+- A complete profile contains 101 approved facts: eligibility inputs,
+  descriptive saved facts, learned/equipped identities, 30 base aptitude
+  values, and 60 explicit unsupported current qualification/attainment facts.
+- Unit and architecture suites cover immutable contract invariants, missing,
+  partial, ineligible, conflict, invalid-buffer, deterministic, dependency-
+  injection, one-pass, and no-mutation behavior.
+- The guarded production test returned one complete 101-fact profile with no
+  omissions, equivalent repeated fingerprints, one expected standalone
+  warning, a 20.487-second cold read, and a 2-millisecond warm read. The save
+  and two loaded GameData assemblies retained identical SHA-256, length, and
+  last-write time.
 
 ## Slice 4: Enrichment and evaluation
 

@@ -211,10 +211,12 @@ typed facts; it does not authorize weights, thresholds, or a combined score.
 
 ## One-pass read boundary
 
-The Infrastructure adapter delivered later by E6-004 must load one configured
-save revision and project the complete current-group candidate snapshot inside
-one `TaiwuArchiveReadSession.ReadAsync` callback. It must not loop over the
-existing archive-opening single-character progress reader.
+The E6-004 Infrastructure adapter loads one configured save revision and
+projects the complete current-group candidate snapshot inside one
+`TaiwuArchiveReadSession.ReadAsync` callback. It does not loop over the
+existing archive-opening single-character progress reader. The full design and
+production evidence are recorded in the
+[companion-candidate snapshot architecture](./COMPANION-CANDIDATE-SNAPSHOT.md).
 
 The snapshot records:
 
@@ -256,3 +258,10 @@ The single local companion verifies the positive source path; documented
 synthetic representatives own ineligible, incomplete, unsupported, conflict,
 multi-candidate ordering, and tie states without committing local identities or
 values.
+
+The production E6-004 projection emits one 101-fact complete profile for that
+representative. Negative equipped-array empty-slot sentinels are excluded from
+the saved identity set; current qualification and attainment remain explicit
+unsupported facts. The guarded production test completed cold in 20.487
+seconds and warm in 2 milliseconds while the save and two loaded GameData
+assemblies remained unchanged.

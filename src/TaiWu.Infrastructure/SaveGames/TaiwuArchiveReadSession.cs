@@ -99,9 +99,7 @@ internal sealed class TaiwuArchiveReadSession(
 
             if (fingerprintBefore != fingerprintAfter)
             {
-                throw new InvalidDataException(
-                    "The Taiwu save changed while it was being read. "
-                    + "The result was discarded; retry after the save is stable.");
+                throw new TaiwuArchiveChangedException();
             }
 
             CurrentArchive = new LoadedArchive(
@@ -153,9 +151,7 @@ internal sealed class TaiwuArchiveReadSession(
         if (revisionBefore != revisionAfter)
         {
             CurrentArchive = null;
-            throw new InvalidDataException(
-                "The Taiwu save changed while it was being read. "
-                + "The result was discarded; retry after the save is stable.");
+            throw new TaiwuArchiveChangedException();
         }
 
         return result;
@@ -203,3 +199,13 @@ internal sealed record TaiwuArchiveReadContext(
     string SaveFilePath,
     ReadOnlyFileFingerprint SourceFingerprint,
     TaiwuArchiveLoadWarning? LoadWarning);
+
+internal sealed class TaiwuArchiveChangedException : IOException
+{
+    public TaiwuArchiveChangedException()
+        : base(
+            "The Taiwu save changed while it was being read. "
+            + "The result was discarded; retry after the save is stable.")
+    {
+    }
+}

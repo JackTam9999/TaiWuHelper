@@ -67,7 +67,7 @@ public sealed class TaiwuArchiveReadSessionTests
 
         try
         {
-            var exception = await Assert.ThrowsAsync<InvalidDataException>(
+            var exception = await Assert.ThrowsAsync<TaiwuArchiveChangedException>(
                 () => session.ReadAsync(
                     path,
                     static (_, _) => "discard me",
@@ -239,7 +239,7 @@ public sealed class TaiwuArchiveReadSessionTests
                 static (_, _) => 1,
                 TestContext.Current.CancellationToken);
 
-            var exception = await Assert.ThrowsAsync<InvalidDataException>(
+            var exception = await Assert.ThrowsAsync<TaiwuArchiveChangedException>(
                 () => session.ReadAsync(
                     path,
                     static (_, _) => "discard me",

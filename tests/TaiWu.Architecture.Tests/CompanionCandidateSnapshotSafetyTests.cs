@@ -1,0 +1,188 @@
+using System.Reflection;
+using TaiWu.Application.CompanionCandidates;
+using TaiWu.Application.GameData;
+using TaiWu.Domain.CompanionCandidates;
+using TaiWu.Infrastructure;
+using Xunit;
+
+namespace TaiWu.Architecture.Tests;
+
+public sealed class CompanionCandidateSnapshotSafetyTests
+{
+    private static readonly string[] ForbiddenAdapterTokens =
+    [
+        "File.Write",
+        "File.OpenWrite",
+        "File.Create",
+        "File.Delete",
+        "Directory.CreateDirectory",
+        "FileStream",
+        "SqliteConnection",
+        "HttpClient",
+        "Socket",
+        "Process.Start",
+        "Process.GetProcess",
+        "DllImport",
+        "SendInput",
+        "Harmony",
+        ".Save("
+    ];
+
+    [Fact]
+    public void Candidate_snapshot_port_is_path_free_immutable_and_read_only()
+    {
+        var port = typeof(ICompanionCandidateSnapshotReader);
+        Assert.True(typeof(IReadOnlyGameDataSource).IsAssignableFrom(port));
+        var method = Assert.Single(port.GetMethods());
+        Assert.Equal("ReadAsync", method.Name);
+        Assert.Contains(
+            method.GetParameters(),
+            parameter => parameter.ParameterType == typeof(CancellationToken));
+        Assert.DoesNotContain(
+            method.GetParameters(),
+            parameter => parameter.ParameterType == typeof(string));
+
+        var contractTypes = typeof(CompanionCandidateSnapshot).Assembly
+            .GetExportedTypes()
+            .Where(type => type.Namespace == "TaiWu.Application.CompanionCandidates")
+            .ToArray();
+        Assert.NotEmpty(contractTypes);
+        Assert.All(
+            contractTypes.SelectMany(type => type.GetProperties()),
+            property => Assert.False(property.CanWrite));
+        Assert.DoesNotContain(
+            contractTypes.SelectMany(type => type.GetProperties()),
+            property => property.Name.Contains("Path", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(
+            contractTypes.SelectMany(PublicSignatureTypes),
+            type => type.Namespace?.StartsWith("GameData", StringComparison.Ordinal) == true
+                || type.Namespace?.StartsWith("TaiWu.Infrastructure", StringComparison.Ordinal) == true
+                || type == typeof(FileInfo)
+                || type == typeof(DirectoryInfo)
+                || type == typeof(Stream)
+                || type == typeof(System.Diagnostics.Process));
+    }
+
+    [Fact]
+    public void Candidate_snapshot_adapter_has_one_archive_call_and_no_mutation_path()
+    {
+        var root = FindRepositoryRoot();
+        var readerPath = Path.Combine(
+            root,
+            "src",
+            "TaiWu.Infrastructure",
+            "SaveGames",
+            "TaiwuCompanionCandidateSnapshotReader.cs");
+        var mappingPath = Path.Combine(
+            root,
+            "src",
+            "TaiWu.Infrastructure",
+            "SaveGames",
+            "CompanionCandidateSnapshotMapping.cs");
+        var reader = File.ReadAllText(readerPath);
+        var combined = reader + Environment.NewLine + File.ReadAllText(mappingPath);
+
+        Assert.Equal(
+            1,
+            CountOccurrences(reader, "readSession.ReadAsync("));
+        Assert.Contains("saveFilePathProvider.Resolve()", reader);
+        Assert.DoesNotContain("request.Save", reader);
+        Assert.DoesNotContain("request.Path", reader);
+        Assert.DoesNotContain(
+            ForbiddenAdapterTokens,
+            token => combined.Contains(token, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Candidate_snapshot_public_contract_exposes_no_archive_or_game_types()
+    {
+        var publicTypes = typeof(CompanionCandidateSnapshot).Assembly
+            .GetExportedTypes()
+            .Where(type => type.Namespace == "TaiWu.Application.CompanionCandidates")
+            .SelectMany(PublicSignatureTypes)
+            .Distinct()
+            .ToArray();
+
+        Assert.DoesNotContain(
+            publicTypes,
+            type => type.Namespace?.StartsWith("GameData", StringComparison.Ordinal) == true
+                || type.Name.Contains("Archive", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(typeof(CandidateProfile), publicTypes);
+        Assert.Contains(typeof(CandidateProfileSourceVersions), publicTypes);
+    }
+
+    private static IEnumerable<Type> PublicSignatureTypes(Type type)
+    {
+        yield return type;
+        foreach (var property in type.GetProperties(
+                     BindingFlags.Instance | BindingFlags.Public))
+        {
+            yield return Unwrap(property.PropertyType);
+        }
+
+        foreach (var constructor in type.GetConstructors())
+        {
+            foreach (var parameter in constructor.GetParameters())
+            {
+                yield return Unwrap(parameter.ParameterType);
+            }
+        }
+
+        foreach (var method in type.GetMethods(
+                     BindingFlags.Instance
+                     | BindingFlags.Static
+                     | BindingFlags.Public
+                     | BindingFlags.DeclaredOnly))
+        {
+            yield return Unwrap(method.ReturnType);
+            foreach (var parameter in method.GetParameters())
+            {
+                yield return Unwrap(parameter.ParameterType);
+            }
+        }
+    }
+
+    private static Type Unwrap(Type type)
+    {
+        if (type.IsArray)
+        {
+            return type.GetElementType()!;
+        }
+
+        if (type.IsGenericType)
+        {
+            return type.GetGenericArguments().Last();
+        }
+
+        return Nullable.GetUnderlyingType(type) ?? type;
+    }
+
+    private static int CountOccurrences(string value, string token)
+    {
+        var count = 0;
+        var offset = 0;
+        while ((offset = value.IndexOf(token, offset, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            offset += token.Length;
+        }
+
+        return count;
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory);
+             directory is not null;
+             directory = directory.Parent)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "TaiWu.slnx")))
+            {
+                return directory.FullName;
+            }
+        }
+
+        throw new DirectoryNotFoundException(
+            "Could not locate the repository root containing TaiWu.slnx.");
+    }
+}

@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CombatSnapshots;
+using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.RegionStories;
 using TaiWu.Application.Targets;
@@ -86,6 +87,11 @@ public static class DependencyInjection
                 provider.GetRequiredService<TaiwuGameTextResolver>(),
                 TimeProvider.System));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
+        services.AddSingleton<ICompanionCandidateSnapshotReader>(provider =>
+            new TaiwuCompanionCandidateSnapshotReader(
+                provider.GetRequiredService<TaiwuArchiveReadSession>(),
+                provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
+                TimeProvider.System));
         services.AddSingleton<ISaveGameReader, TaiwuSaveGameReader>();
         services.AddSingleton<IRegionStoryProgressReader>(provider =>
             new TaiwuRegionStoryProgressReader(
