@@ -158,7 +158,7 @@ semantics before adding Domain contracts or scoring rules.
 
 ### E6-001 — Define role evaluation, shortlist, and UI semantics
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -172,27 +172,27 @@ indicators, and responsive interaction states before adding public contracts.
 
 #### Acceptance criteria
 
-- [ ] Every delivered role has a stable identity, purpose, version, supported
+- [x] Every delivered role has a stable identity, purpose, version, supported
       source versions, hard requirements, scored dimensions, normalization
       rules, weights, and tie breakers.
-- [ ] Scores are explicitly local to one role and are not probabilities,
+- [x] Scores are explicitly local to one role and are not probabilities,
       grades of intrinsic worth, or comparable across roles.
-- [ ] Eligible, ineligible, incomplete, unsupported, and conflicting candidate
+- [x] Eligible, ineligible, incomplete, unsupported, and conflicting candidate
       states have distinct meanings and presentation.
-- [ ] Ranked, tied, and unranked evaluation states have exact rules.
-- [ ] Missing required evidence cannot produce a total score; optional missing
+- [x] Ranked, tied, and unranked evaluation states have exact rules.
+- [x] Missing required evidence cannot produce a total score; optional missing
       evidence follows a documented role-specific rule.
-- [ ] Filtering changes visible rows but not evaluation facts, rank identity,
+- [x] Filtering changes visible rows but not evaluation facts, rank identity,
       or the disclosed unfiltered result count.
-- [ ] Candidate comparison identifies decisive strengths, weaknesses, hard
+- [x] Candidate comparison identifies decisive strengths, weaknesses, hard
       gates, ties, tradeoffs, evidence gaps, and unavailable facts.
-- [ ] The contract distinguishes current ability from development potential.
-- [ ] Desktop and narrow-screen states define role selection, shortlist,
+- [x] The contract distinguishes current ability from development potential.
+- [x] Desktop and narrow-screen states define role selection, shortlist,
       comparison, evidence details, loading, empty, unsupported, conflict, and
       failure behavior.
-- [ ] Keyboard order, focus behavior, headings, live-region use, table or card
+- [x] Keyboard order, focus behavior, headings, live-region use, table or card
       semantics, and non-color status cues are documented.
-- [ ] Recruitment instructions, development plans, settlement assignment,
+- [x] Recruitment instructions, development plans, settlement assignment,
       persistence, export, and game control are confirmed out of scope.
 
 #### Evidence when complete
@@ -200,6 +200,22 @@ indicators, and responsive interaction states before adding public contracts.
 - `docs/architecture/COMPANION-ROLE-EVALUATION-CONTRACT.md`.
 - `docs/roadmap/epic-006/UI-006-companion-candidate-finder.md`.
 - English and Traditional Chinese semantic wireframes using synthetic data.
+
+#### Completion evidence
+
+- `COMPANION-ROLE-EVALUATION-CONTRACT.md` defines the two version-1 role
+  identities, exact hard-gate order, one identity-normalized component with
+  weight 1, role-local total, competition ranking, explicit ties, evidence
+  states, canonical order, filters, comparison, and atomic lifecycle.
+- Missing, incomplete, unsupported, or conflicting base qualification forbids
+  a total score. A confirmed numeric zero remains distinct from missing.
+- The first UI design uses a dedicated `/companions` page, explicit read
+  action, 960-pixel container boundary, fact-equivalent cards on narrow
+  layouts, native controls, deterministic focus order, polite announcements,
+  and complete English/Traditional Chinese terminology.
+- Synthetic desktop and narrow wireframes contain no real save identity or
+  value and show the adjacent limitation that aptitude scores are not current
+  attainment, success probability, or universal companion quality.
 
 ## Slice 2: Candidate and role Domain
 
