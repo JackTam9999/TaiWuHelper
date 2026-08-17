@@ -132,10 +132,11 @@ There is no global candidate score. Every evaluation names one stable role
 definition and version. Scores from different roles are not comparable, and
 the UI must not combine them into a universal leaderboard.
 
-The optional capability breadth index is not an evaluation or leaderboard. It
-is a transparent equal-weight description of three complete saved-base
-category averages and never affects eligibility, a selected-role score, rank,
-tie, shortlist order, explanation, or recommendation.
+There is one explicit comprehensive saved-base objective. Its breadth index is
+the transparent equal-weight mean of three complete category averages and is
+the role-local score only when that objective is selected. It never changes a
+martial- or life-skill objective, and it is not future potential, universal
+suitability, success probability, or an action recommendation.
 
 ### Eligibility precedes suitability
 
@@ -419,8 +420,9 @@ The workflow must present these states explicitly:
 - [x] API and UI expose equivalent eligibility, evaluation, evidence,
       tradeoff, conflict, and unavailable-state semantics.
 - [x] The capability overview exposes exact 6/14/16 coverage, formula version,
-      category averages, breadth index, and top values without changing role
-      evaluation, rank, order, recommendation, or result identity.
+      category averages, breadth index, and top values without changing a
+      martial- or life-skill evaluation; the same complete breadth is the
+      score only for the explicitly selected comprehensive objective.
 - [x] Traditional Chinese and English layouts are complete, responsive,
       keyboard accessible, and do not rely on color alone.
 - [x] Automated tests cover eligible, ineligible, incomplete, unsupported,
@@ -456,7 +458,7 @@ The workflow must present these states explicitly:
 |---|---|
 | Target lookup is mistaken for a recruitable-candidate list | Establish a separate verified candidate universe and eligibility contract in E6-000 |
 | One opaque score becomes a universal character ranking | Require one selected role, role-local scores, component explanations, and no cross-role comparison |
-| A descriptive breadth index is mistaken for a recommendation | Label the equal-category formula and limitation, expose all category coverage, and prohibit it from role evaluation, ranking, ordering, or result identity |
+| A descriptive breadth index is mistaken for a universal recommendation | Label the equal-category formula and limitation, expose all category coverage, and permit it to affect evaluation and order only for the explicitly selected comprehensive objective |
 | Missing data makes a candidate look weak | Preserve incomplete and unsupported states; never normalize missing evidence to zero |
 | Readable fields are assigned guessed mechanics | Require typed, version-matched rules and reject raw text or label inference |
 | A hard requirement is hidden inside weighting | Evaluate and display hard gates before any score |

@@ -127,7 +127,9 @@ public enum CompanionFinderUiTextKey
     LifeSkillAptitudeAverage = 118,
     CapabilityLimitation = 119,
     ConfirmedCoverage = 120,
-    TopValues = 121
+    TopValues = 121,
+    SelectObjectiveOnly = 122,
+    ComprehensiveCapabilityRole = 123
 }
 
 public static class CompanionFinderUiText
@@ -176,10 +178,10 @@ public static class CompanionFinderUiText
             CompanionFinderUiTextKey.PageTitle =>
                 ("Companion finder", "同道人選比較"),
             CompanionFinderUiTextKey.Eyebrow =>
-                ("Current group · one discipline", "目前隊伍 · 單一類別"),
+                ("Current group · selected objective", "目前隊伍 · 比較目標"),
             CompanionFinderUiTextKey.HeroCopy =>
-                ("Choose one verified aptitude role, then review an evidence-aware shortlist from one stable configured-save snapshot.",
-                 "選擇一項已驗證的資質目標，再查看由單一穩定存檔快照產生、保留證據狀態的人選清單。"),
+                ("Choose one verified comparison objective, then review an evidence-aware shortlist from one stable configured-save snapshot.",
+                 "選擇一項已驗證的比較目標，再查看由單一穩定存檔快照產生、保留證據狀態的人選清單。"),
             CompanionFinderUiTextKey.InformationOnly =>
                 ("Information only", "僅供參考"),
             CompanionFinderUiTextKey.InformationNotice =>
@@ -447,6 +449,11 @@ public static class CompanionFinderUiText
                 ("Confirmed coverage", "已確認範圍"),
             CompanionFinderUiTextKey.TopValues =>
                 ("Top values", "最高項目"),
+            CompanionFinderUiTextKey.SelectObjectiveOnly =>
+                ("This objective compares all three saved-base categories; no discipline selection is needed.",
+                 "此目標會比較三個存檔基礎類別，不需要選擇類別。"),
+            CompanionFinderUiTextKey.ComprehensiveCapabilityRole =>
+                ("Comprehensive base capability", "綜合基礎能力"),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(key),
                 key,
@@ -474,6 +481,8 @@ public static class CompanionFinderUiText
                 CompanionFinderUiTextKey.MartialRole,
             CandidateDisciplineDomain.LifeSkill =>
                 CompanionFinderUiTextKey.LifeSkillRole,
+            CandidateDisciplineDomain.Capability =>
+                CompanionFinderUiTextKey.ComprehensiveCapabilityRole,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(domain),
                 domain,

@@ -14,9 +14,10 @@ Define the exact meaning of an Epic 6 role, candidate state, hard requirement,
 score component, rank, tie, shortlist, filter, comparison, evidence indicator,
 and result lifecycle before Domain or public API contracts are implemented.
 
-The contract deliberately starts small. Each delivered role compares one exact
-saved base-qualification value for one player-selected discipline. It does not
-estimate current modified attainment, future development, battle contribution,
+The contract deliberately starts small. Two objectives compare one exact saved
+base-qualification value for one player-selected discipline. A third explicit
+objective compares the complete equal-category saved-base breadth index. None
+estimates current modified attainment, future development, battle contribution,
 teaching, recruitment, settlement productivity, or universal character value.
 
 ## Result boundary
@@ -46,11 +47,15 @@ evidence gate approves an explicit mapping.
 |---|---|---|---|
 | `MARTIAL_DISCIPLINE_APTITUDE` | Compare current companions by saved base aptitude in one martial discipline | One installed combat-discipline type in the verified range `0..13` | `BASE_MARTIAL_QUALIFICATION` |
 | `LIFE_SKILL_DISCIPLINE_APTITUDE` | Compare current companions by saved base aptitude in one life-skill discipline | One installed life-skill type in the verified range `0..15` | `BASE_LIFE_SKILL_QUALIFICATION` |
+| `COMPREHENSIVE_BASE_CAPABILITY` | Compare current companions by complete saved-base breadth | Fixed aggregate objective `Capability/0`; no discipline selector | `CAPABILITY_BREADTH_INDEX` derived from complete 6/14/16 facts |
 
 Stable discipline identity is its domain plus exact installed type value. The
 Domain identity is not a localized name. The UI resolves the current installed
 English or Traditional Chinese discipline name and never prints a raw type
 value as player-visible identity.
+
+The aggregate objective also has a stable domain/type identity, but its type
+is fixed at zero and has no localized discipline label.
 
 ## Candidate and eligibility states
 
@@ -78,11 +83,12 @@ non-passing state while retaining all already-known evidence and diagnostics:
 2. role identity and version are known;
 3. installed GameData, profile mapping, and evaluation versions exactly match
    the role definition;
-4. the selected discipline belongs to the role's verified domain and range;
-5. the candidate profile contains exactly one confirmed saved base-
-   qualification fact for that discipline; and
-6. the fact provenance matches the same save and supported source version as
-   the profile.
+4. the selected discipline or aggregate objective belongs to the role's
+   verified domain and range;
+5. the candidate profile contains the required confirmed source fact, or all
+   36 confirmed facts required by the comprehensive summary; and
+6. every contributing fact provenance matches the same save and supported
+   source version as the profile.
 
 Gate outcomes are `Passed`, `Failed`, `Incomplete`, `Unsupported`, or
 `Conflicting`. Only `Failed` with sufficient contrary evidence may create an
@@ -115,6 +121,15 @@ normalization.
 
 The score is role-local. A martial value cannot be compared with a life-skill
 value, and two different selected disciplines do not form one leaderboard.
+
+### Comprehensive saved-base component
+
+The comprehensive objective has one derived component. Its raw unit is the
+version-1 breadth index multiplied by 100, normalization divides by 100,
+weight is `1`, and the total equals the breadth index. The breadth index is the
+equal-weight mean of the complete six-attribute, 14-martial, and 16-life-skill
+category averages. If any expected fact is unavailable or incompatible, there
+is no component or total and the exact typed unranked state remains visible.
 
 ### Prohibited score claims
 

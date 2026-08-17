@@ -124,6 +124,13 @@ three guarded scenarios in `27.846` seconds. It selected a compatible local
 archive by file type without recording its name or path; every newly
 save-derived display-language guard remained unchanged.
 
+E6-014 extends the third guarded scenario to repeat the comprehensive objective
+alongside martial and life-skill objectives, with the same source-fingerprint,
+two-second warm-request, candidate-count, display-parity, and authoritative-
+result assertions. The extension is compiled and part of the default skipped
+integration matrix; its next configured local run requires the explicit
+`TAIWU_INTEGRATION_SAVE_PATH` environment value.
+
 ## Release and default matrix
 
 | Project | Passed | Failed | Skipped |
@@ -138,6 +145,15 @@ save-derived display-language guard remained unchanged.
 The Release solution build completes with zero warnings and zero errors.
 `dotnet format --verify-no-changes`, changed-document link validation,
 repository leak/capability scans, and `git diff --check` pass.
+
+### E6-014 addendum
+
+The comprehensive objective adds four Domain cases, one Application workflow
+case, and three API/Presentation cases. The current non-integration matrix is
+`1,256` passed with zero failures. The full default matrix reports `1,269`
+total: `1,257` passed, `12` guarded local cases skipped, and zero failed.
+Desktop and 390-pixel browser evidence is recorded in the
+[E6-014 review](./E6-014-comprehensive-capability.md).
 
 ## Epic acceptance traceability
 
@@ -157,9 +173,9 @@ repository leak/capability scans, and `git diff --check` pass.
 | Coherent save/catalogue/GameData/rule identity | Finder source-chain constructors and Application revision tests | Verified |
 | Filters and localization preserve identity | Finder, response, mapper, and session-state tests | Verified |
 | API and UI state parity | Shared API mapper, exact universe-eligibility/evaluation states, identifiable typed gates, typed snapshot/enrichment/catalogue view models, exhaustive rendered state guidance, and no-reranking architecture checks | Verified |
-| Capability overview is transparent and non-ranking | Typed summary builder, API/Presentation mapping, rendering tests, and architecture exclusion from role evaluation/ranking | Verified |
-| Bilingual responsive keyboard-native UI | [E6-010 browser review](./E6-010-companion-finder-ui.md) and rendered semantics tests | Verified |
-| Required automated state coverage | 1,248-test matrix plus 3 historical guarded integration cases | Verified |
+| Capability overview and objective are transparent and scope-safe | Typed summary builder, explicit aggregate role, complete-only Domain evaluation, API/Presentation mapping, rendering tests, and architecture proof that breadth enters only its own objective | Verified |
+| Bilingual responsive keyboard-native UI | [E6-010 browser review](./E6-010-companion-finder-ui.md), [E6-014 browser review](./E6-014-comprehensive-capability.md), and rendered semantics tests | Verified |
+| Required automated state coverage | 1,256-test non-integration matrix plus 3 historical guarded integration cases; aggregate guarded scenario prepared for next configured run | Verified |
 | Game-owned bytes unchanged | Expanded before/after guarded integration set, including all eight save-derived candidate-display name/map language packs | Verified |
 | No mutation, persistence, process, screenshot, or input capability | Epic 6 architecture suites | Verified |
 | Every criterion has linked evidence | This table | Verified |

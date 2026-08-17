@@ -24,7 +24,9 @@
                     : Text(CompanionFinderUiTextKey.Result))
             </p>
             <h2 id="companion-result-heading" tabindex="-1">
-                @Model.DisciplineName · @Model.RoleLabel
+                @(Model.RequiresDisciplineSelection
+                    ? $"{Model.DisciplineName} · {Model.RoleLabel}"
+                    : Model.RoleLabel)
             </h2>
             <p>@Model.RolePurpose</p>
         </div>
@@ -151,7 +153,7 @@
                                 <tr>
                                     <th scope="col">@Text(CompanionFinderUiTextKey.Rank)</th>
                                     <th scope="col">@Text(CompanionFinderUiTextKey.Candidate)</th>
-                                    <th scope="col">@Text(CompanionFinderUiTextKey.SavedBaseQualification)</th>
+                                    <th scope="col">@Model.ScoreColumnLabel</th>
                                     <th scope="col">@Text(CompanionFinderUiTextKey.State)</th>
                                     <th scope="col">@Text(CompanionFinderUiTextKey.Evidence)</th>
                                     <th scope="col">@Text(CompanionFinderUiTextKey.Compare)</th>
@@ -176,11 +178,19 @@
                                                 @Text(CompanionFinderUiTextKey.Location): @candidate.LocationName
                                             </span>
                                         </th>
-                                        <td data-label="@Text(CompanionFinderUiTextKey.SavedBaseQualification)">
+                                        <td data-label="@Model.ScoreColumnLabel">
                                             <span class="companion-mobile-label" aria-hidden="true">
-                                                @Text(CompanionFinderUiTextKey.SavedBaseQualification)
+                                                @Model.ScoreColumnLabel
                                             </span>
                                             <strong>@candidate.ScoreLabel</strong>
+                                            @if (!Model.RequiresDisciplineSelection)
+                                            {
+                                                <dl class="companion-capability-row-summary">
+                                                    @CapabilityAverage(candidate.CapabilitySummary.MainAttributes)
+                                                    @CapabilityAverage(candidate.CapabilitySummary.MartialDisciplines)
+                                                    @CapabilityAverage(candidate.CapabilitySummary.LifeSkillDisciplines)
+                                                </dl>
+                                            }
                                         </td>
                                         <td data-label="@Text(CompanionFinderUiTextKey.State)">
                                             <span class="companion-mobile-label" aria-hidden="true">
@@ -522,6 +532,19 @@
     private string EvidenceDetailsLabel(CompanionCandidateViewModel candidate) =>
         $"{Text(CompanionFinderUiTextKey.RequirementEvidence)} · "
         + $"{candidate.DisplayName} · {RequirementSummary(candidate)}";
+
+    private static RenderFragment CapabilityAverage(
+        CompanionCapabilityCategoryViewModel category) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.OpenElement(1, "dt");
+        builder.AddContent(2, category.Label);
+        builder.CloseElement();
+        builder.OpenElement(3, "dd");
+        builder.AddContent(4, category.ScoreLabel);
+        builder.CloseElement();
+        builder.CloseElement();
+    };
 
     private static string FormatSnapshot(DateTimeOffset value) =>
         value.ToUniversalTime().ToString(

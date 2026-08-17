@@ -21,11 +21,14 @@ public static class CompanionFinderResponseMapper
                     definition.RoleVersion,
                     definition.EvaluationRuleVersion,
                     CompanionRolePresetStatus.Supported,
+                    definition.RequiresDisciplineSelection,
                     definition.DisciplineDomain,
                     definition.MinimumDisciplineType,
                     definition.MaximumDisciplineType,
                     CompanionFinderApiText.RolePurpose(language, definition.Identity),
-                    CompanionFinderApiText.ScoreLimitation(language))) ]);
+                    CompanionFinderApiText.ScoreLimitation(
+                        language,
+                        definition.Identity))) ]);
     }
 
     public static CompanionFinderResponse Map(
@@ -119,10 +122,13 @@ public static class CompanionFinderResponseMapper
             definition.Identity.Value,
             definition.RoleVersion,
             definition.EvaluationRuleVersion,
+            definition.RequiresDisciplineSelection,
             result.Ranking.Discipline.Domain,
             result.Ranking.Discipline.Type,
             CompanionFinderApiText.RolePurpose(language, definition.Identity),
-            CompanionFinderApiText.ScoreLimitation(language));
+            CompanionFinderApiText.ScoreLimitation(
+                language,
+                definition.Identity));
     }
 
     private static CompanionCandidateResponse MapCandidate(
@@ -133,12 +139,16 @@ public static class CompanionFinderResponseMapper
     {
         var evaluation = entry.Evaluation;
         var definition = evaluation.Definition;
+        var capabilitySummary = CompanionCapabilitySummaryBuilder.Build(
+            evaluation.Profile);
         var scoreFacts = definition.ScoreDimensions.Select(dimension =>
         {
             var field = new CandidateProfileFieldIdentity(
                 dimension.Field,
                 evaluation.Discipline);
-            return MapFact(evaluation.Profile.FindFact(field), field, language);
+            return dimension.Field == CandidateProfileField.CapabilityBreadthIndex
+                ? MapCapabilityScoreFact(capabilitySummary, field)
+                : MapFact(evaluation.Profile.FindFact(field), field, language);
         });
         return new CompanionCandidateResponse(
             CandidateReference(evaluation.Profile.Identity.CharacterId),
@@ -160,8 +170,7 @@ public static class CompanionFinderResponseMapper
                     [.. explanation.Components.Select(item => item.Dimension.Identity)],
                     [.. explanation.Gates.Select(item => item.ReasonIdentity)]))],
             [.. scoreFacts],
-            MapCapabilitySummary(
-                CompanionCapabilitySummaryBuilder.Build(evaluation.Profile)),
+            MapCapabilitySummary(capabilitySummary),
             [.. entry.LocationEvidence.Select(fact => MapFact(
                 fact,
                 fact.Identity,
@@ -189,6 +198,52 @@ public static class CompanionFinderResponseMapper
         MapCapabilityCategory(summary.MainAttributes),
         MapCapabilityCategory(summary.MartialDisciplines),
         MapCapabilityCategory(summary.LifeSkillDisciplines));
+
+    private static CompanionRoleFactResponse MapCapabilityScoreFact(
+        CompanionCapabilitySummary summary,
+        CandidateProfileFieldIdentity field)
+    {
+        var scaledBreadth = summary.BreadthIndex.GetValueOrDefault() * 100m;
+        var valueAvailable = summary.BreadthIndex.HasValue
+            && scaledBreadth >= 0m
+            && scaledBreadth <= 10_000m;
+        return new CompanionRoleFactResponse(
+            field.Field,
+            field.Discipline?.Domain,
+            field.Discipline?.Type,
+            summary.State switch
+            {
+                CompanionCapabilitySummaryState.Complete when valueAvailable =>
+                    CompanionFactEvidenceState.Confirmed,
+                CompanionCapabilitySummaryState.Complete =>
+                    CompanionFactEvidenceState.Conflicting,
+                CompanionCapabilitySummaryState.Incomplete =>
+                    CompanionFactEvidenceState.Incomplete,
+                CompanionCapabilitySummaryState.Unsupported =>
+                    CompanionFactEvidenceState.Unsupported,
+                CompanionCapabilitySummaryState.Stale =>
+                    CompanionFactEvidenceState.Stale,
+                CompanionCapabilitySummaryState.Conflicting =>
+                    CompanionFactEvidenceState.Conflicting,
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(summary),
+                    summary.State,
+                    "Unknown capability summary state.")
+            },
+            valueAvailable
+                ? new CompanionFactValueResponse(
+                    CandidateFactValueKind.Int16,
+                    Boolean: null,
+                    decimal.ToInt16(scaledBreadth),
+                    Int32: null,
+                    Identities: [])
+                : null,
+            Provenance: null,
+            Unavailable: null,
+            Conflicts: [],
+            ConflictDecision: null,
+            Evidence: []);
+    }
 
     private static CompanionCapabilityCategoryResponse MapCapabilityCategory(
         CompanionCapabilityCategorySummary category) => new(

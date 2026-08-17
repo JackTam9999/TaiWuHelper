@@ -74,7 +74,9 @@
                            name="companion-role-family"
                            checked="@(_draftDomain == role.Domain)"
                            @onchange="() => SetRole(role.Domain)"
-                           disabled="@(_isLoading || !LabelsAvailable)" />
+                           disabled="@(_isLoading
+                               || (!LabelsAvailable
+                                   && role.RequiresDisciplineSelection))" />
                     <span>
                         <strong>@role.Label</strong>
                         <small>@role.Purpose</small>
@@ -83,23 +85,28 @@
             }
         </fieldset>
 
-        <label class="companion-discipline-control"
-               for="companion-discipline-select">
-            <span>@Text(CompanionFinderUiTextKey.Discipline)</span>
-            <select id="companion-discipline-select"
-                    value="@SelectedDisciplineKey"
-                    @onchange="SetDiscipline"
-                    disabled="@(_isLoading || !_draftDomain.HasValue || !LabelsAvailable)">
-                <option value="">@Text(CompanionFinderUiTextKey.ChooseDiscipline)</option>
-                @foreach (var option in CurrentDisciplineOptions)
-                {
-                    <option value="@OptionKey(option)"
-                            disabled="@(!option.NameAvailable)">
-                        @option.DisplayName
-                    </option>
-                }
-            </select>
-        </label>
+        @if (CurrentRole?.RequiresDisciplineSelection != false)
+        {
+            <label class="companion-discipline-control"
+                   for="companion-discipline-select">
+                <span>@Text(CompanionFinderUiTextKey.Discipline)</span>
+                <select id="companion-discipline-select"
+                        value="@SelectedDisciplineKey"
+                        @onchange="SetDiscipline"
+                        disabled="@(_isLoading
+                            || !_draftDomain.HasValue
+                            || !LabelsAvailable)">
+                    <option value="">@Text(CompanionFinderUiTextKey.ChooseDiscipline)</option>
+                    @foreach (var option in CurrentDisciplineOptions)
+                    {
+                        <option value="@OptionKey(option)"
+                                disabled="@(!option.NameAvailable)">
+                            @option.DisplayName
+                        </option>
+                    }
+                </select>
+            </label>
+        }
 
         <div class="companion-find-action">
             <button type="button"
@@ -110,7 +117,11 @@
                     ? Text(CompanionFinderUiTextKey.FindingCandidates)
                     : Text(CompanionFinderUiTextKey.FindCandidates))
             </button>
-            <small>@Text(CompanionFinderUiTextKey.SelectRoleAndDiscipline)</small>
+            <small>
+                @Text(CurrentRole?.RequiresDisciplineSelection == false
+                    ? CompanionFinderUiTextKey.SelectObjectiveOnly
+                    : CompanionFinderUiTextKey.SelectRoleAndDiscipline)
+            </small>
         </div>
     </div>
 
@@ -207,11 +218,17 @@
             CompanionDisciplineDisplayStatus.Complete
             or CompanionDisciplineDisplayStatus.Partial;
 
-    private bool DraftValid => CurrentRole is not null
-        && _draftDisciplineType.HasValue
-        && CurrentDisciplineOptions.Any(value =>
-            value.Type == _draftDisciplineType.Value
-            && value.NameAvailable);
+    private bool DraftValid => CurrentRole switch
+    {
+        { RequiresDisciplineSelection: false } =>
+            _draftDisciplineType == 0,
+        { RequiresDisciplineSelection: true } =>
+            _draftDisciplineType.HasValue
+            && CurrentDisciplineOptions.Any(value =>
+                value.Type == _draftDisciplineType.Value
+                && value.NameAvailable),
+        _ => false
+    };
 
     private bool CanFind => DraftValid && !_isLoading && !_labelsBusy;
 
@@ -220,7 +237,8 @@
             || _draftDisciplineType != _submittedDisciplineType);
 
     private string SelectedDisciplineKey =>
-        _draftDisciplineType.HasValue
+        CurrentRole?.RequiresDisciplineSelection == true
+            && _draftDisciplineType.HasValue
             ? OptionKey(CurrentDisciplineOptions.Single(value =>
                 value.Type == _draftDisciplineType.Value))
             : string.Empty;
@@ -264,7 +282,7 @@
         try
         {
             _disciplineDisplay = await DisciplineDisplaySource.ReadAsync();
-            if (_draftDomain.HasValue
+            if (CurrentRole?.RequiresDisciplineSelection == true
                 && _draftDisciplineType.HasValue
                 && CurrentDisciplineOptions.All(value =>
                     value.Type != _draftDisciplineType.Value
@@ -304,7 +322,10 @@
         }
 
         _draftDomain = domain;
-        _draftDisciplineType = null;
+        _draftDisciplineType = RoleOptions.Single(value => value.Domain == domain)
+            .RequiresDisciplineSelection
+            ? null
+            : (short)0;
     }
 
     private void SetDiscipline(ChangeEventArgs args)
@@ -392,10 +413,14 @@
         var disciplineOptions = CompanionFinderViewModelMapper.MapDisciplines(
             _disciplineDisplay!,
             Language);
-        var disciplineName = disciplineOptions
-            .Single(value => value.Domain == _submittedDomain
-                && value.Type == _submittedDisciplineType)
-            .DisplayName;
+        var submittedRole = RoleOptions.Single(value =>
+            value.Domain == _submittedDomain);
+        var disciplineName = submittedRole.RequiresDisciplineSelection
+            ? disciplineOptions
+                .Single(value => value.Domain == _submittedDomain
+                    && value.Type == _submittedDisciplineType)
+                .DisplayName
+            : null;
         _model = CompanionFinderViewModelMapper.Map(
             _result,
             Language,
@@ -426,6 +451,7 @@
         {
             CandidateDisciplineDomain.Martial => "companion-role-martial",
             CandidateDisciplineDomain.LifeSkill => "companion-role-life-skill",
+            CandidateDisciplineDomain.Capability => "companion-role-capability",
             _ => throw new ArgumentOutOfRangeException(
                 nameof(domain),
                 domain,

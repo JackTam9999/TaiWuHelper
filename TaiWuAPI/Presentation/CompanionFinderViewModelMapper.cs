@@ -18,6 +18,7 @@ public static class CompanionFinderViewModelMapper
                 role.Identity,
                 role.RoleVersion,
                 role.DisciplineDomain,
+                role.RequiresDisciplineSelection,
                 CompanionFinderUiText.RoleLabel(
                     language,
                     role.DisciplineDomain),
@@ -54,11 +55,10 @@ public static class CompanionFinderViewModelMapper
     public static CompanionFinderViewModel Map(
         CompanionFinderResult result,
         TaiwuLanguage language,
-        string disciplineName,
+        string? disciplineName,
         IReadOnlyList<CompanionDisciplineOptionViewModel>? disciplineOptions = null)
     {
         ArgumentNullException.ThrowIfNull(result);
-        ArgumentException.ThrowIfNullOrWhiteSpace(disciplineName);
         if (!result.HasAuthoritativeResult)
         {
             throw new ArgumentException(
@@ -67,6 +67,18 @@ public static class CompanionFinderViewModelMapper
         }
 
         var response = CompanionFinderResponseMapper.Map(result, language);
+        var role = response.Role!;
+        if (role.RequiresDisciplineSelection
+            && string.IsNullOrWhiteSpace(disciplineName))
+        {
+            throw new ArgumentException(
+                "A discipline label is required for this objective.",
+                nameof(disciplineName));
+        }
+
+        var roleLabel = CompanionFinderUiText.RoleLabel(
+            language,
+            role.DisciplineDomain);
         var counts = response.Counts!;
         var candidates = response.Candidates.Select(candidate => MapCandidate(
             candidate,
@@ -74,14 +86,20 @@ public static class CompanionFinderViewModelMapper
             disciplineOptions ?? [])).ToArray();
         return new CompanionFinderViewModel(
             response.Status,
-            disciplineName.Trim(),
-            CompanionFinderUiText.RoleLabel(
+            role.RequiresDisciplineSelection
+                ? disciplineName!.Trim()
+                : roleLabel,
+            roleLabel,
+            role.RequiresDisciplineSelection,
+            Text(
                 language,
-                response.Role!.DisciplineDomain),
-            response.Role.Purpose,
-            CompanionFinderUiText.Get(
-                language,
-                CompanionFinderUiTextKey.ScoreLimitation),
+                role.RequiresDisciplineSelection
+                    ? CompanionFinderUiTextKey.SavedBaseQualification
+                    : CompanionFinderUiTextKey.BreadthIndex),
+            role.Purpose,
+            role.RequiresDisciplineSelection
+                ? Text(language, CompanionFinderUiTextKey.ScoreLimitation)
+                : role.ScoreLimitation,
             response.Source!.SnapshotCapturedAtUtc,
             response.Source.SnapshotReadStatus,
             MapEnrichment(
@@ -217,6 +235,12 @@ public static class CompanionFinderViewModelMapper
         };
         foreach (var row in comparison.Rows)
         {
+            if (row.Dimension.Field
+                == CandidateProfileField.CapabilityBreadthIndex)
+            {
+                continue;
+            }
+
             facts.Add(new CompanionComparisonFactViewModel(
                 Text(
                     language,
@@ -225,21 +249,27 @@ public static class CompanionFinderViewModelMapper
                 ComparisonValue(row.Second, language)));
         }
 
-        facts.Add(new CompanionComparisonFactViewModel(
-            Text(language, CompanionFinderUiTextKey.Evidence),
-            first.EvidenceLabel,
-            second.EvidenceLabel));
-        facts.Add(new CompanionComparisonFactViewModel(
-            Text(language, CompanionFinderUiTextKey.RoleLocalScore),
-            first.ScoreLabel,
-            second.ScoreLabel));
+        if (model.RequiresDisciplineSelection)
+        {
+            facts.Add(new CompanionComparisonFactViewModel(
+                Text(language, CompanionFinderUiTextKey.Evidence),
+                first.EvidenceLabel,
+                second.EvidenceLabel));
+            facts.Add(new CompanionComparisonFactViewModel(
+                Text(language, CompanionFinderUiTextKey.RoleLocalScore),
+                first.ScoreLabel,
+                second.ScoreLabel));
+        }
+
         facts.Add(new CompanionComparisonFactViewModel(
             Text(language, CompanionFinderUiTextKey.CompetitionRank),
             first.RankLabel,
             second.RankLabel));
         var capability = new CompanionCapabilityComparisonViewModel(
             Text(language, CompanionFinderUiTextKey.CapabilityOverview),
-            Text(language, CompanionFinderUiTextKey.CapabilityLimitation),
+            model.RequiresDisciplineSelection
+                ? Text(language, CompanionFinderUiTextKey.CapabilityLimitation)
+                : model.ScoreLimitation,
             [
                 new CompanionCapabilityComparisonFactViewModel(
                     Text(language, CompanionFinderUiTextKey.BreadthIndex),

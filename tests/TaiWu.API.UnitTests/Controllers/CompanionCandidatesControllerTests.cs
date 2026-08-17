@@ -30,7 +30,7 @@ public sealed class CompanionCandidatesControllerTests
         var english = CompanionFinderResponseMapper.MapRoles(TaiwuLanguage.English);
         var chinese = CompanionFinderResponseMapper.MapRoles(TaiwuLanguage.Chinese);
 
-        Assert.Equal(2, english.Roles.Count);
+        Assert.Equal(3, english.Roles.Count);
         Assert.Equal(
             english.Roles.Select(item => item.Identity),
             chinese.Roles.Select(item => item.Identity));
@@ -42,8 +42,11 @@ public sealed class CompanionCandidatesControllerTests
             Assert.Equal(CompanionRolePresetStatus.Supported, item.Status);
             Assert.Equal("1", item.RoleVersion);
             Assert.Equal("1", item.EvaluationRuleVersion);
-            Assert.Contains("not a universal ranking", item.ScoreLimitation);
+            Assert.Contains("action recommendation", item.ScoreLimitation);
         });
+        Assert.Equal(
+            [true, true, false],
+            english.Roles.Select(item => item.RequiresDisciplineSelection));
         Assert.All(
             english.Roles.Zip(chinese.Roles),
             pair =>
@@ -119,6 +122,44 @@ public sealed class CompanionCandidatesControllerTests
         Assert.Equal((short)90, Assert.Single(response.Comparison.Rows).First.Value);
         Assert.NotNull(response.Fingerprint);
         Assert.Null(response.Failure);
+    }
+
+    [Fact]
+    public async Task Comprehensive_objective_exposes_breadth_rank_and_three_category_averages()
+    {
+        var snapshot = Snapshot([
+            Profile(2, facts: [ScoreFact(90)]),
+            Profile(1, score: 70)
+        ]);
+        var result = await Execute(
+            Workflow(snapshot),
+            new CompanionFinderRequest(
+                "COMPREHENSIVE_BASE_CAPABILITY",
+                "1",
+                CandidateDisciplineDomain.Capability,
+                0,
+                CompanionRoleShortlistFilter.All,
+                2,
+                1));
+
+        var response = CompanionFinderResponseMapper.Map(
+            result,
+            TaiwuLanguage.English);
+
+        Assert.False(response.Role!.RequiresDisciplineSelection);
+        Assert.Equal(
+            CandidateDisciplineDomain.Capability,
+            response.Role.DisciplineDomain);
+        Assert.Contains("three complete saved-base category averages", response.Role.ScoreLimitation);
+        var first = response.Candidates[0];
+        Assert.Equal(first.CapabilitySummary.BreadthIndex, first.TotalScore);
+        Assert.Equal(
+            CandidateProfileField.CapabilityBreadthIndex,
+            Assert.Single(first.ScoreFacts).Field);
+        Assert.NotNull(first.CapabilitySummary.MainAttributes.Average);
+        Assert.NotNull(first.CapabilitySummary.MartialDisciplines.Average);
+        Assert.NotNull(first.CapabilitySummary.LifeSkillDisciplines.Average);
+        Assert.NotNull(response.Comparison);
     }
 
     [Fact]

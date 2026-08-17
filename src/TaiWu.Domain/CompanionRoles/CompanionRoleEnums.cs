@@ -6,7 +6,8 @@ public enum CompanionRoleRequirementKind
     SourceVersionsSupported = 1,
     DisciplineSupported = 2,
     RequiredFactConfirmed = 3,
-    FactProvenanceCompatible = 4
+    FactProvenanceCompatible = 4,
+    ObjectiveSupported = 5
 }
 
 public enum CompanionRoleGateOutcome
@@ -35,7 +36,8 @@ public enum CompanionRoleScoreDirection
 
 public enum CompanionRoleNormalizationKind
 {
-    Identity = 0
+    Identity = 0,
+    Hundredth = 1
 }
 
 public enum CompanionRoleMissingEvidenceBehavior

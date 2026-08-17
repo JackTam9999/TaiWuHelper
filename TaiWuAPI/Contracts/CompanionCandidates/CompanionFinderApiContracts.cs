@@ -40,6 +40,7 @@ public sealed record CompanionRolePresetResponse(
     string RoleVersion,
     string EvaluationRuleVersion,
     CompanionRolePresetStatus Status,
+    bool RequiresDisciplineSelection,
     CandidateDisciplineDomain DisciplineDomain,
     short MinimumDisciplineType,
     short MaximumDisciplineType,
@@ -125,6 +126,7 @@ public sealed record CompanionRoleContextResponse(
     string Identity,
     string RoleVersion,
     string EvaluationRuleVersion,
+    bool RequiresDisciplineSelection,
     CandidateDisciplineDomain DisciplineDomain,
     short DisciplineType,
     string Purpose,
@@ -171,7 +173,7 @@ public sealed record CompanionCapabilitySummaryResponse(
     CompanionCapabilitySummaryState State,
     string RuleVersion,
     CompanionCapabilitySummaryFormula Formula,
-    [property: Description("Equal-weight mean of the six-attribute, 14-martial-discipline, and 16-life-skill-discipline category averages. Descriptive only; it does not affect role rank or claim universal suitability.")]
+    [property: Description("Equal-weight mean of the complete six-attribute, 14-martial-discipline, and 16-life-skill-discipline category averages. It is the score only for the explicit comprehensive objective and never claims universal suitability.")]
     decimal? BreadthIndex,
     CompanionCapabilityCategoryResponse MainAttributes,
     CompanionCapabilityCategoryResponse MartialDisciplines,

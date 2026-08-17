@@ -13,7 +13,8 @@ internal static class CompanionFinderTestData
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     internal static async Task<CompanionFinderResult> ResultAsync(
-        bool partialSnapshot = false)
+        bool partialSnapshot = false,
+        bool comprehensiveObjective = false)
     {
         var snapshot = Snapshot();
         var reader = Substitute.For<ICompanionCandidateSnapshotReader>();
@@ -41,9 +42,13 @@ internal static class CompanionFinderTestData
         return await new FindCompanionCandidates(reader, source, repository)
             .ExecuteAsync(
                 new CompanionFinderRequest(
-                    "MARTIAL_DISCIPLINE_APTITUDE",
+                    comprehensiveObjective
+                        ? "COMPREHENSIVE_BASE_CAPABILITY"
+                        : "MARTIAL_DISCIPLINE_APTITUDE",
                     "1",
-                    CandidateDisciplineDomain.Martial,
+                    comprehensiveObjective
+                        ? CandidateDisciplineDomain.Capability
+                        : CandidateDisciplineDomain.Martial,
                     0),
                 TestContext.Current.CancellationToken);
     }

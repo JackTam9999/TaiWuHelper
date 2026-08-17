@@ -301,7 +301,7 @@ public sealed class CompanionCandidateSnapshotSafetyTests
     }
 
     [Fact]
-    public void Capability_breadth_is_transparent_and_cannot_change_role_rank()
+    public void Capability_breadth_only_changes_rank_for_its_explicit_objective()
     {
         var root = FindRepositoryRoot();
         var summary = File.ReadAllText(Path.Combine(
@@ -322,6 +322,12 @@ public sealed class CompanionCandidateSnapshotSafetyTests
             "TaiWu.Domain",
             "CompanionRoles",
             "CompanionRoleEvaluator.cs"));
+        var definitions = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "TaiWu.Domain",
+            "CompanionRoles",
+            "VerifiedCompanionRoleDefinitions.cs"));
 
         Assert.Contains("EqualCategoryMean", summary);
         Assert.Contains("/ 3m", summary);
@@ -329,7 +335,13 @@ public sealed class CompanionCandidateSnapshotSafetyTests
         Assert.Contains("MartialDisciplineCount = 14", summary);
         Assert.Contains("LifeSkillDisciplineCount = 16", summary);
         Assert.DoesNotContain("CompanionCapabilitySummary", ranking);
-        Assert.DoesNotContain("CompanionCapabilitySummary", evaluator);
+        Assert.Equal(
+            1,
+            CountOccurrences(
+                evaluator,
+                "CompanionCapabilitySummaryBuilder.Build("));
+        Assert.Contains("COMPREHENSIVE_BASE_CAPABILITY", definitions);
+        Assert.Contains("CandidateProfileField.CapabilityBreadthIndex", definitions);
     }
 
     private static IEnumerable<Type> PublicSignatureTypes(Type type)

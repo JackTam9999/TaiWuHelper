@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-010 and extended by E6-013 |
+| Status | Implemented for E6-010 and extended by E6-013/E6-014 |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
-| Backlog items | [E6-010](../roadmap/epic-006/BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](../roadmap/epic-006/BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview) |
+| Backlog items | [E6-010](../roadmap/epic-006/BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](../roadmap/epic-006/BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview), [E6-014](../roadmap/epic-006/BACKLOG.md#e6-014--make-comprehensive-base-capability-a-selectable-objective) |
 | UI contract | [UI-006 companion finder](../roadmap/epic-006/UI-006-companion-candidate-finder.md) |
 | Application source | [Companion finder Application](./COMPANION-FINDER-APPLICATION.md) |
 | API mapping | [Companion candidates API](../api/COMPANION-CANDIDATES.md) |
@@ -12,10 +12,10 @@
 ## Purpose and boundary
 
 The `/companions` Blazor page presents one information-only workflow over the
-immutable E6-008 finder result. The player selects one martial or life-skill
-discipline, explicitly starts one read, inspects every candidate state, filters
-the existing shortlist, and optionally compares two entries from that same
-result.
+immutable E6-008 finder result. The player selects either one martial/life-
+skill discipline or the comprehensive base-capability objective, explicitly
+starts one read, inspects every candidate state, filters the existing shortlist,
+and optionally compares two entries from that same result.
 
 Presentation cannot recruit, dismiss, train, move, equip, assign, persist,
 upload, export, automate input, control a process, or mutate the game. The page
@@ -46,9 +46,9 @@ The API mapper also derives one versioned capability summary directly from
 each immutable candidate profile. Presentation only localizes its typed six-
 attribute, 14-martial, and 16-life-skill components, selects the top three
 confirmed values for display, and places the two summaries in a separate
-semantic comparison table. The equal-category breadth index is descriptive;
-it cannot change the role comparison, selected-discipline score, rank, tie,
-ordering, explanation, or finder fingerprint.
+semantic comparison table. The equal-category breadth index cannot change a
+selected-discipline score, rank, tie, ordering, or explanation. It becomes the
+role-local score only for the explicitly selected comprehensive objective.
 
 ## Read and interaction lifecycle
 
@@ -103,6 +103,11 @@ life-skill-aptitude averages, confirmed coverage, and top values. A visible
 limitation states that these are equal-weight saved-base descriptions and do
 not change the selected-role recommendation or rank. Incomplete categories and
 the resulting breadth index render an explicit unavailable state.
+
+For the comprehensive objective, the discipline select is absent. Every main
+candidate row directly shows the breadth index plus the six-attribute,
+14-martial, and 16-life-skill averages. The candidate order is still copied
+from Domain ranking; Presentation performs no aggregate sort.
 
 Partial source projection and catalogue enrichment are independent notices.
 Every supported enrichment/catalogue combination has distinct bilingual

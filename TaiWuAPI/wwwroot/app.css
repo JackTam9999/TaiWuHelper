@@ -5934,6 +5934,31 @@ select {
     font-weight: 400;
 }
 
+.companion-capability-row-summary {
+    display: grid;
+    gap: 5px;
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.companion-capability-row-summary > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.companion-capability-row-summary dt,
+.companion-capability-row-summary dd {
+    margin: 0;
+}
+
+.companion-capability-row-summary dd {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+}
+
 .companion-state-label {
     display: inline-flex;
     padding: 4px 8px;

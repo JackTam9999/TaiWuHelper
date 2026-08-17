@@ -890,6 +890,10 @@ Add a compact companion-to-companion summary over all verified saved-base
 attributes and aptitudes while preserving the selected role as the only
 ranking and recommendation path.
 
+E6-014 later makes that same complete summary an explicit selectable
+objective. It remains outside martial- and life-skill ranking unless the
+player deliberately selects that objective.
+
 #### Acceptance criteria
 
 - [x] Each candidate profile contains six typed saved base main attributes in
@@ -905,8 +909,8 @@ ranking and recommendation path.
 - [x] Missing, incomplete, unsupported, stale, or conflicting evidence remains
       explicit and never becomes zero or a fabricated partial average.
 - [x] The overview is visibly labelled as saved-base descriptive evidence and
-      does not change role eligibility, score, rank, tie, shortlist order,
-      explanation, recommendation, or finder fingerprint.
+      does not change martial- or life-skill eligibility, score, rank, tie,
+      shortlist order, explanation, recommendation, or finder fingerprint.
 - [x] Comparison uses a separate semantic table with responsive single-DOM
       behavior and no raw character or discipline identity fallback.
 - [x] The archive adapter copies the fixed six-value buffer once per candidate
@@ -928,6 +932,56 @@ ranking and recommendation path.
 - Release verification and updated browser review recorded under E6-010 and
   E6-011.
 
+### E6-014 — Make comprehensive base capability a selectable objective
+
+**Status:** Complete
+
+**Priority:** P1
+
+**Estimate:** M
+
+**Dependencies:** E6-003, E6-006 through E6-010, E6-013
+
+Let the player compare the current saved companion group directly by the
+existing complete breadth summary without first choosing one martial or
+life-skill discipline.
+
+#### Acceptance criteria
+
+- [x] Role discovery exposes `COMPREHENSIVE_BASE_CAPABILITY` as a third stable,
+      bilingual objective and declares that it needs no discipline selection.
+- [x] Selecting it uses the fixed aggregate objective identity `Capability/0`;
+      the discipline selector is hidden and no localized discipline name is
+      required.
+- [x] The role-local total is the version-1 breadth index: the equally weighted
+      mean of the complete six-attribute, 14-martial, and 16-life-skill saved-
+      base category averages.
+- [x] All 36 facts must be confirmed and provenance-compatible before a score
+      exists; missing, stale, unsupported, conflicting, or mismatched evidence
+      remains explicitly unranked and never becomes zero.
+- [x] The main candidate table directly shows breadth index plus all three
+      category averages while retaining the existing two-candidate detailed
+      comparison.
+- [x] Domain evaluation and ranking own the score and ordering; API and
+      Presentation map the immutable result without client-side re-ranking.
+- [x] The adjacent limitation says the objective is a saved-base description,
+      not future potential, universal suitability, success probability, or an
+      action recommendation.
+- [x] Candidate scope remains the current saved non-Taiwu group. Village
+      residents and other broad character lookup results are not added.
+- [x] Existing martial- and life-skill objectives keep their exact score,
+      ordering, evidence, and UI behavior.
+- [x] Release build, automated suites, bilingual desktop/narrow browser review,
+      formatter, link, and clean-diff checks pass.
+
+#### Evidence when complete
+
+- Versioned aggregate role definition, complete-only Domain evaluator and
+  deterministic ranking/comparison tests.
+- Updated API discovery/result contracts and bilingual responsive finder UI.
+- Updated role-evaluation, Presentation, API, Epic, and verification evidence.
+- [E6-014 comprehensive objective review](../../reviews/E6-014-comprehensive-capability.md).
+
 ### E6-012 — Validate representative roles and close Epic 6
 
 **Status:** Awaiting product-owner decision
@@ -936,7 +990,7 @@ ranking and recommendation path.
 
 **Estimate:** M
 
-**Dependencies:** E6-011, E6-013
+**Dependencies:** E6-011, E6-013, E6-014
 
 Compare each delivered role, candidate state, shortlist explanation, and
 responsive UI against the verified game sources and representative scenarios.

@@ -289,6 +289,11 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 "1",
                 CandidateDisciplineDomain.LifeSkill,
                 0);
+            var capabilityRequest = new CompanionFinderRequest(
+                "COMPREHENSIVE_BASE_CAPABILITY",
+                "1",
+                CandidateDisciplineDomain.Capability,
+                0);
 
             var coldWatch = Stopwatch.StartNew();
             var firstMartial = await workflow.ExecuteAsync(
@@ -310,16 +315,38 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 lifeRequest,
                 TestContext.Current.CancellationToken);
             secondLifeWatch.Stop();
+            var firstCapabilityWatch = Stopwatch.StartNew();
+            var firstCapability = await workflow.ExecuteAsync(
+                capabilityRequest,
+                TestContext.Current.CancellationToken);
+            firstCapabilityWatch.Stop();
+            var secondCapabilityWatch = Stopwatch.StartNew();
+            var secondCapability = await workflow.ExecuteAsync(
+                capabilityRequest,
+                TestContext.Current.CancellationToken);
+            secondCapabilityWatch.Stop();
 
             AssertAuthoritative(firstMartial, CandidateDisciplineDomain.Martial);
             AssertAuthoritative(secondMartial, CandidateDisciplineDomain.Martial);
             AssertAuthoritative(firstLife, CandidateDisciplineDomain.LifeSkill);
             AssertAuthoritative(secondLife, CandidateDisciplineDomain.LifeSkill);
+            AssertAuthoritative(
+                firstCapability,
+                CandidateDisciplineDomain.Capability);
+            AssertAuthoritative(
+                secondCapability,
+                CandidateDisciplineDomain.Capability);
             Assert.Equal(firstMartial.Fingerprint, secondMartial.Fingerprint);
             Assert.Equal(firstLife.Fingerprint, secondLife.Fingerprint);
             Assert.Equal(
+                firstCapability.Fingerprint,
+                secondCapability.Fingerprint);
+            Assert.Equal(
                 firstMartial.SourceIdentity!.CandidateSourceVersions.SaveSha256,
                 firstLife.SourceIdentity!.CandidateSourceVersions.SaveSha256);
+            Assert.Equal(
+                firstMartial.SourceIdentity.CandidateSourceVersions.SaveSha256,
+                firstCapability.SourceIdentity!.CandidateSourceVersions.SaveSha256);
             Assert.Equal(
                 DisplaySignatures(firstMartial.Snapshot!),
                 DisplaySignatures(secondMartial.Snapshot!));
@@ -327,8 +354,14 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 DisplaySignatures(firstLife.Snapshot!),
                 DisplaySignatures(secondLife.Snapshot!));
             Assert.Equal(
+                DisplaySignatures(firstCapability.Snapshot!),
+                DisplaySignatures(secondCapability.Snapshot!));
+            Assert.Equal(
                 firstMartial.Shortlist!.Counts.Total,
                 firstLife.Shortlist!.Counts.Total);
+            Assert.Equal(
+                firstMartial.Shortlist.Counts.Total,
+                firstCapability.Shortlist!.Counts.Total);
             Assert.True(
                 coldWatch.Elapsed <= TimeSpan.FromSeconds(30),
                 $"Cold companion finder took {coldWatch.Elapsed.TotalSeconds:F3} seconds.");
@@ -337,24 +370,31 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 {
                     warmMartialWatch.Elapsed,
                     firstLifeWatch.Elapsed,
-                    secondLifeWatch.Elapsed
+                    secondLifeWatch.Elapsed,
+                    firstCapabilityWatch.Elapsed,
+                    secondCapabilityWatch.Elapsed
                 },
                 elapsed => Assert.True(
                     elapsed <= TimeSpan.FromSeconds(2),
                     $"Warm companion finder took {elapsed.TotalSeconds:F3} seconds."));
 
             output.WriteLine(
-                "E6-011 companion finder: martial={0}; life={1}; candidates={2}; "
-                + "disciplines={3}; coldMs={4:F0}; warmMartialMs={5:F0}; "
-                + "warmLifeMs={6:F0}/{7:F0}; guardedFiles={8}.",
+                "E6-014 companion finder: martial={0}; life={1}; "
+                + "capability={2}; candidates={3}; "
+                + "disciplines={4}; coldMs={5:F0}; warmMartialMs={6:F0}; "
+                + "warmLifeMs={7:F0}/{8:F0}; warmCapabilityMs={9:F0}/{10:F0}; "
+                + "guardedFiles={11}.",
                 firstMartial.Status,
                 firstLife.Status,
+                firstCapability.Status,
                 firstMartial.Shortlist.Counts.Total,
                 display.Disciplines.Length,
                 coldWatch.Elapsed.TotalMilliseconds,
                 warmMartialWatch.Elapsed.TotalMilliseconds,
                 firstLifeWatch.Elapsed.TotalMilliseconds,
                 secondLifeWatch.Elapsed.TotalMilliseconds,
+                firstCapabilityWatch.Elapsed.TotalMilliseconds,
+                secondCapabilityWatch.Elapsed.TotalMilliseconds,
                 guardedPaths.Length);
         }
         finally

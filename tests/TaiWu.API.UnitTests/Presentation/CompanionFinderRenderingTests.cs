@@ -129,6 +129,40 @@ public sealed partial class CompanionFinderRenderingTests
     }
 
     [Fact]
+    public async Task Comprehensive_objective_shows_breadth_and_all_three_averages_in_each_row()
+    {
+        var result = await CompanionFinderTestData.ResultAsync(
+            comprehensiveObjective: true);
+        var disciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.English);
+        var model = CompanionFinderViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            disciplineName: null,
+            disciplines);
+
+        var html = await RenderResultsAsync(
+            model,
+            new CompanionFinderInteractionState(),
+            comparison: null,
+            TaiwuLanguage.English);
+        var text = VisibleText(html);
+
+        Assert.Contains("Comprehensive base capability", text);
+        Assert.Contains("Breadth index", text);
+        Assert.Contains("Synthetic Person A", text);
+        Assert.Contains(">47.67</strong>", html);
+        Assert.Contains("Six base attributes 53.5", text);
+        Assert.Contains("14 martial aptitudes 51", text);
+        Assert.Contains("16 life-skill aptitudes 38.5", text);
+        Assert.Contains("class=\"companion-capability-row-summary\"", html);
+        Assert.DoesNotContain(
+            "Comprehensive base capability · Comprehensive base capability",
+            text);
+    }
+
+    [Fact]
     public async Task Every_noncurrent_enrichment_state_renders_its_typed_action()
     {
         var result = await CompanionFinderTestData.ResultAsync();
@@ -312,6 +346,7 @@ public sealed partial class CompanionFinderRenderingTests
             text);
         Assert.Contains("Martial discipline aptitude", text);
         Assert.Contains("Life-skill discipline aptitude", text);
+        Assert.Contains("Comprehensive base capability", text);
         Assert.Contains("Choose a discipline", text);
         Assert.Contains("Find candidates", text);
         Assert.Contains("type=\"radio\"", html);

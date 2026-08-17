@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>E6-014 綜合基礎能力檢視</title>
+    <link rel="stylesheet" href="../../../TaiWuAPI/wwwroot/app.css">
+    <style>
+        [hidden] { display: none !important; }
+        .review-fixture-note {
+            margin: 18px 0;
+            padding: 10px 14px;
+            border: 1px dashed rgba(215, 182, 107, 0.5);
+            color: #e7d6ad;
+            background: rgba(215, 182, 107, 0.08);
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <p class="review-fixture-note">僅使用合成資料檢視版面；人物、數值、位置與名次皆非真實存檔內容。</p>
+    <main>
+        <section class="companion-hero">
+            <div>
+                <p class="eyebrow">目前隊伍 · 比較目標</p>
+                <h1>同道人選比較</h1>
+                <p class="hero-copy">選擇已驗證的比較目標，再查看保留證據狀態的人選清單。</p>
+            </div>
+            <div class="boundary-card" role="note">
+                <strong>僅供參考</strong>
+                <span>只會讀取目前存檔中的太吾隊伍，不包含村民，也不會改變遊戲。</span>
+            </div>
+        </section>
+
+        <section class="companion-controls" aria-labelledby="fixture-controls">
+            <div class="section-heading"><div><p class="eyebrow">目標類型</p><h2 id="fixture-controls">選擇比較目標</h2></div></div>
+            <div class="companion-objective-grid">
+                <fieldset class="companion-role-options">
+                    <legend>目標類型</legend>
+                    <label><input type="radio" name="objective" value="martial"><span><strong>武學資質</strong><small>比較一項武學類別的存檔基礎資質。</small></span></label>
+                    <label><input type="radio" name="objective" value="life"><span><strong>技藝資質</strong><small>比較一項技藝類別的存檔基礎資質。</small></span></label>
+                    <label><input type="radio" name="objective" value="capability" checked><span><strong>綜合基礎能力</strong><small>等權比較六項屬性、十四項武學資質與十六項技藝資質。</small></span></label>
+                </fieldset>
+                <label id="fixture-discipline" class="companion-discipline-control" hidden>
+                    <span>類別</span><select><option>合成類別</option></select>
+                </label>
+                <div class="companion-find-action"><button class="primary-button" type="button">查找人選</button><small id="fixture-help">選擇目標後即可搜尋。</small></div>
+            </div>
+            <div class="companion-role-purpose" role="note">
+                <strong>綜合基礎能力</strong>
+                <span>廣度指數是三個完整存檔基礎類別平均值的等權平均。</span>
+                <span>只依此描述目標排名；不代表未來潛力、通用適合度或行動建議。</span>
+            </div>
+        </section>
+
+        <section class="companion-result-region">
+            <section class="companion-result-shell" aria-labelledby="fixture-results">
+                <div class="section-heading companion-result-heading">
+                    <div><p class="eyebrow">結果</p><h2 id="fixture-results">綜合基礎能力</h2><p>比較目前同道的完整存檔基礎廣度。</p></div>
+                    <span class="companion-freshness">快照目前有效</span>
+                </div>
+                <div class="companion-score-notice" role="note"><strong>分數意義</strong><span>廣度指數等權平均三個完整類別平均值；任何缺項都不會以 0 排名。</span></div>
+                <dl class="companion-counts" aria-label="結果摘要">
+                    <div><dt>共計</dt><dd>3</dd></div><div><dt>符合資格</dt><dd>3</dd></div><div><dt>已排序</dt><dd>2</dd></div><div><dt>並列</dt><dd>0</dd></div><div><dt>需檢查</dt><dd>1</dd></div><div><dt>不符合資格</dt><dd>0</dd></div><div><dt>資料不完整</dt><dd>1</dd></div><div><dt>目前不支援</dt><dd>0</dd></div><div><dt>資料衝突</dt><dd>0</dd></div>
+                </dl>
+                <section class="companion-candidate-section" aria-labelledby="fixture-ranked">
+                    <h3 id="fixture-ranked">已排序人選</h3>
+                    <table class="companion-candidate-table">
+                        <thead><tr><th scope="col">名次</th><th scope="col">人選</th><th scope="col">廣度指數</th><th scope="col">狀態</th><th scope="col">證據</th><th scope="col">比較</th></tr></thead>
+                        <tbody>
+                            <tr class="companion-candidate-main-row">
+                                <td data-label="名次"><span class="companion-mobile-label">名次</span><strong>第 1 名</strong></td>
+                                <th scope="row" data-label="人選"><span class="companion-mobile-label">人選</span><strong class="companion-candidate-name">範例人物甲</strong><span class="companion-location">位置：範例聚落</span></th>
+                                <td data-label="廣度指數"><span class="companion-mobile-label">廣度指數</span><strong>64.25</strong><dl class="companion-capability-row-summary"><div><dt>六項基礎主要屬性</dt><dd>68.5</dd></div><div><dt>十四項武學資質</dt><dd>61.75</dd></div><div><dt>十六項技藝資質</dt><dd>62.5</dd></div></dl></td>
+                                <td data-label="狀態"><span class="companion-mobile-label">狀態</span><span class="companion-state-label ranked">已排名</span></td>
+                                <td data-label="證據"><span class="companion-mobile-label">證據</span>完整存檔基礎值已確認</td>
+                                <td data-label="比較"><span class="companion-mobile-label">比較</span><label class="companion-compare-control"><input type="checkbox"><span>選取作比較 · 範例人物甲</span></label></td>
+                            </tr>
+                            <tr class="companion-candidate-detail-row"><td colspan="6"><details class="companion-candidate-evidence"><summary><strong>條件證據</strong><span>已通過全部 5 項條件</span></summary></details></td></tr>
+                            <tr class="companion-candidate-main-row">
+                                <td data-label="名次"><span class="companion-mobile-label">名次</span><strong>第 2 名</strong></td>
+                                <th scope="row" data-label="人選"><span class="companion-mobile-label">人選</span><strong class="companion-candidate-name">範例人物乙</strong><span class="companion-location">位置：範例山谷</span></th>
+                                <td data-label="廣度指數"><span class="companion-mobile-label">廣度指數</span><strong>58.42</strong><dl class="companion-capability-row-summary"><div><dt>六項基礎主要屬性</dt><dd>60.5</dd></div><div><dt>十四項武學資質</dt><dd>57.25</dd></div><div><dt>十六項技藝資質</dt><dd>57.5</dd></div></dl></td>
+                                <td data-label="狀態"><span class="companion-mobile-label">狀態</span><span class="companion-state-label ranked">已排名</span></td>
+                                <td data-label="證據"><span class="companion-mobile-label">證據</span>完整存檔基礎值已確認</td>
+                                <td data-label="比較"><span class="companion-mobile-label">比較</span><label class="companion-compare-control"><input type="checkbox"><span>選取作比較 · 範例人物乙</span></label></td>
+                            </tr>
+                            <tr class="companion-candidate-detail-row"><td colspan="6"><details class="companion-candidate-evidence"><summary><strong>條件證據</strong><span>已通過全部 5 項條件</span></summary></details></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+                <section class="companion-candidate-section" aria-labelledby="fixture-review">
+                    <h3 id="fixture-review">需檢查</h3>
+                    <table class="companion-candidate-table"><thead><tr><th scope="col">名次</th><th scope="col">人選</th><th scope="col">廣度指數</th><th scope="col">狀態</th><th scope="col">證據</th><th scope="col">比較</th></tr></thead><tbody><tr class="companion-candidate-main-row"><td><span class="companion-mobile-label">名次</span><strong>無法使用</strong></td><th scope="row"><span class="companion-mobile-label">人選</span><strong class="companion-candidate-name">範例人物丙</strong></th><td><span class="companion-mobile-label">廣度指數</span><strong>無法使用</strong><dl class="companion-capability-row-summary"><div><dt>六項基礎主要屬性</dt><dd>無法使用</dd></div><div><dt>十四項武學資質</dt><dd>無法使用</dd></div><div><dt>十六項技藝資質</dt><dd>無法使用</dd></div></dl></td><td><span class="companion-mobile-label">狀態</span><span class="companion-state-label needs-review">證據不完整</span></td><td><span class="companion-mobile-label">證據</span>至少一項能力值缺漏</td><td><span class="companion-mobile-label">比較</span><label class="companion-compare-control"><input type="checkbox"><span>選取作比較 · 範例人物丙</span></label></td></tr></tbody></table>
+                </section>
+            </section>
+        </section>
+    </main>
+</div>
+<script>
+    const discipline = document.getElementById('fixture-discipline');
+    const help = document.getElementById('fixture-help');
+    document.querySelectorAll('input[name="objective"]').forEach(input => {
+        input.addEventListener('change', event => {
+            const comprehensive = event.target.value === 'capability';
+            discipline.hidden = comprehensive;
+            help.textContent = comprehensive ? '選擇目標後即可搜尋。' : '請選擇目標類型與類別。';
+        });
+    });
+</script>
+</body>
+</html>

@@ -107,6 +107,9 @@ public sealed class CompanionRoleDefinition
 
     public CandidateDisciplineDomain DisciplineDomain { get; }
 
+    public bool RequiresDisciplineSelection =>
+        DisciplineDomain != CandidateDisciplineDomain.Capability;
+
     public short MinimumDisciplineType { get; }
 
     public short MaximumDisciplineType { get; }
@@ -126,6 +129,7 @@ public sealed class CompanionRoleDefinition
         {
             (CandidateProfileField.BaseMartialQualification, CandidateDisciplineDomain.Martial) => true,
             (CandidateProfileField.BaseLifeSkillQualification, CandidateDisciplineDomain.LifeSkill) => true,
+            (CandidateProfileField.CapabilityBreadthIndex, CandidateDisciplineDomain.Capability) => true,
             _ => false
         };
 
@@ -136,7 +140,17 @@ public sealed class CompanionRoleDefinition
         {
             new(1, CompanionRoleRequirementKind.CandidateUniverseEligible, "CANDIDATE_UNIVERSE_ELIGIBLE", null),
             new(2, CompanionRoleRequirementKind.SourceVersionsSupported, "SOURCE_VERSIONS_SUPPORTED", null),
-            new(3, CompanionRoleRequirementKind.DisciplineSupported, "DISCIPLINE_SUPPORTED", null)
+            new(
+                3,
+                dimensions.All(dimension =>
+                    dimension.Field == CandidateProfileField.CapabilityBreadthIndex)
+                    ? CompanionRoleRequirementKind.ObjectiveSupported
+                    : CompanionRoleRequirementKind.DisciplineSupported,
+                dimensions.All(dimension =>
+                    dimension.Field == CandidateProfileField.CapabilityBreadthIndex)
+                    ? "OBJECTIVE_SUPPORTED"
+                    : "DISCIPLINE_SUPPORTED",
+                null)
         };
         var order = 4;
         foreach (var dimension in dimensions)

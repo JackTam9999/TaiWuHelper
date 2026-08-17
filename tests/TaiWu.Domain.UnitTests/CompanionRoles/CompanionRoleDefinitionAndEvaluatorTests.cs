@@ -7,13 +7,17 @@ namespace TaiWu.Domain.UnitTests.CompanionRoles;
 public sealed class CompanionRoleDefinitionAndEvaluatorTests
 {
     [Fact]
-    public void Verified_catalogue_exposes_two_stable_nonlocalized_role_definitions()
+    public void Verified_catalogue_exposes_three_stable_nonlocalized_role_definitions()
     {
         var roles = VerifiedCompanionRoleDefinitions.All;
 
-        Assert.Equal(2, roles.Length);
+        Assert.Equal(3, roles.Length);
         Assert.Equal(
-            ["MARTIAL_DISCIPLINE_APTITUDE", "LIFE_SKILL_DISCIPLINE_APTITUDE"],
+            [
+                "MARTIAL_DISCIPLINE_APTITUDE",
+                "LIFE_SKILL_DISCIPLINE_APTITUDE",
+                "COMPREHENSIVE_BASE_CAPABILITY"
+            ],
             roles.Select(item => item.Identity.Value));
         Assert.All(roles, role =>
         {
@@ -49,6 +53,116 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
                 CompanionRoleRequirementKind.FactProvenanceCompatible
             ],
             martial.HardRequirements.Select(item => item.Kind));
+
+        var capability = VerifiedCompanionRoleDefinitions
+            .ComprehensiveBaseCapability;
+        Assert.Equal(CandidateDisciplineDomain.Capability, capability.DisciplineDomain);
+        Assert.False(capability.RequiresDisciplineSelection);
+        Assert.Equal((short)0, capability.MinimumDisciplineType);
+        Assert.Equal((short)0, capability.MaximumDisciplineType);
+        var dimension = Assert.Single(capability.ScoreDimensions);
+        Assert.Equal(CandidateProfileField.CapabilityBreadthIndex, dimension.Field);
+        Assert.Equal(CompanionRoleNormalizationKind.Hundredth, dimension.Normalization);
+        Assert.Equal(
+            CompanionRoleRequirementKind.ObjectiveSupported,
+            capability.HardRequirements[2].Kind);
+    }
+
+    [Fact]
+    public void Comprehensive_objective_scores_and_ranks_complete_capability_breadth()
+    {
+        var definition = VerifiedCompanionRoleDefinitions
+            .ComprehensiveBaseCapability;
+        var objective = CapabilityObjective();
+        var lower = Profile(
+            characterId: 42,
+            facts: CapabilityFacts(mainValue: 60, martialValue: 30, lifeValue: 90));
+        var higher = Profile(
+            characterId: 43,
+            facts: CapabilityFacts(mainValue: 75, martialValue: 60, lifeValue: 90));
+
+        var evaluation = CompanionRoleEvaluator.Evaluate(
+            definition,
+            lower,
+            objective);
+        var ranking = CompanionRoleShortlistBuilder.EvaluateAndRank(
+            definition,
+            objective,
+            [lower, higher],
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(CompanionRoleEvaluationState.Rankable, evaluation.State);
+        Assert.All(evaluation.Gates, gate =>
+            Assert.Equal(CompanionRoleGateOutcome.Passed, gate.Outcome));
+        var component = Assert.Single(evaluation.Components);
+        Assert.Equal((short)6000, component.RawValue);
+        Assert.Equal(60m, component.NormalizedValue);
+        Assert.Equal(60m, component.Contribution);
+        Assert.Equal(60m, evaluation.TotalScore);
+        Assert.Equal([43, 42], ranking.RankedCandidates.Select(candidate =>
+            candidate.Evaluation.Profile.Identity.CharacterId));
+        Assert.Equal([75m, 60m], ranking.RankedCandidates.Select(candidate =>
+            candidate.Evaluation.TotalScore));
+    }
+
+    [Fact]
+    public void Comprehensive_objective_never_turns_missing_capability_into_zero()
+    {
+        var facts = CapabilityFacts().ToList();
+        facts.RemoveAt(0);
+
+        var evaluation = CompanionRoleEvaluator.Evaluate(
+            VerifiedCompanionRoleDefinitions.ComprehensiveBaseCapability,
+            Profile(facts: facts),
+            CapabilityObjective());
+
+        Assert.Equal(CompanionRoleEvaluationState.Incomplete, evaluation.State);
+        Assert.Equal(
+            CompanionRoleGateOutcome.Incomplete,
+            evaluation.Gates[^1].Outcome);
+        Assert.Null(evaluation.TotalScore);
+        Assert.Empty(evaluation.Components);
+    }
+
+    [Fact]
+    public void Comprehensive_objective_requires_every_component_to_match_profile_source()
+    {
+        var facts = CapabilityFacts().ToList();
+        var original = facts[0];
+        facts[0] = CandidateProfileFact.Confirmed(
+            original.Identity,
+            original.Value!,
+            SaveProvenance(revision: OtherSha),
+            [Evidence(revision: OtherSha)]);
+
+        var evaluation = CompanionRoleEvaluator.Evaluate(
+            VerifiedCompanionRoleDefinitions.ComprehensiveBaseCapability,
+            Profile(facts: facts),
+            CapabilityObjective());
+
+        Assert.Equal(CompanionRoleEvaluationState.Conflicting, evaluation.State);
+        Assert.Equal(
+            "CAPABILITY_PROVENANCE_CONFLICTS_WITH_PROFILE",
+            evaluation.Gates[^1].ReasonIdentity);
+        Assert.Null(evaluation.TotalScore);
+    }
+
+    [Fact]
+    public void Comprehensive_objective_rejects_out_of_range_breadth_without_throwing()
+    {
+        var evaluation = CompanionRoleEvaluator.Evaluate(
+            VerifiedCompanionRoleDefinitions.ComprehensiveBaseCapability,
+            Profile(facts: CapabilityFacts(
+                mainValue: 400,
+                martialValue: 400,
+                lifeValue: 400)),
+            CapabilityObjective());
+
+        Assert.Equal(CompanionRoleEvaluationState.Conflicting, evaluation.State);
+        Assert.Equal(
+            "FACT_OUTSIDE_NORMALIZATION_RANGE",
+            evaluation.Gates[^1].ReasonIdentity);
+        Assert.Null(evaluation.TotalScore);
     }
 
     [Fact]
@@ -447,6 +561,41 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
     private static CandidateDisciplineIdentity MartialDiscipline(short type = 0) => new(
         CandidateDisciplineDomain.Martial,
         type);
+
+    private static CandidateDisciplineIdentity CapabilityObjective() => new(
+        CandidateDisciplineDomain.Capability,
+        0);
+
+    private static IEnumerable<CandidateProfileFact> CapabilityFacts(
+        short mainValue = 60,
+        short martialValue = 30,
+        short lifeValue = 90)
+    {
+        foreach (var attribute in Enum.GetValues<CandidateMainAttribute>())
+        {
+            yield return CandidateProfileFact.Confirmed(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseMainAttribute,
+                    attribute),
+                CandidateFactValue.Int16(mainValue),
+                SaveProvenance(),
+                [Evidence()]);
+        }
+
+        foreach (var type in Enumerable.Range(
+                     0,
+                     CompanionCapabilitySummary.MartialDisciplineCount))
+        {
+            yield return MartialFact(martialValue, checked((short)type));
+        }
+
+        foreach (var type in Enumerable.Range(
+                     0,
+                     CompanionCapabilitySummary.LifeSkillDisciplineCount))
+        {
+            yield return LifeFact(lifeValue, checked((short)type));
+        }
+    }
 
     private static CandidateProfileFact MartialFact(short value, short type = 0) =>
         CandidateProfileFact.Confirmed(

@@ -152,8 +152,14 @@ public static class CompanionRoleComparisonBuilder
         CompanionRoleShortlistEntry second)
     {
         var field = new CandidateProfileFieldIdentity(dimension.Field, discipline);
-        var firstValue = ReadValue(first.Evaluation.Profile.FindFact(field));
-        var secondValue = ReadValue(second.Evaluation.Profile.FindFact(field));
+        var firstValue = dimension.Field
+            == CandidateProfileField.CapabilityBreadthIndex
+            ? ReadCapabilityValue(first.Evaluation.Profile, dimension)
+            : ReadValue(first.Evaluation.Profile.FindFact(field));
+        var secondValue = dimension.Field
+            == CandidateProfileField.CapabilityBreadthIndex
+            ? ReadCapabilityValue(second.Evaluation.Profile, dimension)
+            : ReadValue(second.Evaluation.Profile.FindFact(field));
         var outcome = CompareRow(first, second, dimension, firstValue, secondValue);
         return new CompanionRoleComparisonRow(
             dimension,
@@ -161,6 +167,46 @@ public static class CompanionRoleComparisonBuilder
             firstValue,
             secondValue,
             outcome);
+    }
+
+    private static CompanionRoleComparisonValue ReadCapabilityValue(
+        CandidateProfile profile,
+        CompanionRoleScoreDimension dimension)
+    {
+        var summary = CompanionCapabilitySummaryBuilder.Build(profile);
+        var state = summary.State switch
+        {
+            CompanionCapabilitySummaryState.Complete =>
+                CompanionRoleComparisonEvidenceState.Confirmed,
+            CompanionCapabilitySummaryState.Incomplete =>
+                CompanionRoleComparisonEvidenceState.Incomplete,
+            CompanionCapabilitySummaryState.Unsupported =>
+                CompanionRoleComparisonEvidenceState.Unsupported,
+            CompanionCapabilitySummaryState.Stale =>
+                CompanionRoleComparisonEvidenceState.Stale,
+            CompanionCapabilitySummaryState.Conflicting =>
+                CompanionRoleComparisonEvidenceState.Conflicting,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(summary),
+                summary.State,
+                "Unknown capability summary state.")
+        };
+        var scaledBreadth = summary.BreadthIndex.GetValueOrDefault() * 100m;
+        if (state == CompanionRoleComparisonEvidenceState.Confirmed
+            && (scaledBreadth < short.MinValue
+                || scaledBreadth > short.MaxValue
+                || scaledBreadth < dimension.NormalizationMinimum
+                || scaledBreadth > dimension.NormalizationMaximum))
+        {
+            state = CompanionRoleComparisonEvidenceState.Conflicting;
+        }
+
+        return new CompanionRoleComparisonValue(
+            state,
+            state == CompanionRoleComparisonEvidenceState.Confirmed
+                ? decimal.ToInt16(scaledBreadth)
+                : null,
+            fact: null);
     }
 
     private static CompanionRoleComparisonValue ReadValue(CandidateProfileFact? fact)

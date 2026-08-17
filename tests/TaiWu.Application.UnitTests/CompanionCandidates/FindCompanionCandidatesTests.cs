@@ -51,6 +51,37 @@ public sealed class FindCompanionCandidatesTests
     }
 
     [Fact]
+    public async Task Comprehensive_objective_ranks_complete_breadth_and_retains_missing_evidence()
+    {
+        var snapshot = Snapshot([
+            Profile(1, facts: CapabilityFacts(50)),
+            Profile(2, facts: CapabilityFacts(80)),
+            Profile(3, facts: CapabilityFacts(90).Skip(1))
+        ]);
+        var (reader, source, repository) = CurrentWorkflow(snapshot);
+        var request = Request(
+            roleIdentity: "COMPREHENSIVE_BASE_CAPABILITY",
+            domain: CandidateDisciplineDomain.Capability,
+            firstComparisonCharacterId: 2,
+            secondComparisonCharacterId: 1);
+
+        var result = await new FindCompanionCandidates(reader, source, repository)
+            .ExecuteAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(CompanionFinderStatus.Complete, result.Status);
+        Assert.Equal([2, 1], result.Ranking!.RankedCandidates.Select(candidate =>
+            candidate.Evaluation.Profile.Identity.CharacterId));
+        Assert.Equal([80m, 50m], result.Ranking.RankedCandidates.Select(candidate =>
+            candidate.Evaluation.TotalScore));
+        Assert.Equal(
+            CompanionRoleCandidateRankingState.Incomplete,
+            Assert.Single(result.Ranking.UnrankedCandidates).State);
+        Assert.Equal(
+            CompanionRoleComparisonOutcome.FirstAdvantage,
+            result.Comparison!.Outcome);
+    }
+
+    [Fact]
     public async Task Empty_snapshot_returns_a_typed_empty_authoritative_result()
     {
         var snapshot = Snapshot([]);
@@ -340,12 +371,13 @@ public sealed class FindCompanionCandidatesTests
     private static CompanionFinderRequest Request(
         string roleIdentity = "MARTIAL_DISCIPLINE_APTITUDE",
         string roleVersion = "1",
+        CandidateDisciplineDomain domain = CandidateDisciplineDomain.Martial,
         CompanionRoleShortlistFilter filter = CompanionRoleShortlistFilter.All,
         int? firstComparisonCharacterId = null,
         int? secondComparisonCharacterId = null) => new(
             roleIdentity,
             roleVersion,
-            CandidateDisciplineDomain.Martial,
+            domain,
             0,
             filter,
             firstComparisonCharacterId,
@@ -478,6 +510,52 @@ public sealed class FindCompanionCandidatesTests
             SetFact(CandidateProfileField.EquippedMartialSkillIdentities, revision),
             SetFact(CandidateProfileField.LearnedLifeSkillIdentities, revision)
         };
+
+    private static IEnumerable<CandidateProfileFact> CapabilityFacts(short value)
+    {
+        foreach (var attribute in Enum.GetValues<CandidateMainAttribute>())
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseMainAttribute,
+                    attribute),
+                value);
+        }
+
+        for (short type = 0;
+             type < CompanionCapabilitySummary.MartialDisciplineCount;
+             type++)
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseMartialQualification,
+                    new CandidateDisciplineIdentity(
+                        CandidateDisciplineDomain.Martial,
+                        type)),
+                value);
+        }
+
+        for (short type = 0;
+             type < CompanionCapabilitySummary.LifeSkillDisciplineCount;
+             type++)
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseLifeSkillQualification,
+                    new CandidateDisciplineIdentity(
+                        CandidateDisciplineDomain.LifeSkill,
+                        type)),
+                value);
+        }
+    }
+
+    private static CandidateProfileFact ScalarFact(
+        CandidateProfileFieldIdentity field,
+        short value) => CandidateProfileFact.Confirmed(
+        field,
+        CandidateFactValue.Int16(value),
+        Provenance(Sha),
+        []);
 
     private static CandidateProfileFact SetFact(
         CandidateProfileField field,

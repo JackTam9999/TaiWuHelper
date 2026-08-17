@@ -114,6 +114,7 @@ public sealed record CandidateProfileFieldIdentity
             or CandidateProfileField.LivingState => CandidateFactValueKind.Boolean,
         CandidateProfileField.CurrentAge
             or CandidateProfileField.BaseMainAttribute
+            or CandidateProfileField.CapabilityBreadthIndex
             or CandidateProfileField.BaseMartialQualification
             or CandidateProfileField.CurrentMartialQualification
             or CandidateProfileField.CurrentMartialAttainment
@@ -139,6 +140,8 @@ public sealed record CandidateProfileFieldIdentity
             CandidateProfileField.BaseLifeSkillQualification
                 or CandidateProfileField.CurrentLifeSkillQualification
                 or CandidateProfileField.CurrentLifeSkillAttainment => CandidateDisciplineDomain.LifeSkill,
+            CandidateProfileField.CapabilityBreadthIndex =>
+                CandidateDisciplineDomain.Capability,
             _ => null
         };
 }

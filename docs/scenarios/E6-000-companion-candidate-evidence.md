@@ -158,8 +158,9 @@ aptitudes, and all life-skill aptitudes. Metadata inspection confirmed
 Concentration, Vitality, Energy, and Intelligence (膂力、靈敏、定力、體質、根骨、
 悟性).
 
-The resulting version-1 breadth index is a descriptive comparison aid, not a
-third role or universal recommendation:
+The resulting version-1 breadth index is a descriptive comparison aid and,
+after E6-014, the score for one explicit comprehensive objective. It is not a
+universal recommendation:
 
 1. calculate an arithmetic mean only when all 6 saved base main attributes are
    confirmed;
@@ -172,8 +173,9 @@ third role or universal recommendation:
 
 An incomplete, unsupported, stale, or conflicting component makes its category
 and the breadth index unavailable. It is never replaced by zero. The overview
-does not change role eligibility, the selected-discipline score, rank, tie,
-shortlist order, explanation, or finder fingerprint.
+does not change a selected-discipline score, rank, tie, shortlist order, or
+explanation. Breadth affects order only when the player selects the separate
+comprehensive objective.
 
 ### Roles rejected from the first matrix
 

@@ -37,7 +37,8 @@ public enum CandidateFactValueKind
 public enum CandidateDisciplineDomain
 {
     Martial = 0,
-    LifeSkill = 1
+    LifeSkill = 1,
+    Capability = 2
 }
 
 public enum CandidateMainAttribute
@@ -69,7 +70,8 @@ public enum CandidateProfileField
     CurrentLifeSkillQualification = 14,
     CurrentLifeSkillAttainment = 15,
     LearnedLifeSkillIdentities = 16,
-    BaseMainAttribute = 17
+    BaseMainAttribute = 17,
+    CapabilityBreadthIndex = 18
 }
 
 public enum CandidateConflictDecisionKind

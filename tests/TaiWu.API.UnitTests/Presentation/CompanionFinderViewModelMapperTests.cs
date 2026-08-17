@@ -29,13 +29,15 @@ public sealed class CompanionFinderViewModelMapperTests
                 CompanionFinderTestData.Disciplines(),
                 TaiwuLanguage.Chinese);
 
-        Assert.Equal(2, englishRoles.Count);
+        Assert.Equal(3, englishRoles.Count);
         Assert.Equal(
             englishRoles.Select(value => (value.Identity, value.Version, value.Domain)),
             chineseRoles.Select(value => (value.Identity, value.Version, value.Domain)));
         Assert.Equal("Martial discipline aptitude", englishRoles[0].Label);
         Assert.Equal("武學資質", chineseRoles[0].Label);
         Assert.Contains("not a universal ranking", englishRoles[0].ScoreLimitation);
+        Assert.Equal("Comprehensive base capability", englishRoles[2].Label);
+        Assert.False(englishRoles[2].RequiresDisciplineSelection);
         Assert.Equal(30, englishDisciplines.Count);
         Assert.Equal(14, englishDisciplines.Count(value =>
             value.Domain == CandidateDisciplineDomain.Martial));
@@ -152,6 +154,42 @@ public sealed class CompanionFinderViewModelMapperTests
             value.EvidenceLabel == "Evidence no longer current");
         Assert.Contains(unranked, value =>
             value.EvidenceLabel == "Evidence conflicts");
+    }
+
+    [Fact]
+    public async Task Comprehensive_objective_maps_without_a_discipline_label()
+    {
+        var result = await CompanionFinderTestData.ResultAsync(
+            comprehensiveObjective: true);
+        var disciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.English);
+
+        var model = CompanionFinderViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            disciplineName: null,
+            disciplines);
+
+        Assert.False(model.RequiresDisciplineSelection);
+        Assert.Equal("Comprehensive base capability", model.RoleLabel);
+        Assert.Equal("Breadth index", model.ScoreColumnLabel);
+        Assert.Contains("three complete saved-base category averages", model.ScoreLimitation);
+        Assert.All(model.Candidates.Where(candidate => candidate.RoleLocalScore.HasValue), candidate =>
+            Assert.Equal(
+                candidate.CapabilitySummary.BreadthIndexLabel,
+                candidate.ScoreLabel));
+        var comparison = CompanionFinderViewModelMapper.MapComparison(
+            result,
+            model,
+            31001,
+            31002,
+            TaiwuLanguage.English);
+        Assert.Equal(model.ScoreLimitation, comparison.Capability.Limitation);
+        Assert.DoesNotContain(
+            "does not change the selected objective",
+            comparison.Capability.Limitation,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

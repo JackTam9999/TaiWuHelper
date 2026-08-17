@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-009 and extended by E6-013 |
+| Status | Implemented for E6-009 and extended by E6-013/E6-014 |
 | Base route | `/api/companion-candidates` |
 | Network boundary | Localhost only |
 | Application source | [Companion finder Application architecture](../architecture/COMPANION-FINDER-APPLICATION.md) |
@@ -29,11 +29,13 @@ Each role contains:
 - stable reference, identity, role version, and evaluation-rule version;
 - `Supported` state;
 - typed discipline domain and supported type range;
+- whether the objective requires a discipline selection;
 - localized purpose; and
 - a localized score limitation.
 
-The two initial roles compare exact saved base aptitude in one selected martial
-or life-skill discipline. Discovery never claims universal quality, success
+Two objectives compare exact saved base aptitude in one selected martial or
+life-skill discipline. The third compares the complete equal-category breadth
+index and reports `requiresDisciplineSelection: false`. Discovery never claims universal quality, success
 probability, future development, teaching, recruitment, settlement output, or
 combat synergy.
 
@@ -137,12 +139,13 @@ confirmed. The breadth index is the equal-weight mean of the three category
 averages and exists only when all three categories are complete. Category
 averages and the final index are rounded to two decimals.
 
-This value is a saved-base descriptive overview. It does not change candidate
-eligibility, the selected-role score, rank, tie, shortlist order, comparison
-outcome, explanation, or finder fingerprint; it is not a success probability,
-future-potential model, or universal recommendation. Missing, incomplete,
-unsupported, stale, and conflicting components remain explicit and never
-become zero.
+This value is a saved-base descriptive overview. It does not change a martial-
+or life-skill score, rank, tie, shortlist order, or comparison outcome. When
+`COMPREHENSIVE_BASE_CAPABILITY` is explicitly selected, the complete breadth
+index is that objective's role-local total and ranking basis. It is not a
+success probability, future-potential model, universal suitability claim, or
+action recommendation. Missing, incomplete, unsupported, stale, and
+conflicting components remain explicit and never become zero.
 
 ### Comparison
 

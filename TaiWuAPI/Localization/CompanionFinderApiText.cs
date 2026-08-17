@@ -18,6 +18,10 @@ public static class CompanionFinderApiText
                 language,
                 "Compare current companions by the exact saved base aptitude in one selected life-skill discipline.",
                 "依所選技藝類別的存檔基礎資質精確值，比較目前同道。"),
+            "COMPREHENSIVE_BASE_CAPABILITY" => Localized(
+                language,
+                "Compare current companions by a transparent equal-weight breadth index across six base attributes, 14 martial aptitudes, and 16 life-skill aptitudes.",
+                "以透明的等權重廣度指數，比較目前同道的六項基礎主要屬性、十四項武學資質與十六項技藝資質。"),
             _ => Localized(
                 language,
                 "Compare candidates for this verified role.",
@@ -28,6 +32,16 @@ public static class CompanionFinderApiText
         language,
         "The score is role-local evidence, not a universal ranking, success probability, or action recommendation.",
         "此分數僅代表該角色的證據，不是通用排名、成功機率或行動建議。");
+
+    public static string ScoreLimitation(
+        TaiwuLanguage language,
+        CompanionRoleIdentity identity) => identity.Value
+            == "COMPREHENSIVE_BASE_CAPABILITY"
+        ? Localized(
+            language,
+            "The breadth index equally averages three complete saved-base category averages. It ranks this descriptive objective only; it is not future potential, universal suitability, success probability, or an action recommendation.",
+            "廣度指數等權平均三個完整的存檔基礎類別平均值，只依此描述目標排名；不代表未來潛力、通用適合度、成功機率或行動建議。")
+        : ScoreLimitation(language);
 
     public static string RankingState(
         TaiwuLanguage language,
@@ -65,6 +79,8 @@ public static class CompanionFinderApiText
                 Localized(language, "Supported source versions", "受支援的來源版本"),
             CompanionRoleRequirementKind.DisciplineSupported =>
                 Localized(language, "Supported discipline", "受支援的類別"),
+            CompanionRoleRequirementKind.ObjectiveSupported =>
+                Localized(language, "Supported comparison objective", "受支援的比較目標"),
             CompanionRoleRequirementKind.RequiredFactConfirmed => Localized(
                 language,
                 $"Required {FieldLabel(language, field)} evidence",
@@ -118,10 +134,24 @@ public static class CompanionFinderApiText
                 language,
                 "Required evidence conflicts and cannot be resolved safely.",
                 "必要證據互相衝突，無法安全判定。"),
-            "SOURCE_VERSIONS_UNSUPPORTED" or "DISCIPLINE_UNSUPPORTED" => Localized(
+            "CAPABILITY_SUMMARY_INCOMPLETE" or "CAPABILITY_SUMMARY_STALE" => Localized(
                 language,
-                "The selected source version or discipline is unsupported.",
-                "所選來源版本或類別不受支援。"),
+                "At least one required capability value is incomplete or stale, so no breadth rank is assigned.",
+                "至少一項必要能力值不完整或已過期，因此不會給予廣度名次。"),
+            "CAPABILITY_SUMMARY_UNSUPPORTED" => Localized(
+                language,
+                "At least one required capability value is unsupported, so no breadth rank is assigned.",
+                "至少一項必要能力值不受支援，因此不會給予廣度名次。"),
+            "CAPABILITY_SUMMARY_CONFLICTING" or
+                "CAPABILITY_PROVENANCE_CONFLICTS_WITH_PROFILE" => Localized(
+                    language,
+                    "Capability evidence conflicts with the profile revision, so no breadth rank is assigned.",
+                    "能力證據與人物資料版本衝突，因此不會給予廣度名次。"),
+            "SOURCE_VERSIONS_UNSUPPORTED" or "DISCIPLINE_UNSUPPORTED" or
+                "OBJECTIVE_UNSUPPORTED" => Localized(
+                language,
+                "The selected source version, discipline, or comparison objective is unsupported.",
+                "所選來源版本、類別或比較目標不受支援。"),
             _ => Localized(
                 language,
                 "See the typed requirement outcome and supporting evidence.",
@@ -136,6 +166,10 @@ public static class CompanionFinderApiText
                 "Strongest contribution among the role's approved components.",
                 "此角色已核准計分項目中的最高貢獻。"),
             "ROLE_SCORE_LIMITED_TO_APPROVED_COMPONENTS" => ScoreLimitation(language),
+            "CAPABILITY_BREADTH_INDEX_CONTRIBUTION" => Localized(
+                language,
+                "Equal-weight mean of the complete six-attribute, martial-aptitude, and life-skill-aptitude category averages.",
+                "完整的六項基礎主要屬性、武學資質與技藝資質類別平均值之等權平均。"),
             "EXACT_ROLE_TOTAL_TIE" => Localized(
                 language,
                 "Another candidate has the same exact role-local total and shared rank.",
@@ -205,6 +239,10 @@ public static class CompanionFinderApiText
                 language,
                 "saved base life-skill qualification",
                 "存檔基礎技藝資質"),
+            CandidateProfileField.CapabilityBreadthIndex => Localized(
+                language,
+                "saved-base capability breadth index",
+                "存檔基礎能力廣度指數"),
             null => throw new ArgumentException(
                 "This requirement kind needs a candidate-profile field.",
                 nameof(field)),

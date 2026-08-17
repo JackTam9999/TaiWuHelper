@@ -16,6 +16,7 @@ public sealed record CompanionFinderRoleOptionViewModel(
     string Identity,
     string Version,
     CandidateDisciplineDomain Domain,
+    bool RequiresDisciplineSelection,
     string Label,
     string Purpose,
     string ScoreLimitation);
@@ -100,6 +101,8 @@ public sealed record CompanionFinderViewModel(
     CompanionFinderStatus Status,
     string DisciplineName,
     string RoleLabel,
+    bool RequiresDisciplineSelection,
+    string ScoreColumnLabel,
     string RolePurpose,
     string ScoreLimitation,
     DateTimeOffset SnapshotCapturedAtUtc,

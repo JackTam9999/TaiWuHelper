@@ -4,17 +4,17 @@
 |---|---|
 | Status | Accepted design — implemented and verified |
 | Epic | [EPIC-006](./EPIC.md) |
-| Backlog items | [E6-001](./BACKLOG.md#e6-001--define-role-evaluation-shortlist-and-ui-semantics), [E6-010](./BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](./BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview) |
+| Backlog items | [E6-001](./BACKLOG.md#e6-001--define-role-evaluation-shortlist-and-ui-semantics), [E6-010](./BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](./BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview), [E6-014](./BACKLOG.md#e6-014--make-comprehensive-base-capability-a-selectable-objective) |
 | Primary surface | Dedicated local Blazor page at `/companions` |
 | Last updated | 2026-08-17 |
 
 ## Purpose
 
-Provide one information-only page where the player selects a martial- or life-
-skill-discipline aptitude role, reads one coherent configured-save snapshot,
-reviews the deterministic shortlist, filters visible states, and compares two
-candidates without turning saved base qualification into a universal character
-ranking.
+Provide one information-only page where the player selects a martial aptitude,
+life-skill aptitude, or comprehensive base-capability objective; reads one
+coherent configured-save snapshot; reviews the deterministic shortlist; filters
+visible states; and compares two candidates without turning any role-local
+score into universal character quality.
 
 The data and state rules are defined by the
 [companion role evaluation contract](../../architecture/COMPANION-ROLE-EVALUATION-CONTRACT.md).
@@ -38,7 +38,7 @@ The page renders in this order:
 1. page heading and persistent information-only notice;
 2. concise explanation of the current-group-only candidate boundary;
 3. role family control;
-4. role-specific discipline control;
+4. role-specific discipline control when required;
 5. explicit `Find candidates` action;
 6. active result heading with snapshot freshness and score limitation;
 7. unfiltered state counts;
@@ -57,10 +57,11 @@ hover, color, icon, or a collapsed disclosure.
 
 ### Role family
 
-Two radio buttons or a single-labelled radio group appear in stable order:
+Three radio buttons or a single-labelled radio group appear in stable order:
 
-1. `Martial discipline aptitude`; and
-2. `Life-skill discipline aptitude`.
+1. `Martial discipline aptitude`;
+2. `Life-skill discipline aptitude`; and
+3. `Comprehensive base capability`.
 
 Changing role updates the discipline options and clears any draft discipline
 that is invalid for the new role. It does not read the save, retain a stale
@@ -71,6 +72,9 @@ result as current, or compare scores across roles.
 One native labelled select lists every installed verified discipline in stable
 type order using localized in-game names. The raw type index never appears.
 Martial role exposes 14 verified entries; life-skill role exposes 16.
+
+The comprehensive objective hides this select and uses its fixed internal
+aggregate identity. Its find action requires only that objective selection.
 
 The first option is `Choose a discipline`. `Find candidates` remains disabled
 until both role and discipline are valid. Disabled state is conveyed by native
@@ -278,9 +282,14 @@ Before the role-specific facts, a separate `Capability overview` table shows
 the equal-category breadth index and the three saved-base category averages:
 six main attributes, 14 martial aptitudes, and 16 life-skill aptitudes. Each
 category shows confirmed/expected coverage and up to three highest localized
-values. A visible limitation says this overview is descriptive, equally
-weighted, and cannot change the selected-role score, rank, or recommendation.
-It is not styled as a winner, grade, probability, or universal ranking.
+values. For martial and life-skill objectives, a visible limitation says this
+overview is descriptive, equally weighted, and cannot change the selected-role
+score, rank, or recommendation. It is not styled as a winner, grade,
+probability, or universal ranking.
+
+When `Comprehensive base capability` is the selected objective, breadth is the
+explicit role-local score. The main candidate list directly shows breadth and
+all three category averages; the same comparison table remains available.
 
 If either value is unavailable or conflicting, the result says so and omits a
 numeric difference. It never treats missing evidence as an advantage.
@@ -292,7 +301,7 @@ The keyboard and DOM order is:
 1. skip link and page heading;
 2. information-only and candidate-boundary notices;
 3. role radio group;
-4. discipline select;
+4. discipline select when the objective requires it;
 5. find/retry button;
 6. result heading and status summary;
 7. status filter and name query;
@@ -315,10 +324,10 @@ focus on the equivalent control whenever it still exists.
 
 | State | Required visible content | Recovery or transition |
 |---|---|---|
-| No role selected | Candidate-boundary explanation and disabled find action | Select role and discipline |
-| Valid draft input | Role/discipline purpose and enabled find action | Find candidates |
+| No role selected | Candidate-boundary explanation and disabled find action | Select an objective, plus a discipline when required |
+| Valid draft input | Objective purpose and enabled find action | Find candidates |
 | Loading | Busy status, information-only notice, no mixed old/new active result | Atomic success or failure |
-| Available ranked result | Role, discipline, score warning, counts, ranked/tied rows | Filter, compare, or request another role |
+| Available ranked result | Objective, optional discipline, score warning, counts, ranked/tied rows | Filter, compare, or request another objective |
 | One eligible candidate | Rank 1 with no claim that comparison proved superiority | Review or run another discipline |
 | No eligible candidate | Zero eligible count and honest universe-state sections | Review reasons or refresh stable save |
 | Explicit tie | Shared rank plus visible tied text | Compare tied candidates |
@@ -347,6 +356,7 @@ All visible copy is resource-backed. These terms define the intended meaning:
 | information only | Information only | 僅供參考 |
 | martial role | Martial discipline aptitude | 武學資質 |
 | life-skill role | Life-skill discipline aptitude | 技藝資質 |
+| comprehensive role | Comprehensive base capability | 綜合基礎能力 |
 | discipline | Discipline | 類別 |
 | find action | Find candidates | 查找人選 |
 | saved-group boundary | Saved group roster excluding Taiwu; evidence determines eligibility | 存檔隊伍名冊不含太吾本人；證據決定資格 |

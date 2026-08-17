@@ -72,7 +72,13 @@ public static class CompanionRoleEvaluator
         gates.Add(Gate(
             definition.HardRequirements[requirementIndex++],
             disciplineOutcome,
-            disciplineSupported ? "DISCIPLINE_SUPPORTED" : "DISCIPLINE_UNSUPPORTED",
+            definition.RequiresDisciplineSelection
+                ? disciplineSupported
+                    ? "DISCIPLINE_SUPPORTED"
+                    : "DISCIPLINE_UNSUPPORTED"
+                : disciplineSupported
+                    ? "OBJECTIVE_SUPPORTED"
+                    : "OBJECTIVE_UNSUPPORTED",
             []));
         if (!disciplineSupported)
         {
@@ -82,42 +88,123 @@ public static class CompanionRoleEvaluator
         foreach (var dimension in definition.ScoreDimensions)
         {
             var field = new CandidateProfileFieldIdentity(dimension.Field, discipline);
-            var fact = profile.FindFact(field);
-            var factOutcome = FactOutcome(fact, dimension);
-            gates.Add(Gate(
-                definition.HardRequirements[requirementIndex++],
-                factOutcome,
-                FactReason(fact, factOutcome),
-                fact?.Evidence ?? []));
-            if (factOutcome != CompanionRoleGateOutcome.Passed)
+            short rawValue;
+            IReadOnlyList<CandidateEvidenceReference> componentEvidence;
+            if (dimension.Field == CandidateProfileField.CapabilityBreadthIndex)
             {
-                return Unranked(definition, profile, discipline, gates, factOutcome);
+                var summary = CompanionCapabilitySummaryBuilder.Build(profile);
+                var capabilityFacts = CapabilityFacts(profile, summary);
+                var capabilityEvidence = capabilityFacts
+                    .SelectMany(fact => fact.Evidence)
+                    .Distinct()
+                    .OrderBy(item => item.StableKey, StringComparer.Ordinal)
+                    .ToArray();
+                var factOutcome = CapabilityOutcome(summary.State);
+                gates.Add(Gate(
+                    definition.HardRequirements[requirementIndex++],
+                    factOutcome,
+                    $"CAPABILITY_SUMMARY_{summary.State.ToString().ToUpperInvariant()}",
+                    capabilityEvidence));
+                if (factOutcome != CompanionRoleGateOutcome.Passed)
+                {
+                    return Unranked(
+                        definition,
+                        profile,
+                        discipline,
+                        gates,
+                        factOutcome);
+                }
+
+                var provenanceMatches = capabilityFacts.Count
+                        == CompanionCapabilitySummary.MainAttributeCount
+                        + CompanionCapabilitySummary.MartialDisciplineCount
+                        + CompanionCapabilitySummary.LifeSkillDisciplineCount
+                    && capabilityFacts.All(fact =>
+                        ProvenanceMatchesProfile(fact, profile));
+                var provenanceOutcome = provenanceMatches
+                    ? CompanionRoleGateOutcome.Passed
+                    : CompanionRoleGateOutcome.Conflicting;
+                gates.Add(Gate(
+                    definition.HardRequirements[requirementIndex++],
+                    provenanceOutcome,
+                    provenanceMatches
+                        ? "CAPABILITY_PROVENANCE_MATCHES_PROFILE"
+                        : "CAPABILITY_PROVENANCE_CONFLICTS_WITH_PROFILE",
+                    capabilityEvidence));
+                if (!provenanceMatches)
+                {
+                    return Unranked(
+                        definition,
+                        profile,
+                        discipline,
+                        gates,
+                        provenanceOutcome);
+                }
+
+                var scaledBreadth = summary.BreadthIndex!.Value * 100m;
+                if (scaledBreadth < short.MinValue
+                    || scaledBreadth > short.MaxValue)
+                {
+                    gates[^1] = Gate(
+                        gates[^1].Requirement,
+                        CompanionRoleGateOutcome.Conflicting,
+                        "FACT_OUTSIDE_NORMALIZATION_RANGE",
+                        capabilityEvidence);
+                    return Unranked(
+                        definition,
+                        profile,
+                        discipline,
+                        gates,
+                        CompanionRoleGateOutcome.Conflicting);
+                }
+
+                rawValue = decimal.ToInt16(scaledBreadth);
+                componentEvidence = capabilityEvidence;
+            }
+            else
+            {
+                var fact = profile.FindFact(field);
+                var factOutcome = FactOutcome(fact, dimension);
+                gates.Add(Gate(
+                    definition.HardRequirements[requirementIndex++],
+                    factOutcome,
+                    FactReason(fact, factOutcome),
+                    fact?.Evidence ?? []));
+                if (factOutcome != CompanionRoleGateOutcome.Passed)
+                {
+                    return Unranked(
+                        definition,
+                        profile,
+                        discipline,
+                        gates,
+                        factOutcome);
+                }
+
+                var provenanceMatches = ProvenanceMatchesProfile(fact!, profile);
+                var provenanceOutcome = provenanceMatches
+                    ? CompanionRoleGateOutcome.Passed
+                    : CompanionRoleGateOutcome.Conflicting;
+                gates.Add(Gate(
+                    definition.HardRequirements[requirementIndex++],
+                    provenanceOutcome,
+                    provenanceMatches
+                        ? "FACT_PROVENANCE_MATCHES_PROFILE"
+                        : "FACT_PROVENANCE_CONFLICTS_WITH_PROFILE",
+                    fact!.Evidence));
+                if (!provenanceMatches)
+                {
+                    return Unranked(
+                        definition,
+                        profile,
+                        discipline,
+                        gates,
+                        provenanceOutcome);
+                }
+
+                rawValue = fact.Value!.Int16Value;
+                componentEvidence = fact.Evidence;
             }
 
-            var provenanceMatches = fact!.Provenance!.SourceKind
-                    == CandidateEvidenceSourceKind.ConfiguredSave
-                && string.Equals(
-                    fact.Provenance.RevisionIdentity,
-                    profile.SourceVersions.SaveSha256,
-                    StringComparison.OrdinalIgnoreCase)
-                && string.Equals(
-                    fact.Provenance.SourceVersion,
-                    profile.SourceVersions.ProfileMappingVersion,
-                    StringComparison.Ordinal);
-            var provenanceOutcome = provenanceMatches
-                ? CompanionRoleGateOutcome.Passed
-                : CompanionRoleGateOutcome.Conflicting;
-            gates.Add(Gate(
-                definition.HardRequirements[requirementIndex++],
-                provenanceOutcome,
-                provenanceMatches ? "FACT_PROVENANCE_MATCHES_PROFILE" : "FACT_PROVENANCE_CONFLICTS_WITH_PROFILE",
-                fact.Evidence));
-            if (!provenanceMatches)
-            {
-                return Unranked(definition, profile, discipline, gates, provenanceOutcome);
-            }
-
-            var rawValue = fact.Value!.Int16Value;
             var normalized = Normalize(dimension, rawValue);
             if (normalized is null)
             {
@@ -125,7 +212,7 @@ public static class CompanionRoleEvaluator
                     gates[^1].Requirement,
                     CompanionRoleGateOutcome.Conflicting,
                     "FACT_OUTSIDE_NORMALIZATION_RANGE",
-                    fact.Evidence);
+                    componentEvidence);
                 return Unranked(
                     definition,
                     profile,
@@ -150,7 +237,7 @@ public static class CompanionRoleEvaluator
                 rawValue,
                 normalized.Value,
                 contribution,
-                fact.Evidence));
+                componentEvidence));
         }
 
         var total = components.Sum(item => item.Contribution);
@@ -171,6 +258,47 @@ public static class CompanionRoleEvaluator
         string reason,
         IEnumerable<CandidateEvidenceReference> evidence) =>
         new(requirement, outcome, reason, evidence);
+
+    private static IReadOnlyList<CandidateProfileFact> CapabilityFacts(
+        CandidateProfile profile,
+        CompanionCapabilitySummary summary) =>
+        [.. summary.MainAttributes.Components
+            .Concat(summary.MartialDisciplines.Components)
+            .Concat(summary.LifeSkillDisciplines.Components)
+            .Select(component => profile.FindFact(component.Field))
+            .OfType<CandidateProfileFact>()];
+
+    private static CompanionRoleGateOutcome CapabilityOutcome(
+        CompanionCapabilitySummaryState state) => state switch
+        {
+            CompanionCapabilitySummaryState.Complete =>
+                CompanionRoleGateOutcome.Passed,
+            CompanionCapabilitySummaryState.Incomplete or
+                CompanionCapabilitySummaryState.Stale =>
+                CompanionRoleGateOutcome.Incomplete,
+            CompanionCapabilitySummaryState.Unsupported =>
+                CompanionRoleGateOutcome.Unsupported,
+            CompanionCapabilitySummaryState.Conflicting =>
+                CompanionRoleGateOutcome.Conflicting,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(state),
+                state,
+                "Unknown capability summary state.")
+        };
+
+    private static bool ProvenanceMatchesProfile(
+        CandidateProfileFact fact,
+        CandidateProfile profile) =>
+        fact.Provenance is { } provenance
+        && provenance.SourceKind == CandidateEvidenceSourceKind.ConfiguredSave
+        && string.Equals(
+            provenance.RevisionIdentity,
+            profile.SourceVersions.SaveSha256,
+            StringComparison.OrdinalIgnoreCase)
+        && string.Equals(
+            provenance.SourceVersion,
+            profile.SourceVersions.ProfileMappingVersion,
+            StringComparison.Ordinal);
 
     private static CompanionRoleGateOutcome FactOutcome(
         CandidateProfileFact? fact,
@@ -223,6 +351,7 @@ public static class CompanionRoleEvaluator
         return dimension.Normalization switch
         {
             CompanionRoleNormalizationKind.Identity => rawValue,
+            CompanionRoleNormalizationKind.Hundredth => rawValue / 100m,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(dimension),
                 dimension.Normalization,

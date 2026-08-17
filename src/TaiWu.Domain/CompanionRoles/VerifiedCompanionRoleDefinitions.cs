@@ -29,8 +29,36 @@ public static class VerifiedCompanionRoleDefinitions
             CandidateProfileField.BaseLifeSkillQualification,
             "BASE_LIFE_SKILL_QUALIFICATION");
 
+    public static CompanionRoleDefinition ComprehensiveBaseCapability { get; } =
+        new(
+            new CompanionRoleIdentity("COMPREHENSIVE_BASE_CAPABILITY"),
+            RoleVersion,
+            EvaluationRuleVersion,
+            [SupportedGameDataVersion],
+            ProfileMappingVersion,
+            FingerprintSchemaVersion,
+            CandidateDisciplineDomain.Capability,
+            minimumDisciplineType: 0,
+            maximumDisciplineType: 0,
+            [new CompanionRoleScoreDimension(
+                "CAPABILITY_BREADTH_INDEX",
+                CandidateProfileField.CapabilityBreadthIndex,
+                "BREADTH_INDEX_X100",
+                CompanionRoleScoreDirection.HigherIsBetter,
+                CompanionRoleNormalizationKind.Hundredth,
+                normalizationMinimum: 0m,
+                normalizationMaximum: 10_000m,
+                weight: 1m,
+                CompanionRoleMissingEvidenceBehavior.EvaluationIncomplete,
+                "CAPABILITY_BREADTH_INDEX_CONTRIBUTION")],
+            CompanionRoleTiePolicy.ExactTotalRemainsTie);
+
     public static ImmutableArray<CompanionRoleDefinition> All { get; } =
-        [MartialDisciplineAptitude, LifeSkillDisciplineAptitude];
+        [
+            MartialDisciplineAptitude,
+            LifeSkillDisciplineAptitude,
+            ComprehensiveBaseCapability
+        ];
 
     public static CompanionRoleDefinitionResolution Resolve(
         CompanionRoleIdentity identity,
