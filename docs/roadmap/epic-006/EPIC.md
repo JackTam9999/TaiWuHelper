@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress — technical verification complete; product decision pending |
+| Status | Complete — product-owner approved |
 | Milestone | 6 |
 | Target release | TBD |
-| Last updated | 2026-08-17 |
+| Last updated | 2026-08-18 |
 
 ## Summary
 
@@ -434,7 +434,7 @@ The workflow must present these states explicitly:
       is introduced.
 - [x] Every acceptance criterion links to implementation or verification
       evidence.
-- [ ] The product owner records the Epic 6 completion decision.
+- [x] The product owner records the Epic 6 completion decision.
 
 ## Success measures
 
@@ -469,6 +469,15 @@ The workflow must present these states explicitly:
 | Role presets encode subjective bias without disclosure | Version every dimension, weight, normalization rule, and tie breaker and show components |
 | Scope expands into settlement management | Keep PI-010 and PI-011 outside the epic even if character primitives are reusable |
 | Feature drifts toward game control | Enforce ADR-0001 in ports, architecture tests, API verbs, and UI language |
+
+## Completion decision
+
+On 2026-08-18, the product owner explicitly accepted Epic 6 completion after
+the E6-012 representative verification, independent correction and re-review,
+E6-013 capability comparison, and E6-014 comprehensive-objective follow-up.
+The accepted scope remains information-only and limited to the current saved
+non-Taiwu group; deferred development, village, persistence, export, and game-
+control work remains outside Epic 6.
 
 ## Delivery reference
 

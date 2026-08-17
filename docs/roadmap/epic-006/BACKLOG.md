@@ -985,7 +985,7 @@ life-skill discipline.
 
 ### E6-012 — Validate representative roles and close Epic 6
 
-**Status:** Awaiting product-owner decision
+**Status:** Complete
 
 **Priority:** P1
 
@@ -1018,7 +1018,7 @@ Record remaining limitations and obtain the explicit completion decision.
 - [x] All Epic 6 acceptance criteria have linked implementation or evidence.
 - [x] Remaining unsupported roles or mechanics become explicit future backlog
       candidates rather than partially implemented rules.
-- [ ] The product owner records the Epic 6 completion decision.
+- [x] The product owner records the Epic 6 completion decision.
 
 #### Evidence when complete
 
@@ -1027,7 +1027,7 @@ Record remaining limitations and obtain the explicit completion decision.
   redacted content.
 - Product-owner completion decision in `EPIC.md` and the roadmap index.
 
-#### Evidence ready for decision
+#### Completion evidence record
 
 - [Representative manual verification](../../reviews/E6-012-manual-verification.md)
   covering both live role families and both languages without recording local
@@ -1050,6 +1050,8 @@ Record remaining limitations and obtain the explicit completion decision.
   configured-save production locator as display reads, and retain exact
   evaluation plus identifiable ordered gate semantics through Presentation and
   comparison.
+- Product-owner approval was explicitly recorded on 2026-08-18 after the
+  comprehensive objective was made the first, default finder objective.
 
 ## Future work outside Epic 6
 

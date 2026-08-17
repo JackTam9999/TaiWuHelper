@@ -2,12 +2,13 @@
 
 | Field | Value |
 |---|---|
-| Status | Awaiting product-owner decision |
-| Evidence date | 2026-08-17 |
+| Status | Complete — product-owner approved |
+| Evidence date | 2026-08-18 |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
 | Backlog item | [E6-012](../roadmap/epic-006/BACKLOG.md#e6-012--validate-representative-roles-and-close-epic-6) |
 | Automated evidence | [E6-011 verification](./E6-011-automated-verification.md) |
 | UI evidence | [E6-010 review](./E6-010-companion-finder-ui.md) |
+| Comprehensive objective evidence | [E6-014 review](./E6-014-comprehensive-capability.md) |
 
 ## Scope and privacy boundary
 
@@ -24,26 +25,33 @@ command. The temporary localhost server was stopped after the checks.
 
 ## Representative role review
 
-Role discovery returned exactly the two verified version-1 roles in English
-and Traditional Chinese. Four authoritative finder responses were reviewed:
+Final role discovery returns exactly three verified version-1 objectives in
+English and Traditional Chinese. The original E6-012 representative live pass
+reviewed four authoritative responses for the two discipline objectives;
+E6-014 subsequently exercised the comprehensive objective through the same
+guarded finder path and bilingual API, Presentation, and browser surfaces:
 
-| Role | English | Traditional Chinese | Exact scored field | Result |
+| Objective | English | Traditional Chinese | Exact scored field | Result |
 |---|---:|---:|---|---|
+| Comprehensive base capability | Passed | Passed | Complete `CapabilityBreadthIndex` over 6/14/16 saved-base facts | Authoritative and ranked when complete |
 | Martial discipline aptitude | Passed | Passed | `BaseMartialQualification` for the selected martial discipline | Authoritative and ranked |
 | Life-skill discipline aptitude | Passed | Passed | `BaseLifeSkillQualification` for the selected life-skill discipline | Authoritative and ranked |
 
 For every retained candidate, the API exposed hard-gate evidence. Every ranked
 candidate had one exact role-local component in the requested typed domain and
 a non-null total. Candidate count matched the unfiltered shortlist total.
-Neither role reused the other domain's field or claimed current attainment,
-success probability, teaching ability, recruitment, future potential, or
-universal character quality.
+No objective reused another objective's field or claimed current attainment,
+success probability, teaching ability, recruitment, or future potential. The
+comprehensive objective explicitly remains a saved-base breadth description,
+not a universal character-quality claim or action recommendation.
 
 English and Traditional Chinese responses retained identical candidate
 references, evaluation/ranking states, competition ranks, role-local totals,
 hard-gate outcomes, raw component values, contributions, and authoritative
 finder fingerprints. Only localized presentation text changed. All four
-responses shared the same stable save revision during the review.
+original discipline responses shared the same stable save revision during the
+review. The subsequent aggregate verification retained the same coherent
+snapshot, source-version, evidence, and read-only boundaries.
 
 ## Candidate universe independence
 
@@ -119,8 +127,10 @@ The E6-013 follow-up adds one separate capability overview before the existing
 role facts. Desktop and 390-pixel browser review confirms that breadth, the
 three category averages, 6/6, 14/14, and 16/16 coverage, and localized top
 values remain readable in both languages without horizontal overflow. Its
-visible equal-weight saved-base limitation states that it does not change the
-selected-role score, rank, or recommendation.
+visible equal-weight saved-base limitation states that it does not change a
+martial- or life-skill score, rank, or recommendation. E6-014 subsequently
+makes the same breadth the score only when comprehensive base capability is
+explicitly selected.
 
 Post-read result behavior additionally passes executable Razor component
 rendering for exact eligibility counts, all typed source/catalogue states,
@@ -152,10 +162,12 @@ selected archive's name or path.
 
 ## Deferred mechanics and future backlog
 
-The first delivery intentionally ranks only martial- and life-skill-discipline
-saved base aptitude. The six attributes and all aptitudes additionally support
-a descriptive comparison overview, not another role or recommendation.
-Remaining mechanics are explicit discovery or future-product candidates in
+The final delivery has three explicit objectives: comprehensive saved-base
+breadth plus martial- and life-skill-discipline saved-base aptitude. The six
+attributes and all aptitudes remain a descriptive comparison overview for the
+two discipline objectives; they become the role-local score only when the
+player explicitly selects comprehensive base capability. Remaining mechanics
+are explicit discovery or future-product candidates in
 [Future product ideas](../roadmap/FUTURE-PRODUCT-IDEAS.md#epic-6-deferred-companion-mechanics):
 
 - current modified qualification and attainment under live special effects;
@@ -168,10 +180,11 @@ Remaining mechanics are explicit discovery or future-product candidates in
 None is partially implemented or inferred from labels, learned skills,
 location, age, or raw text.
 
-Both delivered roles intentionally use one evidence-backed saved-base-
-qualification component. Multi-component synergy and development tradeoffs
-remain future evidence work rather than invented Epic 6 dimensions; the
-generic comparison model is not presented as proof of an undelivered role.
+Both discipline objectives intentionally use one evidence-backed saved-base-
+qualification component. The comprehensive objective uses one evidence-backed
+derived breadth component whose formula and complete 6/14/16 coverage are
+visible. Multi-component synergy and development tradeoffs remain future
+evidence work rather than invented Epic 6 dimensions.
 
 ## Independent review correction result
 
@@ -195,11 +208,15 @@ A fresh independent re-review found and drove three further corrections:
    identity/kind/field/outcome/reason semantics, and comparison renders the
    evaluation label rather than relabelling ranking state.
 
-The corrected Release matrix passes 1,248 non-integration tests with zero
-failures and the guarded local class passes 3 of 3. The solution build has zero
-warnings and errors; formatter and repository validation also pass.
+The final Release matrix contains 1,269 tests: 1,257 pass, 12 guarded local
+scenarios skip because no integration save is configured, and zero fail. The
+solution build has zero warnings and errors; formatter and repository
+validation also pass. The most recent configured-save guarded class passed all
+3 scenarios without source changes.
 
 ## Product-owner decision
 
-All technical and representative E6-012 checks pass. Epic 6 remains in
-progress until the product owner explicitly accepts or rejects completion.
+On 2026-08-18, the product owner explicitly accepted Epic 6 completion. All
+technical, representative, responsive, non-interference, and scope checks pass.
+This completion decision does not add any deferred development, village,
+persistence, export, automation, or game-control capability.

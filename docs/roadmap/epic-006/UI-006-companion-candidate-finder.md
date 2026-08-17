@@ -6,7 +6,7 @@
 | Epic | [EPIC-006](./EPIC.md) |
 | Backlog items | [E6-001](./BACKLOG.md#e6-001--define-role-evaluation-shortlist-and-ui-semantics), [E6-010](./BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](./BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview), [E6-014](./BACKLOG.md#e6-014--make-comprehensive-base-capability-a-selectable-objective) |
 | Primary surface | Dedicated local Blazor page at `/companions` |
-| Last updated | 2026-08-17 |
+| Last updated | 2026-08-18 |
 
 ## Purpose
 
