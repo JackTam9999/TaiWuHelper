@@ -257,20 +257,28 @@ silently alter evaluation facts or score semantics.
 
 ## Initial delivery boundary
 
-E6-000 must inspect the supported installed version and approve the final
-candidate and role matrix before implementation begins. The intended discovery
-order is:
+E6-000 inspected the current installed metadata and a stable configured-save
+revision and selected this candidate and role boundary:
 
-1. a combat-support role that can reuse verified current combat-skill,
-   equipment, feature, and catalogue facts; and
-2. a martial-art teaching or inheritance-value role only if its eligibility,
-   requirements, and relevant progress semantics can be verified independently.
+1. the current saved Taiwu group roster excluding the Taiwu player, with
+   character-object, Domain membership, character membership, and living-state
+   agreement required for eligibility;
+2. `MARTIAL_DISCIPLINE_APTITUDE`, comparing exact saved base qualification for
+   one player-selected martial discipline; and
+3. `LIFE_SKILL_DISCIPLINE_APTITUDE`, comparing exact saved base qualification
+   for one player-selected life-skill discipline.
 
-If the second role cannot be supported, E6-000 must select another genuinely
-different evidence-backed role or update this product boundary for explicit
-product-owner approval. Settlement work is not a replacement within Epic 6;
-it remains part of PI-010 because it requires assignment, building, and
-resource models.
+The stable archive probe confirmed that both base-qualification buffers are
+standalone-safe, deterministic, and inside the cold and warm performance
+budgets. Current modified qualification and attainment are explicitly
+unsupported because their getters require unavailable live special-effect
+context. The detailed evidence is recorded in
+[E6-000-companion-candidate-evidence.md](../../scenarios/E6-000-companion-candidate-evidence.md).
+
+General combat support is too broad because qualification does not prove party
+synergy or battle contribution. Teaching and inheritance require unverified
+interaction or future-development rules. Settlement work remains part of
+PI-010 because it requires assignment, building, and resource models.
 
 The first delivery considers only characters whose inclusion and eligibility
 can be established from the configured save and supported installed sources.

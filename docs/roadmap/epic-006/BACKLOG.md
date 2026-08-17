@@ -73,7 +73,7 @@ Every completed item must:
 
 ### E6-000 — Verify the candidate universe and select the initial role matrix
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -89,36 +89,36 @@ semantics before adding Domain contracts or scoring rules.
 
 #### Acceptance criteria
 
-- [ ] The inspected Taiwu and GameData versions are recorded.
-- [ ] Target lookup enumeration is explicitly distinguished from companion-
+- [x] The inspected Taiwu and GameData versions are recorded.
+- [x] Target lookup enumeration is explicitly distinguished from companion-
       candidate eligibility.
-- [ ] Every candidate-universe and eligibility field records its owning source,
+- [x] Every candidate-universe and eligibility field records its owning source,
       runtime type, normalized meaning, version, availability, completeness,
       and source-of-truth precedence.
-- [ ] Candidate discovery evaluates current companions, potential candidates,
+- [x] Candidate discovery evaluates current companions, potential candidates,
       story or generated characters, unavailable characters, and other
       relevant categories without assuming that all are rankable.
-- [ ] Candidate fields considered for roles record exact units and semantics,
+- [x] Candidate fields considered for roles record exact units and semantics,
       including attributes, features, skills, progress, relationship or
       membership facts, availability, and location where supported.
-- [ ] Localized names, feature names, skill names, category labels, and raw
+- [x] Localized names, feature names, skill names, category labels, and raw
       descriptions are rejected as mechanical evidence by themselves.
-- [ ] Current ability is separated from future growth, training, acquisition,
+- [x] Current ability is separated from future growth, training, acquisition,
       relationship change, and speculative potential.
-- [ ] At least two genuinely different, evidence-backed initial role presets
+- [x] At least two genuinely different, evidence-backed initial role presets
       are selected with documented hard requirements and score candidates.
-- [ ] Combat support is assessed first; teaching or inheritance value is
+- [x] Combat support is assessed first; teaching or inheritance value is
       delivered only if its mechanics are independently verified.
-- [ ] Settlement work, building assignment, and library roles remain outside
+- [x] Settlement work, building assignment, and library roles remain outside
       the selected matrix.
-- [ ] Representative synthetic fixtures and privacy-safe local verification
+- [x] Representative synthetic fixtures and privacy-safe local verification
       cases cover eligible, ineligible, incomplete, unsupported, and
       conflicting candidates.
-- [ ] A measurable cold and warm performance budget is recorded for projecting
+- [x] A measurable cold and warm performance budget is recorded for projecting
       and evaluating the verified candidate universe.
-- [ ] Before and after fingerprints prove every inspected save, GameData,
+- [x] Before and after fingerprints prove every inspected save, GameData,
       language, and other game-owned source remains unchanged.
-- [ ] EPIC-006 is updated if verified fields, role presets, or candidate scope
+- [x] EPIC-006 is updated if verified fields, role presets, or candidate scope
       differ from the proposed boundary.
 
 #### Evidence when complete
@@ -128,6 +128,31 @@ semantics before adding Domain contracts or scoring rules.
 - A source-field, role-rule, representative-scenario, and performance matrix
   containing no proprietary data, character identities, or local paths.
 - Recorded guarded read commands and fingerprint results.
+
+#### Completion evidence
+
+- The exact installed GameData version exposes a 14-entry saved base martial-
+  qualification buffer and a 16-entry saved base life-skill-qualification
+  buffer. Every entry was readable in the privacy-safe local representative.
+- Current modified qualification and attainment are unsupported: every martial
+  and life-skill getter entered unavailable `SpecialEffectDomain.ModifyData`.
+- The authoritative first universe is the saved Taiwu group excluding Taiwu,
+  with object existence, Domain membership, character membership, and living-
+  state agreement required. Broad character and target lookup cannot create a
+  candidate.
+- `MARTIAL_DISCIPLINE_APTITUDE` and
+  `LIFE_SKILL_DISCIPLINE_APTITUDE` are the two initial role families. General
+  combat support, teaching, inheritance, recruitment, and settlement work are
+  unsupported or deferred.
+- The local save contained one privacy-safe eligible companion after excluding
+  Taiwu. Synthetic representatives cover ineligible, incomplete, unsupported,
+  conflicting, multi-candidate ordering, and tie cases.
+- Cold projection completed in 21.598 seconds against a 30-second budget; warm
+  projection completed in 4 milliseconds against a 2-second budget. Repeated
+  aggregate results were equivalent and used one archive session per request.
+- Five metadata/XML sources and three local archive sources retained identical
+  length, last-write time, and SHA-256 before and after inspection. An earlier
+  changing-save attempt was rejected without accepting a mixed revision.
 
 ## Slice 1: Product and interaction contract
 

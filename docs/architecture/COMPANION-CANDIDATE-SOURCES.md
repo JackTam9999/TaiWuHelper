@@ -1,0 +1,214 @@
+# Companion-candidate source boundary
+
+This document defines the evidence and source boundary being selected by
+[E6-000](../roadmap/epic-006/BACKLOG.md#e6-000--verify-the-candidate-universe-and-select-the-initial-role-matrix).
+It records which saved facts may enter an Epic 6 candidate profile, which
+sources own them, and which tempting interpretations remain unsupported.
+
+The inspected GameData product version is
+`1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20`. Every mapping or role rule
+derived from this document is invalid for another version until the evidence
+gate is repeated.
+
+The first configured-save attempt changed during the guarded archive read, and
+the production revision guard rejected that result. A later stable interval
+completed two equivalent aggregate projections within budget and preserved
+every inspected source.
+
+## Decision
+
+Epic 6 starts from the current saved Taiwu group, not the broad character or
+target-lookup universe. A candidate must have consistent saved group
+membership, a current character object, and a confirmed living state.
+
+The first role matrix compares one player-selected martial discipline and one
+player-selected life-skill discipline. Exact saved base qualification is the
+comparison fact. Learned or equipped skill identities remain separate
+supporting evidence.
+
+Current qualification and attainment getters are not available in the
+standalone archive runtime. Every guarded local call entered
+`SpecialEffectDomain.ModifyData`. These fields remain explicitly unsupported;
+the helper never substitutes a base value or zero while calling it current.
+
+No first-delivery field proves recruitability, teaching ability, future
+development, battle synergy, settlement suitability, or universal companion
+quality.
+
+## Source precedence
+
+| Priority | Source | Permitted ownership |
+|---:|---|---|
+| 1 | One immutable configured-save revision | Current roster membership, character existence, living state, saved base qualifications, current readable values, learned/equipped identities, age, feature IDs, and location |
+| 2 | Exact-version installed GameData metadata and configuration | Field shape, discipline catalogue identity, fixed-buffer length, and typed method contract |
+| 3 | Existing helper catalogue and verified progress contracts | Stable martial identities, localized names, progress provenance, and lifecycle state where compatible |
+| 4 | Presentation localization | English and Traditional Chinese display text only |
+
+Later sources may enrich a stable fact but cannot replace a conflicting saved
+roster or current value silently. A different save fingerprint, GameData
+version, catalogue version, or mapping version requires a new candidate result.
+
+## Candidate-universe contract
+
+### Authoritative membership
+
+`TaiwuDomain.GetGroupCharIds()` is the authoritative roster source.
+For every returned ID:
+
+1. the ID must not identify the Taiwu player character;
+2. `CharacterDomain.Characters` must contain the current character object;
+3. `TaiwuDomain.IsInGroup(id)` must be true;
+4. `Character.IsInTaiwuGroup()` must be true; and
+5. `CharacterDomain.IsCharacterAlive(id)` must be true.
+
+The local roster confirms that `GetGroupCharIds()` includes the Taiwu player,
+so the first exclusion is required rather than inferred from collection shape.
+
+The last three checks validate consistency and eligibility. They do not expand
+the universe. A character outside `GetGroupCharIds()` cannot enter the first
+shortlist because another API describes it as following, friendly, nearby,
+visible, named, or potentially interactive.
+
+### Candidate evidence states
+
+The Domain names are finalized by E6-001 and E6-002, but the source boundary
+must preserve these distinctions:
+
+| State | Required source condition | May be ranked? |
+|---|---|---:|
+| `Eligible` | Roster entry, current character, two agreeing membership checks, and living state are confirmed | Yes, if the selected role is also evaluable |
+| `Ineligible` | A verified hard condition such as living state is false | No |
+| `Incomplete` | Roster entry exists but the character object or required saved fact is absent | No |
+| `Unsupported` | The installed version or standalone reader cannot evaluate a required source | No |
+| `Conflicting` | Roster and membership checks disagree, or applicable sources retain incompatible facts | No |
+
+Missing evidence never becomes `Ineligible`, and a character cannot become
+eligible merely because it can be named or located.
+
+## Source-field matrix
+
+### Identity, eligibility, and descriptive context
+
+| Stable field candidate | Owner and member | Runtime type | Completeness and precedence | Epic 6 decision |
+|---|---|---|---|---|
+| Character identity | `CharacterDomain.Characters` dictionary key | `Int32` | Available only with a current object; source identity is the save fingerprint | Stable candidate identity; never display text |
+| Current roster membership | `TaiwuDomain.GetGroupCharIds()` | `CharacterSet` | Complete for the saved current group under the inspected version | Authoritative candidate-universe inclusion |
+| Domain membership check | `TaiwuDomain.IsInGroup(int)` | `Boolean` | Must agree with the roster | Consistency evidence; disagreement conflicts |
+| Character membership check | `Character.IsInTaiwuGroup()` | `Boolean` | Must agree with roster and Domain check | Consistency evidence; disagreement conflicts |
+| Living state | `CharacterDomain.IsCharacterAlive(int)` | `Boolean` | Required for current-role eligibility | Hard eligibility fact |
+| Current age | `Character.GetCurrAge()` | `Int16` | Saved current fact when available | Descriptive only; no initial scoring |
+| Current location | `Character.GetLocation()` | `Location` with area/block IDs | Valid non-negative IDs may be displayed after localization | Descriptive only; no initial scoring or recruitability claim |
+| Feature identities | `Character.GetFeatureIds()` | `List<Int16>` | Saved identities; individual mechanics not normalized by E6-000 | Evidence/display only |
+
+### Martial-discipline facts
+
+| Stable field candidate | Owner and member | Runtime type and unit | Completeness | Epic 6 decision |
+|---|---|---|---|---|
+| Base martial qualification | `Character.GetBaseCombatSkillQualifications()` | Fixed 14-entry `Int16` buffer indexed by installed combat-discipline identity | All 14 values were readable in the guarded local case | Authoritative comparison fact for the martial aptitude role |
+| Current martial qualification | `Character.GetCombatSkillQualification(sbyte)` | `Int16` qualification (`资质`) | Every local call entered unavailable `SpecialEffectDomain.ModifyData` | `Unsupported`; never substitute base or zero |
+| Current martial attainment | `Character.GetCombatSkillAttainment(sbyte)` | `Int16` attainment (`造诣`) | Every local call entered unavailable `SpecialEffectDomain.ModifyData` | `Unsupported`; no first-role influence |
+| Learned martial identities | `Character.GetLearnedCombatSkills()` | `List<Int16>` | Saved learned membership | Supporting fact only; learned does not mean equipped, mastered, teachable, or battle-effective |
+| Equipped martial identities | `Character.GetEquippedCombatSkills()` | `Int16[]` | Saved equipped membership | Supporting current-loadout fact only |
+
+### Life-skill-discipline facts
+
+| Stable field candidate | Owner and member | Runtime type and unit | Completeness | Epic 6 decision |
+|---|---|---|---|---|
+| Base life-skill qualification | `Character.GetBaseLifeSkillQualifications()` | Fixed 16-entry `Int16` buffer indexed by installed life-skill discipline identity | All 16 values were readable in the guarded local case | Authoritative comparison fact for the life-skill aptitude role |
+| Current life-skill qualification | `Character.GetLifeSkillQualification(sbyte)` | `Int16` qualification (`资质`) | Every local call entered unavailable `SpecialEffectDomain.ModifyData` | `Unsupported`; never substitute base or zero |
+| Current life-skill attainment | `Character.GetLifeSkillAttainment(sbyte)` | `Int16` attainment (`造诣`) | Every local call entered unavailable `SpecialEffectDomain.ModifyData` | `Unsupported`; no first-role influence |
+| Learned life-skill identities | `Character.GetLearnedLifeSkills()` | `List<LifeSkillItem>` | Saved identity and reading state | Supporting fact only; no teaching, work, or future-development inference |
+
+## Initial role source contracts
+
+### `MARTIAL_DISCIPLINE_APTITUDE`
+
+The player selects exactly one stable installed combat-discipline identity.
+The role requires:
+
+- confirmed `Eligible` candidate state;
+- exact supported GameData and discipline mapping versions;
+- available saved base martial qualification for the selected discipline.
+
+Learned or equipped martial identities remain explanatory facts. Base
+qualification is labelled explicitly and cannot prove current modified
+attainment, general combat support, synergy, survival, damage, or success
+probability.
+
+### `LIFE_SKILL_DISCIPLINE_APTITUDE`
+
+The player selects exactly one stable installed life-skill-discipline identity.
+The role requires:
+
+- confirmed `Eligible` candidate state;
+- exact supported GameData and discipline mapping versions;
+- available saved base life-skill qualification for the selected discipline.
+
+Learned life-skill identities remain explanatory facts. Base qualification is
+labelled explicitly and cannot prove current modified attainment, teaching,
+settlement work, production, training efficiency, or future progression.
+
+E6-001 owns score and tie semantics. This source contract permits only the
+typed facts; it does not authorize weights, thresholds, or a combined score.
+
+## Unsupported source interpretations
+
+| Tempting interpretation | Why unsupported | Required future evidence |
+|---|---|---|
+| Every target-lookup entry is a companion candidate | Target lookup enumerates a broad named-character store and omits group eligibility | Exact recruitment or roster contract for the intended expanded universe |
+| A following character is a current group member | Following and group APIs are separate | Versioned equivalence rule or explicit product state for followers |
+| High qualification means best companion | Qualification is one role-local fact, not universal quality | Selected objective, other required facts, and explicit comparison semantics |
+| Learned skill means current combat contribution | Learned does not mean equipped, active, feasible, or synergistic | Typed battle-role and composition rules |
+| Feature name implies a bonus | Localized labels are display text and individual feature mechanics are unverified | Stable feature rule with typed effect and version |
+| `CanTeach*` proves teaching value | Teaching calls incorporate target and interaction rules not verified by E6-000 | Exact relationship, book, cost, eligibility, and standalone behavior evidence |
+| Age predicts inheritance or development value | Future lifespan, growth, training, and transfer rules are outside the current snapshot | PI-009 evidence and staged-plan contract |
+| Location proves recruitability or availability | A saved location is descriptive only | Exact interaction and travel availability rules |
+| Life-skill values prove settlement productivity | Building, assignment, resource, and worker formulas are absent | PI-010 settlement evidence |
+
+## One-pass read boundary
+
+The Infrastructure adapter delivered later by E6-004 must load one configured
+save revision and project the complete current-group candidate snapshot inside
+one `TaiwuArchiveReadSession.ReadAsync` callback. It must not loop over the
+existing archive-opening single-character progress reader.
+
+The snapshot records:
+
+- save fingerprint and captured time;
+- exact GameData, mapping, and discipline-catalogue versions;
+- archive load warning;
+- authoritative roster IDs and consistency results;
+- typed available or unavailable profile facts; and
+- sanitized candidate-level and result-level diagnostics.
+
+If the save revision changes before projection completes, the existing session
+guard discards the entire result. No candidate from the earlier revision may be
+retained.
+
+## Performance and safety gate
+
+The representative local scenario must meet:
+
+- cold complete request at or below 30 seconds;
+- warm unchanged-revision request at or below 2 seconds;
+- one archive session per request;
+- equivalent repeated aggregate result; and
+- unchanged save, inspected GameData assemblies, and any installed language or
+  configuration sources actually read by the production projection.
+
+Metadata inspection on 2026-08-17 guarded the Steam manifest, player
+executable, `GameData.dll`, `GameData.Shared.dll`, and installed XML
+documentation: all five were unchanged. The first configured-save probe
+correctly rejected a revision that changed while the game was running.
+
+The accepted stable run projected 9,603 broad objects to a two-ID saved roster,
+then excluded Taiwu and confirmed one living candidate with agreeing
+membership checks. Cold projection completed in 21.598 seconds and warm
+unchanged-revision projection in 4 milliseconds. The two aggregate results
+were equivalent. The save and two GameData assemblies were unchanged before
+and after both reads.
+
+The single local companion verifies the positive source path; documented
+synthetic representatives own ineligible, incomplete, unsupported, conflict,
+multi-candidate ordering, and tie states without committing local identities or
+values.
