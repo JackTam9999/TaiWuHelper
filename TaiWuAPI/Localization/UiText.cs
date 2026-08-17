@@ -188,7 +188,7 @@ public static class UiText
             ["Skill catalogue pages"] = "功法目錄分頁",
             ["Previous page"] = "上一頁",
             ["Next page"] = "下一頁",
-            ["Page"] = "第",
+            ["Page {0}"] = "第 {0} 頁",
             ["results"] = "項結果",
             ["Unknown category"] = "未知類別",
             ["Grade unavailable"] = "品級不可用",

@@ -45,14 +45,17 @@ invalid internal states accurately. `CA2208` is also enforced as a warning.
 ### Project configuration drift
 
 All ten projects repeated the same framework and compiler settings. Those
-settings now live in `Directory.Build.props`; warnings remain errors for the
+settings now live in `Directory.Build.props`; warnings are now errors for the
 whole solution and individual project files contain only project-specific
 configuration.
 
 ### Cancellation API consistency
 
-The two `CA1068` findings were corrected while preserving HTTP binding and
-repository behavior. `CA1068` is enforced as a warning to prevent regression.
+The two `CA1068` findings were corrected while preserving HTTP binding. The
+repository overload now places the token last; callers using the former
+five-positional-argument order must migrate to the new order. A null optional
+legendary-book-effect collection retains its former empty-collection meaning.
+`CA1068` is enforced as a warning to prevent regression.
 
 ### Companion presentation responsibility
 

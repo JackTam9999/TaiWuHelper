@@ -317,14 +317,13 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IReadOnlyList<CombatSkillDefinition> definitions,
         IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
-        IReadOnlyList<LegendaryBookEffectDefinition> legendaryBookEffects,
+        IReadOnlyList<LegendaryBookEffectDefinition>? legendaryBookEffects,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceIdentity);
         ArgumentNullException.ThrowIfNull(definitions);
         ArgumentNullException.ThrowIfNull(diagnostics);
-        ArgumentNullException.ThrowIfNull(legendaryBookEffects);
-        var effectValues = legendaryBookEffects;
+        var effectValues = legendaryBookEffects ?? [];
         var validationFailure = ValidateReplacement(
             definitions,
             diagnostics,

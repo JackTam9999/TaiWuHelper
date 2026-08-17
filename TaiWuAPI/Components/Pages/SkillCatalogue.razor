@@ -686,7 +686,10 @@
 
     private string PageSummary => _atlas is null
         ? string.Empty
-        : $"{T("Page")} {(_atlas.Offset / PageSize) + 1} · {_atlas.TotalMatches} {T("results")}";
+        : $"{string.Format(
+            System.Globalization.CultureInfo.InvariantCulture,
+            T("Page {0}"),
+            (_atlas.Offset / PageSize) + 1)} · {_atlas.TotalMatches} {T("results")}";
 
     private static CombatSkillDiscipline? CategoryOf(
         CharacterCombatSkillAtlasEntry entry) =>

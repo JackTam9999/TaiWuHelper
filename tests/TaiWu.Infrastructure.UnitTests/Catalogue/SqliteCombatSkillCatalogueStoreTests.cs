@@ -73,6 +73,24 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
     }
 
     [Fact]
+    public async Task Null_legendary_book_effects_preserve_empty_compatibility()
+    {
+        using var fixture = StoreFixture.Create();
+        var store = fixture.CreateStore();
+
+        var replacement = await store.ReplaceAsync(
+            Identity,
+            [Definition(1, "First", CombatSkillDiscipline.Blade)],
+            diagnostics: [],
+            legendaryBookEffects: null,
+            CancellationToken);
+        var repository = (ILegendaryBookEffectCatalogueRepository)store;
+
+        Assert.True(replacement.Succeeded);
+        Assert.Empty(await repository.QueryAsync(CancellationToken));
+    }
+
+    [Fact]
     public async Task Round_trip_preserves_manifest_definition_and_provenance()
     {
         using var fixture = StoreFixture.Create();

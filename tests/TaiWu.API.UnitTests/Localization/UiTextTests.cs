@@ -155,8 +155,8 @@ public sealed class UiTextTests
                 "正在搜尋目錄……"
             },
             {
-                "Page",
-                "第"
+                "Page {0}",
+                "第 {0} 頁"
             },
             {
                 "The supported game UI does not expose the opponent's "
@@ -247,6 +247,23 @@ public sealed class UiTextTests
         var actual = UiText.Get(TaiwuLanguage.English, english);
 
         Assert.Equal(english, actual);
+    }
+
+    [Theory]
+    [InlineData(TaiwuLanguage.English, "Page 1")]
+    [InlineData(TaiwuLanguage.Chinese, "第 1 頁")]
+    public void Page_format_renders_a_complete_localized_phrase(
+        TaiwuLanguage language,
+        string expected)
+    {
+        var format = UiText.Get(language, "Page {0}");
+
+        var actual = string.Format(
+            System.Globalization.CultureInfo.InvariantCulture,
+            format,
+            1);
+
+        Assert.Equal(expected, actual);
     }
 
     [Theory]

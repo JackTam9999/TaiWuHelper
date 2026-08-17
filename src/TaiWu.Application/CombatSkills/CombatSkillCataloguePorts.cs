@@ -40,7 +40,7 @@ public interface ICombatSkillCatalogueRepository
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IReadOnlyList<CombatSkillDefinition> definitions,
         IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
-        IReadOnlyList<LegendaryBookEffectDefinition> legendaryBookEffects,
+        IReadOnlyList<LegendaryBookEffectDefinition>? legendaryBookEffects,
         CancellationToken cancellationToken = default);
 }
 
