@@ -86,7 +86,7 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Equal(CompanionRoleEvaluationState.Rankable, first.EvaluationState);
         Assert.Equal("Rankable", first.EvaluationStateLabel);
         Assert.NotEmpty(first.Strengths);
-        Assert.NotEmpty(first.Limitations);
+        Assert.Empty(first.Limitations);
         Assert.All(first.Gates, gate => Assert.True(gate.Passed));
         Assert.Equal(
             Enum.GetValues<CompanionRoleEvaluationState>()
@@ -404,5 +404,25 @@ public sealed class CompanionFinderViewModelMapperTests
             Assert.False(string.IsNullOrWhiteSpace(chinese));
             Assert.NotEqual(english, chinese);
         }
+    }
+
+    [Theory]
+    [InlineData(TaiwuLanguage.English, 5, 5, "All 5 requirements passed")]
+    [InlineData(TaiwuLanguage.English, 4, 5, "1 of 5 requirements needs review")]
+    [InlineData(TaiwuLanguage.English, 3, 5, "2 of 5 requirements need review")]
+    [InlineData(TaiwuLanguage.Chinese, 5, 5, "已通過全部 5 項條件")]
+    [InlineData(TaiwuLanguage.Chinese, 3, 5, "5 項條件中有 2 項需檢查")]
+    public void Requirement_summary_is_compact_bilingual_and_exact(
+        TaiwuLanguage language,
+        int passed,
+        int total,
+        string expected)
+    {
+        Assert.Equal(
+            expected,
+            CompanionFinderUiText.RequirementSummary(
+                language,
+                passed,
+                total));
     }
 }

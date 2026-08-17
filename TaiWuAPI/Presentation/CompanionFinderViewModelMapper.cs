@@ -286,11 +286,17 @@ public static class CompanionFinderViewModelMapper
             .Where(value => value.Kind
                 == CompanionRoleExplanationKind.StrongestContribution)
             .Select(value => value.Message)
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
         var limitations = candidate.Explanations
             .Where(value => value.Kind
-                != CompanionRoleExplanationKind.StrongestContribution)
+                != CompanionRoleExplanationKind.StrongestContribution
+                && !string.Equals(
+                    value.Identity,
+                    "ROLE_SCORE_LIMITED_TO_APPROVED_COMPONENTS",
+                    StringComparison.Ordinal))
             .Select(value => value.Message)
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
         return new CompanionCandidateViewModel(
             candidate.CharacterId,

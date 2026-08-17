@@ -64,6 +64,12 @@ public sealed class CompanionFinderPresentationSafetyTests
         Assert.Contains("disabled=", page);
         Assert.Contains("type=\"radio\"", result);
         Assert.Contains("type=\"checkbox\"", result);
+        Assert.Contains(
+            "<details class=\"companion-candidate-evidence\">",
+            result);
+        Assert.DoesNotContain(
+            "<details class=\"companion-candidate-evidence\" open",
+            result);
         Assert.Contains("scope=\"col\"", result);
         Assert.Contains("scope=\"row\"", result);
         Assert.Contains("aria-live=\"polite\"", result);

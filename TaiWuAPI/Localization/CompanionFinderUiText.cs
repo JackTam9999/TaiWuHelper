@@ -124,6 +124,41 @@ public enum CompanionFinderUiTextKey
 
 public static class CompanionFinderUiText
 {
+    public static string RequirementSummary(
+        TaiwuLanguage language,
+        int passed,
+        int total)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(passed);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(total);
+        if (passed > total)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(passed),
+                passed,
+                "Passed requirements cannot exceed total requirements.");
+        }
+
+        var needsReview = total - passed;
+        return language switch
+        {
+            TaiwuLanguage.English when needsReview == 0 =>
+                $"All {total} requirements passed",
+            TaiwuLanguage.English when needsReview == 1 =>
+                $"1 of {total} requirements needs review",
+            TaiwuLanguage.English =>
+                $"{needsReview} of {total} requirements need review",
+            TaiwuLanguage.Chinese when needsReview == 0 =>
+                $"已通過全部 {total} 項條件",
+            TaiwuLanguage.Chinese =>
+                $"{total} 項條件中有 {needsReview} 項需檢查",
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(language),
+                language,
+                "Unknown UI language.")
+        };
+    }
+
     public static string Get(
         TaiwuLanguage language,
         CompanionFinderUiTextKey key)

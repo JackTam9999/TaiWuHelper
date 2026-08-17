@@ -801,6 +801,9 @@ reasons without introducing a second evaluation path in Presentation.
 - Mapper, rendering, API, Infrastructure, and architecture coverage for every
   visible state, immutable comparison, native semantics, single-DOM responsive
   rendering, no raw-ID fallback, and no Presentation mutation path.
+- Candidate evidence uses a closed native disclosure with an exact passed/total
+  summary; full typed gates remain available on demand and the role-wide score
+  limitation is not repeated inside every candidate.
 - [Presentation architecture](../../architecture/COMPANION-FINDER-PRESENTATION.md),
   updated [API contract](../../api/COMPANION-CANDIDATES.md), and
   [browser review](../../reviews/E6-010-companion-finder-ui.md).
@@ -869,7 +872,7 @@ architecture rules, performance checks, and guarded read-only local scenarios.
 - Three guarded Release integration scenarios, including two repeated complete
   role workflows and all installed discipline-language sources; every guarded
   save/runtime/source file remained byte-for-byte unchanged.
-- Release build with zero warnings/errors, 1,239 default tests, formatter and
+- Release build with zero warnings/errors, 1,244 default tests, formatter and
   link checks, architecture capability scans, and clean diff validation.
 
 ### E6-012 — Validate representative roles and close Epic 6

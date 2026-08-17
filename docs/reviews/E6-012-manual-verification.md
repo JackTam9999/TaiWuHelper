@@ -110,6 +110,11 @@ The narrow layout reflows the same table DOM into labelled cards and preserves
 all facts, order, and non-color cues without document-level horizontal
 overflow.
 
+The final compactness review keeps the comparison facts visible, summarizes
+each candidate's passed/total requirement count in a closed native disclosure,
+and reveals the complete strengths, limitations, and typed gates on expansion.
+The role-wide score caveat appears once rather than repeating per candidate.
+
 Post-read result behavior additionally passes executable Razor component
 rendering for exact eligibility counts, all typed source/catalogue states,
 filters, comparison, previous-result inertness, and both languages. This
@@ -182,7 +187,7 @@ A fresh independent re-review found and drove three further corrections:
    identity/kind/field/outcome/reason semantics, and comparison renders the
    evaluation label rather than relabelling ranking state.
 
-The corrected Release matrix passes 1,239 non-integration tests with zero
+The corrected Release matrix passes 1,244 non-integration tests with zero
 failures and the guarded local class passes 3 of 3. The solution build has zero
 warnings and errors; formatter and repository validation also pass.
 

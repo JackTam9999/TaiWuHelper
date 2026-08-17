@@ -53,6 +53,20 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Decisive strengths", text);
         Assert.Contains("Material limitations", text);
         Assert.Contains("Requirement evidence", text);
+        Assert.Contains("All 5 requirements passed", text);
+        Assert.Equal(
+            model.Candidates.Count,
+            Regex.Matches(
+                html,
+                "<details class=\"companion-candidate-evidence\"").Count);
+        Assert.DoesNotContain(
+            "<details class=\"companion-candidate-evidence\" open",
+            html,
+            StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(
+            text,
+            "Scores compare saved base qualification within this selected discipline only",
+            RegexOptions.IgnoreCase));
         Assert.Contains("Candidate-universe eligibility · Passed", text);
         Assert.Contains(
             "Required saved base martial qualification evidence · Passed",
@@ -105,6 +119,7 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("並列第 2 名", text);
         Assert.Contains("已確認存檔基礎值", text);
         Assert.Contains("證據已非最新", text);
+        Assert.Contains("已通過全部 5 項條件", text);
         Assert.Contains("姓名與位置只供顯示，不會改變資格", text);
         Assert.DoesNotContain("31001", html, StringComparison.Ordinal);
     }

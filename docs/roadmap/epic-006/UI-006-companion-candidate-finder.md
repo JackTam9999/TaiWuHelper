@@ -188,6 +188,12 @@ kind, typed field when applicable, exact outcome, reason identity, and localized
 explanation. The UI labels repeated field gates by requirement purpose so fact
 confirmation and provenance compatibility remain distinguishable.
 
+Candidate rows keep this evidence in a native disclosure that is collapsed by
+default. Its summary reports the exact passed/total requirement count; expanding
+one candidate reveals strengths, material limitations, and every typed gate.
+The role-wide score limitation appears once above the table rather than being
+repeated inside every ranked candidate.
+
 No candidate receives a winner crown, best-person badge, percentage bar,
 quality grade, green/red worth indicator, or cross-role comparison.
 
@@ -401,7 +407,8 @@ manually in the game.
   outcomes, missing display values, and raw-ID hiding.
 - Rendered-component tests cover native role/discipline controls, loading,
   stable-save retry, one-candidate, empty, tied, needs-review, ineligible,
-  comparison, previous-result, focus-target, and bilingual states.
+  comparison, collapsed candidate evidence, previous-result, focus-target, and
+  bilingual states.
 - Architecture tests require the dedicated route and navigation entry, one
   explicit source action, the single-DOM responsive layout, and absence of a
   Presentation evaluation, persistence, process, upload, input, or game-control

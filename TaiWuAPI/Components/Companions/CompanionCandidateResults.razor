@@ -218,49 +218,54 @@
                                     </tr>
                                     <tr class="companion-candidate-detail-row">
                                         <td colspan="6">
-                                            <div class="companion-candidate-details">
-                                                @if (candidate.Strengths.Count > 0)
-                                                {
-                                                    <section>
-                                                        <h4>@Text(CompanionFinderUiTextKey.DecisiveStrengths)</h4>
+                                            <details class="companion-candidate-evidence">
+                                                <summary aria-label="@EvidenceDetailsLabel(candidate)">
+                                                    <strong>@Text(CompanionFinderUiTextKey.RequirementEvidence)</strong>
+                                                    <span>@RequirementSummary(candidate)</span>
+                                                </summary>
+                                                <div class="companion-candidate-details">
+                                                    @if (candidate.Strengths.Count > 0)
+                                                    {
+                                                        <section>
+                                                            <h4>@Text(CompanionFinderUiTextKey.DecisiveStrengths)</h4>
+                                                            <ul>
+                                                                @foreach (var strength in candidate.Strengths)
+                                                                {
+                                                                    <li>@strength</li>
+                                                                }
+                                                            </ul>
+                                                        </section>
+                                                    }
+                                                    @if (candidate.Limitations.Count > 0)
+                                                    {
+                                                        <section>
+                                                            <h4>@Text(CompanionFinderUiTextKey.MaterialLimitations)</h4>
+                                                            <ul>
+                                                                @foreach (var limitation in candidate.Limitations)
+                                                                {
+                                                                    <li>@limitation</li>
+                                                                }
+                                                            </ul>
+                                                        </section>
+                                                    }
+                                                    <div class="companion-requirement-evidence">
                                                         <ul>
-                                                            @foreach (var strength in candidate.Strengths)
+                                                            @foreach (var gate in candidate.Gates)
                                                             {
-                                                                <li>@strength</li>
+                                                                <li data-requirement-order="@gate.Order"
+                                                                    data-requirement-identity="@gate.RequirementIdentity"
+                                                                    data-requirement-kind="@gate.Kind"
+                                                                    data-requirement-field="@gate.Field"
+                                                                    data-gate-outcome="@gate.Outcome"
+                                                                    data-reason-identity="@gate.ReasonIdentity">
+                                                                    <strong>@gate.RequirementLabel · @gate.OutcomeLabel:</strong>
+                                                                    @gate.Explanation
+                                                                </li>
                                                             }
                                                         </ul>
-                                                    </section>
-                                                }
-                                                @if (candidate.Limitations.Count > 0)
-                                                {
-                                                    <section>
-                                                        <h4>@Text(CompanionFinderUiTextKey.MaterialLimitations)</h4>
-                                                        <ul>
-                                                            @foreach (var limitation in candidate.Limitations)
-                                                            {
-                                                                <li>@limitation</li>
-                                                            }
-                                                        </ul>
-                                                    </section>
-                                                }
-                                                <section>
-                                                    <h4>@Text(CompanionFinderUiTextKey.RequirementEvidence)</h4>
-                                                    <ul>
-                                                        @foreach (var gate in candidate.Gates)
-                                                        {
-                                                            <li data-requirement-order="@gate.Order"
-                                                                data-requirement-identity="@gate.RequirementIdentity"
-                                                                data-requirement-kind="@gate.Kind"
-                                                                data-requirement-field="@gate.Field"
-                                                                data-gate-outcome="@gate.Outcome"
-                                                                data-reason-identity="@gate.ReasonIdentity">
-                                                                <strong>@gate.RequirementLabel · @gate.OutcomeLabel:</strong>
-                                                                @gate.Explanation
-                                                            </li>
-                                                        }
-                                                    </ul>
-                                                </section>
-                                            </div>
+                                                    </div>
+                                                </div>
+                                            </details>
                                         </td>
                                     </tr>
                                 }
@@ -463,6 +468,16 @@
             CompanionCandidateSection.Ineligible => "ineligible",
             _ => string.Empty
         };
+
+    private string RequirementSummary(CompanionCandidateViewModel candidate) =>
+        CompanionFinderUiText.RequirementSummary(
+            Language,
+            candidate.Gates.Count(gate => gate.Passed),
+            candidate.Gates.Count);
+
+    private string EvidenceDetailsLabel(CompanionCandidateViewModel candidate) =>
+        $"{Text(CompanionFinderUiTextKey.RequirementEvidence)} · "
+        + $"{candidate.DisplayName} · {RequirementSummary(candidate)}";
 
     private static string FormatSnapshot(DateTimeOffset value) =>
         value.ToUniversalTime().ToString(

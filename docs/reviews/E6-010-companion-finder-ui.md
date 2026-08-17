@@ -23,7 +23,8 @@ report or its captures.
 
 > **Closure correction:** the PNG captures below predate the independent E6-012
 > reviews and retain the former rankability-based eligible tile plus the former
-> living-only boundary wording. They remain historical layout evidence only.
+> living-only boundary wording. They also predate the compact candidate-evidence
+> disclosure. They remain historical layout evidence only.
 > The corrected synthetic fixture reports all four candidate-universe-eligible
 > profiles and describes the full saved non-Taiwu roster universe, while current
 > mapper and Razor rendering tests prove exact eligibility, evaluation/gate
@@ -58,6 +59,16 @@ The inspected synthetic document contained six native radios, four native
 comparison checkboxes, three semantic tables, and the expected heading order.
 Its document scroll width equalled its client width. Visible tie text and an
 accessible shared-rank label supplemented the numeric competition rank.
+
+A post-review compactness pass keeps the comparison row visible while moving
+each candidate's strengths, limitations, and exact typed gates into a native
+`details` disclosure that is closed by default. The visible summary gives only
+the passed/total requirement count. The role-wide score limitation appears once
+above the table instead of repeating for every ranked candidate. At the desktop
+breakpoint, the three-candidate Traditional Chinese ranked table measured 384
+CSS pixels high, with a 1,425-pixel client width matching its scroll width.
+Opening and closing the English example exposed the complete evidence without
+changing the candidate comparison facts.
 
 ![Synthetic English desktop result](./assets/epic-006/companion-finder-en-desktop.png)
 
@@ -101,15 +112,15 @@ independent of rankability in both API and Presentation summaries.
 
 ## Automated result
 
-The final non-integration matrix passed 1,221 tests:
+The current post-review non-integration matrix passed 1,244 tests:
 
 | Project | Passed |
 |---|---:|
-| Domain | 491 |
+| Domain | 493 |
 | Application | 178 |
-| Infrastructure | 145 |
-| Architecture | 93 |
-| API and Presentation | 314 |
+| Infrastructure | 146 |
+| Architecture | 94 |
+| API and Presentation | 333 |
 
 The complete solution build passed with zero warnings and zero errors.
 Formatter verification, Markdown link validation, leak/safety scans, and
@@ -119,6 +130,7 @@ Formatter verification, Markdown link validation, leak/safety scans, and
 
 E6-010 satisfies the accepted UI contract. The page is bilingual,
 keyboard-native, evidence-preserving, responsive without fact duplication,
-and information-only. It delegates the only save read to the existing
+compact by default with full candidate evidence available on demand, and
+information-only. It delegates the only save read to the existing
 Application use case and does not introduce a second evaluation or mutation
 path.
