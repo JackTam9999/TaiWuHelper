@@ -215,6 +215,38 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
     }
 
     [Fact]
+    public async Task Query_hydrates_large_candidate_sets_across_batches()
+    {
+        using var fixture = StoreFixture.Create();
+        var store = fixture.CreateStore();
+        var definitions = Enumerable.Range(1, 501)
+            .Select(skillId => Definition(
+                skillId,
+                $"Skill {skillId}",
+                CombatSkillDiscipline.Finger))
+            .ToArray();
+
+        var replacement = await store.ReplaceAsync(
+            Identity,
+            definitions,
+            diagnostics: [],
+            CancellationToken);
+        var loaded = await store.QueryAsync(
+            new CombatSkillCatalogueFilter(
+                candidateLimit: definitions.Length),
+            CancellationToken);
+
+        Assert.True(replacement.Succeeded);
+        Assert.Equal(definitions.Length, loaded.Count);
+        Assert.Equal(
+            definitions.Select(value => value.SkillId),
+            loaded.Select(value => value.SkillId));
+        Assert.Equal(
+            "Skill 501",
+            loaded[^1].Names.Get(CatalogueLanguage.English).Value.Text);
+    }
+
+    [Fact]
     public async Task Typed_filters_and_candidate_limit_are_deterministic()
     {
         using var fixture = StoreFixture.Create();

@@ -19,6 +19,8 @@ internal sealed class SqliteCombatSkillCatalogueStore(
 {
     internal const int SchemaVersion = 4;
 
+    private const int MaximumDefinitionBatchSize = 500;
+
     private const string CategoryField = "category";
     private const string GradeField = "grade";
     private const string FactionField = "faction";
@@ -187,13 +189,13 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 cancellationToken)
             .ConfigureAwait(false);
         List<CombatSkillDefinition> definitions = [];
-        foreach (var skillId in skillIds)
+        foreach (var skillIdBatch in skillIds.Chunk(MaximumDefinitionBatchSize))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            definitions.Add(await ReadDefinitionAsync(
+            definitions.AddRange(await ReadDefinitionsAsync(
                     connection,
                     transaction,
-                    skillId,
+                    skillIdBatch,
                     cancellationToken)
                 .ConfigureAwait(false));
         }
@@ -224,25 +226,14 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                     IsolationLevel.Serializable,
                     cancellationToken)
                 .ConfigureAwait(false);
-        if (!await DefinitionExistsAsync(
+        var definitions = await ReadDefinitionsAsync(
                 connection,
                 transaction,
-                skillId,
-                cancellationToken).ConfigureAwait(false))
-        {
-            await transaction.CommitAsync(cancellationToken)
-                .ConfigureAwait(false);
-            return null;
-        }
-
-        var definition = await ReadDefinitionAsync(
-                connection,
-                transaction,
-                skillId,
+                [skillId],
                 cancellationToken)
             .ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return definition;
+        return definitions.SingleOrDefault();
     }
 
     async Task<IReadOnlyList<LegendaryBookEffectDefinition>>
@@ -1477,176 +1468,229 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         }
     }
 
-    private static async Task<bool> DefinitionExistsAsync(
-        SqliteConnection connection,
-        SqliteTransaction transaction,
-        int skillId,
-        CancellationToken cancellationToken)
+    private static async Task<IReadOnlyList<CombatSkillDefinition>>
+        ReadDefinitionsAsync(
+            SqliteConnection connection,
+            SqliteTransaction transaction,
+            IReadOnlyList<int> skillIds,
+            CancellationToken cancellationToken)
     {
-        await using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = """
-            SELECT EXISTS(
-                SELECT 1 FROM definitions WHERE skill_id = $skillId);
-            """;
-        command.Parameters.AddWithValue("$skillId", skillId);
-        return Convert.ToInt32(
-                   await command.ExecuteScalarAsync(cancellationToken)
-                       .ConfigureAwait(false),
-                   CultureInfo.InvariantCulture)
-               == 1;
-    }
+        if (skillIds.Count == 0)
+        {
+            return [];
+        }
 
-    private static async Task<CombatSkillDefinition> ReadDefinitionAsync(
-        SqliteConnection connection,
-        SqliteTransaction transaction,
-        int skillId,
-        CancellationToken cancellationToken)
-    {
-        var source = await ReadDefinitionSourceAsync(
+        var sources = await ReadDefinitionSourcesAsync(
                 connection,
                 transaction,
-                skillId,
+                skillIds,
                 cancellationToken)
             .ConfigureAwait(false);
+        if (sources.Count == 0)
+        {
+            return [];
+        }
+
+        if (sources.Count != skillIds.Count)
+        {
+            throw new InvalidDataException(
+                "One or more catalogue definitions disappeared during their read.");
+        }
+
         var names = await ReadNamesAsync(
                 connection,
                 transaction,
-                skillId,
+                skillIds,
                 cancellationToken)
             .ConfigureAwait(false);
         var fields = await ReadFieldsAsync(
                 connection,
                 transaction,
-                skillId,
+                skillIds,
                 cancellationToken)
             .ConfigureAwait(false);
         var requirements = await ReadRequirementsAsync(
                 connection,
                 transaction,
-                skillId,
+                skillIds,
                 cancellationToken)
             .ConfigureAwait(false);
         var descriptions = await ReadDescriptionsAsync(
                 connection,
                 transaction,
-                skillId,
+                skillIds,
                 cancellationToken)
             .ConfigureAwait(false);
 
-        return new CombatSkillDefinition(
-            skillId,
-            new CombatSkillLocalizedNames(names),
-            RequiredField(fields, CategoryField)
-                .ToCatalogueField(value => (CombatSkillDiscipline)value),
-            RequiredField(fields, GradeField)
-                .ToCatalogueField(value => new CombatSkillGrade(value)),
-            RequiredField(fields, FactionField)
-                .ToCatalogueField(value => new CombatSkillFactionId(value)),
-            RequiredField(fields, ElementField)
-                .ToCatalogueField(value => (CombatSkillElement)value),
-            RequiredField(fields, EquipmentTypeField)
-                .ToCatalogueField(value => (CombatSkillEquipmentType)value),
-            RequiredField(fields, BaseGridCostField)
-                .ToCatalogueField(value => new CombatSkillGridCost(value)),
-            RequiredField(fields, SlotContributionField)
-                .ToCompositeCatalogueField(values => new SkillSlotContribution(
-                    values[0],
-                    values[1],
-                    values[2],
-                    values[3],
-                    values[4])),
-            requirements,
-            new CombatSkillTimingDefinition(
-                RequiredField(fields, PreparationProgressField)
-                    .ToCatalogueField(value => value),
-                RequiredField(fields, BreathStanceCostField)
-                    .ToCatalogueField(value => value),
-                RequiredField(fields, CastSpeedField)
-                    .ToCatalogueField(value => value)),
-            new CombatSkillEffectReferences(
-                RequiredField(fields, DirectEffectField)
-                    .ToCatalogueField(value => new CombatSkillEffectId(value)),
-                RequiredField(fields, ReverseEffectField)
-                    .ToCatalogueField(value => new CombatSkillEffectId(value)),
-                RequiredField(fields, NeutralEffectField)
-                    .ToCatalogueField(value => new CombatSkillEffectId(value))),
-            descriptions,
-            source);
-    }
-
-    private static async Task<CatalogueSourceReference> ReadDefinitionSourceAsync(
-        SqliteConnection connection,
-        SqliteTransaction transaction,
-        int skillId,
-        CancellationToken cancellationToken)
-    {
-        await using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = """
-            SELECT source_kind, source_identity, source_record_identity
-            FROM definitions
-            WHERE skill_id = $skillId;
-            """;
-        command.Parameters.AddWithValue("$skillId", skillId);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
-            .ConfigureAwait(false);
-        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        List<CombatSkillDefinition> definitions = new(skillIds.Count);
+        foreach (var skillId in skillIds)
         {
-            throw new InvalidDataException(
-                $"Catalogue definition {skillId} disappeared during its read.");
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!sources.TryGetValue(skillId, out var source))
+            {
+                throw new InvalidDataException(
+                    $"Catalogue definition {skillId} disappeared during its read.");
+            }
+
+            definitions.Add(BuildDefinition(
+                skillId,
+                source,
+                names.TryGetValue(skillId, out var nameValues)
+                    ? nameValues
+                    : [],
+                fields.TryGetValue(skillId, out var fieldValues)
+                    ? fieldValues
+                    : new Dictionary<string, ReadField>(StringComparer.Ordinal),
+                requirements.TryGetValue(skillId, out var requirementValues)
+                    ? requirementValues
+                    : [],
+                descriptions.TryGetValue(skillId, out var descriptionValues)
+                    ? descriptionValues
+                    : []));
         }
 
-        return ReadRequiredSource(reader, 0);
+        return definitions;
     }
 
-    private static async Task<ImmutableArray<LocalizedCombatSkillName>>
-        ReadNamesAsync(
+    private static CombatSkillDefinition BuildDefinition(
+        int skillId,
+        CatalogueSourceReference source,
+        ImmutableArray<LocalizedCombatSkillName> names,
+        IReadOnlyDictionary<string, ReadField> fields,
+        ImmutableArray<CombatSkillRequirementDefinition> requirements,
+        ImmutableArray<RawCombatSkillDescription> descriptions) => new(
+        skillId,
+        new CombatSkillLocalizedNames(names),
+        RequiredField(fields, CategoryField)
+            .ToCatalogueField(value => (CombatSkillDiscipline)value),
+        RequiredField(fields, GradeField)
+            .ToCatalogueField(value => new CombatSkillGrade(value)),
+        RequiredField(fields, FactionField)
+            .ToCatalogueField(value => new CombatSkillFactionId(value)),
+        RequiredField(fields, ElementField)
+            .ToCatalogueField(value => (CombatSkillElement)value),
+        RequiredField(fields, EquipmentTypeField)
+            .ToCatalogueField(value => (CombatSkillEquipmentType)value),
+        RequiredField(fields, BaseGridCostField)
+            .ToCatalogueField(value => new CombatSkillGridCost(value)),
+        RequiredField(fields, SlotContributionField)
+            .ToCompositeCatalogueField(values => new SkillSlotContribution(
+                values[0],
+                values[1],
+                values[2],
+                values[3],
+                values[4])),
+        requirements,
+        new CombatSkillTimingDefinition(
+            RequiredField(fields, PreparationProgressField)
+                .ToCatalogueField(value => value),
+            RequiredField(fields, BreathStanceCostField)
+                .ToCatalogueField(value => value),
+            RequiredField(fields, CastSpeedField)
+                .ToCatalogueField(value => value)),
+        new CombatSkillEffectReferences(
+            RequiredField(fields, DirectEffectField)
+                .ToCatalogueField(value => new CombatSkillEffectId(value)),
+            RequiredField(fields, ReverseEffectField)
+                .ToCatalogueField(value => new CombatSkillEffectId(value)),
+            RequiredField(fields, NeutralEffectField)
+                .ToCatalogueField(value => new CombatSkillEffectId(value))),
+        descriptions,
+        source);
+
+    private static async Task<IReadOnlyDictionary<int, CatalogueSourceReference>>
+        ReadDefinitionSourcesAsync(
             SqliteConnection connection,
             SqliteTransaction transaction,
-            int skillId,
+            IReadOnlyList<int> skillIds,
             CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
+        var skillIdParameters = AddSkillIdParameters(command, skillIds);
+        command.CommandText = $"""
             SELECT
+                skill_id,
+                source_kind,
+                source_identity,
+                source_record_identity
+            FROM definitions
+            WHERE skill_id IN ({skillIdParameters})
+            ORDER BY skill_id;
+            """;
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
+            .ConfigureAwait(false);
+        Dictionary<int, CatalogueSourceReference> values = [];
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            values.Add(reader.GetInt32(0), ReadRequiredSource(reader, 1));
+        }
+
+        return values;
+    }
+
+    private static async Task<
+        IReadOnlyDictionary<int, ImmutableArray<LocalizedCombatSkillName>>>
+        ReadNamesAsync(
+            SqliteConnection connection,
+            SqliteTransaction transaction,
+            IReadOnlyList<int> skillIds,
+            CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        var skillIdParameters = AddSkillIdParameters(command, skillIds);
+        command.CommandText = $"""
+            SELECT
+                skill_id,
                 language,
                 text,
                 source_kind,
                 source_identity,
                 source_record_identity
             FROM localized_names
-            WHERE skill_id = $skillId
-            ORDER BY language;
+            WHERE skill_id IN ({skillIdParameters})
+            ORDER BY skill_id, language;
             """;
-        command.Parameters.AddWithValue("$skillId", skillId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken)
             .ConfigureAwait(false);
-        ImmutableArray<LocalizedCombatSkillName>.Builder values =
-            ImmutableArray.CreateBuilder<LocalizedCombatSkillName>();
+        Dictionary<int, ImmutableArray<LocalizedCombatSkillName>.Builder> values =
+            [];
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            values.Add(new LocalizedCombatSkillName(
-                (CatalogueLanguage)reader.GetInt32(0),
-                reader.GetString(1),
-                ReadRequiredSource(reader, 2)));
+            var skillId = reader.GetInt32(0);
+            if (!values.TryGetValue(skillId, out var localizations))
+            {
+                localizations =
+                    ImmutableArray.CreateBuilder<LocalizedCombatSkillName>();
+                values.Add(skillId, localizations);
+            }
+
+            localizations.Add(new LocalizedCombatSkillName(
+                (CatalogueLanguage)reader.GetInt32(1),
+                reader.GetString(2),
+                ReadRequiredSource(reader, 3)));
         }
 
-        return values.ToImmutable();
+        return values.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value.ToImmutable());
     }
 
-    private static async Task<IReadOnlyDictionary<string, ReadField>>
+    private static async Task<
+        IReadOnlyDictionary<int, IReadOnlyDictionary<string, ReadField>>>
         ReadFieldsAsync(
             SqliteConnection connection,
             SqliteTransaction transaction,
-            int skillId,
+            IReadOnlyList<int> skillIds,
             CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
+        var skillIdParameters = AddSkillIdParameters(command, skillIds);
+        command.CommandText = $"""
             SELECT
+                skill_id,
                 field_key,
                 status,
                 value_1,
@@ -1659,42 +1703,55 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 source_identity,
                 source_record_identity
             FROM definition_fields
-            WHERE skill_id = $skillId
-            ORDER BY field_key;
+            WHERE skill_id IN ({skillIdParameters})
+            ORDER BY skill_id, field_key;
             """;
-        command.Parameters.AddWithValue("$skillId", skillId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken)
             .ConfigureAwait(false);
-        Dictionary<string, ReadField> values = new(StringComparer.Ordinal);
+        Dictionary<int, Dictionary<string, ReadField>> values = [];
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            values.Add(
-                reader.GetString(0),
+            var skillId = reader.GetInt32(0);
+            if (!values.TryGetValue(skillId, out var definitionFields))
+            {
+                definitionFields = new Dictionary<string, ReadField>(
+                    StringComparer.Ordinal);
+                values.Add(skillId, definitionFields);
+            }
+
+            definitionFields.Add(
+                reader.GetString(1),
                 new ReadField(
-                    (CatalogueFieldStatus)reader.GetInt32(1),
-                    Enumerable.Range(2, 5)
+                    (CatalogueFieldStatus)reader.GetInt32(2),
+                    Enumerable.Range(3, 5)
                         .Select(index => reader.IsDBNull(index)
                             ? (int?)null
                             : reader.GetInt32(index))
                         .ToImmutableArray(),
-                    reader.IsDBNull(7) ? null : reader.GetString(7),
-                    ReadOptionalSource(reader, 8)));
+                    reader.IsDBNull(8) ? null : reader.GetString(8),
+                    ReadOptionalSource(reader, 9)));
         }
 
-        return values;
+        return values.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyDictionary<string, ReadField>)pair.Value);
     }
 
-    private static async Task<ImmutableArray<CombatSkillRequirementDefinition>>
+    private static async Task<
+        IReadOnlyDictionary<int,
+            ImmutableArray<CombatSkillRequirementDefinition>>>
         ReadRequirementsAsync(
             SqliteConnection connection,
             SqliteTransaction transaction,
-            int skillId,
+            IReadOnlyList<int> skillIds,
             CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
+        var skillIdParameters = AddSkillIdParameters(command, skillIds);
+        command.CommandText = $"""
             SELECT
+                skill_id,
                 requirement_id,
                 status,
                 required_value,
@@ -1703,42 +1760,55 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 source_identity,
                 source_record_identity
             FROM requirements
-            WHERE skill_id = $skillId
-            ORDER BY sort_order;
+            WHERE skill_id IN ({skillIdParameters})
+            ORDER BY skill_id, sort_order;
             """;
-        command.Parameters.AddWithValue("$skillId", skillId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken)
             .ConfigureAwait(false);
-        ImmutableArray<CombatSkillRequirementDefinition>.Builder values =
-            ImmutableArray.CreateBuilder<CombatSkillRequirementDefinition>();
+        Dictionary<
+            int,
+            ImmutableArray<CombatSkillRequirementDefinition>.Builder> values = [];
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            var source = ReadRequiredSource(reader, 4);
+            var skillId = reader.GetInt32(0);
+            if (!values.TryGetValue(skillId, out var requirementValues))
+            {
+                requirementValues = ImmutableArray
+                    .CreateBuilder<CombatSkillRequirementDefinition>();
+                values.Add(skillId, requirementValues);
+            }
+
+            var source = ReadRequiredSource(reader, 5);
             var field = new ReadField(
-                (CatalogueFieldStatus)reader.GetInt32(1),
-                [reader.IsDBNull(2) ? null : reader.GetInt32(2)],
-                reader.IsDBNull(3) ? null : reader.GetString(3),
+                (CatalogueFieldStatus)reader.GetInt32(2),
+                [reader.IsDBNull(3) ? null : reader.GetInt32(3)],
+                reader.IsDBNull(4) ? null : reader.GetString(4),
                 source);
-            values.Add(new CombatSkillRequirementDefinition(
-                new CombatSkillRequirementId(reader.GetString(0)),
+            requirementValues.Add(new CombatSkillRequirementDefinition(
+                new CombatSkillRequirementId(reader.GetString(1)),
                 field.ToCatalogueField(value => value),
                 source));
         }
 
-        return values.ToImmutable();
+        return values.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value.ToImmutable());
     }
 
-    private static async Task<ImmutableArray<RawCombatSkillDescription>>
+    private static async Task<
+        IReadOnlyDictionary<int, ImmutableArray<RawCombatSkillDescription>>>
         ReadDescriptionsAsync(
             SqliteConnection connection,
             SqliteTransaction transaction,
-            int skillId,
+            IReadOnlyList<int> skillIds,
             CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
+        var skillIdParameters = AddSkillIdParameters(command, skillIds);
+        command.CommandText = $"""
             SELECT
+                skill_id,
                 kind,
                 language,
                 text,
@@ -1746,24 +1816,56 @@ internal sealed class SqliteCombatSkillCatalogueStore(
                 source_identity,
                 source_record_identity
             FROM raw_descriptions
-            WHERE skill_id = $skillId
-            ORDER BY sort_order;
+            WHERE skill_id IN ({skillIdParameters})
+            ORDER BY skill_id, sort_order;
             """;
-        command.Parameters.AddWithValue("$skillId", skillId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken)
             .ConfigureAwait(false);
-        ImmutableArray<RawCombatSkillDescription>.Builder values =
-            ImmutableArray.CreateBuilder<RawCombatSkillDescription>();
+        Dictionary<int, ImmutableArray<RawCombatSkillDescription>.Builder> values =
+            [];
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            values.Add(new RawCombatSkillDescription(
-                (RawCombatSkillDescriptionKind)reader.GetInt32(0),
-                (CatalogueLanguage)reader.GetInt32(1),
-                reader.GetString(2),
-                ReadRequiredSource(reader, 3)));
+            var skillId = reader.GetInt32(0);
+            if (!values.TryGetValue(skillId, out var descriptionValues))
+            {
+                descriptionValues =
+                    ImmutableArray.CreateBuilder<RawCombatSkillDescription>();
+                values.Add(skillId, descriptionValues);
+            }
+
+            descriptionValues.Add(new RawCombatSkillDescription(
+                (RawCombatSkillDescriptionKind)reader.GetInt32(1),
+                (CatalogueLanguage)reader.GetInt32(2),
+                reader.GetString(3),
+                ReadRequiredSource(reader, 4)));
         }
 
-        return values.ToImmutable();
+        return values.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value.ToImmutable());
+    }
+
+    private static string AddSkillIdParameters(
+        SqliteCommand command,
+        IReadOnlyList<int> skillIds)
+    {
+        if (skillIds.Count is < 1 or > MaximumDefinitionBatchSize)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(skillIds),
+                skillIds.Count,
+                $"A definition batch must contain 1..{MaximumDefinitionBatchSize} IDs.");
+        }
+
+        string[] parameterNames = new string[skillIds.Count];
+        for (var index = 0; index < skillIds.Count; index++)
+        {
+            var parameterName = $"$skillId{index}";
+            parameterNames[index] = parameterName;
+            command.Parameters.AddWithValue(parameterName, skillIds[index]);
+        }
+
+        return string.Join(", ", parameterNames);
     }
 
     private static async Task<ImmutableArray<LegendaryBookEffectDefinition>>
