@@ -71,8 +71,7 @@ visible, named, or potentially interactive.
 
 ### Candidate evidence states
 
-The Domain names are finalized by E6-001 and E6-002, but the source boundary
-must preserve these distinctions:
+The `TaiWu.Domain.CompanionCandidates` contracts preserve these distinctions:
 
 | State | Required source condition | May be ranked? |
 |---|---|---:|
@@ -84,6 +83,51 @@ must preserve these distinctions:
 
 Missing evidence never becomes `Ineligible`, and a character cannot become
 eligible merely because it can be named or located.
+
+## Implemented Domain profile contract
+
+E6-002 adds presentation-neutral values under
+`src/TaiWu.Domain/CompanionCandidates/`:
+
+- `CandidateIdentity` contains only the stable positive saved character ID;
+  localized or player-visible names remain outside the profile identity;
+- `CandidateProfileFieldIdentity` combines a typed field with a typed martial
+  or life-skill discipline identity only where that field requires one;
+- `CandidateFactValue` is a closed typed value over Boolean, `Int16`, `Int32`,
+  and sorted immutable identity-set shapes rather than an untyped object or
+  display string;
+- `CandidateProfileFact` has explicit `Confirmed`, `Incomplete`,
+  `Unsupported`, `Stale`, and `Conflicting` construction paths;
+- `CandidateFactProvenance` and `CandidateEvidenceReference` retain stable
+  source identity, source version, source revision, and evidence reference;
+- `CandidateConflictValue` retains every candidate value with its own
+  provenance and evidence, while `CandidateConflictDecision` records whether
+  precedence is unresolved, selected a retained source, or rejected all
+  candidates;
+- `CandidateProfileSourceVersions` owns the save SHA-256, GameData version,
+  profile-mapping version, discipline-catalogue version, and fingerprint-
+  schema version; and
+- `CandidateProfile` copies, validates, de-duplicates, and canonically sorts
+  facts and diagnostics before producing its deterministic fingerprint.
+
+A confirmed fact requires one compatible typed value and provenance. An
+incomplete or unsupported fact requires an unavailable reason and cannot carry
+a value. A stale fact retains its last observed value and provenance but also
+requires the reason it is unusable. A conflicting fact carries no selected
+fact value, requires at least two retained candidates, and requires a typed
+precedence decision. Therefore missing evidence cannot enter the model as
+confirmed numeric zero.
+
+The fingerprint covers stable character identity, candidate-universe state,
+all source and rule versions, typed fact semantics, retained conflict values,
+precedence decisions, and stable diagnostic identities. It deliberately
+excludes localized display text, filesystem paths, reason and diagnostic
+detail, and capture timestamps. Stable identity inputs reject path separators
+so a local source path cannot accidentally become semantic profile identity.
+
+These contracts depend only on the .NET base class libraries. They have no
+reference to Application, Infrastructure, Presentation, persistence,
+filesystem, process, reflection, or installed GameData types.
 
 ## Source-field matrix
 

@@ -221,7 +221,7 @@ indicators, and responsive interaction states before adding public contracts.
 
 ### E6-002 — Add immutable companion-candidate profile contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -235,24 +235,24 @@ conflicts, unavailable reasons, diagnostics, and deterministic fingerprints.
 
 #### Acceptance criteria
 
-- [ ] Candidate identity uses a stable language-independent character identity;
+- [x] Candidate identity uses a stable language-independent character identity;
       display text remains separate.
-- [ ] Candidate-universe and availability states cannot be inferred from name,
+- [x] Candidate-universe and availability states cannot be inferred from name,
       age, location, or target-lookup membership.
-- [ ] Each profile fact has a stable field identity, typed value, provenance,
+- [x] Each profile fact has a stable field identity, typed value, provenance,
       evidence state, source version, and optional unavailable reason.
-- [ ] Confirmed, incomplete, unsupported, stale, and conflicting evidence have
+- [x] Confirmed, incomplete, unsupported, stale, and conflicting evidence have
       explicit invariants.
-- [ ] Missing evidence cannot construct a confirmed fact or a zero value.
-- [ ] Source conflicts retain every candidate value and precedence decision.
-- [ ] Collections copy into immutable values with stable ordering and reject
+- [x] Missing evidence cannot construct a confirmed fact or a zero value.
+- [x] Source conflicts retain every candidate value and precedence decision.
+- [x] Collections copy into immutable values with stable ordering and reject
       nulls, duplicates, invalid enums, blank identities, and incompatible
       evidence.
-- [ ] A profile fingerprint includes semantic facts and source or rule versions
+- [x] A profile fingerprint includes semantic facts and source or rule versions
       but excludes localized text, local paths, and irrelevant timestamps.
-- [ ] Domain types have no Application, Infrastructure, Presentation,
+- [x] Domain types have no Application, Infrastructure, Presentation,
       persistence, filesystem, process, reflection, or GameData dependencies.
-- [ ] Unit tests cover valid, empty, duplicate, incomplete, unsupported, stale,
+- [x] Unit tests cover valid, empty, duplicate, incomplete, unsupported, stale,
       conflicting, and deterministic-fingerprint cases.
 
 #### Evidence when complete
@@ -260,6 +260,23 @@ conflicts, unavailable reasons, diagnostics, and deterministic fingerprints.
 - `src/TaiWu.Domain/CompanionCandidates/` immutable contracts.
 - `tests/TaiWu.Domain.UnitTests/CompanionCandidates/` invariant tests.
 - Updated `docs/architecture/COMPANION-CANDIDATE-SOURCES.md`.
+
+#### Completion evidence
+
+- The Domain contract uses stable numeric candidate identity, typed field and
+  discipline identities, a closed typed fact-value union, explicit universe
+  and evidence states, versioned provenance, retained conflict candidates,
+  unavailable reasons, and typed diagnostics.
+- Confirmed, incomplete, unsupported, stale, and conflicting factories enforce
+  mutually exclusive state invariants. A missing fact has no value, while a
+  confirmed zero remains a real typed value.
+- Profiles and nested evidence collections defensively copy, reject null or
+  duplicate semantic identities, and sort canonically before fingerprinting.
+- The semantic fingerprint includes saved identity, universe state, source and
+  mapping versions, facts, conflict decisions, and diagnostics while excluding
+  localized text, filesystem paths, free-form detail, and timestamps.
+- Fifteen focused contract tests pass inside the 436-test Domain suite and the
+  dependency-free `TaiWu.Domain` project builds with zero warnings.
 
 ### E6-003 — Define versioned role definitions and evaluation rules
 
