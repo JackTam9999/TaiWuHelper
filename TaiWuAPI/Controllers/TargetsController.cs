@@ -21,8 +21,8 @@ public sealed class TargetsController(
     public async Task<ActionResult<TargetLookupResponse>> Find(
         [FromQuery] string? query,
         [FromQuery] int maxResults = 25,
-        CancellationToken cancellationToken = default,
-        [FromQuery] TaiwuLanguage language = TaiwuLanguage.English)
+        [FromQuery] TaiwuLanguage language = TaiwuLanguage.English,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {

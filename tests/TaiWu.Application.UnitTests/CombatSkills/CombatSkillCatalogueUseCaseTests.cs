@@ -237,8 +237,8 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 Arg.Any<CombatSkillCatalogueSourceIdentity>(),
                 Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
                 Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
-                Arg.Any<CancellationToken>(),
-                Arg.Any<IReadOnlyList<LegendaryBookEffectDefinition>>())
+                Arg.Any<IReadOnlyList<LegendaryBookEffectDefinition>>(),
+                Arg.Any<CancellationToken>())
             .Returns(CatalogueReplaceResult.Success());
         var installed = CombatSkillDefinitionSourceResult.Available(
             CurrentIdentity,
@@ -256,11 +256,11 @@ public sealed class CombatSkillCatalogueUseCaseTests
             CurrentIdentity,
             Arg.Any<IReadOnlyList<CombatSkillDefinition>>(),
             Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
-            CancellationToken,
             Arg.Is<IReadOnlyList<LegendaryBookEffectDefinition>>(values =>
                 values != null
                 && values.Count == 1
-                && values[0].EffectId == 83));
+                && values[0].EffectId == 83),
+            CancellationToken);
     }
 
     [Fact]

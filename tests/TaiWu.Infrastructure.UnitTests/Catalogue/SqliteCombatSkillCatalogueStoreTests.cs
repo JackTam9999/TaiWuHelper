@@ -34,8 +34,8 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
             Identity,
             [Definition(1, "First", CombatSkillDiscipline.Blade)],
             diagnostics: [],
-            CancellationToken,
-            [effect]);
+            [effect],
+            CancellationToken);
         var repository = (ILegendaryBookEffectCatalogueRepository)store;
         var all = await repository.QueryAsync(CancellationToken);
         var loaded = await repository.GetAsync(83, CancellationToken);
@@ -538,8 +538,8 @@ public sealed class SqliteCombatSkillCatalogueStoreTests
             Identity,
             [Definition(1, "One", CombatSkillDiscipline.Finger)],
             diagnostics: [],
-            CancellationToken,
-            [LegendaryBookEffect(83)])).Succeeded);
+            [LegendaryBookEffect(83)],
+            CancellationToken)).Succeeded);
         await ExecuteAsync(
             fixture.Provider.DatabasePath,
             "UPDATE catalogue_manifest SET legendary_book_effect_count = 2;");

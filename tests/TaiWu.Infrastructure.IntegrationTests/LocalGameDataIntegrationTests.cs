@@ -218,8 +218,8 @@ public sealed class LocalGameDataIntegrationTests
                     first.SourceIdentity,
                     first.Definitions,
                     first.Diagnostics,
-                    TestContext.Current.CancellationToken,
-                    first.LegendaryBookEffects)).Succeeded);
+                    first.LegendaryBookEffects,
+                    TestContext.Current.CancellationToken)).Succeeded);
                 var firstStored = await store.QueryAsync(
                     new CombatSkillCatalogueFilter(),
                     TestContext.Current.CancellationToken);
@@ -232,8 +232,8 @@ public sealed class LocalGameDataIntegrationTests
                     second.SourceIdentity!,
                     second.Definitions,
                     second.Diagnostics,
-                    TestContext.Current.CancellationToken,
-                    second.LegendaryBookEffects)).Succeeded);
+                    second.LegendaryBookEffects,
+                    TestContext.Current.CancellationToken)).Succeeded);
                 var secondStored = await store.QueryAsync(
                     new CombatSkillCatalogueFilter(),
                     TestContext.Current.CancellationToken);
@@ -334,8 +334,8 @@ public sealed class LocalGameDataIntegrationTests
                 imported.SourceIdentity!,
                 imported.Definitions,
                 imported.Diagnostics,
-                TestContext.Current.CancellationToken,
-                imported.LegendaryBookEffects)).Succeeded);
+                imported.LegendaryBookEffects,
+                TestContext.Current.CancellationToken)).Succeeded);
 
             var useCase = new ReadCharacterCombatSkillAtlas(
                 source,

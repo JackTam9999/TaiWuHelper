@@ -27,8 +27,8 @@ public sealed class TargetsControllerTests
         var action = await controller.Find(
             "何",
             maxResults: 25,
-            cancellationToken,
-            TaiwuLanguage.Chinese);
+            TaiwuLanguage.Chinese,
+            cancellationToken);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
         var response = Assert.IsType<TargetLookupResponse>(ok.Value);
@@ -69,8 +69,8 @@ public sealed class TargetsControllerTests
         var action = await controller.Find(
             "邋遢道長",
             maxResults: 25,
-            TestContext.Current.CancellationToken,
-            TaiwuLanguage.Chinese);
+            TaiwuLanguage.Chinese,
+            TestContext.Current.CancellationToken);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
         var response = Assert.IsType<TargetLookupResponse>(ok.Value);
@@ -92,7 +92,7 @@ public sealed class TargetsControllerTests
         var action = await controller.Find(
             query,
             maxResults: 25,
-            TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var problem = Assert.IsType<ObjectResult>(action.Result);
         Assert.Equal(400, problem.StatusCode);
@@ -108,7 +108,7 @@ public sealed class TargetsControllerTests
         var action = await controller.Find(
             "何",
             maxResults: 0,
-            TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var problem = Assert.IsType<ObjectResult>(action.Result);
         Assert.Equal(400, problem.StatusCode);
@@ -130,7 +130,7 @@ public sealed class TargetsControllerTests
         var action = await controller.Find(
             "何",
             maxResults: 25,
-            TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var problem = Assert.IsType<ObjectResult>(action.Result);
         Assert.Equal(400, problem.StatusCode);

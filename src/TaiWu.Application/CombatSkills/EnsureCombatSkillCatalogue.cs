@@ -99,8 +99,8 @@ public sealed class EnsureCombatSkillCatalogue(
                         identity,
                         installed.Definitions,
                         installed.Diagnostics,
-                        cancellationToken,
-                        installed.LegendaryBookEffects)
+                        installed.LegendaryBookEffects,
+                        cancellationToken)
                     .ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

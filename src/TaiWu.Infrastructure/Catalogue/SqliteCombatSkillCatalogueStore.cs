@@ -302,17 +302,29 @@ internal sealed class SqliteCombatSkillCatalogueStore(
         return values.SingleOrDefault();
     }
 
+    public Task<CatalogueReplaceResult> ReplaceAsync(
+        CombatSkillCatalogueSourceIdentity sourceIdentity,
+        IReadOnlyList<CombatSkillDefinition> definitions,
+        IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
+        CancellationToken cancellationToken = default) => ReplaceAsync(
+            sourceIdentity,
+            definitions,
+            diagnostics,
+            [],
+            cancellationToken);
+
     public async Task<CatalogueReplaceResult> ReplaceAsync(
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IReadOnlyList<CombatSkillDefinition> definitions,
         IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
-        CancellationToken cancellationToken = default,
-        IReadOnlyList<LegendaryBookEffectDefinition>? legendaryBookEffects = null)
+        IReadOnlyList<LegendaryBookEffectDefinition> legendaryBookEffects,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sourceIdentity);
         ArgumentNullException.ThrowIfNull(definitions);
         ArgumentNullException.ThrowIfNull(diagnostics);
-        var effectValues = legendaryBookEffects ?? [];
+        ArgumentNullException.ThrowIfNull(legendaryBookEffects);
+        var effectValues = legendaryBookEffects;
         var validationFailure = ValidateReplacement(
             definitions,
             diagnostics,

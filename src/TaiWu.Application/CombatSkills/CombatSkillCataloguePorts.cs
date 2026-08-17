@@ -34,8 +34,14 @@ public interface ICombatSkillCatalogueRepository
         CombatSkillCatalogueSourceIdentity sourceIdentity,
         IReadOnlyList<CombatSkillDefinition> definitions,
         IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
-        CancellationToken cancellationToken = default,
-        IReadOnlyList<LegendaryBookEffectDefinition>? legendaryBookEffects = null);
+        CancellationToken cancellationToken = default);
+
+    Task<CatalogueReplaceResult> ReplaceAsync(
+        CombatSkillCatalogueSourceIdentity sourceIdentity,
+        IReadOnlyList<CombatSkillDefinition> definitions,
+        IReadOnlyList<CombatSkillImportDiagnostic> diagnostics,
+        IReadOnlyList<LegendaryBookEffectDefinition> legendaryBookEffects,
+        CancellationToken cancellationToken = default);
 }
 
 public interface ILegendaryBookEffectCatalogueRepository
