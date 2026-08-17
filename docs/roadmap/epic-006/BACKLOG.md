@@ -280,7 +280,7 @@ conflicts, unavailable reasons, diagnostics, and deterministic fingerprints.
 
 ### E6-003 — Define versioned role definitions and evaluation rules
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -294,23 +294,23 @@ scored dimensions, normalization, weighting, and tie breaking explicit.
 
 #### Acceptance criteria
 
-- [ ] Role identity and rule version are stable and non-localized.
-- [ ] Each role declares supported profile and GameData versions.
-- [ ] Candidate-universe eligibility is evaluated before role hard
+- [x] Role identity and rule version are stable and non-localized.
+- [x] Each role declares supported profile and GameData versions.
+- [x] Candidate-universe eligibility is evaluated before role hard
       requirements, and hard requirements are evaluated before scoring.
-- [ ] Every rule references typed verified fields rather than display text or
+- [x] Every rule references typed verified fields rather than display text or
       raw descriptions.
-- [ ] Each scored dimension defines its unit, direction, normalization range,
+- [x] Each scored dimension defines its unit, direction, normalization range,
       weight, missing-evidence behavior, and explanation identity.
-- [ ] Weights and normalization cannot hide a failed hard requirement.
-- [ ] Total scores remain role-local and retain all component values and
+- [x] Weights and normalization cannot hide a failed hard requirement.
+- [x] Total scores remain role-local and retain all component values and
       evidence references.
-- [ ] Tie breakers use stable semantic facts and never localized text or source
+- [x] Tie breakers use stable semantic facts and never localized text or source
       enumeration order.
-- [ ] Unsupported role or source versions fail closed with typed diagnostics.
-- [ ] At least two verified role definitions demonstrate different hard
+- [x] Unsupported role or source versions fail closed with typed diagnostics.
+- [x] At least two verified role definitions demonstrate different hard
       requirements or score tradeoffs over shared candidate profiles.
-- [ ] Unit tests cover valid definitions, invalid weights, missing fields,
+- [x] Unit tests cover valid definitions, invalid weights, missing fields,
       failed gates, unsupported versions, exact ties, and deterministic rule
       identity.
 
@@ -319,6 +319,25 @@ scored dimensions, normalization, weighting, and tie breaking explicit.
 - `src/TaiWu.Domain/CompanionRoles/` definitions and rule contracts.
 - `tests/TaiWu.Domain.UnitTests/CompanionRoles/` invariant tests.
 - `docs/architecture/COMPANION-ROLE-EVALUATION.md`.
+
+#### Completion evidence
+
+- The immutable definition model exposes stable role and rule versions,
+  supported source versions, typed discipline bounds, ordered hard gates,
+  complete score-dimension semantics, exact tie policy, and a deterministic
+  rule fingerprint.
+- The verified catalogue resolves unknown identities and unsupported role
+  versions as typed fail-closed results. Its martial and life-skill roles use
+  different approved typed fields over the same candidate-profile contract.
+- The pure single-profile evaluator stops on the first non-passing universe,
+  source, discipline, evidence, or provenance gate. Only complete compatible
+  facts create components and a role-local total.
+- Score components retain raw and normalized values, direction, weight,
+  contribution, explanation identity, and evidence. Exact equal totals remain
+  ties; candidate ID and localized text never change merit.
+- Twenty-two focused test cases (including a four-case evidence-state theory) pass
+  inside the 458-test Domain suite with deterministic definition and
+  evaluation fingerprints.
 
 ## Slice 3: One-pass source projection
 

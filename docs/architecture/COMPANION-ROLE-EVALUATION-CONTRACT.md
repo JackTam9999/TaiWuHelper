@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted — implementation planned |
+| Status | Accepted — Domain rules implemented; shortlist planned |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
 | Backlog item | [E6-001](../roadmap/epic-006/BACKLOG.md#e6-001--define-role-evaluation-shortlist-and-ui-semantics) |
 | Evidence boundary | [Companion-candidate sources](./COMPANION-CANDIDATE-SOURCES.md) |
