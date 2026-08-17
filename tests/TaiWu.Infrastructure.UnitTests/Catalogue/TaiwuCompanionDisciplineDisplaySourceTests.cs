@@ -1,8 +1,7 @@
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text;
 using TaiWu.Application.CompanionCandidates;
 using TaiWu.Domain.CompanionCandidates;
-using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
 using Xunit;
 

@@ -12,7 +12,6 @@ using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.LoadoutComparisons;
 using TaiWu.Domain.TargetPlaybooks;
 using TaiWu.Domain.TargetProfiles;
-using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
 using Xunit;
 

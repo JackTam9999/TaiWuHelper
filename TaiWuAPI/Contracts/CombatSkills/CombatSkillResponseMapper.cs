@@ -1,6 +1,5 @@
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSkills;
-using TaiWu.Domain.CombatSnapshots;
 
 namespace TaiWuAPI.Contracts.CombatSkills;
 

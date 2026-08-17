@@ -1,6 +1,5 @@
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.Localization;
-using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.TargetArchetypes;
 using TaiWu.Domain.TargetPlaybookComposition;

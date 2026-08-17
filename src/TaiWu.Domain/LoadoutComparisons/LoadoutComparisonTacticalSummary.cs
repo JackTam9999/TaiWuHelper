@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using TaiWu.Domain.CombatRecommendations;
 
 namespace TaiWu.Domain.LoadoutComparisons;
 

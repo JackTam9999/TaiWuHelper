@@ -1,9 +1,9 @@
-using TaiWu.Application.CompanionCandidates;
+using TaiWu.API.UnitTests.Controllers;
 using TaiWu.Application.CombatSkills;
+using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
-using TaiWu.API.UnitTests.Controllers;
 using TaiWuAPI.Localization;
 using TaiWuAPI.Presentation;
 using Xunit;

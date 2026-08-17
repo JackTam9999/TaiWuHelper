@@ -8,7 +8,6 @@ using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.LoadoutComparisons;
 using TaiWu.Domain.TargetArchetypes;
-using TaiWu.Domain.TargetPlaybookComposition;
 using TaiWuAPI.Presentation;
 using Xunit;
 

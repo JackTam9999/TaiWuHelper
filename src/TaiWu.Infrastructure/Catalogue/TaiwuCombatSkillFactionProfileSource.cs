@@ -1,7 +1,7 @@
-using GameBehaviorType = GameData.Domains.Character.BehaviorType;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
+using GameBehaviorType = GameData.Domains.Character.BehaviorType;
 
 namespace TaiWu.Infrastructure.Catalogue;
 

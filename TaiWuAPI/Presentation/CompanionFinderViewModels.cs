@@ -1,5 +1,5 @@
-using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.CombatSkills;
+using TaiWu.Application.CompanionCandidates;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
 

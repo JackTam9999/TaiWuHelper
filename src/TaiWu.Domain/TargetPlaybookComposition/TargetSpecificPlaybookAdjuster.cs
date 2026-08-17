@@ -1,7 +1,5 @@
-using TaiWu.Domain.CombatThreats;
 using TaiWu.Domain.TargetArchetypes;
 using TaiWu.Domain.TargetPlaybooks;
-using TaiWu.Domain.TargetProfiles;
 
 namespace TaiWu.Domain.TargetPlaybookComposition;
 

@@ -1,5 +1,5 @@
-using System.Reflection;
 using NSubstitute;
+using System.Reflection;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.LoadoutComparisons;
@@ -7,8 +7,8 @@ using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
-using TaiWu.Domain.LoadoutComparisons;
 using TaiWu.Domain.CombatThreats;
+using TaiWu.Domain.LoadoutComparisons;
 using Xunit;
 
 namespace TaiWu.Application.UnitTests.LoadoutComparisons;

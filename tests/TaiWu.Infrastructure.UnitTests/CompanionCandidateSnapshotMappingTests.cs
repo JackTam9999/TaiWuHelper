@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using TaiWu.Application.CompanionCandidates;
 using TaiWu.Domain.CompanionCandidates;
-using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.SaveGames;
 using Xunit;
 

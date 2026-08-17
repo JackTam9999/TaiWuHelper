@@ -1,6 +1,6 @@
+using NSubstitute;
 using System.Reflection;
 using System.Text.Json;
-using NSubstitute;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.Localization;

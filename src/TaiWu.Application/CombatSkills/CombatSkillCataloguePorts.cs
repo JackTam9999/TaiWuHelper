@@ -1,6 +1,6 @@
+using TaiWu.Application.GameData;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
-using TaiWu.Application.GameData;
 using TaiWu.Domain.LegendaryBooks;
 
 namespace TaiWu.Application.CombatSkills;

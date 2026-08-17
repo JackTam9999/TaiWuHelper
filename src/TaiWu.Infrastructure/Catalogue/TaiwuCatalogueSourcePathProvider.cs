@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace TaiWu.Infrastructure.Catalogue;
 
 internal sealed record TaiwuCatalogueSourcePaths(
