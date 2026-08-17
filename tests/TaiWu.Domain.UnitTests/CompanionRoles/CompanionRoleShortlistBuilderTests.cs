@@ -135,6 +135,59 @@ public sealed class CompanionRoleShortlistBuilderTests
             item => Assert.Equal(CompanionRoleCandidateRankingState.Ranked, item.State));
     }
 
+    [Theory]
+    [InlineData(CandidateDisciplineDomain.Martial)]
+    [InlineData(CandidateDisciplineDomain.LifeSkill)]
+    public void Every_verified_role_covers_the_complete_synthetic_state_matrix(
+        CandidateDisciplineDomain domain)
+    {
+        var definition = domain == CandidateDisciplineDomain.Martial
+            ? VerifiedCompanionRoleDefinitions.MartialDisciplineAptitude
+            : VerifiedCompanionRoleDefinitions.LifeSkillDisciplineAptitude;
+        var discipline = new CandidateDisciplineIdentity(domain, 0);
+        var profiles = new[]
+        {
+            Profile(1, CandidateUniverseState.Eligible, [ScoreFact(domain, 90)]),
+            Profile(2, CandidateUniverseState.Ineligible, [ScoreFact(domain, 99)]),
+            Profile(3, CandidateUniverseState.Eligible, []),
+            Profile(4, CandidateUniverseState.Eligible, [UnsupportedScoreFact(domain)]),
+            Profile(5, CandidateUniverseState.Eligible, [ScoreFact(domain, 80, OtherSha)]),
+            Profile(6, CandidateUniverseState.Eligible, [ScoreFact(domain, 70)]),
+            Profile(7, CandidateUniverseState.Eligible, [ScoreFact(domain, 70)])
+        };
+
+        var result = Build(definition, discipline, profiles);
+        var reordered = Build(definition, discipline, profiles.Reverse().ToArray());
+
+        Assert.Equal(7, result.CandidateCount);
+        Assert.Equal(
+            [
+                CompanionRoleCandidateRankingState.Ranked,
+                CompanionRoleCandidateRankingState.Ineligible,
+                CompanionRoleCandidateRankingState.Incomplete,
+                CompanionRoleCandidateRankingState.Unsupported,
+                CompanionRoleCandidateRankingState.Conflicting,
+                CompanionRoleCandidateRankingState.Tied,
+                CompanionRoleCandidateRankingState.Tied
+            ],
+            profiles.Select(profile => result.Candidates.Single(candidate =>
+                candidate.Evaluation.Profile.Identity == profile.Identity).State));
+        Assert.Equal([1, 6, 7], CandidateIds(result.RankedCandidates));
+        Assert.Equal([1, 2, 2], result.RankedCandidates.Select(candidate =>
+            candidate.CompetitionRank));
+        Assert.Equal(result.Fingerprint, reordered.Fingerprint);
+        Assert.Equal(CandidateIds(result.Candidates), CandidateIds(reordered.Candidates));
+        Assert.Equal(
+            result.Candidates.Select(candidate => candidate.Evaluation.Fingerprint),
+            reordered.Candidates.Select(candidate => candidate.Evaluation.Fingerprint));
+        Assert.All(result.UnrankedCandidates, candidate =>
+        {
+            Assert.Null(candidate.CompetitionRank);
+            Assert.Null(candidate.Evaluation.TotalScore);
+            Assert.Empty(candidate.Evaluation.Components);
+        });
+    }
+
     [Fact]
     public void Component_retains_rule_evidence_arithmetic_and_explanation()
     {
@@ -383,6 +436,27 @@ public sealed class CompanionRoleShortlistBuilderTests
             SaveProvenance(Sha),
             [Evidence()]);
 
+    private static CandidateProfileFact ScoreFact(
+        CandidateDisciplineDomain domain,
+        short value,
+        string revision = Sha) => domain switch
+        {
+            CandidateDisciplineDomain.Martial => MartialFact(
+                value,
+                revision: revision),
+            CandidateDisciplineDomain.LifeSkill => CandidateProfileFact.Confirmed(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseLifeSkillQualification,
+                    new CandidateDisciplineIdentity(domain, 0)),
+                CandidateFactValue.Int16(value),
+                SaveProvenance(revision),
+                [Evidence(revision)]),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(domain),
+                domain,
+                "Unknown discipline domain.")
+        };
+
     private static CandidateProfileFact UnsupportedMartialFact() =>
         CandidateProfileFact.Unsupported(
             new CandidateProfileFieldIdentity(
@@ -392,6 +466,18 @@ public sealed class CompanionRoleShortlistBuilderTests
                 "BASE_MARTIAL_QUALIFICATION_UNSUPPORTED",
                 "Synthetic unsupported evidence for a Domain test."),
             []);
+
+    private static CandidateProfileFact UnsupportedScoreFact(
+        CandidateDisciplineDomain domain) => CandidateProfileFact.Unsupported(
+        new CandidateProfileFieldIdentity(
+            domain == CandidateDisciplineDomain.Martial
+                ? CandidateProfileField.BaseMartialQualification
+                : CandidateProfileField.BaseLifeSkillQualification,
+            new CandidateDisciplineIdentity(domain, 0)),
+        new CandidateUnavailableReason(
+            "BASE_QUALIFICATION_UNSUPPORTED",
+            "Synthetic unsupported evidence for a Domain test."),
+        []);
 
     private static CandidateDisciplineIdentity MartialDiscipline(short type = 0) => new(
         CandidateDisciplineDomain.Martial,

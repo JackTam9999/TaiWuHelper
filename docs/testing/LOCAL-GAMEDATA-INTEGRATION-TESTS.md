@@ -117,3 +117,20 @@ language source unchanged.
 
 Build output can contain local runtime copies required by GameData. Those files
 remain ignored, are never publish items, and must never be committed.
+
+## Epic 6 companion finder
+
+E6-011 verifies the snapshot, enrichment, and complete two-role finder against
+the current configured save without recording its path or contents:
+
+```powershell
+$env:TAIWU_INTEGRATION_SAVE_PATH = '<path-to-current-local.sav>'
+dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.IntegrationTests.csproj -c Release --no-restore -- --filter-class '*CompanionCandidateSnapshotIntegrationTests*'
+```
+
+The three tests enforce the 30-second cold and 2-second warm budgets, repeat
+both verified role families, and compare the save, runtime, catalogue, combat,
+special-effect, legendary-book, and discipline-language source fingerprints
+before and after. They never print a path, hash, candidate identity, or exact
+candidate value. The non-proprietary outcome is recorded in
+[`E6-011-automated-verification.md`](../reviews/E6-011-automated-verification.md).

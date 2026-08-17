@@ -813,7 +813,7 @@ reasons without introducing a second evaluation path in Presentation.
 
 ### E6-011 — Verify safety, batching, determinism, and cross-layer parity
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -826,30 +826,30 @@ architecture rules, performance checks, and guarded read-only local scenarios.
 
 #### Acceptance criteria
 
-- [ ] Domain tests cover every candidate, eligibility, evidence, hard-gate,
+- [x] Domain tests cover every candidate, eligibility, evidence, hard-gate,
       score, tie, exclusion, comparison, and fingerprint invariant.
-- [ ] Each delivered role has synthetic positive, negative, incomplete,
+- [x] Each delivered role has synthetic positive, negative, incomplete,
       unsupported, conflicting, and tied cases.
-- [ ] Application tests prove one coherent revision and deterministic rebuild
+- [x] Application tests prove one coherent revision and deterministic rebuild
       after a revision change.
-- [ ] Infrastructure tests prove one bounded archive projection rather than an
+- [x] Infrastructure tests prove one bounded archive projection rather than an
       archive open per candidate.
-- [ ] API and Presentation tests prove parity with the immutable Application
+- [x] API and Presentation tests prove parity with the immutable Application
       result and no re-ranking.
-- [ ] English and Traditional Chinese states contain equivalent facts and
+- [x] English and Traditional Chinese states contain equivalent facts and
       accessible names.
-- [ ] Performance verification meets the cold and warm budgets selected by
+- [x] Performance verification meets the cold and warm budgets selected by
       E6-000 for the representative candidate universe.
-- [ ] Repeated and reordered synthetic inputs produce equivalent evaluations,
+- [x] Repeated and reordered synthetic inputs produce equivalent evaluations,
       ties, shortlist ordering, comparisons, diagnostics, and fingerprints.
-- [ ] Architecture tests forbid mutation-capable GameData dependencies,
+- [x] Architecture tests forbid mutation-capable GameData dependencies,
       persistence, process access, screenshot handling, automation, or input
       control in the Epic 6 vertical.
-- [ ] Guarded local verification records save and installed-source fingerprints
+- [x] Guarded local verification records save and installed-source fingerprints
       before and after every read scenario and reports no changes.
-- [ ] Release build, default test matrix, formatter verification, Markdown link
+- [x] Release build, default test matrix, formatter verification, Markdown link
       validation, and `git diff --check` pass.
-- [ ] Every Epic 6 acceptance criterion maps to implementation or evidence.
+- [x] Every Epic 6 acceptance criterion maps to implementation or evidence.
 
 #### Evidence when complete
 
@@ -857,6 +857,17 @@ architecture rules, performance checks, and guarded read-only local scenarios.
 - Automated test suites and guarded integration results.
 - Performance and non-interference evidence without proprietary data or local
   paths.
+
+#### Completion evidence
+
+- [Automated verification and Epic traceability](../../reviews/E6-011-automated-verification.md).
+- Two-role Domain state matrix covering positive, ineligible, incomplete,
+  unsupported, conflicting, and tied candidates under reordered inputs.
+- Three guarded Release integration scenarios, including two repeated complete
+  role workflows and all installed discipline-language sources; every guarded
+  save/runtime/source file remained byte-for-byte unchanged.
+- Release build with zero warnings/errors, 1,223 default tests, formatter and
+  link checks, architecture capability scans, and clean diff validation.
 
 ### E6-012 — Validate representative roles and close Epic 6
 

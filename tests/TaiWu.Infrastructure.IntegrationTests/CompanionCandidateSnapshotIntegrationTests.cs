@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CompanionCandidates;
+using TaiWu.Domain.CompanionRoles;
 using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
 using Xunit;
@@ -177,6 +178,180 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
             first.Candidates.Sum(candidate => candidate.CombatSkills.Length),
             guardedPaths.Length);
     }
+
+    [Fact]
+    public async Task Companion_finder_roles_are_repeatable_bounded_and_read_only()
+    {
+        var savePath = RequireSavePath();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SaveGames:DefaultSaveFilePath"] = savePath
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddTaiwuInfrastructure();
+        using var provider = services.BuildServiceProvider();
+        var paths = provider
+            .GetRequiredService<ITaiwuCatalogueSourcePathProvider>()
+            .Resolve()
+            .Paths;
+        Assert.NotNull(paths);
+        var traditionalDirectory = Path.GetDirectoryName(
+            paths.TraditionalChineseCombatSkillLanguage)!;
+        var englishDirectory = Path.GetDirectoryName(
+            paths.EnglishCombatSkillLanguage)!;
+        var guardedPaths = new[]
+            {
+                savePath,
+                Path.Combine(AppContext.BaseDirectory, "GameData.dll"),
+                Path.Combine(AppContext.BaseDirectory, "GameData.Shared.dll"),
+                paths.GameDataConfigurationAssembly,
+                paths.TraditionalChineseCombatSkillLanguage,
+                paths.EnglishCombatSkillLanguage,
+                paths.TraditionalChineseSpecialEffectLanguage,
+                paths.EnglishSpecialEffectLanguage,
+                paths.TraditionalChineseLegendaryBookSlotLanguage,
+                paths.EnglishLegendaryBookSlotLanguage,
+                Path.Combine(traditionalDirectory, "CombatSkillType_language.txt"),
+                Path.Combine(englishDirectory, "CombatSkillType_language.txt"),
+                Path.Combine(traditionalDirectory, "LifeSkillType_language.txt"),
+                Path.Combine(englishDirectory, "LifeSkillType_language.txt")
+            }
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        Assert.All(guardedPaths, path => Assert.True(File.Exists(path)));
+        var before = await CaptureAsync(guardedPaths);
+
+        try
+        {
+            var displaySource = provider
+                .GetRequiredService<ICompanionDisciplineDisplaySource>();
+            var display = await displaySource.ReadAsync(
+                TestContext.Current.CancellationToken);
+            Assert.True(display.Status is CompanionDisciplineDisplayStatus.Complete
+                or CompanionDisciplineDisplayStatus.Partial);
+            Assert.Equal(30, display.Disciplines.Length);
+            Assert.All(display.Disciplines, value =>
+            {
+                Assert.NotNull(value.TraditionalChineseName);
+                Assert.NotNull(value.EnglishName);
+            });
+
+            var workflow = new FindCompanionCandidates(
+                provider.GetRequiredService<ICompanionCandidateSnapshotReader>(),
+                provider.GetRequiredService<ICombatSkillDefinitionSource>(),
+                provider.GetRequiredService<ICombatSkillCatalogueRepository>());
+            var martialRequest = new CompanionFinderRequest(
+                "MARTIAL_DISCIPLINE_APTITUDE",
+                "1",
+                CandidateDisciplineDomain.Martial,
+                0);
+            var lifeRequest = new CompanionFinderRequest(
+                "LIFE_SKILL_DISCIPLINE_APTITUDE",
+                "1",
+                CandidateDisciplineDomain.LifeSkill,
+                0);
+
+            var coldWatch = Stopwatch.StartNew();
+            var firstMartial = await workflow.ExecuteAsync(
+                martialRequest,
+                TestContext.Current.CancellationToken);
+            coldWatch.Stop();
+            var warmMartialWatch = Stopwatch.StartNew();
+            var secondMartial = await workflow.ExecuteAsync(
+                martialRequest,
+                TestContext.Current.CancellationToken);
+            warmMartialWatch.Stop();
+            var firstLifeWatch = Stopwatch.StartNew();
+            var firstLife = await workflow.ExecuteAsync(
+                lifeRequest,
+                TestContext.Current.CancellationToken);
+            firstLifeWatch.Stop();
+            var secondLifeWatch = Stopwatch.StartNew();
+            var secondLife = await workflow.ExecuteAsync(
+                lifeRequest,
+                TestContext.Current.CancellationToken);
+            secondLifeWatch.Stop();
+
+            AssertAuthoritative(firstMartial, CandidateDisciplineDomain.Martial);
+            AssertAuthoritative(secondMartial, CandidateDisciplineDomain.Martial);
+            AssertAuthoritative(firstLife, CandidateDisciplineDomain.LifeSkill);
+            AssertAuthoritative(secondLife, CandidateDisciplineDomain.LifeSkill);
+            Assert.Equal(firstMartial.Fingerprint, secondMartial.Fingerprint);
+            Assert.Equal(firstLife.Fingerprint, secondLife.Fingerprint);
+            Assert.Equal(
+                firstMartial.SourceIdentity!.CandidateSourceVersions.SaveSha256,
+                firstLife.SourceIdentity!.CandidateSourceVersions.SaveSha256);
+            Assert.Equal(
+                DisplaySignatures(firstMartial.Snapshot!),
+                DisplaySignatures(secondMartial.Snapshot!));
+            Assert.Equal(
+                DisplaySignatures(firstLife.Snapshot!),
+                DisplaySignatures(secondLife.Snapshot!));
+            Assert.Equal(
+                firstMartial.Shortlist!.Counts.Total,
+                firstLife.Shortlist!.Counts.Total);
+            Assert.True(
+                coldWatch.Elapsed <= TimeSpan.FromSeconds(30),
+                $"Cold companion finder took {coldWatch.Elapsed.TotalSeconds:F3} seconds.");
+            Assert.All(
+                new[]
+                {
+                    warmMartialWatch.Elapsed,
+                    firstLifeWatch.Elapsed,
+                    secondLifeWatch.Elapsed
+                },
+                elapsed => Assert.True(
+                    elapsed <= TimeSpan.FromSeconds(2),
+                    $"Warm companion finder took {elapsed.TotalSeconds:F3} seconds."));
+
+            output.WriteLine(
+                "E6-011 companion finder: martial={0}; life={1}; candidates={2}; "
+                + "disciplines={3}; coldMs={4:F0}; warmMartialMs={5:F0}; "
+                + "warmLifeMs={6:F0}/{7:F0}; guardedFiles={8}.",
+                firstMartial.Status,
+                firstLife.Status,
+                firstMartial.Shortlist.Counts.Total,
+                display.Disciplines.Length,
+                coldWatch.Elapsed.TotalMilliseconds,
+                warmMartialWatch.Elapsed.TotalMilliseconds,
+                firstLifeWatch.Elapsed.TotalMilliseconds,
+                secondLifeWatch.Elapsed.TotalMilliseconds,
+                guardedPaths.Length);
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            Assert.Equal(before, after);
+        }
+    }
+
+    private static void AssertAuthoritative(
+        CompanionFinderResult result,
+        CandidateDisciplineDomain expectedDomain)
+    {
+        Assert.True(result.Status is CompanionFinderStatus.Complete
+            or CompanionFinderStatus.Partial);
+        Assert.True(result.HasAuthoritativeResult);
+        Assert.NotNull(result.Fingerprint);
+        Assert.Equal(expectedDomain, result.SourceIdentity!.Discipline.Domain);
+        Assert.NotEmpty(result.Snapshot!.Profiles);
+        Assert.Equal(result.Snapshot.Profiles.Length, result.Shortlist!.Counts.Total);
+        Assert.Contains(result.Shortlist.Entries, entry => entry.Candidate.IsRanked);
+    }
+
+    private static IEnumerable<(int CharacterId, string? ChineseName,
+        string? EnglishName, string? ChineseLocation, string? EnglishLocation)>
+        DisplaySignatures(CompanionCandidateSnapshot snapshot) =>
+        snapshot.Displays.Select(value => (
+            value.Identity.CharacterId,
+            value.TraditionalChineseName,
+            value.EnglishName,
+            value.TraditionalChineseLocation,
+            value.EnglishLocation));
 
     private static string RequireSavePath()
     {

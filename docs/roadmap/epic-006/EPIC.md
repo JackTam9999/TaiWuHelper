@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Planned |
+| Status | In progress — technical verification complete; product decision pending |
 | Milestone | 6 |
 | Target release | TBD |
 | Last updated | 2026-08-17 |
@@ -382,43 +382,43 @@ The workflow must present these states explicitly:
 
 ## Epic acceptance criteria
 
-- [ ] The supported candidate universe and every eligibility rule are defined
+- [x] The supported candidate universe and every eligibility rule are defined
       by version-matched evidence rather than target-lookup membership.
-- [ ] At least two genuinely different role presets are selected through the
+- [x] At least two genuinely different role presets are selected through the
       evidence gate and approved before implementation.
-- [ ] Every delivered role has stable identity, version, hard requirements,
+- [x] Every delivered role has stable identity, version, hard requirements,
       score semantics, required evidence, weights, and tie breakers.
-- [ ] Candidate identity, eligibility, profile facts, source versions,
+- [x] Candidate identity, eligibility, profile facts, source versions,
       conflicts, diagnostics, and fingerprints are immutable and typed.
-- [ ] Eligibility and hard requirements are evaluated before suitability
+- [x] Eligibility and hard requirements are evaluated before suitability
       scoring.
-- [ ] Missing, stale, unsupported, or conflicting evidence never becomes zero,
+- [x] Missing, stale, unsupported, or conflicting evidence never becomes zero,
       a negative trait, or confirmed ineligibility.
-- [ ] Only comparable candidates enter the ranked shortlist; every omitted or
+- [x] Only comparable candidates enter the ranked shortlist; every omitted or
       unranked candidate has a typed reason when retained.
-- [ ] Every score component and decisive explanation links to verified source
+- [x] Every score component and decisive explanation links to verified source
       evidence and the owning rule version.
-- [ ] Localized names, raw descriptions, and category labels never become
+- [x] Localized names, raw descriptions, and category labels never become
       identity, eligibility rules, or scored mechanics.
-- [ ] Current ability remains distinct from speculative future development.
-- [ ] The candidate source is projected through one bounded archive read and
+- [x] Current ability remains distinct from speculative future development.
+- [x] The candidate source is projected through one bounded archive read and
       does not reopen the archive for each candidate.
-- [ ] Save revision, catalogue version, GameData version, and rule version form
+- [x] Save revision, catalogue version, GameData version, and rule version form
       one coherent immutable result boundary.
-- [ ] Filters and localization do not change score facts, ordering, ties, or
+- [x] Filters and localization do not change score facts, ordering, ties, or
       stable result identity.
-- [ ] API and UI expose equivalent eligibility, evaluation, evidence,
+- [x] API and UI expose equivalent eligibility, evaluation, evidence,
       tradeoff, conflict, and unavailable-state semantics.
-- [ ] Traditional Chinese and English layouts are complete, responsive,
+- [x] Traditional Chinese and English layouts are complete, responsive,
       keyboard accessible, and do not rely on color alone.
-- [ ] Automated tests cover eligible, ineligible, incomplete, unsupported,
+- [x] Automated tests cover eligible, ineligible, incomplete, unsupported,
       conflicting, tied, filtered, stale, and changed-revision states.
-- [ ] Guarded local verification proves every inspected save, GameData,
+- [x] Guarded local verification proves every inspected save, GameData,
       language, and other game-owned source remains byte-for-byte unchanged.
-- [ ] No recruitment, training, movement, equipment, assignment, persistence,
+- [x] No recruitment, training, movement, equipment, assignment, persistence,
       screenshot, process access, input automation, or game-control capability
       is introduced.
-- [ ] Every acceptance criterion links to implementation or verification
+- [x] Every acceptance criterion links to implementation or verification
       evidence.
 - [ ] The product owner records the Epic 6 completion decision.
 
