@@ -1,6 +1,5 @@
 @using TaiWu.Domain.CombatRecommendations
 @using TaiWu.Domain.CombatSnapshots
-@using TaiWu.Domain.CombatThreats
 @using TaiWu.Domain.LoadoutComparisons
 @using TaiWuAPI.Presentation
 
@@ -270,227 +269,10 @@
         </table>
     </div>
 
-    <section class="comparison-tactics"
-             aria-labelledby="comparison-tactics-heading">
-        <div class="comparison-tactics-heading">
-            <div>
-                <p class="eyebrow">@T("Policy-local facts")</p>
-                <h4 id="comparison-tactics-heading">
-                    @T("Threat coverage, requirements, and risks")
-                </h4>
-            </div>
-            <p>@T("Scores rank candidates only inside each policy; they are not win odds.")</p>
-        </div>
-
-        @if (Comparison.SafeUnsupportedMechanics.Count > 0)
-        {
-            <div class="comparison-unsupported" role="note">
-                <strong>@T("Unsupported or excluded mechanics")</strong>
-                <ul>
-                    @foreach (var warning in Comparison.SafeUnsupportedMechanics)
-                    {
-                        <li class="@(warning.IsCritical ? "critical" : null)">
-                            <span aria-hidden="true">!</span>
-                            <div>
-                                <strong>@T(warning.Message)</strong>
-                                <span>@T(warning.EffectOnRecommendation)</span>
-                                <small>
-                                    @warning.EvidenceReferences.Count
-                                    @T("evidence source(s)")
-                                </small>
-                            </div>
-                        </li>
-                    }
-                </ul>
-            </div>
-        }
-
-        <div class="comparison-tactics-grid">
-            @foreach (var column in VisibleColumns.Where(value =>
-                value.Policy == SelectedPolicy))
-            {
-                <article class="@PolicyTacticalClass(column)">
-                    <header>
-                        <div>
-                            <strong>@ColumnLabel(column)</strong>
-                            <small>@ColumnStatusLabel(column)</small>
-                        </div>
-                        @if (column.Tactical is not null)
-                        {
-                            <span>
-                                @column.Tactical.EvidenceReferences.Count
-                                @T("linked evidence facts")
-                            </span>
-                        }
-                    </header>
-
-                    @if (column.Tactical is null)
-                    {
-                        <p class="comparison-diagnostic">
-                            @T(column.Diagnostic ?? "Unavailable")
-                        </p>
-                    }
-                    else
-                    {
-                        var tactical = column.Tactical;
-                        <div class="comparison-role-summary">
-                            <span>
-                                <strong>@T("Active defense")</strong>
-                                @RoleLabel(tactical.ActiveDefense)
-                            </span>
-                            <span>
-                                <strong>@T("Active agility")</strong>
-                                @RoleLabel(tactical.ActiveAgility)
-                            </span>
-                        </div>
-
-                        <div class="comparison-threat-summary">
-                            <section>
-                                <strong>@T("Covered threats")</strong>
-                                @if (tactical.CoveredThreats.Count == 0)
-                                {
-                                    <p>@T("No verified threat is covered by this policy.")</p>
-                                }
-                                else
-                                {
-                                    <ul>
-                                        @foreach (var threat in tactical.CoveredThreats)
-                                        {
-                                            <li>
-                                                <button type="button"
-                                                        @onclick="() => SelectThreatAsync(threat.Reference)">
-                                                    <span>@ThreatCode(threat)</span>
-                                                    <strong>@T(threat.Title)</strong>
-                                                    <small>
-                                                        @SeverityLabel(threat.Severity) ·
-                                                        @threat.EvidenceReferences.Count
-                                                        @T("evidence source(s)")
-                                                    </small>
-                                                </button>
-                                            </li>
-                                        }
-                                    </ul>
-                                }
-                            </section>
-                            <section class="comparison-unresolved">
-                                <strong>@T("Unresolved risks")</strong>
-                                @if (tactical.UnresolvedThreats.Count == 0)
-                                {
-                                    <p>@T("No verified threat remains unresolved.")</p>
-                                }
-                                else
-                                {
-                                    <ul>
-                                        @foreach (var threat in tactical.UnresolvedThreats)
-                                        {
-                                            <li class="@ThreatRiskClass(threat)">
-                                                <button type="button"
-                                                        @onclick="() => SelectThreatAsync(threat.Reference)">
-                                                    <span>@ThreatCode(threat)</span>
-                                                    <strong>@T(threat.Title)</strong>
-                                                    <small>
-                                                        @SeverityLabel(threat.Severity) ·
-                                                        @T("Unresolved")
-                                                    </small>
-                                                </button>
-                                            </li>
-                                        }
-                                    </ul>
-                                }
-                            </section>
-                        </div>
-
-                        <details class="comparison-requirements">
-                            <summary>
-                                @T("Requirements and caveats")
-                                <span>
-                                    @(tactical.Conditions.Count
-                                        + tactical.Caveats.Count)
-                                </span>
-                            </summary>
-                            @if (tactical.Conditions.Count == 0
-                                && tactical.Caveats.Count == 0)
-                            {
-                                <p>@T("No additional requirement or caveat was produced.")</p>
-                            }
-                            else
-                            {
-                                <ul>
-                                    @foreach (var condition in tactical.Conditions)
-                                    {
-                                        <li class="@ConditionClass(condition)">
-                                            <strong>
-                                                @condition.SkillName ·
-                                                @ConditionKindLabel(condition.Kind)
-                                            </strong>
-                                            <span>@ConditionStatusLabel(condition.Status)</span>
-                                            <p>@T(condition.Evaluation)</p>
-                                            <small>1 @T("evidence source(s)")</small>
-                                        </li>
-                                    }
-                                    @foreach (var caveat in tactical.Caveats)
-                                    {
-                                        <li class="comparison-caveat">
-                                            <strong>
-                                                @CaveatKindLabel(caveat.Kind)
-                                                @if (caveat.SkillName is not null)
-                                                {
-                                                    <span> · @caveat.SkillName</span>
-                                                }
-                                            </strong>
-                                            <p>@T(caveat.Explanation)</p>
-                                            <small>
-                                                @caveat.EvidenceReferences.Count
-                                                @T("evidence source(s)")
-                                            </small>
-                                        </li>
-                                    }
-                                </ul>
-                            }
-                        </details>
-
-                        <details class="comparison-policy-scores">
-                            <summary>
-                                @T("Ranking within") @PolicyLabel(tactical.Policy)
-                                <span>@tactical.Scores.Count</span>
-                            </summary>
-                            <p class="comparison-score-boundary">
-                                @T("Scores rank candidates only inside each policy; they are not win odds.")
-                            </p>
-                            <div class="comparison-score-table-wrap">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">@T("Component")</th>
-                                            <th scope="col">@T("Weight")</th>
-                                            <th scope="col">@T("Score")</th>
-                                            <th scope="col">@T("Explanation")</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var score in tactical.Scores)
-                                        {
-                                            <tr>
-                                                <th scope="row">@ScoreKindLabel(score.Kind)</th>
-                                                <td>@score.Weight</td>
-                                                <td>@ScoreLabel(score)</td>
-                                                <td>
-                                                    @T(score.Explanation)
-                                                    <small>
-                                                        1 @T("evidence source(s)")
-                                                    </small>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </details>
-                    }
-                </article>
-            }
-        </div>
-    </section>
+    <LoadoutComparisonTactics Comparison="Comparison"
+                               SelectedPolicy="SelectedPolicy"
+                               ThreatSelected="ThreatSelected"
+                               Language="Language" />
 
     <div class="comparison-legend" role="note"
          aria-label="@T("Comparison status legend")">
@@ -580,9 +362,6 @@
     private Task SelectPolicyAsync(RecommendationPolicy policy) =>
         PolicySelected.InvokeAsync(policy);
 
-    private Task SelectThreatAsync(string reference) =>
-        ThreatSelected.InvokeAsync(reference);
-
     private bool HasDifferenceForPolicy(
         LoadoutComparisonSkillRowViewModel skill,
         RecommendationPolicy policy)
@@ -616,102 +395,6 @@
                     ? "comparison-selected-policy"
                     : "comparison-unselected-policy"));
 
-    private string PolicyTacticalClass(
-        LoadoutComparisonColumnViewModel column) =>
-        "comparison-tactics-card "
-        + (column.Policy == SelectedPolicy
-            ? "comparison-selected-policy"
-            : "comparison-unselected-policy")
-        + (column.Tactical is null ? " unavailable" : null);
-
-    private string RoleLabel(LoadoutComparisonRoleViewModel role) =>
-        role.SkillName is not null
-            ? role.SkillName
-            : T(role.UnavailableReason ?? "Unavailable");
-
-    private static string ThreatCode(
-        LoadoutComparisonThreatViewModel threat) => threat.Code;
-
-    private string SeverityLabel(TargetThreatSeverity severity) =>
-        severity switch
-        {
-            TargetThreatSeverity.Critical => T("Critical"),
-            TargetThreatSeverity.High => T("High"),
-            TargetThreatSeverity.Moderate => T("Moderate"),
-            TargetThreatSeverity.Informational => T("Information only"),
-            _ => T("Unavailable")
-        };
-
-    private static string ThreatRiskClass(
-        LoadoutComparisonThreatViewModel threat) =>
-        threat.Severity == TargetThreatSeverity.Critical
-            ? "critical"
-            : "unresolved";
-
-    private static string ConditionClass(
-        LoadoutComparisonConditionSummaryViewModel condition) =>
-        condition.Status == CombatRequirementStatus.Satisfied
-            ? "satisfied"
-            : condition.Status == CombatRequirementStatus.Unsatisfied
-                ? "unsatisfied"
-                : "unknown";
-
-    private string ConditionStatusLabel(CombatRequirementStatus status) =>
-        status switch
-        {
-            CombatRequirementStatus.Satisfied => T("Satisfied"),
-            CombatRequirementStatus.Unsatisfied => T("Not satisfied"),
-            CombatRequirementStatus.Unknown => T("Unknown"),
-            _ => T("Unavailable")
-        };
-
-    private string ConditionKindLabel(RecommendationConditionKind kind) =>
-        kind switch
-        {
-            RecommendationConditionKind.Weapon => T("Weapon"),
-            RecommendationConditionKind.Trick => T("Trick"),
-            RecommendationConditionKind.Range => T("Range"),
-            RecommendationConditionKind.Resource => T("Resource"),
-            RecommendationConditionKind.WeaponUnlock => T("Weapon unlock"),
-            RecommendationConditionKind.SkillActivation =>
-                T("Skill activation"),
-            _ => T("Unavailable")
-        };
-
-    private string CaveatKindLabel(RecommendationCaveatKind kind) =>
-        kind switch
-        {
-            RecommendationCaveatKind.Assumption => T("Assumption"),
-            RecommendationCaveatKind.UnavailableData => T("Unavailable data"),
-            RecommendationCaveatKind.KnownRisk => T("Known risk"),
-            _ => T("Unavailable")
-        };
-
-    private string ScoreKindLabel(RecommendationScoreComponentKind kind) =>
-        kind switch
-        {
-            RecommendationScoreComponentKind.ThreatCoverage =>
-                T("Threat coverage"),
-            RecommendationScoreComponentKind.Survival => T("Survival"),
-            RecommendationScoreComponentKind.ExecutionReliability =>
-                T("Execution reliability"),
-            RecommendationScoreComponentKind.CurrentLoadoutCompatibility =>
-                T("Current-loadout compatibility"),
-            RecommendationScoreComponentKind.DamagePotential =>
-                T("Damage potential"),
-            RecommendationScoreComponentKind.OpportunityCost =>
-                T("Opportunity cost"),
-            RecommendationScoreComponentKind.ConditionalRisk =>
-                T("Conditional risk"),
-            RecommendationScoreComponentKind.InnerPowerCompatibility =>
-                T("Inner-power compatibility"),
-            _ => T("Unavailable")
-        };
-
-    private string ScoreLabel(LoadoutComparisonScoreSummaryViewModel score) =>
-        score.Score?.ToString("0.##")
-        ?? T(score.ScoreUnavailableReason ?? "Unavailable");
-
     private static LoadoutComparisonCapacityCellViewModel? CapacityFor(
         LoadoutComparisonCategoryViewModel category,
         LoadoutComparisonColumnKind column) =>
@@ -723,39 +406,14 @@
         skill.Cells.SingleOrDefault(value => value.Column == column);
 
     private string ColumnLabel(LoadoutComparisonColumnViewModel column) =>
-        column.Kind switch
-        {
-            LoadoutComparisonColumnKind.Current => T("Current loadout"),
-            LoadoutComparisonColumnKind.Safe => T("Safe"),
-            LoadoutComparisonColumnKind.Balanced => T("Balanced"),
-            LoadoutComparisonColumnKind.Aggressive => T("Aggressive"),
-            _ => T("Unavailable")
-        };
+        LoadoutComparisonUiText.Column(column, Language);
 
-    private string PolicyLabel(RecommendationPolicy policy) => policy switch
-    {
-        RecommendationPolicy.Safe => T("Safe"),
-        RecommendationPolicy.Balanced => T("Balanced"),
-        RecommendationPolicy.Aggressive => T("Aggressive"),
-        _ => T("Unavailable")
-    };
+    private string PolicyLabel(RecommendationPolicy policy) =>
+        LoadoutComparisonUiText.Policy(policy, Language);
 
-    private string ColumnStatusLabel(LoadoutComparisonColumnViewModel column)
-        => column.Status switch
-        {
-            LoadoutComparisonColumnStatus.Available
-                when column.Kind == LoadoutComparisonColumnKind.Current =>
-                T("Baseline used for this result"),
-            LoadoutComparisonColumnStatus.Available =>
-                column.ManualActionCount.HasValue
-                    ? $"{column.ManualActionCount.Value} "
-                        + T("manual action(s)")
-                    : T("Feasible policy winner"),
-            LoadoutComparisonColumnStatus.Infeasible =>
-                T("No feasible proposal"),
-            LoadoutComparisonColumnStatus.Unavailable => T("Unavailable"),
-            _ => T("Unavailable")
-        };
+    private string ColumnStatusLabel(
+        LoadoutComparisonColumnViewModel column) =>
+        LoadoutComparisonUiText.ColumnStatus(column, Language);
 
     private string MembershipLabel(
         LoadoutComparisonSkillCellViewModel cell) => cell.Membership switch

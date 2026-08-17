@@ -12,8 +12,8 @@ using TaiWu.Domain.SaveGames;
 using TaiWu.Infrastructure;
 using TaiWu.Infrastructure.Catalogue;
 using TaiWu.Infrastructure.SaveGames;
-using TaiWuAPI.Controllers;
 using TaiWuAPI.Contracts.CombatRecommendations;
+using TaiWuAPI.Controllers;
 using TaiWuAPI.Presentation;
 using Xunit;
 
@@ -406,11 +406,13 @@ public sealed partial class ArchitectureBoundaryTests
                 componentRoot,
                 "Recommendations",
                 "CapacityBar.razor"));
-        var comparison = File.ReadAllText(
-            Path.Combine(
-                componentRoot,
-                "Recommendations",
-                "LoadoutComparisonMatrix.razor"));
+        var comparison = string.Join(
+            Environment.NewLine,
+            Directory.GetFiles(
+                    Path.Combine(componentRoot, "Recommendations"),
+                    "LoadoutComparison*.razor")
+                .Order(StringComparer.Ordinal)
+                .Select(File.ReadAllText));
         var targetStrategy = File.ReadAllText(
             Path.Combine(
                 componentRoot,
@@ -716,12 +718,17 @@ public sealed partial class ArchitectureBoundaryTests
     public void Loadout_comparison_wires_responsive_and_accessible_contract()
     {
         var repositoryRoot = FindRepositoryRoot();
-        var component = File.ReadAllText(Path.Combine(
-            repositoryRoot,
-            "TaiWuAPI",
-            "Components",
-            "Recommendations",
-            "LoadoutComparisonMatrix.razor"));
+        var component = string.Join(
+            Environment.NewLine,
+            Directory.GetFiles(
+                    Path.Combine(
+                        repositoryRoot,
+                        "TaiWuAPI",
+                        "Components",
+                        "Recommendations"),
+                    "LoadoutComparison*.razor")
+                .Order(StringComparer.Ordinal)
+                .Select(File.ReadAllText));
         var page = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "TaiWuAPI",
@@ -736,6 +743,7 @@ public sealed partial class ArchitectureBoundaryTests
 
         Assert.DoesNotContain("comparison-policy-selector", component);
         Assert.DoesNotContain("ChangePolicyAsync", component);
+        Assert.Contains("<LoadoutComparisonTactics", component);
         Assert.Contains("value.Policy == SelectedPolicy", component);
         Assert.Contains("loadout-detail-disclosure", page);
         Assert.DoesNotContain("result-summary", page);
