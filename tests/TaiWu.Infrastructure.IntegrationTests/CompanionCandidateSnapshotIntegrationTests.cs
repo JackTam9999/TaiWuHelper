@@ -83,9 +83,26 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
         Assert.Equal(
             firstSnapshot.SourceVersions.SaveSha256,
             secondSnapshot.SourceVersions.SaveSha256);
+        Assert.Equal(
+            VerifiedCompanionRoleDefinitions.ProfileMappingVersion,
+            firstSnapshot.SourceVersions.ProfileMappingVersion);
+        Assert.Equal(
+            VerifiedCompanionRoleDefinitions.FingerprintSchemaVersion,
+            firstSnapshot.SourceVersions.FingerprintSchemaVersion);
         Assert.All(firstSnapshot.Profiles, profile =>
         {
             Assert.Equal(firstSnapshot.SourceVersions, profile.SourceVersions);
+            Assert.Equal(107, profile.Facts.Length);
+            Assert.All(Enum.GetValues<CandidateMainAttribute>(), attribute =>
+            {
+                var fact = Assert.IsType<CandidateProfileFact>(profile.FindFact(
+                    new CandidateProfileFieldIdentity(
+                        CandidateProfileField.BaseMainAttribute,
+                        attribute)));
+                Assert.Equal(CandidateEvidenceState.Confirmed, fact.State);
+                var value = Assert.IsType<CandidateFactValue>(fact.Value);
+                Assert.Equal(CandidateFactValueKind.Int16, value.Kind);
+            });
             Assert.NotNull(profile.FindFact(new CandidateProfileFieldIdentity(
                 CandidateProfileField.BaseMartialQualification,
                 new CandidateDisciplineIdentity(CandidateDisciplineDomain.Martial, 0))));

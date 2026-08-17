@@ -4,7 +4,7 @@
 |---|---|
 | Status | Accepted design — implemented and verified |
 | Epic | [EPIC-006](./EPIC.md) |
-| Backlog items | [E6-001](./BACKLOG.md#e6-001--define-role-evaluation-shortlist-and-ui-semantics), [E6-010](./BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui) |
+| Backlog items | [E6-001](./BACKLOG.md#e6-001--define-role-evaluation-shortlist-and-ui-semantics), [E6-010](./BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](./BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview) |
 | Primary surface | Dedicated local Blazor page at `/companions` |
 | Last updated | 2026-08-17 |
 
@@ -45,7 +45,8 @@ The page renders in this order:
 8. status filter and optional localized-name query;
 9. ranked/tied candidate list;
 10. needs-review and ineligible candidate sections;
-11. two-candidate comparison controls and result; and
+11. two-candidate comparison controls, capability overview, and role result;
+    and
 12. evidence, unsupported-current-value, and scope limitations.
 
 Eligibility, unsupported versions, conflicts, missing score evidence, and the
@@ -107,6 +108,11 @@ qualification, or rank.
 │ 2=   │ Synthetic Person C │ 75                 │ Tied        │ [x]     │
 │ —    │ Synthetic Person D │ Unavailable        │ Incomplete  │ [ ]     │
 ├ Compare — Synthetic Person B and Synthetic Person C ─────────────────────┤
+│ Capability overview (descriptive only; does not change role rank)        │
+│ Breadth index     │ 48.29                │ 49.26                         │
+│ Six attributes    │ 54.50 · 6/6          │ 55.50 · 6/6                  │
+│ Martial aptitudes │ 50.86 · 14/14        │ 51.79 · 14/14                │
+│ Life aptitudes    │ 39.50 · 16/16        │ 40.50 · 16/16                │
 │ Eligibility       │ Eligible            │ Eligible                       │
 │ Base qualification│ 75                  │ 75                             │
 │ Relative result   │ Equal               │ Equal                          │
@@ -268,6 +274,14 @@ heading followed by candidate A and B values on narrow screens. It shows
 eligibility, hard gates, exact qualification, evidence state, score/rank when
 available, neutral supporting facts, and the contract's exact relative outcome.
 
+Before the role-specific facts, a separate `Capability overview` table shows
+the equal-category breadth index and the three saved-base category averages:
+six main attributes, 14 martial aptitudes, and 16 life-skill aptitudes. Each
+category shows confirmed/expected coverage and up to three highest localized
+values. A visible limitation says this overview is descriptive, equally
+weighted, and cannot change the selected-role score, rank, or recommendation.
+It is not styled as a winner, grade, probability, or universal ranking.
+
 If either value is unavailable or conflicting, the result says so and omits a
 numeric difference. It never treats missing evidence as an advantage.
 
@@ -346,6 +360,13 @@ All visible copy is resource-backed. These terms define the intended meaning:
 | conflicting | Conflicting | 資料衝突 |
 | needs review | Needs review | 需檢查 |
 | compare | Compare | 比較 |
+| capability overview | Capability overview | 能力概覽 |
+| breadth index | Breadth index | 廣度指數 |
+| six-attribute average | Six base attributes | 六項基礎屬性 |
+| martial-aptitude average | Martial aptitudes | 武學資質 |
+| life-skill-aptitude average | Life-skill aptitudes | 技藝資質 |
+| confirmed coverage | Confirmed coverage | 已確認覆蓋 |
+| top values | Top values | 最高項目 |
 | equal | Equal | 相同 |
 | advantage | Higher for this role | 此目標較高 |
 | disadvantage | Lower for this role | 此目標較低 |

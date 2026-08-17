@@ -95,6 +95,20 @@ public sealed class CompanionCandidatesControllerTests
         Assert.Equal(90m, component.Contribution);
         Assert.Single(component.Evidence);
         Assert.Equal(CompanionFactEvidenceState.Confirmed, Assert.Single(first.ScoreFacts).EvidenceState);
+        Assert.Equal(
+            CompanionCapabilitySummaryState.Complete,
+            first.CapabilitySummary.State);
+        Assert.Equal(
+            CompanionCapabilitySummaryFormula.EqualCategoryMean,
+            first.CapabilitySummary.Formula);
+        Assert.Equal(48.64m, first.CapabilitySummary.BreadthIndex);
+        Assert.Equal(6, first.CapabilitySummary.MainAttributes.ConfirmedCount);
+        Assert.Equal(14, first.CapabilitySummary.MartialDisciplines.ExpectedCount);
+        Assert.Equal(16, first.CapabilitySummary.LifeSkillDisciplines.ExpectedCount);
+        Assert.Contains(
+            first.CapabilitySummary.MainAttributes.Components,
+            item => item.MainAttribute == CandidateMainAttribute.Intelligence
+                && item.Value == 57);
         Assert.Same(location, snapshot.Profiles[1].Facts.Single(item =>
             item.Identity.Field == CandidateProfileField.CurrentLocationArea));
         Assert.Single(first.LocationEvidence);
@@ -380,6 +394,8 @@ public sealed class CompanionCandidatesControllerTests
         Assert.DoesNotContain("rawContent", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("MARTIAL_DISCIPLINE_APTITUDE", json);
         Assert.Contains("not a universal ranking", json);
+        Assert.Contains("EqualCategoryMean", json);
+        Assert.Contains("BreadthIndex", json);
     }
 
     [Fact]
@@ -558,7 +574,8 @@ public sealed class CompanionCandidatesControllerTests
             universeState,
             Versions(),
             (facts ?? (score.HasValue ? [ScoreFact(score.Value)] : []))
-                .Concat(MembershipFacts()),
+                .Concat(MembershipFacts())
+                .Concat(CapabilityFacts(characterId)),
             []);
 
     private static CandidateProfileFact ScoreFact(short value) =>
@@ -605,6 +622,50 @@ public sealed class CompanionCandidatesControllerTests
             SetFact(CandidateProfileField.LearnedLifeSkillIdentities)
         };
 
+    private static IEnumerable<CandidateProfileFact> CapabilityFacts(
+        int characterId)
+    {
+        var offset = characterId % 10;
+        foreach (var attribute in Enum.GetValues<CandidateMainAttribute>())
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseMainAttribute,
+                    attribute),
+                checked((short)(50 + (int)attribute + offset)));
+        }
+
+        for (short type = 1; type < 14; type++)
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseMartialQualification,
+                    new CandidateDisciplineIdentity(
+                        CandidateDisciplineDomain.Martial,
+                        type)),
+                checked((short)(40 + type + offset)));
+        }
+
+        for (short type = 0; type < 16; type++)
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseLifeSkillQualification,
+                    new CandidateDisciplineIdentity(
+                        CandidateDisciplineDomain.LifeSkill,
+                        type)),
+                checked((short)(30 + type + offset)));
+        }
+    }
+
+    private static CandidateProfileFact ScalarFact(
+        CandidateProfileFieldIdentity field,
+        short value) => CandidateProfileFact.Confirmed(
+        field,
+        CandidateFactValue.Int16(value),
+        Provenance(Sha),
+        evidence: []);
+
     private static CandidateProfileFact SetFact(CandidateProfileField field) =>
         CandidateProfileFact.Confirmed(
             new CandidateProfileFieldIdentity(field),
@@ -619,15 +680,15 @@ public sealed class CompanionCandidatesControllerTests
     private static CandidateFactProvenance Provenance(string revision) => new(
         CandidateEvidenceSourceKind.ConfiguredSave,
         "CONFIGURED_SAVE",
-        "1",
+        VerifiedCompanionRoleDefinitions.ProfileMappingVersion,
         revision);
 
     private static CandidateProfileSourceVersions Versions() => new(
         Sha,
         VerifiedCompanionRoleDefinitions.SupportedGameDataVersion,
+        VerifiedCompanionRoleDefinitions.ProfileMappingVersion,
         "1",
-        "1",
-        "1");
+        VerifiedCompanionRoleDefinitions.FingerprintSchemaVersion);
 
     private static Type Unwrap(Type type)
     {

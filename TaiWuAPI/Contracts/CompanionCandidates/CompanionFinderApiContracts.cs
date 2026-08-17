@@ -161,10 +161,37 @@ public sealed record CompanionCandidateResponse(
     IReadOnlyList<CompanionScoreComponentResponse> Components,
     IReadOnlyList<CompanionExplanationResponse> Explanations,
     IReadOnlyList<CompanionRoleFactResponse> ScoreFacts,
+    CompanionCapabilitySummaryResponse CapabilitySummary,
     IReadOnlyList<CompanionRoleFactResponse> LocationEvidence,
     IReadOnlyList<CompanionRoleFactResponse> AvailableLocationFacts,
     CompanionCandidateEnrichmentResponse Enrichment,
     IReadOnlyList<CompanionApiDiagnosticResponse> Diagnostics);
+
+public sealed record CompanionCapabilitySummaryResponse(
+    CompanionCapabilitySummaryState State,
+    string RuleVersion,
+    CompanionCapabilitySummaryFormula Formula,
+    [property: Description("Equal-weight mean of the six-attribute, 14-martial-discipline, and 16-life-skill-discipline category averages. Descriptive only; it does not affect role rank or claim universal suitability.")]
+    decimal? BreadthIndex,
+    CompanionCapabilityCategoryResponse MainAttributes,
+    CompanionCapabilityCategoryResponse MartialDisciplines,
+    CompanionCapabilityCategoryResponse LifeSkillDisciplines);
+
+public sealed record CompanionCapabilityCategoryResponse(
+    CompanionCapabilityCategory Category,
+    CompanionCapabilitySummaryState State,
+    int ConfirmedCount,
+    int ExpectedCount,
+    decimal? Average,
+    IReadOnlyList<CompanionCapabilityComponentResponse> Components);
+
+public sealed record CompanionCapabilityComponentResponse(
+    CandidateProfileField Field,
+    CandidateMainAttribute? MainAttribute,
+    CandidateDisciplineDomain? DisciplineDomain,
+    short? DisciplineType,
+    CompanionFactEvidenceState EvidenceState,
+    short? Value);
 
 public sealed record CompanionGateResponse(
     int Order,

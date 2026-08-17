@@ -259,9 +259,11 @@ synthetic representatives own ineligible, incomplete, unsupported, conflict,
 multi-candidate ordering, and tie states without committing local identities or
 values.
 
-The production E6-004 projection emits one 101-fact complete profile for that
-representative. Negative equipped-array empty-slot sentinels are excluded from
-the saved identity set; current qualification and attainment remain explicit
-unsupported facts. The guarded production test completed cold in 20.487
-seconds and warm in 2 milliseconds while the save and two loaded GameData
-assemblies remained unchanged.
+The original E6-004 production projection emitted one 101-fact complete
+profile for that representative. E6-013 profile-mapping version `2` adds six
+typed saved base main attributes, making the current complete shape 107 facts.
+Negative equipped-array empty-slot sentinels are excluded from the saved
+identity set; current qualification and attainment remain explicit unsupported
+facts. The original guarded production test completed cold in 20.487 seconds
+and warm in 2 milliseconds while the save and two loaded GameData assemblies
+remained unchanged.

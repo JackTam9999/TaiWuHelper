@@ -40,6 +40,16 @@ public enum CandidateDisciplineDomain
     LifeSkill = 1
 }
 
+public enum CandidateMainAttribute
+{
+    Strength = 0,
+    Dexterity = 1,
+    Concentration = 2,
+    Vitality = 3,
+    Energy = 4,
+    Intelligence = 5
+}
+
 public enum CandidateProfileField
 {
     RosterMembership = 0,
@@ -58,7 +68,8 @@ public enum CandidateProfileField
     BaseLifeSkillQualification = 13,
     CurrentLifeSkillQualification = 14,
     CurrentLifeSkillAttainment = 15,
-    LearnedLifeSkillIdentities = 16
+    LearnedLifeSkillIdentities = 16,
+    BaseMainAttribute = 17
 }
 
 public enum CandidateConflictDecisionKind

@@ -132,6 +132,11 @@ There is no global candidate score. Every evaluation names one stable role
 definition and version. Scores from different roles are not comparable, and
 the UI must not combine them into a universal leaderboard.
 
+The optional capability breadth index is not an evaluation or leaderboard. It
+is a transparent equal-weight description of three complete saved-base
+category averages and never affects eligibility, a selected-role score, rank,
+tie, shortlist order, explanation, or recommendation.
+
 ### Eligibility precedes suitability
 
 A character must first have an evidence-backed eligibility state. Target
@@ -266,7 +271,10 @@ revision and selected this candidate and role boundary:
 2. `MARTIAL_DISCIPLINE_APTITUDE`, comparing exact saved base qualification for
    one player-selected martial discipline; and
 3. `LIFE_SKILL_DISCIPLINE_APTITUDE`, comparing exact saved base qualification
-   for one player-selected life-skill discipline.
+   for one player-selected life-skill discipline; and
+4. an opt-in comparison overview over the six saved base main attributes, all
+   14 martial aptitudes, and all 16 life-skill aptitudes, with complete-
+   evidence coverage and a disclosed equal-category formula.
 
 The stable archive probe confirmed that both base-qualification buffers are
 standalone-safe, deterministic, and inside the cold and warm performance
@@ -336,7 +344,8 @@ Build a stable shortlist from comparable evaluations and a separate set of
 excluded or unranked results with reasons. Explain decisive strengths,
 weaknesses, hard gates, tradeoffs, missing evidence, ties, and location or
 availability facts without suggesting unverified recruitment or development
-steps.
+steps. When two candidates are selected, show the descriptive capability
+overview separately from the selected-role comparison.
 
 ### 8. Application and API workflow
 
@@ -409,6 +418,9 @@ The workflow must present these states explicitly:
       stable result identity.
 - [x] API and UI expose equivalent eligibility, evaluation, evidence,
       tradeoff, conflict, and unavailable-state semantics.
+- [x] The capability overview exposes exact 6/14/16 coverage, formula version,
+      category averages, breadth index, and top values without changing role
+      evaluation, rank, order, recommendation, or result identity.
 - [x] Traditional Chinese and English layouts are complete, responsive,
       keyboard accessible, and do not rely on color alone.
 - [x] Automated tests cover eligible, ineligible, incomplete, unsupported,
@@ -444,6 +456,7 @@ The workflow must present these states explicitly:
 |---|---|
 | Target lookup is mistaken for a recruitable-candidate list | Establish a separate verified candidate universe and eligibility contract in E6-000 |
 | One opaque score becomes a universal character ranking | Require one selected role, role-local scores, component explanations, and no cross-role comparison |
+| A descriptive breadth index is mistaken for a recommendation | Label the equal-category formula and limitation, expose all category coverage, and prohibit it from role evaluation, ranking, ordering, or result identity |
 | Missing data makes a candidate look weak | Preserve incomplete and unsupported states; never normalize missing evidence to zero |
 | Readable fields are assigned guessed mechanics | Require typed, version-matched rules and reject raw text or label inference |
 | A hard requirement is hidden inside weighting | Evaluate and display hard gates before any score |

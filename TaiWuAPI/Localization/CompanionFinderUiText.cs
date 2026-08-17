@@ -119,7 +119,15 @@ public enum CompanionFinderUiTextKey
     CatalogueRepositoryFailedTitle = 110,
     CatalogueRepositoryFailedMessage = 111,
     CatalogueCorruptTitle = 112,
-    CatalogueCorruptMessage = 113
+    CatalogueCorruptMessage = 113,
+    CapabilityOverview = 114,
+    BreadthIndex = 115,
+    MainAttributeAverage = 116,
+    MartialAptitudeAverage = 117,
+    LifeSkillAptitudeAverage = 118,
+    CapabilityLimitation = 119,
+    ConfirmedCoverage = 120,
+    TopValues = 121
 }
 
 public static class CompanionFinderUiText
@@ -422,6 +430,23 @@ public static class CompanionFinderUiText
             CompanionFinderUiTextKey.CatalogueCorruptMessage =>
                 ("Rebuild the local catalogue from trusted installed sources before using catalogue-dependent evidence.",
                  "使用依賴目錄的證據前，請先從受信任的已安裝來源重建本機目錄。"),
+            CompanionFinderUiTextKey.CapabilityOverview =>
+                ("Capability overview", "能力概覽"),
+            CompanionFinderUiTextKey.BreadthIndex =>
+                ("Breadth index", "廣度指數"),
+            CompanionFinderUiTextKey.MainAttributeAverage =>
+                ("Six base attributes", "六項基礎主要屬性"),
+            CompanionFinderUiTextKey.MartialAptitudeAverage =>
+                ("14 martial aptitudes", "十四項武學資質"),
+            CompanionFinderUiTextKey.LifeSkillAptitudeAverage =>
+                ("16 life-skill aptitudes", "十六項技藝資質"),
+            CompanionFinderUiTextKey.CapabilityLimitation =>
+                ("The breadth index equally averages the three complete saved-base category averages. It is descriptive only and does not change the selected-role score, rank, or recommendation.",
+                 "廣度指數只會等權平均三個完整的存檔基礎類別平均值，僅供描述，不會改變所選目標的分數、名次或推薦結果。"),
+            CompanionFinderUiTextKey.ConfirmedCoverage =>
+                ("Confirmed coverage", "已確認範圍"),
+            CompanionFinderUiTextKey.TopValues =>
+                ("Top values", "最高項目"),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(key),
                 key,
@@ -454,6 +479,28 @@ public static class CompanionFinderUiText
                 domain,
                 "Unknown discipline domain.")
         });
+
+    public static string MainAttributeLabel(
+        TaiwuLanguage language,
+        CandidateMainAttribute attribute) => (language, attribute) switch
+        {
+            (TaiwuLanguage.English, CandidateMainAttribute.Strength) => "Strength",
+            (TaiwuLanguage.English, CandidateMainAttribute.Dexterity) => "Dexterity",
+            (TaiwuLanguage.English, CandidateMainAttribute.Concentration) => "Concentration",
+            (TaiwuLanguage.English, CandidateMainAttribute.Vitality) => "Vitality",
+            (TaiwuLanguage.English, CandidateMainAttribute.Energy) => "Energy",
+            (TaiwuLanguage.English, CandidateMainAttribute.Intelligence) => "Intelligence",
+            (TaiwuLanguage.Chinese, CandidateMainAttribute.Strength) => "膂力",
+            (TaiwuLanguage.Chinese, CandidateMainAttribute.Dexterity) => "靈敏",
+            (TaiwuLanguage.Chinese, CandidateMainAttribute.Concentration) => "定力",
+            (TaiwuLanguage.Chinese, CandidateMainAttribute.Vitality) => "體質",
+            (TaiwuLanguage.Chinese, CandidateMainAttribute.Energy) => "根骨",
+            (TaiwuLanguage.Chinese, CandidateMainAttribute.Intelligence) => "悟性",
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(attribute),
+                attribute,
+                "Unknown main attribute or UI language.")
+        };
 
     public static string FilterLabel(
         TaiwuLanguage language,

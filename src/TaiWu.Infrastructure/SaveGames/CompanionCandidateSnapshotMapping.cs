@@ -16,6 +16,7 @@ internal sealed class RawCompanionCandidate
         int? locationArea,
         int? locationBlock,
         IEnumerable<int>? featureIdentities,
+        IEnumerable<short>? baseMainAttributes,
         IEnumerable<short>? baseMartialQualifications,
         IEnumerable<int>? learnedMartialSkillIdentities,
         IEnumerable<int>? equippedMartialSkillIdentities,
@@ -32,6 +33,7 @@ internal sealed class RawCompanionCandidate
         LocationArea = locationArea;
         LocationBlock = locationBlock;
         FeatureIdentities = Copy(featureIdentities);
+        BaseMainAttributes = Copy(baseMainAttributes);
         BaseMartialQualifications = Copy(baseMartialQualifications);
         LearnedMartialSkillIdentities = Copy(learnedMartialSkillIdentities);
         EquippedMartialSkillIdentities = Copy(equippedMartialSkillIdentities);
@@ -60,6 +62,8 @@ internal sealed class RawCompanionCandidate
 
     public ImmutableArray<int>? FeatureIdentities { get; }
 
+    public ImmutableArray<short>? BaseMainAttributes { get; }
+
     public ImmutableArray<short>? BaseMartialQualifications { get; }
 
     public ImmutableArray<int>? LearnedMartialSkillIdentities { get; }
@@ -83,9 +87,10 @@ internal sealed record CompanionCandidateProfileMappingResult(
 
 internal static class CompanionCandidateSnapshotMapping
 {
-    internal const string ProfileMappingVersion = "1";
+    internal const string ProfileMappingVersion = "2";
     internal const string DisciplineCatalogVersion = "1";
-    internal const string FingerprintSchemaVersion = "1";
+    internal const string FingerprintSchemaVersion = "2";
+    internal const int MainAttributeCount = 6;
     internal const int MartialDisciplineCount = 14;
     internal const int LifeSkillDisciplineCount = 16;
 
@@ -178,6 +183,12 @@ internal static class CompanionCandidateSnapshotMapping
             facts,
             CandidateProfileField.LearnedLifeSkillIdentities,
             raw.LearnedLifeSkillIdentities,
+            saveProvenance,
+            ref partial);
+
+        AddMainAttributeFacts(
+            facts,
+            raw.BaseMainAttributes,
             saveProvenance,
             ref partial);
 
@@ -306,6 +317,41 @@ internal static class CompanionCandidateSnapshotMapping
         }
     }
 
+    private static void AddMainAttributeFacts(
+        List<CandidateProfileFact> facts,
+        ImmutableArray<short>? baseValues,
+        CandidateFactProvenance saveProvenance,
+        ref bool partial)
+    {
+        if (baseValues is null || baseValues.Value.Length != MainAttributeCount)
+        {
+            partial = true;
+        }
+
+        for (var type = 0; type < MainAttributeCount; type++)
+        {
+            var identity = new CandidateProfileFieldIdentity(
+                CandidateProfileField.BaseMainAttribute,
+                (CandidateMainAttribute)type);
+            if (baseValues is { } available && type < available.Length)
+            {
+                AddConfirmed(
+                    facts,
+                    identity,
+                    CandidateFactValue.Int16(available[type]),
+                    saveProvenance);
+            }
+            else
+            {
+                AddIncomplete(
+                    facts,
+                    identity,
+                    "BASE_MAIN_ATTRIBUTE_UNAVAILABLE",
+                    saveProvenance);
+            }
+        }
+    }
+
     private static void AddNullableBoolean(
         List<CandidateProfileFact> facts,
         CandidateProfileField field,
@@ -430,11 +476,13 @@ internal static class CompanionCandidateSnapshotMapping
         CandidateProfileFieldIdentity field,
         CandidateFactProvenance provenance)
     {
-        var discipline = field.Discipline is null
-            ? "NONE"
-            : $"{(int)field.Discipline.Domain}_{field.Discipline.Type}";
+        var identity = field.Discipline is not null
+            ? $"{(int)field.Discipline.Domain}_{field.Discipline.Type}"
+            : field.MainAttribute.HasValue
+                ? $"ATTRIBUTE_{(int)field.MainAttribute.Value}"
+                : "NONE";
         return new CandidateEvidenceReference(
-            $"E6_FIELD_{(int)field.Field}_{discipline}",
+            $"E6_FIELD_{(int)field.Field}_{identity}",
             provenance);
     }
 

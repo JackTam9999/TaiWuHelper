@@ -160,6 +160,8 @@ public static class CompanionFinderResponseMapper
                     [.. explanation.Components.Select(item => item.Dimension.Identity)],
                     [.. explanation.Gates.Select(item => item.ReasonIdentity)]))],
             [.. scoreFacts],
+            MapCapabilitySummary(
+                CompanionCapabilitySummaryBuilder.Build(evaluation.Profile)),
             [.. entry.LocationEvidence.Select(fact => MapFact(
                 fact,
                 fact.Identity,
@@ -177,6 +179,32 @@ public static class CompanionFinderResponseMapper
                     CompanionFinderApiText.Diagnostic(language, diagnostic.Code),
                     CandidateReference(evaluation.Profile.Identity.CharacterId))) ]);
     }
+
+    private static CompanionCapabilitySummaryResponse MapCapabilitySummary(
+        CompanionCapabilitySummary summary) => new(
+        summary.State,
+        summary.Version,
+        summary.Formula,
+        summary.BreadthIndex,
+        MapCapabilityCategory(summary.MainAttributes),
+        MapCapabilityCategory(summary.MartialDisciplines),
+        MapCapabilityCategory(summary.LifeSkillDisciplines));
+
+    private static CompanionCapabilityCategoryResponse MapCapabilityCategory(
+        CompanionCapabilityCategorySummary category) => new(
+        category.Category,
+        category.State,
+        category.ConfirmedCount,
+        category.ExpectedCount,
+        category.Average,
+        [.. category.Components.Select(component =>
+            new CompanionCapabilityComponentResponse(
+                component.Field.Field,
+                component.Field.MainAttribute,
+                component.Field.Discipline?.Domain,
+                component.Field.Discipline?.Type,
+                MapEvidenceState(component.EvidenceState),
+                component.Value))]);
 
     private static string? DisplayName(
         CompanionCandidateDisplay? display,
@@ -300,7 +328,10 @@ public static class CompanionFinderResponseMapper
         };
 
     private static CompanionFactEvidenceState MapEvidenceState(
-        CandidateProfileFact? fact) => fact?.State switch
+        CandidateProfileFact? fact) => MapEvidenceState(fact?.State);
+
+    private static CompanionFactEvidenceState MapEvidenceState(
+        CandidateEvidenceState? state) => state switch
         {
             null => CompanionFactEvidenceState.Missing,
             CandidateEvidenceState.Confirmed => CompanionFactEvidenceState.Confirmed,
@@ -309,8 +340,8 @@ public static class CompanionFinderResponseMapper
             CandidateEvidenceState.Stale => CompanionFactEvidenceState.Stale,
             CandidateEvidenceState.Conflicting => CompanionFactEvidenceState.Conflicting,
             _ => throw new ArgumentOutOfRangeException(
-                nameof(fact),
-                fact.State,
+                nameof(state),
+                state,
                 "Unknown candidate evidence state.")
         };
 

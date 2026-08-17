@@ -202,6 +202,15 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
             }
 
             var location = character.GetLocation();
+            var mainAttributes = new short[
+                CompanionCandidateSnapshotMapping.MainAttributeCount];
+            var savedMainAttributes = character.GetBaseMainAttributes();
+            for (sbyte type = 0; type < mainAttributes.Length; type++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                mainAttributes[type] = savedMainAttributes[type];
+            }
+
             var martial = new short[
                 CompanionCandidateSnapshotMapping.MartialDisciplineCount];
             for (sbyte type = 0; type < martial.Length; type++)
@@ -230,6 +239,7 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                 location.AreaId,
                 location.BlockId,
                 character.GetFeatureIds().Select(value => (int)value),
+                mainAttributes,
                 martial,
                 character.GetLearnedCombatSkills().Select(value => (int)value),
                 character.GetEquippedCombatSkills()
@@ -256,6 +266,7 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                 locationArea: null,
                 locationBlock: null,
                 featureIdentities: null,
+                baseMainAttributes: null,
                 baseMartialQualifications: null,
                 learnedMartialSkillIdentities: null,
                 equippedMartialSkillIdentities: null,
@@ -277,6 +288,7 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
             locationArea: null,
             locationBlock: null,
             featureIdentities: null,
+            baseMainAttributes: null,
             baseMartialQualifications: null,
             learnedMartialSkillIdentities: null,
             equippedMartialSkillIdentities: null,

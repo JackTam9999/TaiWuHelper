@@ -64,6 +64,7 @@ Metadata inspection confirmed these relevant public shapes:
 | `Character` | `GetLocation()` | `Location` | Descriptive current saved area/block when valid |
 | `Character` | `GetCurrAge()` | `Int16` | Descriptive current saved age; not a score in the first matrix |
 | `Character` | `GetFeatureIds()` | `List<Int16>` | Stable feature identities; display/evidence only until individual mechanics are verified |
+| `Character` | `GetBaseMainAttributes()` | Fixed `MainAttributes` buffer of 6 `Int16` values | Saved base main attributes in stable Strength, Dexterity, Concentration, Vitality, Energy, Intelligence order |
 | `Character` | `GetBaseCombatSkillQualifications()` | Fixed `CombatSkillShorts` buffer of 14 `Int16` values | Saved base martial qualification by stable combat-discipline index |
 | `Character` | `GetCombatSkillQualification(sbyte)` | `Int16` | Current martial qualification; every local call entered unavailable live special-effect modification |
 | `Character` | `GetCombatSkillAttainment(sbyte)` | `Int16` | Current martial attainment; every local call entered unavailable live special-effect modification |
@@ -148,6 +149,32 @@ tie, and evidence-state cases that the one-companion local roster cannot.
 E6-001 must define comparison and tie semantics. E6-000 does not invent a
 weighted or combined universal score.
 
+### Post-delivery capability overview
+
+After the role finder was complete, the player explicitly requested a compact
+companion-to-companion overview across the six main attributes, all martial
+aptitudes, and all life-skill aptitudes. Metadata inspection confirmed
+`MainAttributeType.Count = 6` and the stable buffer order: Strength, Dexterity,
+Concentration, Vitality, Energy, and Intelligence (膂力、靈敏、定力、體質、根骨、
+悟性).
+
+The resulting version-1 breadth index is a descriptive comparison aid, not a
+third role or universal recommendation:
+
+1. calculate an arithmetic mean only when all 6 saved base main attributes are
+   confirmed;
+2. calculate separate arithmetic means only when all 14 saved base martial
+   aptitudes and all 16 saved base life-skill aptitudes are confirmed;
+3. round each category mean to two decimals, then calculate the equal-weight
+   mean of those three displayed category values and round it to two decimals;
+   and
+4. show confirmed coverage and the top three values in each category.
+
+An incomplete, unsupported, stale, or conflicting component makes its category
+and the breadth index unavailable. It is never replaced by zero. The overview
+does not change role eligibility, the selected-discipline score, rank, tie,
+shortlist order, explanation, or finder fingerprint.
+
 ### Roles rejected from the first matrix
 
 | Candidate role | Decision | Reason |
@@ -157,7 +184,7 @@ weighted or combined universal score.
 | Inheritance value | Deferred to PI-009 | Future growth, age horizon, transferable progress, and inheritance mechanics would mix current facts with speculative development |
 | Recruitable prospect | Unsupported | Target enumeration, favor, proximity, or relationship does not prove current recruitability |
 | Settlement worker | Deferred to PI-010 | Work availability, buildings, assignments, resources, and villager roles require a separate settlement domain |
-| Balanced long-term companion | Rejected | Combining unrelated objectives would recreate the universal score Epic 6 explicitly forbids |
+| Balanced long-term companion | Rejected | A descriptive saved-base breadth index does not establish long-term potential, objective weights, future growth, or universal suitability |
 
 ## Evidence-state and precedence decisions
 
@@ -169,7 +196,7 @@ weighted or combined universal score.
 | Missing character object | `Incomplete`; never construct an eligible empty profile |
 | Unsupported GameData version | Entire role evaluation is `Unsupported`; no old mapping fallback |
 | Current qualification or attainment | Explicitly `Unsupported` in standalone reading because all calls entered `SpecialEffectDomain.ModifyData`; never substitute zero |
-| Base versus current value | The initial roles use base qualification under an explicit base identity; they do not label it current modified qualification or attainment |
+| Base versus current value | The initial roles and capability overview use explicitly identified saved base values; they do not label them current modified attributes, qualification, or attainment |
 | Feature IDs | Evidence/display only until a separate typed feature rule verifies a mechanical contribution |
 | Learned skills | Supporting current-progress evidence; learned membership never proves equipped use, teaching, or role success |
 | Location | Descriptive availability evidence only; it does not change rank in the initial matrix |
@@ -221,8 +248,12 @@ saved group contained two IDs: the Taiwu character and one non-Taiwu candidate.
 The non-Taiwu candidate existed, was living, and agreed across roster, Domain,
 and character membership checks. No general following character was reported.
 
-All 14 base martial qualifications and all 16 base life-skill qualifications
-were available, positive, and varied across their respective discipline sets.
+All six base main attributes, 14 base martial qualifications, and 16 base
+life-skill qualifications have fixed metadata-backed shapes. The original
+guarded role probe confirmed both aptitude buffers were available, positive,
+and varied across their respective discipline sets; the later main-attribute
+addition is covered by metadata, synthetic mapping, and guarded-call safety
+tests without recording representative values.
 Learned martial, equipped martial, learned life-skill, feature, and age facts
 were readable as supporting evidence. Saved location was unavailable and
 therefore remained descriptive missing evidence.

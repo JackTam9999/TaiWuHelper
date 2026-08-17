@@ -135,7 +135,9 @@ internal static class CompanionFinderTestData
         new CandidateIdentity(characterId),
         universeState,
         Versions(),
-        scoreFacts.Concat(MembershipFacts()),
+        scoreFacts
+            .Concat(MembershipFacts())
+            .Concat(CapabilityFacts(characterId)),
         diagnostics: []);
 
     private static CandidateProfileFact Score(short value) =>
@@ -180,6 +182,50 @@ internal static class CompanionFinderTestData
         SetFact(CandidateProfileField.EquippedMartialSkillIdentities),
         SetFact(CandidateProfileField.LearnedLifeSkillIdentities)
     ];
+
+    private static IEnumerable<CandidateProfileFact> CapabilityFacts(
+        int characterId)
+    {
+        var offset = characterId % 10;
+        foreach (var attribute in Enum.GetValues<CandidateMainAttribute>())
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseMainAttribute,
+                    attribute),
+                checked((short)(50 + (int)attribute + offset)));
+        }
+
+        for (short type = 1; type < 14; type++)
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseMartialQualification,
+                    new CandidateDisciplineIdentity(
+                        CandidateDisciplineDomain.Martial,
+                        type)),
+                checked((short)(40 + type + offset)));
+        }
+
+        for (short type = 0; type < 16; type++)
+        {
+            yield return ScalarFact(
+                new CandidateProfileFieldIdentity(
+                    CandidateProfileField.BaseLifeSkillQualification,
+                    new CandidateDisciplineIdentity(
+                        CandidateDisciplineDomain.LifeSkill,
+                        type)),
+                checked((short)(30 + type + offset)));
+        }
+    }
+
+    private static CandidateProfileFact ScalarFact(
+        CandidateProfileFieldIdentity field,
+        short value) => CandidateProfileFact.Confirmed(
+        field,
+        CandidateFactValue.Int16(value),
+        Provenance(Sha),
+        evidence: []);
 
     private static CandidateProfileFact SetFact(
         CandidateProfileField field) => CandidateProfileFact.Confirmed(

@@ -10,8 +10,8 @@ public static class VerifiedCompanionRoleDefinitions
 
     public const string RoleVersion = "1";
     public const string EvaluationRuleVersion = "1";
-    public const string ProfileMappingVersion = "1";
-    public const string FingerprintSchemaVersion = "1";
+    public const string ProfileMappingVersion = "2";
+    public const string FingerprintSchemaVersion = "2";
 
     public static CompanionRoleDefinition MartialDisciplineAptitude { get; } =
         Create(

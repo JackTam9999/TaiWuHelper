@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-010 |
+| Status | Implemented for E6-010 and extended by E6-013 |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
-| Backlog item | [E6-010](../roadmap/epic-006/BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui) |
+| Backlog items | [E6-010](../roadmap/epic-006/BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](../roadmap/epic-006/BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview) |
 | UI contract | [UI-006 companion finder](../roadmap/epic-006/UI-006-companion-candidate-finder.md) |
 | Application source | [Companion finder Application](./COMPANION-FINDER-APPLICATION.md) |
 | API mapping | [Companion candidates API](../api/COMPANION-CANDIDATES.md) |
@@ -42,6 +42,14 @@ owned by the immutable shortlist. It neither rereads a source nor reconstructs
 a score, rank, gate, component, or evidence state. Unavailable or conflicting
 values remain non-numeric and produce no invented difference.
 
+The API mapper also derives one versioned capability summary directly from
+each immutable candidate profile. Presentation only localizes its typed six-
+attribute, 14-martial, and 16-life-skill components, selects the top three
+confirmed values for display, and places the two summaries in a separate
+semantic comparison table. The equal-category breadth index is descriptive;
+it cannot change the role comparison, selected-discipline score, rank, tie,
+ordering, explanation, or finder fingerprint.
+
 ## Read and interaction lifecycle
 
 Page initialization reads only the installed bilingual discipline labels. The
@@ -76,6 +84,11 @@ Display descriptors are outside `CandidateProfile` and every semantic
 fingerprint. They cannot decide candidate inclusion, eligibility, score, rank,
 tie order, comparison, or evidence state.
 
+Capability top-value labels use the same installed bilingual discipline
+descriptors. If a label is unavailable, Presentation omits that top-value label
+rather than exposing a raw discipline type. Main-attribute labels come from the
+closed bilingual UI catalogue.
+
 ## State and accessibility model
 
 The route renders explicit states for initial selection, loading, complete,
@@ -83,6 +96,13 @@ partial, empty, cancellation, configured-save absence, unsupported source,
 changed revision, and safe read failure. Candidate sections retain ranked,
 tied, incomplete, unsupported, conflicting, and ineligible labels with visible
 reasons. Missing scores render `Unavailable`, never zero or blank.
+
+The selected-candidate comparison begins with a separate `Capability overview`
+table. It shows the breadth index plus main-attribute, martial-aptitude, and
+life-skill-aptitude averages, confirmed coverage, and top values. A visible
+limitation states that these are equal-weight saved-base descriptions and do
+not change the selected-role recommendation or rank. Incomplete categories and
+the resulting breadth index render an explicit unavailable state.
 
 Partial source projection and catalogue enrichment are independent notices.
 Every supported enrichment/catalogue combination has distinct bilingual
@@ -108,8 +128,9 @@ horizontal overflow.
 Presentation mapper tests cover bilingual role and discipline mapping, every
 candidate and source state, exact universe eligibility, score warnings, typed
 snapshot/enrichment/catalogue states, filtering, comparison, missing display
-text, and ID hiding. Rendered-component tests cover native
-semantics, focus targets, state copy, tie cues, responsive single-DOM markup,
+text, capability coverage/averages/top values, and ID hiding. Rendered-
+component tests cover native semantics, focus targets, state copy, tie cues,
+responsive single-DOM markup,
 and absent mutation actions. Architecture tests enforce the route, navigation,
 one explicit read action, no second evaluation path, no raw-ID rendering, and
 no persistence, process, screenshot, upload, input, or game-control capability.

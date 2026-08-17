@@ -31,7 +31,22 @@ public sealed record CandidateProfileFieldIdentity
 {
     public CandidateProfileFieldIdentity(
         CandidateProfileField field,
-        CandidateDisciplineIdentity? discipline = null)
+        CandidateDisciplineIdentity? discipline = null) :
+        this(field, discipline, mainAttribute: null)
+    {
+    }
+
+    public CandidateProfileFieldIdentity(
+        CandidateProfileField field,
+        CandidateMainAttribute mainAttribute) :
+        this(field, discipline: null, mainAttribute)
+    {
+    }
+
+    private CandidateProfileFieldIdentity(
+        CandidateProfileField field,
+        CandidateDisciplineIdentity? discipline,
+        CandidateMainAttribute? mainAttribute)
     {
         if (!Enum.IsDefined(field))
         {
@@ -54,17 +69,42 @@ public sealed record CandidateProfileFieldIdentity
                 nameof(discipline));
         }
 
+        var expectsMainAttribute = field
+            == CandidateProfileField.BaseMainAttribute;
+        if (expectsMainAttribute != mainAttribute.HasValue)
+        {
+            throw new ArgumentException(
+                expectsMainAttribute
+                    ? "This candidate-profile field requires a main-attribute identity."
+                    : "This candidate-profile field cannot have a main-attribute identity.",
+                nameof(mainAttribute));
+        }
+
+        if (mainAttribute.HasValue
+            && !Enum.IsDefined(mainAttribute.Value))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(mainAttribute),
+                mainAttribute,
+                "Unknown candidate main attribute.");
+        }
+
         Field = field;
         Discipline = discipline;
+        MainAttribute = mainAttribute;
     }
 
     public CandidateProfileField Field { get; }
 
     public CandidateDisciplineIdentity? Discipline { get; }
 
-    internal string StableKey => Discipline is null
-        ? CandidateProfileText.EnumKey(Field)
-        : $"{CandidateProfileText.EnumKey(Field)}:{Discipline.StableKey}";
+    public CandidateMainAttribute? MainAttribute { get; }
+
+    internal string StableKey => Discipline is not null
+        ? $"{CandidateProfileText.EnumKey(Field)}:{Discipline.StableKey}"
+        : MainAttribute.HasValue
+            ? $"{CandidateProfileText.EnumKey(Field)}:{CandidateProfileText.EnumKey(MainAttribute.Value)}"
+            : CandidateProfileText.EnumKey(Field);
 
     internal CandidateFactValueKind ExpectedValueKind => Field switch
     {
@@ -73,6 +113,7 @@ public sealed record CandidateProfileFieldIdentity
             or CandidateProfileField.CharacterGroupMembership
             or CandidateProfileField.LivingState => CandidateFactValueKind.Boolean,
         CandidateProfileField.CurrentAge
+            or CandidateProfileField.BaseMainAttribute
             or CandidateProfileField.BaseMartialQualification
             or CandidateProfileField.CurrentMartialQualification
             or CandidateProfileField.CurrentMartialAttainment

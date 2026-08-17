@@ -24,10 +24,14 @@ public sealed partial class CompanionFinderRenderingTests
     public async Task English_result_uses_semantic_tables_visible_states_and_no_ids()
     {
         var result = await CompanionFinderTestData.ResultAsync();
+        var disciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.English);
         var model = CompanionFinderViewModelMapper.Map(
             result,
             TaiwuLanguage.English,
-            "Synthetic martial discipline");
+            "Synthetic martial discipline",
+            disciplines);
 
         var html = await RenderResultsAsync(
             model,
@@ -207,10 +211,14 @@ public sealed partial class CompanionFinderRenderingTests
     public async Task Ready_comparison_shows_same_facts_and_disables_third_selection()
     {
         var result = await CompanionFinderTestData.ResultAsync();
+        var disciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.English);
         var model = CompanionFinderViewModelMapper.Map(
             result,
             TaiwuLanguage.English,
-            "Synthetic martial discipline");
+            "Synthetic martial discipline",
+            disciplines);
         var state = new CompanionFinderInteractionState();
         state.ToggleComparison(model, 31002);
         state.ToggleComparison(model, 31003);
@@ -233,6 +241,16 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Synthetic Person B", text);
         Assert.Contains("Synthetic Person C", text);
         Assert.Contains("Equal confirmed evidence", text);
+        Assert.Contains("Capability overview", text);
+        Assert.Contains("Breadth index", text);
+        Assert.Contains("Six base attributes", text);
+        Assert.Contains("14 martial aptitudes", text);
+        Assert.Contains("16 life-skill aptitudes", text);
+        Assert.Contains("Synthetic Person B 48.29", text);
+        Assert.Contains("Synthetic Person C 49.26", text);
+        Assert.Contains("Intelligence 57", text);
+        Assert.Contains("Martial discipline 1 75", text);
+        Assert.Contains("descriptive only", text);
         Assert.Contains("Saved base qualification", text);
         Assert.Contains("Synthetic Person B 75", text);
         Assert.Contains("Synthetic Person C 75", text);

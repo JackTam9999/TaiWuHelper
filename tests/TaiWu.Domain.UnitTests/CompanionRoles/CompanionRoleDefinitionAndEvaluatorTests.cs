@@ -400,8 +400,8 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
             "1",
             "1",
             supportedVersions ?? [GameDataVersion],
-            "1",
-            "1",
+            VerifiedCompanionRoleDefinitions.ProfileMappingVersion,
+            VerifiedCompanionRoleDefinitions.FingerprintSchemaVersion,
             CandidateDisciplineDomain.Martial,
             0,
             13,
@@ -434,9 +434,9 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
             new CandidateProfileSourceVersions(
                 Sha,
                 gameDataVersion,
+                VerifiedCompanionRoleDefinitions.ProfileMappingVersion,
                 "1",
-                "1",
-                "1"),
+                VerifiedCompanionRoleDefinitions.FingerprintSchemaVersion),
             facts ?? [],
             []);
 
@@ -498,7 +498,7 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
         string revision = Sha) => new(
             CandidateEvidenceSourceKind.ConfiguredSave,
             source,
-            "1",
+            VerifiedCompanionRoleDefinitions.ProfileMappingVersion,
             revision);
 
     private static CandidateEvidenceReference Evidence(

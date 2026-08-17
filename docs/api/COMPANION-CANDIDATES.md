@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-009 |
+| Status | Implemented for E6-009 and extended by E6-013 |
 | Base route | `/api/companion-candidates` |
 | Network boundary | Localhost only |
 | Application source | [Companion finder Application architecture](../architecture/COMPANION-FINDER-APPLICATION.md) |
@@ -112,6 +112,8 @@ Each candidate response retains:
   decision, and evidence references;
 - location evidence, with a separate list containing only current confirmed
   configured-save location facts;
+- a versioned descriptive capability summary over the six saved base main
+  attributes, 14 martial aptitudes, and 16 life-skill aptitudes;
 - catalogue membership and definition states for saved combat-skill IDs, with
   detailed progress explicitly `NotRequestedByApprovedRole`; and
 - candidate-owned diagnostics.
@@ -119,6 +121,28 @@ Each candidate response retains:
 Missing, stale, unsupported, and conflicting facts have no current score value.
 They are never serialized as zero, false, an empty confirmed collection, a
 penalty, or ineligibility unless separate verified evidence proves that state.
+
+### Capability summary
+
+`capabilitySummary` is computed once from the candidate's immutable profile.
+It exposes formula `EqualCategoryMean`, rule version `1`, a typed overall
+state, nullable `breadthIndex`, and three ordered category summaries. Every
+category includes its identity, state, confirmed/expected coverage, nullable
+average, and every typed component with value/evidence state.
+
+The category averages are arithmetic means of exactly 6 saved base main
+attributes, 14 saved base martial aptitudes, and 16 saved base life-skill
+aptitudes. A category average exists only when every expected component is
+confirmed. The breadth index is the equal-weight mean of the three category
+averages and exists only when all three categories are complete. Category
+averages and the final index are rounded to two decimals.
+
+This value is a saved-base descriptive overview. It does not change candidate
+eligibility, the selected-role score, rank, tie, shortlist order, comparison
+outcome, explanation, or finder fingerprint; it is not a success probability,
+future-potential model, or universal recommendation. Missing, incomplete,
+unsupported, stale, and conflicting components remain explicit and never
+become zero.
 
 ### Comparison
 
@@ -129,6 +153,10 @@ states and confirmed values when available, plus `FirstAdvantage`,
 
 The response mapper does not call the role evaluator, ranking builder, merit
 comparer, or source reader. It cannot create a second ranking path.
+
+Presentation may place the two candidates' capability summaries in a separate
+comparison table, including localized top-three confirmed values. That table
+does not add capability facts to the role comparison or alter its outcome.
 
 ## HTTP status mapping
 

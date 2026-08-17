@@ -794,7 +794,7 @@ reasons without introducing a second evaluation path in Presentation.
 
 - `/companions` Razor page, reusable candidate-result component, pure
   Presentation mapper/view models, helper-session interaction state, and the
-  enum-backed 114-key bilingual copy catalogue.
+  enum-backed 122-key bilingual copy catalogue.
 - Bilingual candidate and location descriptors captured inside the existing
   one-pass save projection, plus a path-free installed discipline-label source;
   all display values remain outside evaluation profiles and fingerprints.
@@ -872,8 +872,61 @@ architecture rules, performance checks, and guarded read-only local scenarios.
 - Three guarded Release integration scenarios, including two repeated complete
   role workflows and all installed discipline-language sources; every guarded
   save/runtime/source file remained byte-for-byte unchanged.
-- Release build with zero warnings/errors, 1,244 default tests, formatter and
-  link checks, architecture capability scans, and clean diff validation.
+- Release build with zero warnings/errors, 1,248 default non-integration tests,
+  formatter and link checks, architecture capability scans, and clean diff
+  validation.
+
+### E6-013 — Add a transparent companion capability overview
+
+**Status:** Complete
+
+**Priority:** P1
+
+**Estimate:** M
+
+**Dependencies:** E6-004, E6-008 through E6-010
+
+Add a compact companion-to-companion summary over all verified saved-base
+attributes and aptitudes while preserving the selected role as the only
+ranking and recommendation path.
+
+#### Acceptance criteria
+
+- [x] Each candidate profile contains six typed saved base main attributes in
+      the verified Strength, Dexterity, Concentration, Vitality, Energy, and
+      Intelligence order.
+- [x] The summary exposes separate arithmetic averages for all six main
+      attributes, 14 martial aptitudes, and 16 life-skill aptitudes only when
+      every expected component is confirmed.
+- [x] A versioned breadth index uses the disclosed equal-weight mean of the
+      three category averages, rounded deterministically to two decimals.
+- [x] API and bilingual Presentation expose exact confirmed/expected coverage,
+      category averages, breadth index, and the top three localized values.
+- [x] Missing, incomplete, unsupported, stale, or conflicting evidence remains
+      explicit and never becomes zero or a fabricated partial average.
+- [x] The overview is visibly labelled as saved-base descriptive evidence and
+      does not change role eligibility, score, rank, tie, shortlist order,
+      explanation, recommendation, or finder fingerprint.
+- [x] Comparison uses a separate semantic table with responsive single-DOM
+      behavior and no raw character or discipline identity fallback.
+- [x] The archive adapter copies the fixed six-value buffer once per candidate
+      inside the existing guarded one-pass session and introduces no mutation
+      or current-modified getter.
+- [x] Domain, Infrastructure, API, Presentation, rendering, and architecture
+      tests cover complete and unavailable summaries, formula transparency,
+      localization, and non-interference with role ranking.
+
+#### Completion evidence
+
+- `CompanionCapabilitySummaryBuilder` and typed main-attribute profile facts.
+- Updated one-pass snapshot mapping, API contracts, bilingual comparison view,
+  responsive styling, and executable Razor rendering coverage.
+- [E6-000 source evidence](../../scenarios/E6-000-companion-candidate-evidence.md),
+  [snapshot architecture](../../architecture/COMPANION-CANDIDATE-SNAPSHOT.md),
+  [API contract](../../api/COMPANION-CANDIDATES.md), and
+  [UI contract](./UI-006-companion-candidate-finder.md).
+- Release verification and updated browser review recorded under E6-010 and
+  E6-011.
 
 ### E6-012 — Validate representative roles and close Epic 6
 
@@ -883,7 +936,7 @@ architecture rules, performance checks, and guarded read-only local scenarios.
 
 **Estimate:** M
 
-**Dependencies:** E6-011
+**Dependencies:** E6-011, E6-013
 
 Compare each delivered role, candidate state, shortlist explanation, and
 responsive UI against the verified game sources and representative scenarios.

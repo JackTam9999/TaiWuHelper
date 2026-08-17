@@ -18,7 +18,7 @@ public sealed class CompanionCandidateSnapshotMappingTests
         Assert.False(mapped.IsPartial);
         Assert.Equal(CandidateUniverseState.Eligible, profile.UniverseState);
         Assert.Empty(mapped.Diagnostics);
-        Assert.Equal(101, profile.Facts.Length);
+        Assert.Equal(107, profile.Facts.Length);
         Assert.True(profile.FindFact(Field(CandidateProfileField.RosterMembership))!
             .Value!.BooleanValue);
         Assert.Equal(
@@ -27,6 +27,10 @@ public sealed class CompanionCandidateSnapshotMappingTests
         Assert.Equal(
             (short)115,
             profile.FindFact(LifeField(15))!.Value!.Int16Value);
+        Assert.Equal(
+            (short)60,
+            profile.FindFact(AttributeField(CandidateMainAttribute.Intelligence))!
+                .Value!.Int16Value);
         Assert.Equal(
             CandidateEvidenceState.Unsupported,
             profile.FindFact(new CandidateProfileFieldIdentity(
@@ -52,6 +56,7 @@ public sealed class CompanionCandidateSnapshotMappingTests
             locationArea: null,
             locationBlock: null,
             featureIdentities: null,
+            baseMainAttributes: null,
             baseMartialQualifications: null,
             learnedMartialSkillIdentities: null,
             equippedMartialSkillIdentities: null,
@@ -95,9 +100,10 @@ public sealed class CompanionCandidateSnapshotMappingTests
     }
 
     [Fact]
-    public void Short_qualification_buffers_create_partial_missing_facts_without_zero()
+    public void Short_saved_buffers_create_partial_missing_facts_without_zero()
     {
         var raw = Complete(
+            attributes: Enumerable.Range(50, 5).Select(value => (short)value),
             martial: Enumerable.Range(0, 13).Select(value => (short)value),
             life: Enumerable.Range(100, 15).Select(value => (short)value));
         var mapped = CompanionCandidateSnapshotMapping.Map(raw, Versions());
@@ -105,10 +111,14 @@ public sealed class CompanionCandidateSnapshotMappingTests
         Assert.True(mapped.IsPartial);
         var martialMissing = mapped.Profile.FindFact(MartialField(13))!;
         var lifeMissing = mapped.Profile.FindFact(LifeField(15))!;
+        var attributeMissing = mapped.Profile.FindFact(AttributeField(
+            CandidateMainAttribute.Intelligence))!;
         Assert.Equal(CandidateEvidenceState.Incomplete, martialMissing.State);
         Assert.Null(martialMissing.Value);
         Assert.Equal(CandidateEvidenceState.Incomplete, lifeMissing.State);
         Assert.Null(lifeMissing.Value);
+        Assert.Equal(CandidateEvidenceState.Incomplete, attributeMissing.State);
+        Assert.Null(attributeMissing.Value);
         Assert.Equal(
             (short)12,
             mapped.Profile.FindFact(MartialField(12))!.Value!.Int16Value);
@@ -185,6 +195,7 @@ public sealed class CompanionCandidateSnapshotMappingTests
         bool domainMembership = true,
         bool livingState = true,
         IEnumerable<int>? features = null,
+        IEnumerable<short>? attributes = null,
         IEnumerable<short>? martial = null,
         IEnumerable<short>? life = null) => new(
             42,
@@ -196,6 +207,8 @@ public sealed class CompanionCandidateSnapshotMappingTests
             locationArea: 3,
             locationBlock: 7,
             featureIdentities: features ?? [9, 2, 5],
+            baseMainAttributes: attributes
+                ?? Enumerable.Range(55, 6).Select(value => (short)value),
             baseMartialQualifications: martial
                 ?? Enumerable.Range(0, 14).Select(value => (short)value),
             learnedMartialSkillIdentities: [8, 3],
@@ -207,9 +220,9 @@ public sealed class CompanionCandidateSnapshotMappingTests
     private static CandidateProfileSourceVersions Versions() => new(
         Sha,
         "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+        "2",
         "1",
-        "1",
-        "1");
+        "2");
 
     private static CandidateProfileFieldIdentity Field(
         CandidateProfileField field) => new(field);
@@ -221,6 +234,11 @@ public sealed class CompanionCandidateSnapshotMappingTests
     private static CandidateProfileFieldIdentity LifeField(short type) => new(
         CandidateProfileField.BaseLifeSkillQualification,
         new CandidateDisciplineIdentity(CandidateDisciplineDomain.LifeSkill, type));
+
+    private static CandidateProfileFieldIdentity AttributeField(
+        CandidateMainAttribute attribute) => new(
+        CandidateProfileField.BaseMainAttribute,
+        attribute);
 
     private static CandidateDisciplineIdentity Martial(short type) => new(
         CandidateDisciplineDomain.Martial,

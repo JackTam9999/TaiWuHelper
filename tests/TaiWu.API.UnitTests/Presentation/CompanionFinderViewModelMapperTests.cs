@@ -50,11 +50,15 @@ public sealed class CompanionFinderViewModelMapperTests
     public async Task Maps_every_rank_and_evidence_state_without_zero_fallback()
     {
         var result = await CompanionFinderTestData.ResultAsync();
+        var disciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.English);
 
         var model = CompanionFinderViewModelMapper.Map(
             result,
             TaiwuLanguage.English,
-            "Synthetic martial discipline");
+            "Synthetic martial discipline",
+            disciplines);
 
         Assert.Equal(9, model.Counts.Total);
         Assert.Equal(8, model.Counts.Eligible);
@@ -87,6 +91,20 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Equal("Rankable", first.EvaluationStateLabel);
         Assert.NotEmpty(first.Strengths);
         Assert.Empty(first.Limitations);
+        Assert.Equal(
+            CompanionCapabilitySummaryState.Complete,
+            first.CapabilitySummary.State);
+        Assert.Equal("47.67", first.CapabilitySummary.BreadthIndexLabel);
+        Assert.Equal("53.5", first.CapabilitySummary.MainAttributes.ScoreLabel);
+        Assert.Equal("6/6", first.CapabilitySummary.MainAttributes.CoverageLabel);
+        Assert.Equal(
+            ["Intelligence", "Energy", "Vitality"],
+            first.CapabilitySummary.MainAttributes.TopValues.Select(value =>
+                value.Label));
+        Assert.Equal(
+            ["Martial discipline 1", "Martial discipline 14", "Martial discipline 13"],
+            first.CapabilitySummary.MartialDisciplines.TopValues.Select(value =>
+                value.Label));
         Assert.All(first.Gates, gate => Assert.True(gate.Passed));
         Assert.Equal(
             Enum.GetValues<CompanionRoleEvaluationState>()
@@ -239,15 +257,23 @@ public sealed class CompanionFinderViewModelMapperTests
     public async Task Language_changes_display_only_and_preserves_exact_facts()
     {
         var result = await CompanionFinderTestData.ResultAsync();
+        var englishDisciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.English);
+        var chineseDisciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.Chinese);
 
         var english = CompanionFinderViewModelMapper.Map(
             result,
             TaiwuLanguage.English,
-            "Synthetic martial discipline");
+            "Synthetic martial discipline",
+            englishDisciplines);
         var chinese = CompanionFinderViewModelMapper.Map(
             result,
             TaiwuLanguage.Chinese,
-            "範例武學類別");
+            "範例武學類別",
+            chineseDisciplines);
 
         Assert.Equal(
             english.Candidates.Select(value => (
@@ -287,6 +313,25 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.NotEqual(
             english.Candidates[0].Gates[0].RequirementLabel,
             chinese.Candidates[0].Gates[0].RequirementLabel);
+        Assert.Equal(
+            english.Candidates[0].CapabilitySummary.BreadthIndexLabel,
+            chinese.Candidates[0].CapabilitySummary.BreadthIndexLabel);
+        Assert.NotEqual(
+            english.Candidates[0].CapabilitySummary.MainAttributes.TopValues[0].Label,
+            chinese.Candidates[0].CapabilitySummary.MainAttributes.TopValues[0].Label);
+        var chineseComparison = CompanionFinderViewModelMapper.MapComparison(
+            result,
+            chinese,
+            31002,
+            31003,
+            TaiwuLanguage.Chinese);
+        Assert.Equal("能力概覽", chineseComparison.Capability.Title);
+        Assert.Contains(chineseComparison.Capability.Facts, fact =>
+            fact.Label == "廣度指數"
+            && fact.FirstValue == "48.29"
+            && fact.SecondValue == "49.26");
+        Assert.Contains(chineseComparison.Capability.Facts, fact =>
+            fact.FirstDetail.Contains("悟性 57", StringComparison.Ordinal));
         Assert.Contains("整體價值", chinese.ScoreLimitation);
     }
 
@@ -294,10 +339,14 @@ public sealed class CompanionFinderViewModelMapperTests
     public async Task Comparison_uses_the_same_evaluations_and_reports_equal_tie()
     {
         var result = await CompanionFinderTestData.ResultAsync();
+        var disciplines = CompanionFinderViewModelMapper.MapDisciplines(
+            CompanionFinderTestData.Disciplines(),
+            TaiwuLanguage.English);
         var model = CompanionFinderViewModelMapper.Map(
             result,
             TaiwuLanguage.English,
-            "Synthetic martial discipline");
+            "Synthetic martial discipline",
+            disciplines);
 
         var comparison = CompanionFinderViewModelMapper.MapComparison(
             result,
@@ -309,6 +358,20 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Equal("Synthetic Person B", comparison.FirstCandidateName);
         Assert.Equal("Synthetic Person C", comparison.SecondCandidateName);
         Assert.Equal("Equal confirmed evidence", comparison.Outcome);
+        Assert.Equal("Capability overview", comparison.Capability.Title);
+        Assert.Contains("descriptive only", comparison.Capability.Limitation);
+        Assert.Contains(comparison.Capability.Facts, value =>
+            value.Label == "Breadth index"
+            && value.FirstValue == "48.29"
+            && value.SecondValue == "49.26");
+        Assert.Contains(comparison.Capability.Facts, value =>
+            value.Label == "Six base attributes"
+            && value.FirstValue == "54.5"
+            && value.SecondValue == "55.5"
+            && value.FirstDetail.Contains("Intelligence 57", StringComparison.Ordinal));
+        Assert.Contains(comparison.Capability.Facts, value =>
+            value.Label == "14 martial aptitudes"
+            && value.FirstDetail.Contains("Martial discipline 1 75", StringComparison.Ordinal));
         Assert.Contains(comparison.Facts, value =>
             value.Label == "Evaluation state"
             && value.FirstValue == "Rankable"

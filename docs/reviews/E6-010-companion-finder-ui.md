@@ -5,7 +5,7 @@
 | Status | Complete |
 | Evidence date | 2026-08-17 |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
-| Backlog item | [E6-010](../roadmap/epic-006/BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui) |
+| Backlog items | [E6-010](../roadmap/epic-006/BACKLOG.md#e6-010--deliver-the-bilingual-accessible-companion-finder-ui), [E6-013](../roadmap/epic-006/BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview) |
 | UI contract | [UI-006](../roadmap/epic-006/UI-006-companion-candidate-finder.md) |
 
 ## Scope and data hygiene
@@ -28,7 +28,8 @@ report or its captures.
 > The corrected synthetic fixture reports all four candidate-universe-eligible
 > profiles and describes the full saved non-Taiwu roster universe, while current
 > mapper and Razor rendering tests prove exact eligibility, evaluation/gate
-> semantics, and typed partial/catalogue states.
+> semantics, typed partial/catalogue states, and the separate capability
+> overview added by E6-013.
 
 ## Live route verification
 
@@ -89,6 +90,22 @@ wrapped without widening the document.
 
 ![Synthetic Traditional Chinese candidate cards](./assets/epic-006/companion-finder-zh-narrow-candidates.png)
 
+## E6-013 capability-overview review
+
+The corrected synthetic fixture now places a separate capability table before
+the existing role-evidence table. At the default 1,280 by 720 viewport, its
+breadth index, six-attribute average, martial-aptitude average, life-skill-
+aptitude average, exact 6/6, 14/14, and 16/16 coverage, and top-three values
+were readable in aligned columns. The equal-weight saved-base limitation was
+visible directly above the table, with no winner color, grade, or universal-
+recommendation language.
+
+At 390 by 844 CSS pixels, the content viewport and document scroll width were
+both 375 pixels. The same five-row semantic table reflowed into labelled cards;
+Traditional Chinese values and top-value details wrapped without clipping or
+horizontal overflow. The following role evidence remained in its own table.
+The browser console contained no errors.
+
 ## Interaction and state guarantees
 
 Automated Presentation tests exercise loading, cancellation, configured-save
@@ -97,6 +114,11 @@ ineligible, incomplete, unsupported, stale, and conflicting states. They also
 prove that filters preserve unfiltered counts and ranks, two selections use the
 existing immutable shortlist, unavailable comparison values have no numeric
 difference, and language remapping preserves stable identities.
+
+Capability tests additionally prove formula/version transparency, complete-
+category requirements, explicit unavailable states, bilingual labels, top-
+three values, raw-ID hiding, and that the overview cannot change role score,
+rank, order, or comparison outcome.
 
 Rendered semantic tests verify native controls, scoped headers, accessible
 names, live regions, focus targets, visible non-color cues, previous-result
@@ -112,14 +134,14 @@ independent of rankability in both API and Presentation summaries.
 
 ## Automated result
 
-The current post-review non-integration matrix passed 1,244 tests:
+The current post-review non-integration matrix passed 1,248 tests:
 
 | Project | Passed |
 |---|---:|
-| Domain | 493 |
+| Domain | 496 |
 | Application | 178 |
 | Infrastructure | 146 |
-| Architecture | 94 |
+| Architecture | 95 |
 | API and Presentation | 333 |
 
 The complete solution build passed with zero warnings and zero errors.

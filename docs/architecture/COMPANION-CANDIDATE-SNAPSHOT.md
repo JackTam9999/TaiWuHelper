@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-004 |
+| Status | Implemented for E6-004 and extended by E6-013 |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
-| Backlog item | [E6-004](../roadmap/epic-006/BACKLOG.md#e6-004--project-a-one-pass-read-only-candidate-snapshot) |
+| Backlog items | [E6-004](../roadmap/epic-006/BACKLOG.md#e6-004--project-a-one-pass-read-only-candidate-snapshot), [E6-013](../roadmap/epic-006/BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview) |
 | Source decision | [Companion-candidate source boundary](./COMPANION-CANDIDATE-SOURCES.md) |
 | Profile contract | [Companion role definition and evaluation](./COMPANION-ROLE-EVALUATION.md) |
 | Enrichment | [Companion-candidate enrichment](./COMPANION-CANDIDATE-ENRICHMENT.md) |
@@ -140,25 +140,29 @@ skill decides candidate inclusion or eligibility.
 
 ## Raw profile projection
 
-A complete version-1 profile contains 101 typed facts:
+A complete profile-mapping version-2 profile contains 107 typed facts:
 
 - roster, Domain membership, character membership, and living state;
 - current age, area ID, block ID, and feature identities;
 - learned and equipped martial identities and learned life-skill identities;
+- 6 saved base main attributes from one fixed buffer;
 - 14 saved base martial qualifications;
 - 16 saved base life-skill qualifications; and
 - explicit unsupported current qualification and attainment facts for all 30
   disciplines.
 
-Saved base arrays must match the verified 14- and 16-entry shapes. A missing
-entry is `Incomplete`; it is not numeric zero. Current modified qualification
-and attainment remain `Unsupported` with the standalone-runtime reason from
-E6-000 and are never called by this projection.
+Saved base arrays must match the verified 6-, 14-, and 16-entry shapes. Main
+attributes retain the fixed Strength, Dexterity, Concentration, Vitality,
+Energy, and Intelligence identities. A missing entry is `Incomplete`; it is
+not numeric zero. Current modified attributes, qualification, and attainment
+are never substituted for these saved-base values. Current modified
+qualification and attainment remain `Unsupported` with the standalone-runtime
+reason from E6-000 and are never called by this projection.
 
-All confirmed saved facts use configured-save provenance with mapping version
-`1` and the same guarded save SHA-256 as the profile. Unsupported modified
-facts use exact installed-GameData provenance. Evidence references are stable,
-path-free field identities.
+All confirmed saved facts use configured-save provenance with profile-mapping
+version `2`, fingerprint-schema version `2`, and the same guarded save SHA-256
+as the profile. Unsupported modified facts use exact installed-GameData
+provenance. Evidence references are stable, path-free field identities.
 
 The installed equipped-skill array includes negative empty-slot sentinels.
 The production mapper filters those non-identities before creating the typed
@@ -208,7 +212,7 @@ configured save as E6-000 and passed with:
 
 - status `Complete`;
 - one non-Taiwu current-group profile;
-- 101 facts and no omissions;
+- 101 facts and no omissions under the original profile-mapping version `1`;
 - one expected standalone-runtime warning;
 - equivalent repeated profile fingerprints and save identity;
 - cold production read `20.487` seconds against a 30-second budget;
@@ -220,6 +224,16 @@ configured save as E6-000 and passed with:
 The repository stores no local path, save identity, candidate identity, or
 candidate value from that run.
 
+After E6-013 added the six saved base main attributes, the current focused
+Release integration class again passed all 3 guarded companion scenarios with
+zero skips. The snapshot scenario validates the current 107-fact profile
+shape, all six confirmed typed main attributes, and repeated
+fingerprints; the before/after guard again covered the save and every installed
+source used by the companion workflow. The class completed in `32.759` seconds.
+No local identity, value, path, or fingerprint is recorded.
+
 E6-005 consumes this snapshot in memory. It joins only the confirmed learned
 and equipped identity sets to a compatible helper catalogue and never reopens
-the archive per candidate or modifies these 101-fact profiles.
+the archive per candidate or modifies the current 107-fact profiles. E6-013
+retains the same one-pass read boundary: `GetBaseMainAttributes()` is called
+once per candidate and the six values are copied before mapping.

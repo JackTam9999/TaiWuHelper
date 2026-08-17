@@ -54,7 +54,8 @@ public static class CompanionFinderViewModelMapper
     public static CompanionFinderViewModel Map(
         CompanionFinderResult result,
         TaiwuLanguage language,
-        string disciplineName)
+        string disciplineName,
+        IReadOnlyList<CompanionDisciplineOptionViewModel>? disciplineOptions = null)
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentException.ThrowIfNullOrWhiteSpace(disciplineName);
@@ -69,7 +70,8 @@ public static class CompanionFinderViewModelMapper
         var counts = response.Counts!;
         var candidates = response.Candidates.Select(candidate => MapCandidate(
             candidate,
-            language)).ToArray();
+            language,
+            disciplineOptions ?? [])).ToArray();
         return new CompanionFinderViewModel(
             response.Status,
             disciplineName.Trim(),
@@ -235,12 +237,36 @@ public static class CompanionFinderViewModelMapper
             Text(language, CompanionFinderUiTextKey.CompetitionRank),
             first.RankLabel,
             second.RankLabel));
+        var capability = new CompanionCapabilityComparisonViewModel(
+            Text(language, CompanionFinderUiTextKey.CapabilityOverview),
+            Text(language, CompanionFinderUiTextKey.CapabilityLimitation),
+            [
+                new CompanionCapabilityComparisonFactViewModel(
+                    Text(language, CompanionFinderUiTextKey.BreadthIndex),
+                    first.CapabilitySummary.BreadthIndexLabel,
+                    string.Empty,
+                    second.CapabilitySummary.BreadthIndexLabel,
+                    string.Empty),
+                CapabilityFact(
+                    first.CapabilitySummary.MainAttributes,
+                    second.CapabilitySummary.MainAttributes,
+                    language),
+                CapabilityFact(
+                    first.CapabilitySummary.MartialDisciplines,
+                    second.CapabilitySummary.MartialDisciplines,
+                    language),
+                CapabilityFact(
+                    first.CapabilitySummary.LifeSkillDisciplines,
+                    second.CapabilitySummary.LifeSkillDisciplines,
+                    language)
+            ]);
         return new CompanionComparisonViewModel(
             first.DisplayName,
             second.DisplayName,
             CompanionFinderApiText.ComparisonOutcome(
                 language,
                 comparison.Outcome),
+            capability,
             facts);
     }
 
@@ -277,7 +303,8 @@ public static class CompanionFinderViewModelMapper
 
     private static CompanionCandidateViewModel MapCandidate(
         CompanionCandidateResponse candidate,
-        TaiwuLanguage language)
+        TaiwuLanguage language,
+        IReadOnlyList<CompanionDisciplineOptionViewModel> disciplineOptions)
     {
         var scoreFact = candidate.ScoreFacts.SingleOrDefault();
         var evidence = scoreFact?.EvidenceState
@@ -324,6 +351,10 @@ public static class CompanionFinderViewModelMapper
                 CultureInfo.InvariantCulture)
                 ?? Text(language, CompanionFinderUiTextKey.Unavailable),
             EvidenceLabel(evidence, language),
+            MapCapabilitySummary(
+                candidate.CapabilitySummary,
+                language,
+                disciplineOptions),
             strengths,
             limitations,
             [.. candidate.Gates.Select(gate =>
@@ -342,6 +373,160 @@ public static class CompanionFinderViewModelMapper
                     gate.Explanation,
                     gate.Outcome == CompanionRoleGateOutcome.Passed))]);
     }
+
+    private static CompanionCapabilitySummaryViewModel MapCapabilitySummary(
+        CompanionCapabilitySummaryResponse summary,
+        TaiwuLanguage language,
+        IReadOnlyList<CompanionDisciplineOptionViewModel> disciplineOptions) =>
+        new(
+            summary.State,
+            summary.RuleVersion,
+            summary.Formula,
+            ScoreLabel(summary.BreadthIndex, summary.State, language),
+            MapCapabilityCategory(
+                summary.MainAttributes,
+                language,
+                disciplineOptions),
+            MapCapabilityCategory(
+                summary.MartialDisciplines,
+                language,
+                disciplineOptions),
+            MapCapabilityCategory(
+                summary.LifeSkillDisciplines,
+                language,
+                disciplineOptions));
+
+    private static CompanionCapabilityCategoryViewModel MapCapabilityCategory(
+        CompanionCapabilityCategoryResponse category,
+        TaiwuLanguage language,
+        IReadOnlyList<CompanionDisciplineOptionViewModel> disciplineOptions)
+    {
+        var topValues = category.State == CompanionCapabilitySummaryState.Complete
+            ? category.Components
+                .Where(component => component.Value.HasValue)
+                .OrderByDescending(component => component.Value)
+                .ThenBy(ComponentOrder)
+                .Select(component => new
+                {
+                    Label = CapabilityComponentLabel(
+                        component,
+                        language,
+                        disciplineOptions),
+                    Value = component.Value!.Value
+                })
+                .Where(component => component.Label is not null)
+                .Take(3)
+                .Select(component => new CompanionCapabilityTopValueViewModel(
+                    component.Label!,
+                    component.Value))
+                .ToArray()
+            : [];
+        return new CompanionCapabilityCategoryViewModel(
+            category.Category,
+            category.State,
+            Text(language, category.Category switch
+            {
+                CompanionCapabilityCategory.MainAttributes =>
+                    CompanionFinderUiTextKey.MainAttributeAverage,
+                CompanionCapabilityCategory.MartialDisciplines =>
+                    CompanionFinderUiTextKey.MartialAptitudeAverage,
+                CompanionCapabilityCategory.LifeSkillDisciplines =>
+                    CompanionFinderUiTextKey.LifeSkillAptitudeAverage,
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(category),
+                    category.Category,
+                    "Unknown capability category.")
+            }),
+            ScoreLabel(category.Average, category.State, language),
+            $"{category.ConfirmedCount.ToString(CultureInfo.InvariantCulture)}/"
+                + category.ExpectedCount.ToString(CultureInfo.InvariantCulture),
+            topValues);
+    }
+
+    private static CompanionCapabilityComparisonFactViewModel CapabilityFact(
+        CompanionCapabilityCategoryViewModel first,
+        CompanionCapabilityCategoryViewModel second,
+        TaiwuLanguage language) => new(
+        first.Label,
+        first.ScoreLabel,
+        CapabilityDetail(first, language),
+        second.ScoreLabel,
+        CapabilityDetail(second, language));
+
+    private static string CapabilityDetail(
+        CompanionCapabilityCategoryViewModel category,
+        TaiwuLanguage language)
+    {
+        var coverage = $"{Text(language, CompanionFinderUiTextKey.ConfirmedCoverage)}: "
+            + category.CoverageLabel;
+        if (category.TopValues.Count == 0)
+        {
+            return coverage;
+        }
+
+        return coverage + "; "
+            + Text(language, CompanionFinderUiTextKey.TopValues)
+            + ": "
+            + string.Join(
+                ", ",
+                category.TopValues.Select(value =>
+                    $"{value.Label} {value.Value.ToString(CultureInfo.InvariantCulture)}"));
+    }
+
+    private static string? CapabilityComponentLabel(
+        CompanionCapabilityComponentResponse component,
+        TaiwuLanguage language,
+        IReadOnlyList<CompanionDisciplineOptionViewModel> disciplineOptions)
+    {
+        if (component.MainAttribute.HasValue)
+        {
+            return CompanionFinderUiText.MainAttributeLabel(
+                language,
+                component.MainAttribute.Value);
+        }
+
+        if (!component.DisciplineDomain.HasValue
+            || !component.DisciplineType.HasValue)
+        {
+            return null;
+        }
+
+        return disciplineOptions.SingleOrDefault(option =>
+            option.Domain == component.DisciplineDomain.Value
+            && option.Type == component.DisciplineType.Value
+            && option.NameAvailable)?.DisplayName;
+    }
+
+    private static int ComponentOrder(
+        CompanionCapabilityComponentResponse component) =>
+        component.MainAttribute.HasValue
+            ? (int)component.MainAttribute.Value
+            : component.DisciplineType ?? int.MaxValue;
+
+    private static string ScoreLabel(
+        decimal? score,
+        CompanionCapabilitySummaryState state,
+        TaiwuLanguage language) => score?.ToString(
+        "0.##",
+        CultureInfo.InvariantCulture) ?? EvidenceLabel(
+        state switch
+        {
+            CompanionCapabilitySummaryState.Incomplete =>
+                CompanionFactEvidenceState.Incomplete,
+            CompanionCapabilitySummaryState.Unsupported =>
+                CompanionFactEvidenceState.Unsupported,
+            CompanionCapabilitySummaryState.Stale =>
+                CompanionFactEvidenceState.Stale,
+            CompanionCapabilitySummaryState.Conflicting =>
+                CompanionFactEvidenceState.Conflicting,
+            CompanionCapabilitySummaryState.Complete =>
+                CompanionFactEvidenceState.Missing,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(state),
+                state,
+                "Unknown capability summary state.")
+        },
+        language);
 
     private static CompanionCandidateSection Section(
         CompanionRoleCandidateRankingState state) => state switch

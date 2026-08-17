@@ -56,6 +56,27 @@ public sealed record CompanionCandidateGateViewModel(
     string Explanation,
     bool Passed);
 
+public sealed record CompanionCapabilityTopValueViewModel(
+    string Label,
+    short Value);
+
+public sealed record CompanionCapabilityCategoryViewModel(
+    CompanionCapabilityCategory Category,
+    CompanionCapabilitySummaryState State,
+    string Label,
+    string ScoreLabel,
+    string CoverageLabel,
+    IReadOnlyList<CompanionCapabilityTopValueViewModel> TopValues);
+
+public sealed record CompanionCapabilitySummaryViewModel(
+    CompanionCapabilitySummaryState State,
+    string RuleVersion,
+    CompanionCapabilitySummaryFormula Formula,
+    string BreadthIndexLabel,
+    CompanionCapabilityCategoryViewModel MainAttributes,
+    CompanionCapabilityCategoryViewModel MartialDisciplines,
+    CompanionCapabilityCategoryViewModel LifeSkillDisciplines);
+
 public sealed record CompanionCandidateViewModel(
     int CharacterId,
     string DisplayName,
@@ -70,6 +91,7 @@ public sealed record CompanionCandidateViewModel(
     decimal? RoleLocalScore,
     string ScoreLabel,
     string EvidenceLabel,
+    CompanionCapabilitySummaryViewModel CapabilitySummary,
     IReadOnlyList<string> Strengths,
     IReadOnlyList<string> Limitations,
     IReadOnlyList<CompanionCandidateGateViewModel> Gates);
@@ -93,10 +115,23 @@ public sealed record CompanionComparisonFactViewModel(
     string FirstValue,
     string SecondValue);
 
+public sealed record CompanionCapabilityComparisonFactViewModel(
+    string Label,
+    string FirstValue,
+    string FirstDetail,
+    string SecondValue,
+    string SecondDetail);
+
+public sealed record CompanionCapabilityComparisonViewModel(
+    string Title,
+    string Limitation,
+    IReadOnlyList<CompanionCapabilityComparisonFactViewModel> Facts);
+
 public sealed record CompanionComparisonViewModel(
     string FirstCandidateName,
     string SecondCandidateName,
     string Outcome,
+    CompanionCapabilityComparisonViewModel Capability,
     IReadOnlyList<CompanionComparisonFactViewModel> Facts);
 
 public enum CompanionFinderNoticeStatus

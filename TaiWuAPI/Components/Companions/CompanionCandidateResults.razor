@@ -304,6 +304,50 @@
                     <strong>@Text(CompanionFinderUiTextKey.RelativeResult):</strong>
                     @Comparison.Outcome
                 </p>
+                <section class="companion-capability-comparison"
+                         aria-labelledby="companion-capability-heading">
+                    <h4 id="companion-capability-heading">
+                        @Comparison.Capability.Title
+                    </h4>
+                    <p>@Comparison.Capability.Limitation</p>
+                    <table class="companion-comparison-table companion-capability-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">@Text(CompanionFinderUiTextKey.CapabilityOverview)</th>
+                                <th scope="col">@Comparison.FirstCandidateName</th>
+                                <th scope="col">@Comparison.SecondCandidateName</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fact in Comparison.Capability.Facts)
+                            {
+                                <tr>
+                                    <th scope="row">@fact.Label</th>
+                                    <td>
+                                        <span class="companion-mobile-label" aria-hidden="true">
+                                            @Comparison.FirstCandidateName
+                                        </span>
+                                        <strong>@fact.FirstValue</strong>
+                                        @if (!string.IsNullOrEmpty(fact.FirstDetail))
+                                        {
+                                            <small>@fact.FirstDetail</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="companion-mobile-label" aria-hidden="true">
+                                            @Comparison.SecondCandidateName
+                                        </span>
+                                        <strong>@fact.SecondValue</strong>
+                                        @if (!string.IsNullOrEmpty(fact.SecondDetail))
+                                        {
+                                            <small>@fact.SecondDetail</small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </section>
                 <table class="companion-comparison-table">
                     <thead>
                         <tr>

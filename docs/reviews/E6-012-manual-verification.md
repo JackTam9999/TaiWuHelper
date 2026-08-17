@@ -115,6 +115,13 @@ each candidate's passed/total requirement count in a closed native disclosure,
 and reveals the complete strengths, limitations, and typed gates on expansion.
 The role-wide score caveat appears once rather than repeating per candidate.
 
+The E6-013 follow-up adds one separate capability overview before the existing
+role facts. Desktop and 390-pixel browser review confirms that breadth, the
+three category averages, 6/6, 14/14, and 16/16 coverage, and localized top
+values remain readable in both languages without horizontal overflow. Its
+visible equal-weight saved-base limitation states that it does not change the
+selected-role score, rank, or recommendation.
+
 Post-read result behavior additionally passes executable Razor component
 rendering for exact eligibility counts, all typed source/catalogue states,
 filters, comparison, previous-result inertness, and both languages. This
@@ -145,9 +152,10 @@ selected archive's name or path.
 
 ## Deferred mechanics and future backlog
 
-The first delivery intentionally supports only martial- and life-skill-
-discipline saved base aptitude. Remaining mechanics are explicit discovery or
-future-product candidates in
+The first delivery intentionally ranks only martial- and life-skill-discipline
+saved base aptitude. The six attributes and all aptitudes additionally support
+a descriptive comparison overview, not another role or recommendation.
+Remaining mechanics are explicit discovery or future-product candidates in
 [Future product ideas](../roadmap/FUTURE-PRODUCT-IDEAS.md#epic-6-deferred-companion-mechanics):
 
 - current modified qualification and attainment under live special effects;
@@ -187,7 +195,7 @@ A fresh independent re-review found and drove three further corrections:
    identity/kind/field/outcome/reason semantics, and comparison renders the
    evaluation label rather than relabelling ranking state.
 
-The corrected Release matrix passes 1,244 non-integration tests with zero
+The corrected Release matrix passes 1,248 non-integration tests with zero
 failures and the guarded local class passes 3 of 3. The solution build has zero
 warnings and errors; formatter and repository validation also pass.
 

@@ -6042,6 +6042,27 @@ select {
     color: #e8d2a0;
 }
 
+.companion-capability-comparison {
+    display: grid;
+    gap: 10px;
+}
+
+.companion-capability-comparison h4,
+.companion-capability-comparison p {
+    margin: 0;
+}
+
+.companion-capability-comparison p,
+.companion-capability-table small {
+    color: var(--muted);
+}
+
+.companion-capability-table small {
+    display: block;
+    margin-top: 4px;
+    line-height: 1.45;
+}
+
 .companion-comparison-table thead th:first-child {
     width: 26%;
 }

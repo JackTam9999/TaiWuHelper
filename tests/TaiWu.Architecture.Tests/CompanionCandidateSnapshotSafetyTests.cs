@@ -89,6 +89,11 @@ public sealed class CompanionCandidateSnapshotSafetyTests
         Assert.Equal(
             1,
             CountOccurrences(reader, "readSession.ReadAsync("));
+        Assert.Equal(
+            1,
+            CountOccurrences(reader, "GetBaseMainAttributes()"));
+        Assert.Contains("MainAttributeCount = 6", combined);
+        Assert.DoesNotContain("GetCurrMainAttribute", reader);
         Assert.Contains("saveFilePathProvider.Resolve()", reader);
         Assert.DoesNotContain("request.Save", reader);
         Assert.DoesNotContain("request.Path", reader);
@@ -284,10 +289,47 @@ public sealed class CompanionCandidateSnapshotSafetyTests
         Assert.DoesNotContain("File.", mapper);
         Assert.DoesNotContain("Process.", mapper);
         Assert.Equal(
+            1,
+            CountOccurrences(
+                mapper,
+                "CompanionCapabilitySummaryBuilder.Build("));
+        Assert.Equal(
             "api/companion-candidates",
             typeof(CompanionCandidatesController)
                 .GetCustomAttribute<Microsoft.AspNetCore.Mvc.RouteAttribute>()?
                 .Template);
+    }
+
+    [Fact]
+    public void Capability_breadth_is_transparent_and_cannot_change_role_rank()
+    {
+        var root = FindRepositoryRoot();
+        var summary = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "TaiWu.Domain",
+            "CompanionCandidates",
+            "CompanionCapabilitySummary.cs"));
+        var ranking = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "TaiWu.Domain",
+            "CompanionRoles",
+            "CompanionRoleRanking.cs"));
+        var evaluator = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "TaiWu.Domain",
+            "CompanionRoles",
+            "CompanionRoleEvaluator.cs"));
+
+        Assert.Contains("EqualCategoryMean", summary);
+        Assert.Contains("/ 3m", summary);
+        Assert.Contains("MainAttributeCount = 6", summary);
+        Assert.Contains("MartialDisciplineCount = 14", summary);
+        Assert.Contains("LifeSkillDisciplineCount = 16", summary);
+        Assert.DoesNotContain("CompanionCapabilitySummary", ranking);
+        Assert.DoesNotContain("CompanionCapabilitySummary", evaluator);
     }
 
     private static IEnumerable<Type> PublicSignatureTypes(Type type)

@@ -389,16 +389,18 @@
             return;
         }
 
-        var disciplineName = CompanionFinderViewModelMapper.MapDisciplines(
-                _disciplineDisplay!,
-                Language)
+        var disciplineOptions = CompanionFinderViewModelMapper.MapDisciplines(
+            _disciplineDisplay!,
+            Language);
+        var disciplineName = disciplineOptions
             .Single(value => value.Domain == _submittedDomain
                 && value.Type == _submittedDisciplineType)
             .DisplayName;
         _model = CompanionFinderViewModelMapper.Map(
             _result,
             Language,
-            disciplineName);
+            disciplineName,
+            disciplineOptions);
         _mappedLanguage = Language;
         RebuildComparison();
     }
