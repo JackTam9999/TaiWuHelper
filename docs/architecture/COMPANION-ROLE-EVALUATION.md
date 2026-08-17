@@ -21,6 +21,13 @@ This slice does not assign shortlist rank, competition rank, or `Ranked` and
 over immutable E6-003 evaluations. It must not reimplement role gates or score
 arithmetic.
 
+E6-005 supporting enrichment is documented in the
+[companion-candidate enrichment architecture](./COMPANION-CANDIDATE-ENRICHMENT.md).
+It attaches compatible combat-skill definitions to saved learned/equipped
+identities without changing any profile fact or role score. Detailed character
+progress is not required by either version-1 role and remains explicitly not
+requested.
+
 ## Implemented contracts
 
 The `TaiWu.Domain.CompanionRoles` namespace contains:

@@ -411,7 +411,7 @@ save revision through one bounded archive session.
 
 ### E6-005 — Enrich candidate profiles with verified catalogue and progress facts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -426,22 +426,22 @@ would otherwise reopen the archive repeatedly.
 
 #### Acceptance criteria
 
-- [ ] Enrichment uses stable skill, feature, field, and character identities;
+- [x] Enrichment uses stable skill, feature, field, and character identities;
       localized names remain display values.
-- [ ] Only E6-000-approved fields enter a role-evaluable profile.
-- [ ] Learned, equipped, mastered, proficiency, study, or other progress states
+- [x] Only E6-000-approved fields enter a role-evaluable profile.
+- [x] Learned, equipped, mastered, proficiency, study, or other progress states
       retain their existing verified meanings rather than being collapsed.
-- [ ] Catalogue and progress version compatibility is checked explicitly.
-- [ ] Missing, stale, rebuilding, partial, unsupported, and failed enrichment
+- [x] Catalogue and progress version compatibility is checked explicitly.
+- [x] Missing, stale, rebuilding, partial, unsupported, and failed enrichment
       states remain typed at candidate and result level.
-- [ ] Missing enrichment cannot become zero progress, no skill, or failed role
+- [x] Missing enrichment cannot become zero progress, no skill, or failed role
       suitability.
-- [ ] One candidate's unavailable progress does not suppress unrelated
+- [x] One candidate's unavailable progress does not suppress unrelated
       candidates or fabricate comparative facts.
-- [ ] The workflow does not call the archive-opening character atlas reader in
+- [x] The workflow does not call the archive-opening character atlas reader in
       an N+1 loop.
-- [ ] Enrichment ordering and parallel scheduling cannot affect the result.
-- [ ] Tests cover version match and mismatch, missing catalogue, partial
+- [x] Enrichment ordering and parallel scheduling cannot affect the result.
+- [x] Tests cover version match and mismatch, missing catalogue, partial
       progress, duplicate facts, unsupported fields, and deterministic joins.
 
 #### Evidence when complete
@@ -450,6 +450,28 @@ would otherwise reopen the archive repeatedly.
 - Any required batch source contract and Infrastructure mapping.
 - Unit and guarded integration tests.
 - Updated companion snapshot and role-evaluation architecture documents.
+
+#### Completion evidence
+
+- The Application enrichment service joins exact saved learned/equipped
+  martial identities to a current compatible combat-skill catalogue while
+  returning the original immutable profiles unchanged.
+- Learned, equipped, and learned-life-skill collections retain available,
+  incomplete, unsupported, stale, or conflicting evidence. Missing membership
+  is nullable and never becomes `false`, an empty collection, zero progress,
+  or failed suitability.
+- Mastery, proficiency, study, breakthrough, activation, and other detailed
+  progress are explicitly not requested because neither approved role uses
+  them. The service has no single-character progress-reader dependency and one
+  catalogue query call site for the whole snapshot.
+- Missing, stale, rebuilding, unsupported, corrupt, query-failed, and partial
+  catalogue states remain distinct at result and candidate level. Bilingual
+  definition names remain display data and do not affect semantic identity.
+- Thirteen focused Application cases and two architecture checks cover the
+  deterministic join and safety boundary. The guarded production test retained
+  one candidate and 57 saved combat-skill identities while reporting the local
+  helper catalogue as stale, accepting no stale definitions, and leaving the
+  save plus seven catalogue sources unchanged.
 
 ### E6-006 — Evaluate role suitability and rank comparable candidates
 

@@ -7,6 +7,7 @@
 | Backlog item | [E6-004](../roadmap/epic-006/BACKLOG.md#e6-004--project-a-one-pass-read-only-candidate-snapshot) |
 | Source decision | [Companion-candidate source boundary](./COMPANION-CANDIDATE-SOURCES.md) |
 | Profile contract | [Companion role definition and evaluation](./COMPANION-ROLE-EVALUATION.md) |
+| Enrichment | [Companion-candidate enrichment](./COMPANION-CANDIDATE-ENRICHMENT.md) |
 
 ## Purpose
 
@@ -191,3 +192,7 @@ configured save as E6-000 and passed with:
 
 The repository stores no local path, save identity, candidate identity, or
 candidate value from that run.
+
+E6-005 consumes this snapshot in memory. It joins only the confirmed learned
+and equipped identity sets to a compatible helper catalogue and never reopens
+the archive per candidate or modifies these 101-fact profiles.

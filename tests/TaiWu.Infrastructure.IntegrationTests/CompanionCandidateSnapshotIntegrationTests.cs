@@ -3,8 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using TaiWu.Application.CompanionCandidates;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Infrastructure;
+using TaiWu.Infrastructure.Catalogue;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -95,6 +97,85 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
             warmWatch.Elapsed <= TimeSpan.FromSeconds(2),
             $"Warm candidate snapshot took {warmWatch.Elapsed.TotalSeconds:F3} seconds.");
         Assert.Equal(before, after);
+    }
+
+    [Fact]
+    public async Task Candidate_enrichment_is_repeatable_versioned_and_read_only()
+    {
+        var savePath = RequireSavePath();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SaveGames:DefaultSaveFilePath"] = savePath
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddTaiwuInfrastructure();
+        using var provider = services.BuildServiceProvider();
+        var paths = provider
+            .GetRequiredService<ITaiwuCatalogueSourcePathProvider>()
+            .Resolve()
+            .Paths;
+        Assert.NotNull(paths);
+        var guardedPaths = new[]
+        {
+            savePath,
+            paths.GameDataConfigurationAssembly,
+            paths.TraditionalChineseCombatSkillLanguage,
+            paths.EnglishCombatSkillLanguage,
+            paths.TraditionalChineseSpecialEffectLanguage,
+            paths.EnglishSpecialEffectLanguage,
+            paths.TraditionalChineseLegendaryBookSlotLanguage,
+            paths.EnglishLegendaryBookSlotLanguage
+        };
+        var before = await CaptureAsync(guardedPaths);
+        var snapshotResult = await provider
+            .GetRequiredService<ICompanionCandidateSnapshotReader>()
+            .ReadAsync(
+                CompanionCandidateSnapshotReadRequest.Current,
+                TestContext.Current.CancellationToken);
+        var snapshot = Assert.IsType<CompanionCandidateSnapshot>(
+            snapshotResult.Snapshot);
+        var useCase = new EnrichCompanionCandidateProfiles(
+            provider.GetRequiredService<ICombatSkillDefinitionSource>(),
+            provider.GetRequiredService<ICombatSkillCatalogueRepository>());
+
+        var first = await useCase.ExecuteAsync(
+            snapshot,
+            TestContext.Current.CancellationToken);
+        var second = await useCase.ExecuteAsync(
+            snapshot,
+            TestContext.Current.CancellationToken);
+        var after = await CaptureAsync(guardedPaths);
+
+        Assert.Equal(first.Status, second.Status);
+        Assert.Equal(first.CatalogueStatus, second.CatalogueStatus);
+        Assert.Equal(first.Fingerprint, second.Fingerprint);
+        Assert.False(
+            first.Status is CompanionCandidateEnrichmentStatus.CatalogueUnsupported
+                or CompanionCandidateEnrichmentStatus.CatalogueFailed);
+        Assert.Equal(snapshot.Profiles.Length, first.Candidates.Length);
+        Assert.All(first.Candidates, candidate =>
+        {
+            Assert.Contains(candidate.Profile, snapshot.Profiles);
+            Assert.Equal(
+                snapshot.Profiles.Single(profile =>
+                    profile.Identity == candidate.Profile.Identity).Fingerprint,
+                candidate.Profile.Fingerprint);
+            Assert.All(candidate.CombatSkills, skill => Assert.Equal(
+                CompanionDetailedProgressState.NotRequestedByApprovedRole,
+                skill.DetailedProgressState));
+        });
+        Assert.Equal(before, after);
+        output.WriteLine(
+            "E6-005 production enrichment: status={0}; catalogue={1}; "
+            + "candidates={2}; skills={3}; guardedFiles={4}.",
+            first.Status,
+            first.CatalogueStatus,
+            first.Candidates.Length,
+            first.Candidates.Sum(candidate => candidate.CombatSkills.Length),
+            guardedPaths.Length);
     }
 
     private static string RequireSavePath()

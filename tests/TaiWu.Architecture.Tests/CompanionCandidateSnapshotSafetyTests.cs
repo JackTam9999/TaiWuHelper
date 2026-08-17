@@ -1,5 +1,6 @@
 using System.Reflection;
 using TaiWu.Application.CompanionCandidates;
+using TaiWu.Application.CombatSkills;
 using TaiWu.Application.GameData;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Infrastructure;
@@ -109,6 +110,63 @@ public sealed class CompanionCandidateSnapshotSafetyTests
                 || type.Name.Contains("Archive", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(typeof(CandidateProfile), publicTypes);
         Assert.Contains(typeof(CandidateProfileSourceVersions), publicTypes);
+    }
+
+    [Fact]
+    public void Candidate_enrichment_cannot_open_character_progress_in_an_n_plus_one_loop()
+    {
+        var parameters = Assert.Single(
+                typeof(EnrichCompanionCandidateProfiles).GetConstructors())
+            .GetParameters()
+            .Select(parameter => parameter.ParameterType)
+            .ToArray();
+        Assert.Equal(
+            [typeof(ICombatSkillDefinitionSource),
+                typeof(ICombatSkillCatalogueRepository)],
+            parameters);
+        Assert.DoesNotContain(
+            typeof(ICharacterCombatSkillProgressReader),
+            parameters);
+
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "TaiWu.Application",
+            "CompanionCandidates",
+            "EnrichCompanionCandidateProfiles.cs"));
+        Assert.DoesNotContain("ICharacterCombatSkillProgressReader", source);
+        Assert.DoesNotContain("ReadCharacterCombatSkillAtlas", source);
+        Assert.Equal(1, CountOccurrences(source, "catalogueRepository.QueryAsync("));
+    }
+
+    [Fact]
+    public void Candidate_enrichment_is_a_view_over_immutable_profiles()
+    {
+        var enrichmentTypes = typeof(CompanionCandidateEnrichmentResult)
+            .Assembly
+            .GetExportedTypes()
+            .Where(type => type.Namespace == "TaiWu.Application.CompanionCandidates"
+                && type.Name.Contains("Enrichment", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.NotEmpty(enrichmentTypes);
+        Assert.All(
+            enrichmentTypes.SelectMany(type => type.GetProperties()),
+            property => Assert.False(property.CanWrite));
+        Assert.DoesNotContain(
+            enrichmentTypes.SelectMany(type => type.GetMethods(
+                BindingFlags.Instance
+                | BindingFlags.Static
+                | BindingFlags.Public
+                | BindingFlags.DeclaredOnly)),
+            method => method.Name.StartsWith("Set", StringComparison.Ordinal)
+                || method.Name.StartsWith("Update", StringComparison.Ordinal)
+                || method.Name.StartsWith("Replace", StringComparison.Ordinal));
+        Assert.Equal(
+            typeof(CandidateProfile),
+            typeof(CompanionCandidateEnrichment)
+                .GetProperty(nameof(CompanionCandidateEnrichment.Profile))!
+                .PropertyType);
     }
 
     private static IEnumerable<Type> PublicSignatureTypes(Type type)
