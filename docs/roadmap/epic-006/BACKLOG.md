@@ -673,7 +673,7 @@ and one immutable source revision.
 
 ### E6-009 — Expose typed companion-finder API contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -686,22 +686,22 @@ localhost-only HTTP endpoints and pure response mappers.
 
 #### Acceptance criteria
 
-- [ ] Role discovery exposes stable identity, version, localized purpose,
+- [x] Role discovery exposes stable identity, version, localized purpose,
       supported state, and limitations.
-- [ ] Finder responses expose source identity, role identity, candidate states,
+- [x] Finder responses expose source identity, role identity, candidate states,
       hard gates, score components, shortlist order, ties, tradeoffs,
       provenance, conflicts, unavailable reasons, and diagnostics.
-- [ ] API types do not expose local paths, proprietary raw content, internal
+- [x] API types do not expose local paths, proprietary raw content, internal
       GameData types, reflection objects, or mutation-capable handles.
-- [ ] Request validation bounds filters and comparison selections.
-- [ ] HTTP behavior distinguishes invalid request, missing save, unsupported
+- [x] Request validation bounds filters and comparison selections.
+- [x] HTTP behavior distinguishes invalid request, missing save, unsupported
       version, partial result, conflict, cancellation, and internal failure.
-- [ ] Mapping is pure and cannot recompute eligibility, scores, or ordering.
-- [ ] Traditional Chinese and English display values map from the same stable
+- [x] Mapping is pure and cannot recompute eligibility, scores, or ordering.
+- [x] Traditional Chinese and English display values map from the same stable
       identities and facts.
-- [ ] OpenAPI documents score limitations and evidence states without
+- [x] OpenAPI documents score limitations and evidence states without
       universal-best or probability language.
-- [ ] Controller, contract, mapper, serialization, localization, and
+- [x] Controller, contract, mapper, serialization, localization, and
       architecture tests cover all response states.
 
 #### Evidence when complete
@@ -709,6 +709,33 @@ localhost-only HTTP endpoints and pure response mappers.
 - Companion-finder controller and response contracts under `TaiWuAPI`.
 - API and architecture tests.
 - `docs/api/COMPANION-CANDIDATES.md`.
+
+#### Completion evidence
+
+- `GET /api/companion-candidates/roles` exposes both verified presets with
+  stable identity/version, typed discipline range, supported state, bilingual
+  purpose, and explicit role-local score limitation.
+- `POST /api/companion-candidates/find` validates bounded transport input and
+  maps one Application execution into source, role, count, candidate, gate,
+  component, fact, conflict, location, enrichment, comparison, and diagnostic
+  response contracts.
+- Missing, incomplete, unsupported, stale, and conflicting score evidence is
+  explicit. Current numeric values exist only for confirmed facts, and API
+  contracts contain no local path, raw content, internal GameData object,
+  reflection type, general object payload, or mutation handle.
+- HTTP `200`, `206`, `400`, `404`, `409`, `422`, `499`, and `500` distinguish
+  complete/empty, partial, invalid, missing, changed-revision, unsupported,
+  cancelled, and failed states. Candidate conflict remains typed response
+  evidence rather than an HTTP revision conflict.
+- The pure mapper copies existing order, rank, ties, outcomes, components, and
+  evidence. Architecture checks forbid evaluator, ranking-builder, merit-
+  comparer, filesystem, or process use in the controller and mapper.
+- English and Traditional Chinese change only mapped display text. OpenAPI
+  response metadata and property descriptions state that totals are role-local,
+  not universal rankings, probabilities, or action recommendations.
+- Twenty API cases and two architecture checks cover role discovery, controller
+  behavior, mapping, localization parity, serialization, public types, every
+  response state, and no re-ranking.
 
 ## Slice 7: Core UI
 

@@ -147,10 +147,11 @@ rebuild after a save revision change. Two architecture tests enforce the
 bounded request and single orchestration paths; the Domain suite separately
 proves evaluation-loop cancellation.
 
-## E6-009 handoff
+## E6-009 API integration
 
-The localhost API must validate transport input into `CompanionFinderRequest`,
-call this use case once, and map the immutable result without recomputing a
-candidate state, score, rank, explanation, filter, or comparison. Response
-types must omit local paths, raw catalogue definitions, and mutation-capable
-handles.
+E6-009 implements the localhost
+[companion candidates API](../api/COMPANION-CANDIDATES.md). It validates
+transport input into `CompanionFinderRequest`, calls this use case once, and
+maps the immutable result without recomputing a candidate state, score, rank,
+explanation, filter, or comparison. Response types omit local paths, raw
+catalogue definitions, and mutation-capable handles.

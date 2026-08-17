@@ -7,6 +7,7 @@ using Xunit;
 
 namespace TaiWu.Application.UnitTests.CompanionCandidates;
 
+[Collection(CompanionCandidateEnrichmentCollection.Name)]
 public sealed class FindCompanionCandidatesTests
 {
     [Fact]

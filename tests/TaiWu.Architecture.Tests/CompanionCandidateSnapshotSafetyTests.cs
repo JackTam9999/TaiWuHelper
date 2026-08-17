@@ -5,6 +5,8 @@ using TaiWu.Application.GameData;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
 using TaiWu.Infrastructure;
+using TaiWuAPI.Contracts.CompanionCandidates;
+using TaiWuAPI.Controllers;
 using Xunit;
 
 namespace TaiWu.Architecture.Tests;
@@ -225,6 +227,67 @@ public sealed class CompanionCandidateSnapshotSafetyTests
         Assert.DoesNotContain("CompanionRoleEvaluator.Evaluate(", source);
         Assert.DoesNotContain("File.", source);
         Assert.DoesNotContain("Process.", source);
+    }
+
+    [Fact]
+    public void Companion_finder_api_contract_has_no_local_or_mutation_capability()
+    {
+        var contractTypes = typeof(CompanionFinderResponse).Assembly
+            .GetExportedTypes()
+            .Where(type => type.Namespace == "TaiWuAPI.Contracts.CompanionCandidates")
+            .ToArray();
+        var properties = contractTypes.SelectMany(type => type.GetProperties()).ToArray();
+
+        Assert.NotEmpty(contractTypes);
+        Assert.DoesNotContain(
+            properties,
+            property => property.Name.Contains("Path", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains("Command", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains("Handle", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains("RawContent", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(
+            properties.Select(property => Unwrap(property.PropertyType)),
+            type => type.Namespace?.StartsWith("GameData", StringComparison.Ordinal) == true
+                || type.Namespace?.StartsWith("TaiWu.Infrastructure", StringComparison.Ordinal) == true
+                || type == typeof(FileInfo)
+                || type == typeof(DirectoryInfo)
+                || type == typeof(Stream)
+                || type == typeof(System.Diagnostics.Process)
+                || type == typeof(MemberInfo)
+                || type == typeof(Type)
+                || type == typeof(object));
+    }
+
+    [Fact]
+    public void Companion_finder_api_maps_once_without_re_evaluating_or_ranking()
+    {
+        var root = FindRepositoryRoot();
+        var controller = File.ReadAllText(Path.Combine(
+            root,
+            "TaiWuAPI",
+            "Controllers",
+            "CompanionCandidatesController.cs"));
+        var mapper = File.ReadAllText(Path.Combine(
+            root,
+            "TaiWuAPI",
+            "Contracts",
+            "CompanionCandidates",
+            "CompanionFinderResponseMapper.cs"));
+
+        Assert.Equal(1, CountOccurrences(controller, "findCompanionCandidates.ExecuteAsync("));
+        Assert.Contains("CompanionFinderResponseMapper.Map(", controller);
+        Assert.DoesNotContain("CompanionRoleEvaluator", controller);
+        Assert.DoesNotContain("EvaluateAndRank", controller);
+        Assert.DoesNotContain("CompanionRoleMeritComparer", mapper);
+        Assert.DoesNotContain("CompanionRoleEvaluator", mapper);
+        Assert.DoesNotContain("EvaluateAndRank", mapper);
+        Assert.DoesNotContain("File.", mapper);
+        Assert.DoesNotContain("Process.", mapper);
+        Assert.Equal(
+            "api/companion-candidates",
+            typeof(CompanionCandidatesController)
+                .GetCustomAttribute<Microsoft.AspNetCore.Mvc.RouteAttribute>()?
+                .Template);
     }
 
     private static IEnumerable<Type> PublicSignatureTypes(Type type)
