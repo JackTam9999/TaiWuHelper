@@ -180,8 +180,9 @@
 @code {
     private readonly CompanionFinderInteractionState _interaction = new();
     private CompanionDisciplineDisplayResult? _disciplineDisplay;
-    private CandidateDisciplineDomain? _draftDomain;
-    private short? _draftDisciplineType;
+    private CandidateDisciplineDomain? _draftDomain =
+        CandidateDisciplineDomain.Capability;
+    private short? _draftDisciplineType = 0;
     private CandidateDisciplineDomain? _submittedDomain;
     private short? _submittedDisciplineType;
     private CompanionFinderResult? _result;

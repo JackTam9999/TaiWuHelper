@@ -45,7 +45,7 @@ public sealed class CompanionCandidatesControllerTests
             Assert.Contains("action recommendation", item.ScoreLimitation);
         });
         Assert.Equal(
-            [true, true, false],
+            [false, true, true],
             english.Roles.Select(item => item.RequiresDisciplineSelection));
         Assert.All(
             english.Roles.Zip(chinese.Roles),

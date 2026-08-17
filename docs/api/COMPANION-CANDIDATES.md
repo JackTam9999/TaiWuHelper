@@ -33,11 +33,12 @@ Each role contains:
 - localized purpose; and
 - a localized score limitation.
 
-Two objectives compare exact saved base aptitude in one selected martial or
-life-skill discipline. The third compares the complete equal-category breadth
-index and reports `requiresDisciplineSelection: false`. Discovery never claims universal quality, success
-probability, future development, teaching, recruitment, settlement output, or
-combat synergy.
+The first discovery item compares the complete equal-category breadth index and
+reports `requiresDisciplineSelection: false`; it is also the finder UI default.
+The remaining two objectives compare exact saved base aptitude in one selected
+martial or life-skill discipline. Discovery never claims universal quality,
+success probability, future development, teaching, recruitment, settlement
+output, or combat synergy.
 
 An invalid language returns HTTP `400` without reading a save.
 

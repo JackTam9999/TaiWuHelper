@@ -33,11 +33,12 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Equal(
             englishRoles.Select(value => (value.Identity, value.Version, value.Domain)),
             chineseRoles.Select(value => (value.Identity, value.Version, value.Domain)));
-        Assert.Equal("Martial discipline aptitude", englishRoles[0].Label);
-        Assert.Equal("武學資質", chineseRoles[0].Label);
-        Assert.Contains("not a universal ranking", englishRoles[0].ScoreLimitation);
-        Assert.Equal("Comprehensive base capability", englishRoles[2].Label);
-        Assert.False(englishRoles[2].RequiresDisciplineSelection);
+        Assert.Equal("Comprehensive base capability", englishRoles[0].Label);
+        Assert.Equal("綜合基礎能力", chineseRoles[0].Label);
+        Assert.False(englishRoles[0].RequiresDisciplineSelection);
+        Assert.Equal("Martial discipline aptitude", englishRoles[1].Label);
+        Assert.Equal("武學資質", chineseRoles[1].Label);
+        Assert.Contains("not a universal ranking", englishRoles[1].ScoreLimitation);
         Assert.Equal(30, englishDisciplines.Count);
         Assert.Equal(14, englishDisciplines.Count(value =>
             value.Domain == CandidateDisciplineDomain.Martial));

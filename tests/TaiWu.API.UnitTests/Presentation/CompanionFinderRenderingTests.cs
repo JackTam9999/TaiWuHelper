@@ -347,11 +347,21 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Martial discipline aptitude", text);
         Assert.Contains("Life-skill discipline aptitude", text);
         Assert.Contains("Comprehensive base capability", text);
-        Assert.Contains("Choose a discipline", text);
+        Assert.True(
+            text.IndexOf("Comprehensive base capability", StringComparison.Ordinal)
+            < text.IndexOf("Martial discipline aptitude", StringComparison.Ordinal));
+        Assert.DoesNotContain("Choose a discipline", text);
         Assert.Contains("Find candidates", text);
         Assert.Contains("type=\"radio\"", html);
-        Assert.Contains("<select", html);
-        Assert.Contains("disabled", html);
+        Assert.Matches(
+            "id=\"companion-role-capability\"[^>]*checked",
+            html);
+        Assert.DoesNotContain("<select", html);
+        var findButton = Assert.Single(
+            System.Text.RegularExpressions.Regex.Matches(
+                html,
+                "<button[^>]*class=\"primary-button\"[^>]*>"));
+        Assert.DoesNotContain("disabled", findButton.Value);
         Assert.Empty(finder.ReceivedCalls());
     }
 

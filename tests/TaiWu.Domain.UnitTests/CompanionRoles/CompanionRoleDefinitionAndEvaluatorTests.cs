@@ -14,9 +14,9 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
         Assert.Equal(3, roles.Length);
         Assert.Equal(
             [
+                "COMPREHENSIVE_BASE_CAPABILITY",
                 "MARTIAL_DISCIPLINE_APTITUDE",
-                "LIFE_SKILL_DISCIPLINE_APTITUDE",
-                "COMPREHENSIVE_BASE_CAPABILITY"
+                "LIFE_SKILL_DISCIPLINE_APTITUDE"
             ],
             roles.Select(item => item.Identity.Value));
         Assert.All(roles, role =>

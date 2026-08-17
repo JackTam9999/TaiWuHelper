@@ -6,15 +6,16 @@
 | Objective identity | `COMPREHENSIVE_BASE_CAPABILITY` version `1` |
 | Aggregate identity | `Capability/0` |
 | Candidate boundary | Current saved non-Taiwu group only; no village expansion |
-| Review date | 2026-08-17 |
+| Review date | 2026-08-18 |
 | Result | Complete |
 
 ## Delivered behavior
 
-Role discovery now exposes three objectives. Martial and life-skill aptitude
-retain their required discipline select and exact saved-base scoring. The new
-comprehensive objective requires no discipline choice and orders only
-complete, comparable candidates by the existing version-1 breadth index.
+Role discovery now exposes three objectives with comprehensive base capability
+first and selected by default. Martial and life-skill aptitude retain their
+required discipline select and exact saved-base scoring. The comprehensive
+objective requires no discipline choice and orders only complete, comparable
+candidates by the existing version-1 breadth index.
 
 The breadth total is the equal-weight mean of these three rounded saved-base
 category averages:
@@ -57,9 +58,10 @@ The bilingual synthetic fixtures contain no real save identity or value:
 - [desktop interaction fixture](./fixtures/E6-014-comprehensive-capability.html);
 - [390-pixel wrapper](./fixtures/E6-014-comprehensive-capability-narrow.html).
 
-The desktop review confirmed three objective radios, automatic removal and
-restoration of the discipline control, direct row summaries, and no horizontal
-overflow at a 1,280-pixel viewport. The 390-pixel review used an independent
+The desktop review confirmed the comprehensive objective appears first and is
+selected by default, three objective radios, automatic removal and restoration
+of the discipline control, direct row summaries, and no horizontal overflow at
+a 1,280-pixel viewport. The 390-pixel review used an independent
 375-pixel iframe content viewport after browser chrome: document client,
 scroll, and body widths were all `375`; mobile labels were visible and all
 three averages remained readable in the candidate card.

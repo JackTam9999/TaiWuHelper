@@ -948,8 +948,9 @@ life-skill discipline.
 
 #### Acceptance criteria
 
-- [x] Role discovery exposes `COMPREHENSIVE_BASE_CAPABILITY` as a third stable,
-      bilingual objective and declares that it needs no discipline selection.
+- [x] Role discovery exposes `COMPREHENSIVE_BASE_CAPABILITY` as the first
+      stable, bilingual objective, selects it by default, and declares that it
+      needs no discipline selection.
 - [x] Selecting it uses the fixed aggregate objective identity `Capability/0`;
       the discipline selector is hidden and no localized discipline name is
       required.

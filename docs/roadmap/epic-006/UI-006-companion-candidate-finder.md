@@ -59,9 +59,13 @@ hover, color, icon, or a collapsed disclosure.
 
 Three radio buttons or a single-labelled radio group appear in stable order:
 
-1. `Martial discipline aptitude`;
-2. `Life-skill discipline aptitude`; and
-3. `Comprehensive base capability`.
+1. `Comprehensive base capability`;
+2. `Martial discipline aptitude`; and
+3. `Life-skill discipline aptitude`.
+
+`Comprehensive base capability` is selected by default, so the initial page
+can search the complete current companion group without requiring a discipline
+choice.
 
 Changing role updates the discipline options and clears any draft discipline
 that is invalid for the new role. It does not read the save, retain a stale
@@ -76,9 +80,10 @@ Martial role exposes 14 verified entries; life-skill role exposes 16.
 The comprehensive objective hides this select and uses its fixed internal
 aggregate identity. Its find action requires only that objective selection.
 
-The first option is `Choose a discipline`. `Find candidates` remains disabled
-until both role and discipline are valid. Disabled state is conveyed by native
-semantics and explanatory text, not color alone.
+For the two discipline objectives, the first option is `Choose a discipline`
+and `Find candidates` remains disabled until both role and discipline are
+valid. Disabled state is conveyed by native semantics and explanatory text,
+not color alone.
 
 ### Find action
 

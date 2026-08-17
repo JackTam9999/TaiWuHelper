@@ -55,9 +55,9 @@ public static class VerifiedCompanionRoleDefinitions
 
     public static ImmutableArray<CompanionRoleDefinition> All { get; } =
         [
+            ComprehensiveBaseCapability,
             MartialDisciplineAptitude,
-            LifeSkillDisciplineAptitude,
-            ComprehensiveBaseCapability
+            LifeSkillDisciplineAptitude
         ];
 
     public static CompanionRoleDefinitionResolution Resolve(
