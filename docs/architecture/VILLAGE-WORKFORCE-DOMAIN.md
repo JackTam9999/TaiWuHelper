@@ -128,8 +128,9 @@ qualification result without becoming an eligible proposal.
 
 `WorkforceComparison` requires two different workers from the same immutable
 result. It derives `Higher`, `Lower` or `Equal` only from two rankable exact
-values. Missing/unsupported states yield `Unavailable`; a conflicting state
-yields `Conflicting`.
+values. Missing/unsupported states yield `Unavailable`; different component
+contracts yield `Incompatible`; ineligible/current-only or conflicting states
+yield `NotComparable`.
 
 ## Versioned rule definitions
 
@@ -154,6 +155,14 @@ unrankable states, preserves current-only values as descriptive, and marks
 exact equal totals as ties. The evaluation set retains the rule fingerprint,
 current worker and every canonical evaluation fingerprint. See
 [Village workforce evaluator](./VILLAGE-WORKFORCE-EVALUATOR.md).
+
+## Shortlist, comparison, and manual review
+
+E7-006 adds canonical competition ranks, unranked state groups, stable counts,
+immutable filter views, no-explicit-vacancy scope, result-level limitations,
+same-result comparison, and an information-only manual plan. Checklist items
+are typed prerequisite/fact/caution identities and carry no completion state.
+See [Village workforce shortlist and comparison](./VILLAGE-WORKFORCE-COMPARISON.md).
 
 ## Fingerprints
 

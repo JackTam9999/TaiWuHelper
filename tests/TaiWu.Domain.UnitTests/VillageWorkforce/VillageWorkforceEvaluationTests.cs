@@ -126,7 +126,7 @@ public sealed class VillageWorkforceEvaluationTests
     [InlineData(
         WorkforceEvaluationState.Conflicting,
         WorkforceWorkerState.Conflicting,
-        WorkforceComparisonOutcome.Conflicting)]
+        WorkforceComparisonOutcome.NotComparable)]
     public void Comparison_preserves_unavailable_and_conflicting_states(
         WorkforceEvaluationState state,
         WorkforceWorkerState workerState,
@@ -181,6 +181,41 @@ public sealed class VillageWorkforceEvaluationTests
             () => new WorkforceComparison(first, sameWorker));
         Assert.Throws<ArgumentException>(
             () => new WorkforceComparison(first, differentResult));
+    }
+
+    [Fact]
+    public void Comparison_marks_different_component_contracts_incompatible()
+    {
+        var snapshot = VillageWorkforceFixtures.Snapshot();
+        var first = VillageWorkforceFixtures.RankedEvaluation(
+            snapshot,
+            snapshot.Workers[0].Identity,
+            60);
+        var incompatibleComponent = new WorkforceScoreComponent(
+            new WorkforceComponentIdentity(
+                WorkforceComponentKind.RequiredBaseLifeSkillQualification,
+                new LifeSkillDisciplineIdentity(7)),
+            80,
+            80m,
+            1m,
+            80m,
+            "QUALIFICATION_EXACT_VALUE",
+            first.Components[0].Evidence);
+        var second = new WorkforceEvaluation(
+            first.ResultIdentity,
+            snapshot.Workers[1].Identity,
+            WorkforceWorkerState.Eligible,
+            WorkforceEvaluationState.Ranked,
+            first.Requirements,
+            [incompatibleComponent],
+            new WorkforceResultValue(
+                WorkforceUnit.BaseQualificationPoint,
+                80m),
+            "QUALIFICATION_AVAILABLE");
+
+        Assert.Equal(
+            WorkforceComparisonOutcome.Incompatible,
+            new WorkforceComparison(first, second).Outcome);
     }
 
     [Fact]

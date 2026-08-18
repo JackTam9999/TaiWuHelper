@@ -442,13 +442,29 @@ public sealed class WorkforceComparison
         if (first.State == WorkforceEvaluationState.Conflicting
             || second.State == WorkforceEvaluationState.Conflicting)
         {
-            return WorkforceComparisonOutcome.Conflicting;
+            return WorkforceComparisonOutcome.NotComparable;
+        }
+
+        if (first.Components.Length == 1
+            && second.Components.Length == 1
+            && (first.Components[0].Identity != second.Components[0].Identity
+                || first.Components[0].Unit != second.Components[0].Unit))
+        {
+            return WorkforceComparisonOutcome.Incompatible;
+        }
+
+        if (first.State is WorkforceEvaluationState.Incomplete
+                or WorkforceEvaluationState.Unsupported
+            || second.State is WorkforceEvaluationState.Incomplete
+                or WorkforceEvaluationState.Unsupported)
+        {
+            return WorkforceComparisonOutcome.Unavailable;
         }
 
         if (!first.IsRankable || !second.IsRankable
             || first.Result is null || second.Result is null)
         {
-            return WorkforceComparisonOutcome.Unavailable;
+            return WorkforceComparisonOutcome.NotComparable;
         }
 
         return first.Result.Value.CompareTo(second.Result.Value) switch

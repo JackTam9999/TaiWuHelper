@@ -314,7 +314,7 @@ component, tie, missing fact, conflict, and limitation.
 
 ### E7-006 — Build the worker shortlist, comparison, and manual checklist
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -328,19 +328,19 @@ manual reassignment.
 
 #### Acceptance criteria
 
-- [ ] Ranked, tied, ineligible, incomplete, unsupported, and conflicting
+- [x] Ranked, tied, ineligible, incomplete, unsupported, and conflicting
       workers remain distinct result groups with stable counts.
-- [ ] The current worker is identifiable without being forced to rank first.
-- [ ] Comparison uses two workers from the same snapshot, target, objective,
+- [x] The current worker is identifiable without being forced to rank first.
+- [x] Comparison uses two workers from the same snapshot, target, objective,
       and rule version.
-- [ ] Every difference has an exact outcome: higher, lower, equal,
+- [x] Every difference has an exact outcome: higher, lower, equal,
       unavailable, incompatible, or not comparable.
-- [ ] Shared scope and score limitations appear once at result level.
-- [ ] The manual checklist identifies current and proposed assignments,
+- [x] Shared scope and score limitations appear once at result level.
+- [x] The manual checklist identifies current and proposed assignments,
       prerequisites, cautions, and facts to verify manually.
-- [ ] No checklist item represents a command or stores completion state.
-- [ ] Filters do not change result identity, scores, ties, or unfiltered counts.
-- [ ] Unit tests cover empty, one-worker, current-best, alternative-best, tie,
+- [x] No checklist item represents a command or stores completion state.
+- [x] Filters do not change result identity, scores, ties, or unfiltered counts.
+- [x] Unit tests cover empty, one-worker, current-best, alternative-best, tie,
       no-vacancy, missing-current, and incomplete-evidence scenarios.
 
 #### Evidence

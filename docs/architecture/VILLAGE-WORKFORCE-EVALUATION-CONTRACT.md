@@ -198,8 +198,9 @@ relative outcome is:
 | `Higher` | First worker has higher confirmed target-required base qualification |
 | `Lower` | First worker has lower confirmed target-required base qualification |
 | `Equal` | Both confirmed values are equal |
-| `Unavailable` | At least one required value or eligibility state is incomplete or unsupported |
-| `Conflicting` | At least one required fact conflicts |
+| `Unavailable` | At least one required value is incomplete or unsupported |
+| `Incompatible` | Component identity or unit differs |
+| `NotComparable` | At least one worker is ineligible/current-only or required evidence conflicts |
 
 The comparison shows target and discipline once, then each worker's assignment
 origin, candidate/evaluation state, hard gates, exact component, rank, and

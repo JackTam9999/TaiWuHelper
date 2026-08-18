@@ -124,7 +124,37 @@ public enum WorkforceComparisonOutcome
     Lower = 1,
     Equal = 2,
     Unavailable = 3,
-    Conflicting = 4
+    Incompatible = 4,
+    NotComparable = 5
+}
+
+public enum WorkforceShortlistFilter
+{
+    All = 0,
+    Comparable = 1,
+    NeedsReview = 2,
+    Ineligible = 3
+}
+
+public enum WorkforceVacancyState
+{
+    NoExplicitVacancy = 0
+}
+
+public enum WorkforceChecklistCategory
+{
+    Prerequisite = 0,
+    FactToVerify = 1,
+    Caution = 2
+}
+
+public enum WorkforceChecklistItemKind
+{
+    TargetIdentityMustMatch = 0,
+    ReassignmentAvailabilityMustBeVerified = 1,
+    QualificationAndEvidenceMustBeReviewed = 2,
+    EfficiencyWasNotCalculated = 3,
+    NoActionWasSentToGame = 4
 }
 
 public enum WorkforceDiagnosticSeverity

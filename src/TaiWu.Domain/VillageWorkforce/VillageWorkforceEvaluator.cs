@@ -54,6 +54,21 @@ public sealed class VillageWorkforceEvaluationSet
                 nameof(evaluations));
         }
 
+        var invalidTieGroup = copied
+            .Where(item => item.IsRankable && item.Result is not null)
+            .GroupBy(item => item.Result!.Value)
+            .FirstOrDefault(group => group.Count() > 1
+                ? group.Any(item =>
+                    item.State != WorkforceEvaluationState.Tied)
+                : group.Any(item =>
+                    item.State != WorkforceEvaluationState.Ranked));
+        if (invalidTieGroup is not null)
+        {
+            throw new ArgumentException(
+                "Exact equal results must be ties, and unique results must be ranked.",
+                nameof(evaluations));
+        }
+
         Evaluations = [.. copied.OrderBy(
             item => item.Worker.CharacterId)];
         Fingerprint = CreateFingerprint();
