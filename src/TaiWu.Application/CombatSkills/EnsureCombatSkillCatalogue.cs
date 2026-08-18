@@ -2,19 +2,17 @@ namespace TaiWu.Application.CombatSkills;
 
 public sealed class EnsureCombatSkillCatalogue(
     ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository repository)
+    ICombatSkillCatalogueRepository repository,
+    CombatSkillCatalogueMaintenanceCoordinator? coordinator = null)
 {
-    private static readonly SemaphoreSlim EnsureGate = new(1, 1);
-    private static int _isRebuilding;
-
-    internal static bool IsRebuilding =>
-        Volatile.Read(ref _isRebuilding) != 0;
+    private readonly CombatSkillCatalogueMaintenanceCoordinator _coordinator =
+        coordinator ?? new CombatSkillCatalogueMaintenanceCoordinator();
 
     public async Task<EnsureCombatSkillCatalogueResult> ExecuteAsync(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        await EnsureGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await _coordinator.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             return await ExecuteControlledAsync(cancellationToken)
@@ -22,7 +20,7 @@ public sealed class EnsureCombatSkillCatalogue(
         }
         finally
         {
-            EnsureGate.Release();
+            _coordinator.Release();
         }
     }
 
@@ -85,7 +83,7 @@ public sealed class EnsureCombatSkillCatalogue(
         }
 
         CatalogueReplaceResult replacement;
-        Interlocked.Exchange(ref _isRebuilding, 1);
+        _coordinator.BeginRebuild();
         try
         {
             replacement = installed.LegendaryBookEffects.Length == 0
@@ -113,7 +111,7 @@ public sealed class EnsureCombatSkillCatalogue(
         }
         finally
         {
-            Interlocked.Exchange(ref _isRebuilding, 0);
+            _coordinator.EndRebuild();
         }
 
         cancellationToken.ThrowIfCancellationRequested();

@@ -1246,9 +1246,13 @@ public sealed partial class ArchitectureBoundaryTests
                 componentRoot,
                 "Pages",
                 "SkillCatalogue.razor"));
-        Assert.Contains("ReadCharacterCombatSkillAtlas(", atlasPage);
-        Assert.Contains("EnsureCombatSkillCatalogue(", atlasPage);
-        Assert.Contains("ClearCharacterCombatSkillProgressCache(", atlasPage);
+        Assert.Contains("@inject ReadCharacterCombatSkillAtlas AtlasReader", atlasPage);
+        Assert.Contains("@inject EnsureCombatSkillCatalogue CatalogueMaintenance", atlasPage);
+        Assert.Contains("@inject ClearCharacterCombatSkillProgressCache ProgressCacheClear", atlasPage);
+        Assert.Contains("AtlasReader.ExecuteAsync(", atlasPage);
+        Assert.Contains("CatalogueMaintenance.ExecuteAsync(", atlasPage);
+        Assert.Contains("ProgressCacheClear.ExecuteAsync(", atlasPage);
+        Assert.DoesNotContain("new ReadCharacterCombatSkillAtlas(", atlasPage);
         Assert.Contains("_catalogue = _atlas!.Catalogue", atlasPage);
         Assert.DoesNotContain("ReadCombatSkillCatalogueStatus(", atlasPage);
         Assert.Contains("characterId: null", atlasPage);
@@ -1314,7 +1318,9 @@ public sealed partial class ArchitectureBoundaryTests
                 "SkillDetail.razor"));
         Assert.Contains("@page \"/skills/{SkillId:int}\"", detailPage);
         Assert.Contains("@attribute [StreamRendering]", detailPage);
-        Assert.Contains("ReadCombatSkillDetails(", detailPage);
+        Assert.Contains("@inject ReadCombatSkillDetails SkillDetails", detailPage);
+        Assert.Contains("SkillDetails.ExecuteAsync(", detailPage);
+        Assert.DoesNotContain("new ReadCombatSkillDetails(", detailPage);
         Assert.Contains("characterId: null", detailPage);
         Assert.Contains("Reading skill detail and current Taiwu progress", detailPage);
         Assert.Contains("Static definition", detailPage);

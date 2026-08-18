@@ -9,10 +9,11 @@ namespace TaiWuAPI.Controllers;
 [ApiController]
 [Route("api/combat-skills")]
 public sealed class CombatSkillsController(
-    ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository repository,
-    ICharacterCombatSkillProgressReader progressReader,
-    ICharacterCombatSkillProgressCacheMaintenance progressCacheMaintenance)
+    ReadCombatSkillCatalogueStatus readStatus,
+    SearchCombatSkillDefinitions searchDefinitions,
+    ReadCombatSkillDetails readDetails,
+    EnsureCombatSkillCatalogue ensureCatalogue,
+    ClearCharacterCombatSkillProgressCache clearProgressCache)
     : ControllerBase
 {
     [HttpGet("status")]
@@ -21,10 +22,7 @@ public sealed class CombatSkillsController(
     public async Task<ActionResult<CombatSkillCatalogueStatusResponse>> Status(
         CancellationToken cancellationToken = default)
     {
-        var result = await new ReadCombatSkillCatalogueStatus(
-                definitionSource,
-                repository)
-            .ExecuteAsync(cancellationToken);
+        var result = await readStatus.ExecuteAsync(cancellationToken);
         return Ok(CombatSkillResponseMapper.Map(result));
     }
 
@@ -47,10 +45,7 @@ public sealed class CombatSkillsController(
     {
         try
         {
-            var result = await new SearchCombatSkillDefinitions(
-                    definitionSource,
-                    repository)
-                .ExecuteAsync(
+            var result = await searchDefinitions.ExecuteAsync(
                     new CombatSkillSearchRequest(
                         language,
                         query,
@@ -83,11 +78,7 @@ public sealed class CombatSkillsController(
     {
         try
         {
-            var result = await new ReadCombatSkillDetails(
-                    definitionSource,
-                    repository,
-                    progressReader)
-                .ExecuteAsync(
+            var result = await readDetails.ExecuteAsync(
                     new CombatSkillDetailsRequest(
                         skillId,
                         language,
@@ -108,10 +99,7 @@ public sealed class CombatSkillsController(
     public async Task<ActionResult<CombatSkillCatalogueMaintenanceResponse>>
         RebuildCatalogueCache(CancellationToken cancellationToken = default)
     {
-        var result = await new EnsureCombatSkillCatalogue(
-                definitionSource,
-                repository)
-            .ExecuteAsync(cancellationToken);
+        var result = await ensureCatalogue.ExecuteAsync(cancellationToken);
         return Ok(CombatSkillResponseMapper.Map(result));
     }
 
@@ -122,9 +110,7 @@ public sealed class CombatSkillsController(
     public async Task<ActionResult<CharacterProgressCacheMaintenanceResponse>>
         ClearProgressCache(CancellationToken cancellationToken = default)
     {
-        var result = await new ClearCharacterCombatSkillProgressCache(
-                progressCacheMaintenance)
-            .ExecuteAsync(cancellationToken);
+        var result = await clearProgressCache.ExecuteAsync(cancellationToken);
         return Ok(CombatSkillResponseMapper.Map(result));
     }
 

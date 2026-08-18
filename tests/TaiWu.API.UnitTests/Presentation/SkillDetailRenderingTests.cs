@@ -392,6 +392,9 @@ public sealed partial class SkillCatalogueRenderingTests
         services.AddSingleton(
             pageSourceReader
             ?? Substitute.For<ICombatSkillPageSourceReader>());
+        services.AddSingleton<CombatSkillCatalogueMaintenanceCoordinator>();
+        services.AddSingleton<ReadCombatSkillDetails>();
+        services.AddSingleton<FindCombatSkillPageSources>();
         using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(
             provider,

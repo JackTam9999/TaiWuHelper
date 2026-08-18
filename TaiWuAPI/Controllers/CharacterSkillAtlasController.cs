@@ -9,9 +9,7 @@ namespace TaiWuAPI.Controllers;
 [ApiController]
 [Route("api/character-skill-atlas")]
 public sealed class CharacterSkillAtlasController(
-    ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository repository,
-    ICharacterCombatSkillProgressReader progressReader) : ControllerBase
+    ReadCharacterCombatSkillAtlas readAtlas) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<CharacterCombatSkillAtlasResponse>(
@@ -42,11 +40,7 @@ public sealed class CharacterSkillAtlasController(
     {
         try
         {
-            var result = await new ReadCharacterCombatSkillAtlas(
-                    definitionSource,
-                    repository,
-                    progressReader)
-                .ExecuteAsync(
+            var result = await readAtlas.ExecuteAsync(
                     new CharacterCombatSkillAtlasRequest(
                         characterId,
                         language,

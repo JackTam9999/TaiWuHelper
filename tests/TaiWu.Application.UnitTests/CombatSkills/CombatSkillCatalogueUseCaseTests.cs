@@ -475,9 +475,13 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 return CatalogueReplaceResult.Success();
             });
 
+        var coordinator = new CombatSkillCatalogueMaintenanceCoordinator();
         var results = await Task.WhenAll(
             Enumerable.Range(0, 8)
-                .Select(_ => new EnsureCombatSkillCatalogue(source, repository)
+                .Select(_ => new EnsureCombatSkillCatalogue(
+                        source,
+                        repository,
+                        coordinator)
                     .ExecuteAsync(CancellationToken)));
 
         Assert.Equal(1, replacements);
@@ -510,9 +514,11 @@ public sealed class CombatSkillCatalogueUseCaseTests
                 await release.Task;
                 return CatalogueReplaceResult.Success();
             });
+        var coordinator = new CombatSkillCatalogueMaintenanceCoordinator();
         var ensure = new EnsureCombatSkillCatalogue(
                 Source(Available(CurrentIdentity, definitions)),
-                repository)
+                repository,
+                coordinator)
             .ExecuteAsync(CancellationToken);
         await entered.Task;
 
@@ -524,7 +530,8 @@ public sealed class CombatSkillCatalogueUseCaseTests
         {
             status = await new ReadCombatSkillCatalogueStatus(
                     statusSource,
-                    statusRepository)
+                    statusRepository,
+                    coordinator)
                 .ExecuteAsync(CancellationToken);
         }
         finally

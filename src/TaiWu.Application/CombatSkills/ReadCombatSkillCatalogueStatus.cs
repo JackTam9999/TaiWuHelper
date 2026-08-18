@@ -2,13 +2,17 @@ namespace TaiWu.Application.CombatSkills;
 
 public sealed class ReadCombatSkillCatalogueStatus(
     ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository repository)
+    ICombatSkillCatalogueRepository repository,
+    CombatSkillCatalogueMaintenanceCoordinator? coordinator = null)
 {
+    private readonly CombatSkillCatalogueMaintenanceCoordinator _coordinator =
+        coordinator ?? new CombatSkillCatalogueMaintenanceCoordinator();
+
     public async Task<CombatSkillCatalogueStatusResult> ExecuteAsync(
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (EnsureCombatSkillCatalogue.IsRebuilding)
+        if (_coordinator.IsRebuilding)
         {
             return new CombatSkillCatalogueStatusResult(
                 CombatSkillCatalogueStatus.Rebuilding,

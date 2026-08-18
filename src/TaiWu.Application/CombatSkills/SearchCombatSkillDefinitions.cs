@@ -6,7 +6,8 @@ namespace TaiWu.Application.CombatSkills;
 
 public sealed class SearchCombatSkillDefinitions(
     ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository repository)
+    ICombatSkillCatalogueRepository repository,
+    CombatSkillCatalogueMaintenanceCoordinator? coordinator = null)
 {
     public async Task<CombatSkillSearchResult> ExecuteAsync(
         CombatSkillSearchRequest request,
@@ -15,7 +16,8 @@ public sealed class SearchCombatSkillDefinitions(
         ArgumentNullException.ThrowIfNull(request);
         var catalogue = await new ReadCombatSkillCatalogueStatus(
                 definitionSource,
-                repository)
+                repository,
+                coordinator)
             .ExecuteAsync(cancellationToken)
             .ConfigureAwait(false);
         if (catalogue.Status != CombatSkillCatalogueStatus.Current)

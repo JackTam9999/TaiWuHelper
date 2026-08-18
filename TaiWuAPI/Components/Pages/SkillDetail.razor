@@ -4,10 +4,8 @@
 @using TaiWu.Application.CombatSkills
 @using TaiWu.Domain.CombatSkills
 @using TaiWu.Domain.CombatSnapshots
-@inject ICombatSkillDefinitionSource DefinitionSource
-@inject ICombatSkillCatalogueRepository CatalogueRepository
-@inject ICharacterCombatSkillProgressReader ProgressReader
-@inject ICombatSkillPageSourceReader PageSourceReader
+@inject ReadCombatSkillDetails SkillDetails
+@inject FindCombatSkillPageSources PageSources
 @inject ILogger<SkillDetail> Logger
 
 <PageTitle>TaiWu Helper · @(_result?.DisplayName?.Value.IsAvailable == true
@@ -316,11 +314,7 @@
         _result = null;
         try
         {
-            _result = await new ReadCombatSkillDetails(
-                    DefinitionSource,
-                    CatalogueRepository,
-                    ProgressReader)
-                .ExecuteAsync(
+            _result = await SkillDetails.ExecuteAsync(
                     new CombatSkillDetailsRequest(
                         SkillId,
                         PreferredLanguage,
@@ -366,9 +360,7 @@
         _pageSourceResult = null;
         try
         {
-            _pageSourceResult = await new FindCombatSkillPageSources(
-                    PageSourceReader)
-                .ExecuteAsync(
+            _pageSourceResult = await PageSources.ExecuteAsync(
                     new CombatSkillPageSourceReadRequest(
                         SkillId,
                         [detailId],

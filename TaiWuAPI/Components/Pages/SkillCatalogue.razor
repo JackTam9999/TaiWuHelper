@@ -4,11 +4,11 @@
 @using TaiWu.Application.CombatSkills
 @using TaiWu.Domain.CombatSkills
 @using TaiWu.Domain.CombatSnapshots
-@inject ICombatSkillDefinitionSource DefinitionSource
 @inject ICombatSkillFactionProfileSource FactionProfileSource
 @inject ICombatSkillCatalogueRepository CatalogueRepository
-@inject ICharacterCombatSkillProgressReader ProgressReader
-@inject ICharacterCombatSkillProgressCacheMaintenance ProgressCacheMaintenance
+@inject ReadCharacterCombatSkillAtlas AtlasReader
+@inject EnsureCombatSkillCatalogue CatalogueMaintenance
+@inject ClearCharacterCombatSkillProgressCache ProgressCacheClear
 @inject ILogger<SkillCatalogue> Logger
 
 <PageTitle>TaiWu Helper · @T("Skill atlas")</PageTitle>
@@ -558,11 +558,7 @@
 
     private async Task ReadAtlasAsync(CancellationToken cancellationToken)
     {
-        _atlas = await new ReadCharacterCombatSkillAtlas(
-                DefinitionSource,
-                CatalogueRepository,
-                ProgressReader)
-            .ExecuteAsync(
+        _atlas = await AtlasReader.ExecuteAsync(
                 new CharacterCombatSkillAtlasRequest(
                     characterId: null,
                     PreferredLanguage,
@@ -606,10 +602,7 @@
         _failure = null;
         try
         {
-            await new EnsureCombatSkillCatalogue(
-                    DefinitionSource,
-                    CatalogueRepository)
-                .ExecuteAsync();
+            await CatalogueMaintenance.ExecuteAsync();
             _factionOptions = [];
             _offset = 0;
             await LoadAsync();
@@ -631,9 +624,7 @@
         _cacheMaintenanceNotice = null;
         try
         {
-            var result = await new ClearCharacterCombatSkillProgressCache(
-                    ProgressCacheMaintenance)
-                .ExecuteAsync();
+            var result = await ProgressCacheClear.ExecuteAsync();
             _cacheMaintenanceNotice = result.Status
                 == ClearCharacterCombatSkillProgressCacheStatus.Failed
                     ? "The local progress cache could not be cleared safely."

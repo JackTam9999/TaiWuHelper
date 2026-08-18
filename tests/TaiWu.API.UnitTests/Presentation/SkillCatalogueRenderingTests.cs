@@ -680,6 +680,11 @@ public sealed partial class SkillCatalogueRenderingTests
             Substitute.For<ICombatSkillPageSourceReader>());
         services.AddSingleton(
             Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>());
+        services.AddSingleton<CombatSkillCatalogueMaintenanceCoordinator>();
+        services.AddSingleton<ReadCharacterCombatSkillAtlas>();
+        services.AddSingleton<EnsureCombatSkillCatalogue>();
+        services.AddSingleton<ClearCharacterCombatSkillProgressCache>();
+        services.AddSingleton<FindCombatSkillPageSources>();
         var factionProfiles = Substitute.For<
             ICombatSkillFactionProfileSource>();
         factionProfiles.ReadAsync(Arg.Any<CancellationToken>())
@@ -725,6 +730,7 @@ public sealed partial class SkillCatalogueRenderingTests
         services.AddSingleton(
             pageSourceReader
             ?? Substitute.For<ICombatSkillPageSourceReader>());
+        services.AddSingleton<FindCombatSkillPageSources>();
         using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(
             provider,

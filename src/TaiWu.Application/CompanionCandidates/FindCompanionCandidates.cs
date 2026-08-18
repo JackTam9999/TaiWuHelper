@@ -7,7 +7,8 @@ namespace TaiWu.Application.CompanionCandidates;
 public sealed class FindCompanionCandidates(
     ICompanionCandidateSnapshotReader snapshotReader,
     ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository catalogueRepository)
+    ICombatSkillCatalogueRepository catalogueRepository,
+    CombatSkillCatalogueMaintenanceCoordinator? coordinator = null)
     : IFindCompanionCandidates
 {
     public async Task<CompanionFinderResult> ExecuteAsync(
@@ -39,7 +40,8 @@ public sealed class FindCompanionCandidates(
         var snapshot = read.Snapshot;
         var enrichment = await new EnrichCompanionCandidateProfiles(
                 definitionSource,
-                catalogueRepository)
+                catalogueRepository,
+                coordinator)
             .ExecuteAsync(snapshot, cancellationToken)
             .ConfigureAwait(false);
 

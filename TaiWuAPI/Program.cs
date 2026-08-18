@@ -30,6 +30,14 @@ builder.Services
 builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddSingleton<CombatSkillCatalogueMaintenanceCoordinator>();
+builder.Services.AddScoped<ReadCombatSkillCatalogueStatus>();
+builder.Services.AddScoped<SearchCombatSkillDefinitions>();
+builder.Services.AddScoped<ReadCombatSkillDetails>();
+builder.Services.AddScoped<EnsureCombatSkillCatalogue>();
+builder.Services.AddScoped<ClearCharacterCombatSkillProgressCache>();
+builder.Services.AddScoped<ReadCharacterCombatSkillAtlas>();
+builder.Services.AddScoped<FindCombatSkillPageSources>();
 builder.Services.AddScoped<ReadSaveGame>();
 builder.Services.AddScoped<ReadRegionStoryProgress>();
 builder.Services.AddScoped<

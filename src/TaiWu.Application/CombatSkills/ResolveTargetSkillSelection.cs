@@ -6,7 +6,8 @@ namespace TaiWu.Application.CombatSkills;
 
 public sealed class ResolveTargetSkillSelection(
     ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository repository)
+    ICombatSkillCatalogueRepository repository,
+    CombatSkillCatalogueMaintenanceCoordinator? coordinator = null)
     : IResolveTargetSkillSelection
 {
     public async Task<TargetSkillSelectionResult> ExecuteAsync(
@@ -17,7 +18,8 @@ public sealed class ResolveTargetSkillSelection(
 
         var search = await new SearchCombatSkillDefinitions(
                 definitionSource,
-                repository)
+                repository,
+                coordinator)
             .ExecuteAsync(
                 new CombatSkillSearchRequest(
                     request.PreferredLanguage,

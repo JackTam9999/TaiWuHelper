@@ -129,7 +129,8 @@ public sealed class CompanionCandidateSnapshotSafetyTests
             .ToArray();
         Assert.Equal(
             [typeof(ICombatSkillDefinitionSource),
-                typeof(ICombatSkillCatalogueRepository)],
+                typeof(ICombatSkillCatalogueRepository),
+                typeof(CombatSkillCatalogueMaintenanceCoordinator)],
             parameters);
         Assert.DoesNotContain(
             typeof(ICharacterCombatSkillProgressReader),
@@ -213,7 +214,8 @@ public sealed class CompanionCandidateSnapshotSafetyTests
             [
                 typeof(ICompanionCandidateSnapshotReader),
                 typeof(ICombatSkillDefinitionSource),
-                typeof(ICombatSkillCatalogueRepository)
+                typeof(ICombatSkillCatalogueRepository),
+                typeof(CombatSkillCatalogueMaintenanceCoordinator)
             ],
             constructorTypes);
 

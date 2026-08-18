@@ -20,7 +20,7 @@ public sealed class CombatSkillsControllerTests
     {
         var definition = Definition(456, "Black Blood Gu");
         var (source, repository) = Current([definition]);
-        var controller = new CombatSkillsController(
+        var controller = Controller(
             source,
             repository,
             Substitute.For<ICharacterCombatSkillProgressReader>(),
@@ -65,7 +65,7 @@ public sealed class CombatSkillsControllerTests
     {
         var source = Substitute.For<ICombatSkillDefinitionSource>();
         var repository = Substitute.For<ICombatSkillCatalogueRepository>();
-        var controller = new CombatSkillsController(
+        var controller = Controller(
             source,
             repository,
             Substitute.For<ICharacterCombatSkillProgressReader>(),
@@ -92,7 +92,7 @@ public sealed class CombatSkillsControllerTests
             .Returns(CombatSkillDefinitionSourceResult.UnsupportedVersion(
                 @"Unsupported source at C:\secret\GameData.dll."));
         var repository = Substitute.For<ICombatSkillCatalogueRepository>();
-        var controller = new CombatSkillsController(
+        var controller = Controller(
             source,
             repository,
             Substitute.For<ICharacterCombatSkillProgressReader>(),
@@ -116,7 +116,7 @@ public sealed class CombatSkillsControllerTests
         var progress = Progress(42, 456);
         var (source, repository) = Current([definition]);
         var reader = ProgressReader([progress]);
-        var controller = new CombatSkillsController(
+        var controller = Controller(
             source,
             repository,
             reader,
@@ -168,7 +168,7 @@ public sealed class CombatSkillsControllerTests
                 Arg.Any<CancellationToken>())
             .Returns(CharacterCombatSkillProgressReadResult.SaveReadFailed(
                 @"Could not open C:\secret\world_1\local.sav."));
-        var controller = new CombatSkillsController(
+        var controller = Controller(
             source,
             repository,
             progressReader,
@@ -193,7 +193,7 @@ public sealed class CombatSkillsControllerTests
         var definition = Definition(456, "Black Blood Gu");
         var progress = Progress(42, 456);
         var (source, repository) = Current([definition]);
-        var controller = new CharacterSkillAtlasController(
+        var controller = AtlasController(
             source,
             repository,
             ProgressReader([progress]));
@@ -238,7 +238,7 @@ public sealed class CombatSkillsControllerTests
                 Arg.Any<CancellationToken>())
             .Returns(CharacterCombatSkillProgressReadResult.SaveMissing(
                 @"Missing C:\secret\world_1\local.sav."));
-        var controller = new CharacterSkillAtlasController(
+        var controller = AtlasController(
             source,
             repository,
             reader);
@@ -276,7 +276,7 @@ public sealed class CombatSkillsControllerTests
                 Arg.Any<IReadOnlyList<CombatSkillImportDiagnostic>>(),
                 Arg.Any<CancellationToken>())
             .Returns(CatalogueReplaceResult.Success());
-        var controller = new CombatSkillsController(
+        var controller = Controller(
             source,
             repository,
             Substitute.For<ICharacterCombatSkillProgressReader>(),
@@ -302,7 +302,7 @@ public sealed class CombatSkillsControllerTests
         var maintenance =
             Substitute.For<ICharacterCombatSkillProgressCacheMaintenance>();
         maintenance.ClearAsync(Arg.Any<CancellationToken>()).Returns(2);
-        var controller = new CombatSkillsController(
+        var controller = Controller(
             source,
             repository,
             Substitute.For<ICharacterCombatSkillProgressReader>(),
@@ -395,6 +395,45 @@ public sealed class CombatSkillsControllerTests
         Assert.NotNull(response.Reason);
         Assert.DoesNotContain("secret", Serialize(response));
     }
+
+    private static CombatSkillsController Controller(
+        ICombatSkillDefinitionSource source,
+        ICombatSkillCatalogueRepository repository,
+        ICharacterCombatSkillProgressReader progressReader,
+        ICharacterCombatSkillProgressCacheMaintenance progressCacheMaintenance)
+    {
+        var coordinator = new CombatSkillCatalogueMaintenanceCoordinator();
+        return new CombatSkillsController(
+            new ReadCombatSkillCatalogueStatus(
+                source,
+                repository,
+                coordinator),
+            new SearchCombatSkillDefinitions(
+                source,
+                repository,
+                coordinator),
+            new ReadCombatSkillDetails(
+                source,
+                repository,
+                progressReader,
+                coordinator),
+            new EnsureCombatSkillCatalogue(
+                source,
+                repository,
+                coordinator),
+            new ClearCharacterCombatSkillProgressCache(
+                progressCacheMaintenance));
+    }
+
+    private static CharacterSkillAtlasController AtlasController(
+        ICombatSkillDefinitionSource source,
+        ICombatSkillCatalogueRepository repository,
+        ICharacterCombatSkillProgressReader progressReader) => new(
+        new ReadCharacterCombatSkillAtlas(
+            source,
+            repository,
+            progressReader,
+            new CombatSkillCatalogueMaintenanceCoordinator()));
 
     private static T Response<T>(ActionResult<T> action)
     {

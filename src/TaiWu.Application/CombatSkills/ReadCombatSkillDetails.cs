@@ -5,7 +5,8 @@ namespace TaiWu.Application.CombatSkills;
 public sealed class ReadCombatSkillDetails(
     ICombatSkillDefinitionSource definitionSource,
     ICombatSkillCatalogueRepository repository,
-    ICharacterCombatSkillProgressReader? progressReader = null)
+    ICharacterCombatSkillProgressReader? progressReader = null,
+    CombatSkillCatalogueMaintenanceCoordinator? coordinator = null)
 {
     public async Task<CombatSkillDetailsResult> ExecuteAsync(
         CombatSkillDetailsRequest request,
@@ -14,7 +15,8 @@ public sealed class ReadCombatSkillDetails(
         ArgumentNullException.ThrowIfNull(request);
         var catalogue = await new ReadCombatSkillCatalogueStatus(
                 definitionSource,
-                repository)
+                repository,
+                coordinator)
             .ExecuteAsync(cancellationToken)
             .ConfigureAwait(false);
         if (catalogue.Status != CombatSkillCatalogueStatus.Current)

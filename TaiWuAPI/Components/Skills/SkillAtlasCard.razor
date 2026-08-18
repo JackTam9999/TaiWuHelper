@@ -2,7 +2,7 @@
 @using TaiWu.Domain.CombatSkills
 @using TaiWu.Domain.CombatSnapshots
 @implements IAsyncDisposable
-@inject ICombatSkillPageSourceReader PageSourceReader
+@inject FindCombatSkillPageSources PageSources
 @inject ILogger<SkillAtlasCard> Logger
 
 <article class="skill-atlas-card @GradeClass @ProgressVisualClasses"
@@ -492,9 +492,7 @@
         _pageSourceResult = null;
         try
         {
-            _pageSourceResult = await new FindCombatSkillPageSources(
-                    PageSourceReader)
-                .ExecuteAsync(
+            _pageSourceResult = await PageSources.ExecuteAsync(
                     new CombatSkillPageSourceReadRequest(
                         Entry.SkillId,
                         [detailId],

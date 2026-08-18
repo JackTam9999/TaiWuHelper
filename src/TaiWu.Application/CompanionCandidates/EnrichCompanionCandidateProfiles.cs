@@ -6,7 +6,8 @@ namespace TaiWu.Application.CompanionCandidates;
 
 public sealed class EnrichCompanionCandidateProfiles(
     ICombatSkillDefinitionSource definitionSource,
-    ICombatSkillCatalogueRepository catalogueRepository)
+    ICombatSkillCatalogueRepository catalogueRepository,
+    CombatSkillCatalogueMaintenanceCoordinator? coordinator = null)
 {
     public async Task<CompanionCandidateEnrichmentResult> ExecuteAsync(
         CompanionCandidateSnapshot snapshot,
@@ -17,7 +18,8 @@ public sealed class EnrichCompanionCandidateProfiles(
 
         var catalogue = await new ReadCombatSkillCatalogueStatus(
                 definitionSource,
-                catalogueRepository)
+                catalogueRepository,
+                coordinator)
             .ExecuteAsync(cancellationToken)
             .ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
