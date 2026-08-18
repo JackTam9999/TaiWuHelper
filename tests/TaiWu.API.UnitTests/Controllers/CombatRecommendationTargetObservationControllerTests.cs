@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -209,6 +210,31 @@ public sealed class CombatRecommendationTargetObservationControllerTests
         Assert.DoesNotContain(
             ConfiguredSavePath,
             JsonSerializer.Serialize(problem));
+    }
+
+    [Fact]
+    public async Task Observation_missing_target_returns_not_found_problem()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<CombatSnapshot>(
+                new CombatSnapshotTargetNotFoundException(16317)));
+        var controller = Controller(reader, [Definition(719, "Target Art")]);
+
+        var action = await controller.Recommend(
+            Request(
+                TargetLoadoutCoverageKind.PartialLoadout,
+                SaveTime.AddMinutes(1),
+                [SkillRequest(confirmedSkillId: 719)]),
+            TestContext.Current.CancellationToken);
+
+        var problem = Assert.IsType<ObjectResult>(action.Result);
+        Assert.Equal(StatusCodes.Status404NotFound, problem.StatusCode);
+        Assert.Equal(
+            "urn:taiwu-helper:combat-recommendation:target-not-found",
+            Assert.IsType<ProblemDetails>(problem.Value).Type);
     }
 
     [Fact]

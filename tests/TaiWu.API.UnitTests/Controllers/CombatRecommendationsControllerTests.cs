@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Options;
@@ -451,6 +452,33 @@ public sealed class CombatRecommendationsControllerTests
         Assert.Equal(
             "Invalid save.",
             Assert.IsType<ProblemDetails>(problem.Value).Detail);
+    }
+
+    [Fact]
+    public async Task Missing_target_returns_not_found_problem()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        reader.ReadAsync(
+                Arg.Any<CombatSnapshotReadRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<CombatSnapshot>(
+                new CombatSnapshotTargetNotFoundException(16317)));
+        var controller = Controller(reader);
+
+        var action = await controller.Recommend(
+            new CombatRecommendationApiRequest
+            {
+                TargetCharacterId = 16317
+            },
+            TestContext.Current.CancellationToken);
+
+        var problem = Assert.IsType<ObjectResult>(action.Result);
+        Assert.Equal(StatusCodes.Status404NotFound, problem.StatusCode);
+        var details = Assert.IsType<ProblemDetails>(problem.Value);
+        Assert.Equal(
+            "urn:taiwu-helper:combat-recommendation:target-not-found",
+            details.Type);
+        Assert.DoesNotContain("16317", details.Detail);
     }
 
     [Fact]

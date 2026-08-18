@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using TaiWu.Application.CombatRecommendations;
+using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.TargetObservations;
 using TaiWuAPI.Configuration;
 using TaiWuAPI.Contracts.CombatRecommendations;
@@ -20,6 +21,8 @@ public sealed class CombatRecommendationsController(
         StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(
         StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CombatRecommendationResponse>> Recommend(
         [FromBody] CombatRecommendationApiRequest request,
         CancellationToken cancellationToken)
@@ -67,6 +70,14 @@ public sealed class CombatRecommendationsController(
                 exception.SelectionIndex,
                 exception.Candidates.Select(
                     CombatRecommendationResponseMapper.MapCandidate));
+        }
+        catch (CombatSnapshotTargetNotFoundException)
+        {
+            return Problem(
+                type: "urn:taiwu-helper:combat-recommendation:target-not-found",
+                title: "Target character was not found.",
+                detail: "The requested target does not exist in the configured save.",
+                statusCode: StatusCodes.Status404NotFound);
         }
         catch (ArgumentException)
             when (request.TargetObservation is not null)

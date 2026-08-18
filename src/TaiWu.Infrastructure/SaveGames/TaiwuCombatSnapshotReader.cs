@@ -81,9 +81,8 @@ internal sealed class TaiwuCombatSnapshotReader(
                 targetCharacterId,
                 out Character target))
         {
-            throw new KeyNotFoundException(
-                $"Target character {targetCharacterId} was not found "
-                + "in the save.");
+            throw new CombatSnapshotTargetNotFoundException(
+                targetCharacterId);
         }
 
         var player = MapPlayer(taiwuId, taiwu, text, warnings);
