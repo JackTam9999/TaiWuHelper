@@ -429,7 +429,7 @@ public static class VerifiedVillageWorkforceRules
     public const string RuleVersion = "1.0.0";
     public const string MappingVersion = "1";
     public const string CandidateUniverseVersion = "1";
-    public const string FingerprintSchemaVersion = "1";
+    public const string FingerprintSchemaVersion = "2";
 
     public static WorkforceRuleResolution Resolve(
         WorkforceObjectiveIdentity objective,

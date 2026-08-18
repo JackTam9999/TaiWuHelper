@@ -130,7 +130,6 @@ public sealed class VillageWorkforceSnapshot
             .Append(SourceVersions.FingerprintSchemaVersion)
             .Append('\n')
             .Append(Settlement.StableKey).Append('\n')
-            .Append(CapturedAt.UtcTicks).Append('\n')
             .Append(SourceVersions.StableKey).Append('\n');
         foreach (var worker in Workers)
         {

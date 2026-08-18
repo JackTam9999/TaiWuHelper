@@ -74,15 +74,10 @@ was not calculated.
 
 ## Capture time and repeated-run identity
 
-The snapshot contract deliberately retains an honest UTC capture time in its
-per-request fingerprint. A fresh projection may therefore have a different
-snapshot and downstream instance fingerprint even when the save has not
-changed. This is documented in the
-[snapshot architecture](../architecture/VILLAGE-WORKFORCE-SNAPSHOT.md#coherence-and-provenance)
-and is not normalized away during closure.
-
-The repeated representative requests instead prove equality for the stable
-semantic boundary:
+The post-review correction keeps the honest UTC capture time as observation
+metadata and excludes it from semantic identity. Fresh projections of the same
+source facts now produce identical snapshot and downstream result fingerprints.
+The repeated representative requests prove equality for:
 
 - `WorkforceSourceVersions`, including the configured-save SHA;
 - target, objective, and rule-version identities;
@@ -94,8 +89,8 @@ semantic boundary:
 
 E7-010 separately proves that two executions over the exact same immutable
 snapshot produce identical top-level, evaluation-set, shortlist, comparison,
-and manual-plan fingerprints. Together these checks distinguish stable facts
-from honest per-request observation metadata.
+and manual-plan fingerprints. Capture time can differ without invalidating any
+of those semantic identities.
 
 ## Synthetic state review
 

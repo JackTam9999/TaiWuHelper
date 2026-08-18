@@ -31,7 +31,7 @@ lookup and cannot choose a rule from display text.
 | GameData version | Exact supported installed product version above |
 | Snapshot mapping version | `1` |
 | Candidate-universe version | `1` |
-| Fingerprint schema version | `1` |
+| Fingerprint schema version | `2` |
 
 `WorkforceRuleVersion` enforces `MAJOR.MINOR.PATCH` Semantic Versioning syntax,
 including valid optional prerelease and build identifiers. Short forms such as

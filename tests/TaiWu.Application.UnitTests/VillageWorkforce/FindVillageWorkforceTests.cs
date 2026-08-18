@@ -523,7 +523,7 @@ public sealed class FindVillageWorkforceTests
             VerifiedVillageWorkforceRules.SupportedGameDataVersion,
             "1",
             "1",
-            "1");
+            VerifiedVillageWorkforceRules.FingerprintSchemaVersion);
 
     private static WorkforceProvenance SaveProvenance(string revision) =>
         new(

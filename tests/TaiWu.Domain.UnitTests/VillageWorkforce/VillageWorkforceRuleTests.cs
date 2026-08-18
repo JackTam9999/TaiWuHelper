@@ -28,7 +28,7 @@ public sealed class VillageWorkforceRuleTests
             rule.SupportedSource.GameDataVersion);
         Assert.Equal("1", rule.SupportedSource.MappingVersion);
         Assert.Equal("1", rule.SupportedSource.CandidateUniverseVersion);
-        Assert.Equal("1", rule.SupportedSource.FingerprintSchemaVersion);
+        Assert.Equal("2", rule.SupportedSource.FingerprintSchemaVersion);
         Assert.Equal(WorkforceTargetKind.ShopManagerSlot, rule.TargetKind);
         Assert.Equal(
             Enum.GetValues<WorkforceRequirementKind>(),
@@ -85,7 +85,7 @@ public sealed class VillageWorkforceRuleTests
             Resolve(candidateUniverseVersion: "2"),
             WorkforceRuleResolutionStatus.UnsupportedCandidateUniverseVersion);
         AssertUnsupported(
-            Resolve(fingerprintSchemaVersion: "2"),
+            Resolve(fingerprintSchemaVersion: "3"),
             WorkforceRuleResolutionStatus.UnsupportedFingerprintSchemaVersion);
         AssertUnsupported(
             Resolve(targetKind: (WorkforceTargetKind)99),
@@ -170,7 +170,8 @@ public sealed class VillageWorkforceRuleTests
         string? gameDataVersion = null,
         string mappingVersion = "1",
         string candidateUniverseVersion = "1",
-        string fingerprintSchemaVersion = "1",
+        string fingerprintSchemaVersion =
+            VerifiedVillageWorkforceRules.FingerprintSchemaVersion,
         WorkforceTargetKind targetKind = WorkforceTargetKind.ShopManagerSlot) =>
         VerifiedVillageWorkforceRules.Resolve(
             new WorkforceObjectiveIdentity(

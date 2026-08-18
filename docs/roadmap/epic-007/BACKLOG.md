@@ -507,9 +507,9 @@ deferred work, and request the product-owner completion decision.
 - [ ] English and Traditional Chinese wide/narrow states expose the same facts.
 - [x] Empty, tied, ineligible, incomplete, unsupported, conflict, and failure
       states are reviewed with synthetic data.
-- [x] Repeated runs retain stable normalized result facts, source identity, and
-      source hashes; the per-request snapshot fingerprint may differ with its
-      honest capture time.
+- [x] Repeated runs retain stable normalized result facts, source identity,
+      source hashes, and semantic result fingerprints; honest capture time is
+      separate observation metadata.
 - [x] Every Epic 7 acceptance criterion links to implementation or evidence.
 - [x] Unsupported settlement, recruitment, development, library, persistence,
       and game-control mechanics remain explicit future work.
@@ -521,6 +521,46 @@ deferred work, and request the product-owner completion decision.
 
 - [E7-011 representative review](../../reviews/E7-011-manual-verification.md).
 - Completion decision in `EPIC.md` and the roadmap index.
+
+## Post-review corrective backlog
+
+### E7-R1 — Stabilize semantic identity and reuse one UI snapshot
+
+**Status:** Complete
+
+- [x] Snapshot fingerprints exclude capture time and use schema version `2`.
+- [x] Fresh reads of unchanged semantic facts produce equal downstream result
+      identities.
+- [x] `BuildVillageWorkforce` evaluates an already coherent read result.
+- [x] The interactive page reads once per explicit refresh and does not reread
+      the save when inspecting a target.
+- [x] Release build and focused Domain/Application/Presentation/architecture
+      tests pass.
+
+### E7-R2 — Add safe bilingual display enrichment
+
+**Status:** In progress
+
+- [ ] Resolve worker names and locations independently from scoring facts.
+- [ ] Resolve building and discipline display names independently from target
+      identity and rule matching.
+- [ ] Preserve explicit unavailable fallbacks without exposing raw identifiers.
+
+### E7-R3 — Deliver concise grouped workforce interaction
+
+**Status:** Pending
+
+- [ ] Group positions by identifiable shop and current assignment.
+- [ ] Show current worker and top confirmed alternatives before the full list.
+- [ ] Make real display names searchable and bound full-list rendering.
+
+### E7-R4 — Restore descriptive context and close review gaps
+
+**Status:** Pending
+
+- [ ] Show six attributes and martial/life aptitudes as display-only context.
+- [ ] Add representative-scale rendering and single-read regression coverage.
+- [ ] Re-run the full Release matrix and bilingual wide/narrow review.
 
 ## Future work outside Epic 7
 

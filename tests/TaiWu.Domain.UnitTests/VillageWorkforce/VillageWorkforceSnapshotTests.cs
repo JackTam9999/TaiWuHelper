@@ -117,7 +117,7 @@ public sealed class VillageWorkforceSnapshotTests
     }
 
     [Fact]
-    public void Snapshot_fingerprint_includes_time_target_and_assignment_facts()
+    public void Snapshot_fingerprint_excludes_observation_time_but_includes_semantic_facts()
     {
         var baseline = VillageWorkforceFixtures.Snapshot();
         var later = VillageWorkforceFixtures.Snapshot(
@@ -125,7 +125,8 @@ public sealed class VillageWorkforceSnapshotTests
         var differentTarget = VillageWorkforceFixtures.Snapshot(
             target: VillageWorkforceFixtures.Target(buildingIndex: 8));
 
-        Assert.NotEqual(baseline.Fingerprint, later.Fingerprint);
+        Assert.NotEqual(baseline.CapturedAt, later.CapturedAt);
+        Assert.Equal(baseline.Fingerprint, later.Fingerprint);
         Assert.NotEqual(baseline.Fingerprint, differentTarget.Fingerprint);
     }
 }

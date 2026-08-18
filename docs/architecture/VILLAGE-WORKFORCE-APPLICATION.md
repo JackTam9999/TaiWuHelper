@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented — one-request coherent orchestration |
+| Status | Implemented — reusable coherent snapshot orchestration |
 | Epic | [EPIC-007](../roadmap/epic-007/EPIC.md) |
 | Backlog item | [E7-007](../roadmap/epic-007/BACKLOG.md#e7-007--orchestrate-one-coherent-village-workforce-result) |
 | Snapshot port | [Village workforce snapshot](./VILLAGE-WORKFORCE-SNAPSHOT.md) |
@@ -10,10 +10,11 @@
 
 ## Purpose
 
-Compose one path-free request into one immutable village-workforce result. The
-Application workflow reads the configured snapshot once, resolves the exact
-rule, evaluates all workers, builds the shortlist and filter view, and
-optionally creates a same-result comparison and manual review plan.
+Compose one path-free request into one immutable village-workforce result.
+`FindVillageWorkforce` reads the configured snapshot once for stateless callers.
+`BuildVillageWorkforce` performs the same deterministic calculation from an
+already loaded coherent snapshot so an interactive client can inspect several
+targets without rereading the save.
 
 `IFindVillageWorkforce` is read only. It exposes no assignment, save path,
 persistence, automation or game-control capability.
@@ -38,7 +39,8 @@ twice before reading the snapshot.
 
 ```text
 validate typed controls
-    -> IVillageWorkforceSnapshotReader.ReadAsync exactly once
+    -> optional IVillageWorkforceSnapshotReader.ReadAsync exactly once
+    -> BuildVillageWorkforce over that immutable read result
     -> locate target in that exact snapshot
     -> resolve exact objective/source/target/discipline rule
     -> evaluate every worker
@@ -48,10 +50,10 @@ validate typed controls
     -> one authoritative result
 ```
 
-No stage rereads the save. Snapshot, resolved rule, evaluation set, shortlist,
-view, comparison and plan are checked as one reference-consistent chain. A
-second request receives a completely new chain; it cannot combine a new
-revision with old evaluations or controls.
+No calculation stage rereads the save. Snapshot, resolved rule, evaluation set,
+shortlist, view, comparison and plan are checked as one reference-consistent
+chain. The interactive page retains the loaded snapshot until explicit refresh;
+changing a target builds a new result from that same immutable workspace.
 
 ## Finder states
 

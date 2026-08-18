@@ -111,7 +111,7 @@ Every profile receives the same `WorkforceSourceVersions`:
 - installed GameData product version;
 - mapping version `1`;
 - candidate-universe version `1`; and
-- fingerprint schema version `1`.
+- fingerprint schema version `2`.
 
 Configured-save provenance must use that exact SHA as revision identity.
 Installed-GameData provenance must use the exact supported product version.
@@ -119,9 +119,9 @@ The Domain snapshot rejects a mixed revision before it can reach a use case.
 Capture time is UTC and source identity never contains the save path.
 
 Stable reads produce equal source versions, worker/profile fingerprints,
-target fingerprints, assignments and diagnostics. Capture time remains an
-honest per-request fact, so the complete snapshot fingerprint may differ while
-the normalized source projection is equal.
+target fingerprints, assignments, diagnostics, and complete snapshot
+fingerprints. Capture time remains an honest per-request observation fact but
+is deliberately excluded from semantic identity.
 
 ## Dependency injection
 

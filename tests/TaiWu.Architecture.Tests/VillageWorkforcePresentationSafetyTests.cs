@@ -21,11 +21,11 @@ public sealed class VillageWorkforcePresentationSafetyTests
         Assert.Contains("<NavLink href=\"/village-workforce\">", layout);
         Assert.Equal(1, CountOccurrences(
             page,
-            "FindWorkforce.ExecuteAsync("));
+            "BuildWorkforce.Execute("));
         Assert.Equal(1, CountOccurrences(
             page,
             "SnapshotReader.ReadAsync("));
-        Assert.DoesNotContain("FindWorkforce", result);
+        Assert.DoesNotContain("BuildWorkforce", result);
         Assert.DoesNotContain("SnapshotReader", result);
         Assert.Contains("State.SetFilter(filter)", result);
         Assert.Contains("State.SetNameQuery", result);

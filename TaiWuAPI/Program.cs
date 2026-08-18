@@ -45,6 +45,7 @@ builder.Services.AddScoped<
     ResolveTargetSkillSelection>();
 builder.Services.AddScoped<IFindTargets, FindTargets>();
 builder.Services.AddScoped<IFindCompanionCandidates, FindCompanionCandidates>();
+builder.Services.AddSingleton<BuildVillageWorkforce>();
 builder.Services.AddScoped<IFindVillageWorkforce, FindVillageWorkforce>();
 builder.Services.AddScoped<TaiwuLanguageState>();
 builder.Services.AddTaiwuInfrastructure();

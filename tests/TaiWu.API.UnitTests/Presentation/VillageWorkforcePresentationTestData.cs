@@ -129,7 +129,7 @@ internal static class VillageWorkforcePresentationTestData
         VerifiedVillageWorkforceRules.SupportedGameDataVersion,
         "1",
         "1",
-        "1");
+        VerifiedVillageWorkforceRules.FingerprintSchemaVersion);
 
     private static WorkforceProvenance SaveProvenance() => new(
         WorkforceEvidenceSourceKind.ConfiguredSave,

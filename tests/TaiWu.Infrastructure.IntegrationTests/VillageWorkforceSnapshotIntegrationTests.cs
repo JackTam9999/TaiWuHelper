@@ -73,6 +73,8 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
             second.Targets.Select(item => item.Fingerprint));
         Assert.Equal(first.CurrentAssignments, second.CurrentAssignments);
         Assert.Equal(first.Diagnostics, second.Diagnostics);
+        Assert.NotEqual(first.CapturedAt, second.CapturedAt);
+        Assert.Equal(first.Fingerprint, second.Fingerprint);
         Assert.NotEmpty(first.Workers);
         Assert.NotEmpty(first.Targets);
         Assert.Equal(first.Targets.Length, first.CurrentAssignments.Length);
@@ -185,6 +187,14 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
         Assert.True(first.Status is VillageWorkforceFinderStatus.Complete
             or VillageWorkforceFinderStatus.Partial);
         Assert.Equal(first.Status, second.Status);
+        Assert.Equal(first.Snapshot?.Fingerprint, second.Snapshot?.Fingerprint);
+        Assert.Equal(first.Fingerprint, second.Fingerprint);
+        Assert.Equal(
+            first.EvaluationSet?.Fingerprint,
+            second.EvaluationSet?.Fingerprint);
+        Assert.Equal(first.Shortlist?.Fingerprint, second.Shortlist?.Fingerprint);
+        Assert.Equal(first.Comparison?.Fingerprint, second.Comparison?.Fingerprint);
+        Assert.Equal(first.ManualPlan?.Fingerprint, second.ManualPlan?.Fingerprint);
         Assert.Equal(
             first.Snapshot?.SourceVersions,
             second.Snapshot?.SourceVersions);

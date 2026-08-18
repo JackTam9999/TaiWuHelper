@@ -9,7 +9,7 @@ internal static class VillageWorkforceFixtures
         VerifiedVillageWorkforceRules.SupportedGameDataVersion,
         "1",
         "1",
-        "1");
+        VerifiedVillageWorkforceRules.FingerprintSchemaVersion);
 
     public static readonly WorkforceProvenance SaveProvenance = new(
         WorkforceEvidenceSourceKind.ConfiguredSave,

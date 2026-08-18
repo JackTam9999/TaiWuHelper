@@ -412,7 +412,7 @@ public sealed class VillageWorkforceControllerTests
         VerifiedVillageWorkforceRules.SupportedGameDataVersion,
         "1",
         "1",
-        "1");
+        VerifiedVillageWorkforceRules.FingerprintSchemaVersion);
 
     private static WorkforceProvenance SaveProvenance() => new(
         WorkforceEvidenceSourceKind.ConfiguredSave,

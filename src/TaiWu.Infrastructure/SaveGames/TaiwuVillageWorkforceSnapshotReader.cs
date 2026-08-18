@@ -21,7 +21,7 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
         "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20";
     internal const string MappingVersion = "1";
     internal const string CandidateUniverseVersion = "1";
-    internal const string FingerprintSchemaVersion = "1";
+    internal const string FingerprintSchemaVersion = "2";
     private readonly ILogger<TaiwuVillageWorkforceSnapshotReader> _logger =
         logger ?? NullLogger<TaiwuVillageWorkforceSnapshotReader>.Instance;
 

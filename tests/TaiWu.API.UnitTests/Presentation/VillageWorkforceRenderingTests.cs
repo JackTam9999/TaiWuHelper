@@ -308,6 +308,7 @@ public sealed partial class VillageWorkforceRenderingTests
         services.AddLogging();
         services.AddSingleton(finder);
         services.AddSingleton(reader);
+        services.AddSingleton<BuildVillageWorkforce>();
         services.AddSingleton(Substitute.For<IJSRuntime>());
         using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(
