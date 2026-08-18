@@ -164,7 +164,7 @@ semantics before implementing public Domain or API contracts.
 
 ### E7-002 — Add immutable settlement, worker, and assignment contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -177,22 +177,22 @@ the exact selected assignment vertical.
 
 #### Acceptance criteria
 
-- [ ] Stable typed identities represent settlement, worker, assignment target,
+- [x] Stable typed identities represent settlement, worker, assignment target,
       objective, rule version, source, and result.
-- [ ] Worker facts preserve available, unavailable, unsupported, and conflict
+- [x] Worker facts preserve available, unavailable, unsupported, and conflict
       states with provenance.
-- [ ] Current assignment is immutable save evidence; proposed assignment is an
+- [x] Current assignment is immutable save evidence; proposed assignment is an
       immutable helper artifact and cannot enter a current snapshot.
-- [ ] Requirement, component, output, evaluation, comparison, and diagnostic
+- [x] Requirement, component, output, evaluation, comparison, and diagnostic
       contracts use typed identities and units.
-- [ ] Collections are immutable, validated, and canonically ordered.
-- [ ] Invalid duplicate workers, targets, assignments, components, or evidence
+- [x] Collections are immutable, validated, and canonically ordered.
+- [x] Invalid duplicate workers, targets, assignments, components, or evidence
       fail before evaluation.
-- [ ] Fingerprints exclude localized display text and include every fact that
+- [x] Fingerprints exclude localized display text and include every fact that
       can affect a result.
-- [ ] Domain projects reference no Application, Infrastructure, ASP.NET, UI,
+- [x] Domain projects reference no Application, Infrastructure, ASP.NET, UI,
       GameData, reflection, filesystem, or process type.
-- [ ] Unit tests cover validation, unavailable states, equality, ordering,
+- [x] Unit tests cover validation, unavailable states, equality, ordering,
       current/proposed separation, and fingerprints.
 
 #### Evidence
