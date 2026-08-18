@@ -8,6 +8,7 @@ using TaiWu.Domain.CompanionRoles;
 using TaiWuAPI.Configuration;
 using TaiWuAPI.Contracts.CompanionCandidates;
 using TaiWuAPI.Contracts.CombatRecommendations;
+using TaiWuAPI.Contracts.VillageWorkforce;
 using Xunit;
 
 namespace TaiWu.API.UnitTests.Contracts;
@@ -21,6 +22,10 @@ public sealed class ApiJsonContractTests
             JsonSerializer.Deserialize<RecommendationPolicy>(
                 "1",
                 Options()));
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<VillageWorkforceApiStatus>(
+                "1",
+                Options()));
     }
 
     [Theory]
@@ -32,6 +37,8 @@ public sealed class ApiJsonContractTests
     [InlineData(PracticeDirection.Reverse, "Reverse")]
     [InlineData(CandidateDisciplineDomain.Capability, "Capability")]
     [InlineData(CompanionRoleShortlistFilter.NeedsReview, "NeedsReview")]
+    [InlineData(VillageWorkforceApiStatus.Partial, "Partial")]
+    [InlineData(VillageWorkforceApiEvaluationState.Tied, "Tied")]
     public void Request_enum_tokens_are_pinned(object value, string token)
     {
         Assert.Equal(
@@ -61,6 +68,19 @@ public sealed class ApiJsonContractTests
                 Language = TaiwuLanguage.English
             },
             Options());
+        var workforce = JsonSerializer.SerializeToDocument(
+            new VillageWorkforceApiQuery
+            {
+                AreaId = 1,
+                BlockId = 2,
+                BuildingBlockIndex = 7,
+                ManagerSlotIndex = 0,
+                Objective = VillageWorkforceApiTokens.Objective,
+                ObjectiveVersion = VillageWorkforceApiTokens.ObjectiveVersion,
+                Filter = VillageWorkforceApiTokens.FilterComparable,
+                Language = VillageWorkforceApiTokens.TraditionalChinese
+            },
+            Options());
 
         Assert.Equal(
             "Capability",
@@ -77,6 +97,15 @@ public sealed class ApiJsonContractTests
         Assert.Equal(
             "English",
             recommendation.RootElement.GetProperty("language").GetString());
+        Assert.Equal(
+            VillageWorkforceApiTokens.Objective,
+            workforce.RootElement.GetProperty("objective").GetString());
+        Assert.Equal(
+            VillageWorkforceApiTokens.FilterComparable,
+            workforce.RootElement.GetProperty("filter").GetString());
+        Assert.Equal(
+            VillageWorkforceApiTokens.TraditionalChinese,
+            workforce.RootElement.GetProperty("language").GetString());
     }
 
     private static JsonSerializerOptions Options()

@@ -1,12 +1,33 @@
 using TaiWu.Application.Localization;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWuAPI.Contracts.CompanionCandidates;
+using TaiWuAPI.Contracts.VillageWorkforce;
 using Xunit;
 
 namespace TaiWu.Architecture.Tests;
 
 public sealed class LoopbackApiContractTests
 {
+    [Fact]
+    public void Village_workforce_contracts_are_api_owned_at_every_nested_level()
+    {
+        var contractAssembly = typeof(VillageWorkforceResultResponse).Assembly;
+        var actual = contractAssembly.GetExportedTypes()
+            .Where(type => type.Namespace?.Equals(
+                "TaiWuAPI.Contracts.VillageWorkforce",
+                StringComparison.Ordinal) == true)
+            .SelectMany(type => type.GetProperties())
+            .SelectMany(property => FlattenType(property.PropertyType))
+            .Where(type => type.Assembly != contractAssembly
+                && type.Assembly != typeof(string).Assembly)
+            .Select(type => type.FullName!)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Empty(actual);
+    }
+
     [Fact]
     public void Cross_layer_contract_types_are_explicitly_inventoried()
     {

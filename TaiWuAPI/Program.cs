@@ -6,6 +6,7 @@ using TaiWu.Application.RegionStories;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.TargetObservations;
 using TaiWu.Application.Targets;
+using TaiWu.Application.VillageWorkforce;
 using TaiWu.Infrastructure;
 using TaiWuAPI.Components;
 using TaiWuAPI.Configuration;
@@ -44,6 +45,7 @@ builder.Services.AddScoped<
     ResolveTargetSkillSelection>();
 builder.Services.AddScoped<IFindTargets, FindTargets>();
 builder.Services.AddScoped<IFindCompanionCandidates, FindCompanionCandidates>();
+builder.Services.AddScoped<IFindVillageWorkforce, FindVillageWorkforce>();
 builder.Services.AddScoped<TaiwuLanguageState>();
 builder.Services.AddTaiwuInfrastructure();
 builder.Services

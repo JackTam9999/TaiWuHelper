@@ -382,7 +382,7 @@ and manual guidance behind one Application request/result boundary.
 
 ### E7-008 — Expose typed village-workforce API contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -395,18 +395,18 @@ workforce result without leaking implementation or source details.
 
 #### Acceptance criteria
 
-- [ ] Routes use `GET` or information-only request semantics; no assignment,
+- [x] Routes use `GET` or information-only request semantics; no assignment,
       building, collection, or mutation route exists.
-- [ ] Request validation rejects unknown stable identities and invalid
+- [x] Request validation rejects unknown stable identities and invalid
       comparison selections with safe `400` responses.
-- [ ] Typed responses preserve snapshot, target, current assignment, worker,
+- [x] Typed responses preserve snapshot, target, current assignment, worker,
       evaluation, shortlist, comparison, evidence, and diagnostic states.
-- [ ] Numeric enum values are rejected and public tokens are fixture-tested.
-- [ ] Local paths, raw save content, proprietary configuration objects,
+- [x] Numeric enum values are rejected and public tokens are fixture-tested.
+- [x] Local paths, raw save content, proprietary configuration objects,
       exceptions, and mutation-capable types never enter responses.
-- [ ] Controller tests cover success, unsupported, missing save, unstable save,
+- [x] Controller tests cover success, unsupported, missing save, unstable save,
       invalid target, comparison, cancellation, and unexpected failure.
-- [ ] Architecture tests inventory nested cross-layer contract types.
+- [x] Architecture tests inventory nested cross-layer contract types.
 
 #### Evidence
 
