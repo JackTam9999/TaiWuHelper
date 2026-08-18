@@ -548,11 +548,11 @@ deferred work, and request the product-owner completion decision.
 
 ### E7-R3 — Deliver concise grouped workforce interaction
 
-**Status:** In progress
+**Status:** Complete
 
-- [ ] Group positions by identifiable shop and current assignment.
-- [ ] Show current worker and top confirmed alternatives before the full list.
-- [ ] Make real display names searchable and bound full-list rendering.
+- [x] Group positions by identifiable shop and current assignment.
+- [x] Show current worker and top confirmed alternatives before the full list.
+- [x] Make real display names searchable and bound full-list rendering.
 
 ### E7-R4 — Restore descriptive context and close review gaps
 

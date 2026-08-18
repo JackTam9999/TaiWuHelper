@@ -258,6 +258,44 @@ public static class VillageWorkforceViewModelMapper
                 .Where(value => !string.IsNullOrWhiteSpace(value)));
     }
 
+    public static string TargetGroupLabel(
+        VillageWorkforceTargetDisplay? display,
+        TaiwuLanguage language,
+        int fallbackOrdinal)
+    {
+        var building = language == TaiwuLanguage.Chinese
+            ? display?.TraditionalChineseBuildingName
+            : display?.EnglishBuildingName;
+        var location = language == TaiwuLanguage.Chinese
+            ? display?.TraditionalChineseLocation
+            : display?.EnglishLocation;
+        var discipline = language == TaiwuLanguage.Chinese
+            ? display?.TraditionalChineseDisciplineName
+            : display?.EnglishDisciplineName;
+        return string.Join(
+            " · ",
+            new[]
+            {
+                building ?? $"{VillageWorkforceUiText.Get(language, VillageWorkforceUiTextKey.Shop)} {fallbackOrdinal}",
+                location,
+                discipline
+            }.Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    public static string TargetPositionLabel(
+        ShopManagerTarget target,
+        VillageWorkerDisplay? currentWorker,
+        TaiwuLanguage language)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        var workerName = WorkerName(currentWorker, language)
+            ?? VillageWorkforceUiText.Get(
+                language,
+                VillageWorkforceUiTextKey.WorkerNameUnavailable);
+        return $"{VillageWorkforceUiText.Get(language, VillageWorkforceUiTextKey.ManagerPosition)} "
+            + $"{target.Identity.ManagerSlotIndex + 1} · {workerName}";
+    }
+
     private static string? WorkerName(
         VillageWorkerDisplay? display,
         TaiwuLanguage language) => language == TaiwuLanguage.Chinese

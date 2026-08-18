@@ -67,3 +67,8 @@ public sealed record VillageWorkforceNoticeViewModel(
 public sealed record VillageWorkforceTargetOptionViewModel(
     int OptionIndex,
     string Label);
+
+public sealed record VillageWorkforceTargetGroupViewModel(
+    int GroupIndex,
+    string Label,
+    IReadOnlyList<VillageWorkforceTargetOptionViewModel> Positions);

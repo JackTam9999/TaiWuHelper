@@ -15,6 +15,9 @@ public enum VillageWorkforceUiTextKey
     ObjectiveLabel,
     ObjectiveDescription,
     AssignmentTarget,
+    Shop,
+    ChooseShop,
+    ManagerPosition,
     ChooseTarget,
     InspectPosition,
     InspectingPosition,
@@ -55,6 +58,11 @@ public enum VillageWorkforceUiTextKey
     All,
     FilterNames,
     VisibleWorkers,
+    ShowAllMatches,
+    ShowTopAlternatives,
+    PreviousPage,
+    NextPage,
+    Page,
     Rank,
     Worker,
     State,
@@ -136,6 +144,12 @@ public static class VillageWorkforceUiText
                  "依所選商鋪需要的存檔基礎技藝資質精確值排列人選。"),
             VillageWorkforceUiTextKey.AssignmentTarget =>
                 ("Shop manager position", "商鋪管理位置"),
+            VillageWorkforceUiTextKey.Shop =>
+                ("Shop", "商鋪"),
+            VillageWorkforceUiTextKey.ChooseShop =>
+                ("Choose a shop", "選擇商鋪"),
+            VillageWorkforceUiTextKey.ManagerPosition =>
+                ("Manager position", "管理位置"),
             VillageWorkforceUiTextKey.ChooseTarget =>
                 ("Choose a position", "選擇位置"),
             VillageWorkforceUiTextKey.InspectPosition =>
@@ -222,6 +236,16 @@ public static class VillageWorkforceUiText
                 ("Filter displayed labels", "篩選顯示標籤"),
             VillageWorkforceUiTextKey.VisibleWorkers =>
                 ("workers visible", "位人員顯示"),
+            VillageWorkforceUiTextKey.ShowAllMatches =>
+                ("Show all matching workers", "顯示全部符合人員"),
+            VillageWorkforceUiTextKey.ShowTopAlternatives =>
+                ("Show current and top alternatives", "顯示目前人員與最佳替代人員"),
+            VillageWorkforceUiTextKey.PreviousPage =>
+                ("Previous page", "上一頁"),
+            VillageWorkforceUiTextKey.NextPage =>
+                ("Next page", "下一頁"),
+            VillageWorkforceUiTextKey.Page =>
+                ("Page", "頁"),
             VillageWorkforceUiTextKey.Rank =>
                 ("Rank", "名次"),
             VillageWorkforceUiTextKey.Worker =>

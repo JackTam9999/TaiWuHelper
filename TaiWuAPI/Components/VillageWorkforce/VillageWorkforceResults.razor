@@ -130,6 +130,32 @@
             </p>
         </div>
 
+        @if (State.HasMoreCompactCandidates(Model))
+        {
+            <div class="workforce-list-actions">
+                <p>@TopAlternativesMessage</p>
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="ShowAllMatches"
+                        disabled="@IsPrevious">
+                    @Text(VillageWorkforceUiTextKey.ShowAllMatches)
+                </button>
+            </div>
+        }
+        else if (State.Filter == WorkforceShortlistFilter.Comparable
+            && State.ShowAllComparable
+            && string.IsNullOrWhiteSpace(State.NameQuery))
+        {
+            <div class="workforce-list-actions">
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="ShowTopAlternatives"
+                        disabled="@IsPrevious">
+                    @Text(VillageWorkforceUiTextKey.ShowTopAlternatives)
+                </button>
+            </div>
+        }
+
         @if (VisibleCandidates.Count == 0)
         {
             <p class="workforce-empty-state">
@@ -272,6 +298,27 @@
             </table>
         }
 
+
+        @if (PageCount > 1)
+        {
+            <nav class="workforce-pagination"
+                 aria-label="@Text(VillageWorkforceUiTextKey.VisibleWorkers)">
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="PreviousPage"
+                        disabled="@(IsPrevious || !State.HasPreviousPage)">
+                    @Text(VillageWorkforceUiTextKey.PreviousPage)
+                </button>
+                <span aria-live="polite">@PageLabel</span>
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="NextPage"
+                        disabled="@(IsPrevious || !State.HasNextPage(Model))">
+                    @Text(VillageWorkforceUiTextKey.NextPage)
+                </button>
+            </nav>
+        }
+
         @if (State.ComparisonReady)
         {
             <p class="workforce-comparison-status" role="status">
@@ -396,10 +443,32 @@
         + Model.Counts.Unsupported
         + Model.Counts.Conflicting;
 
+    private int MatchingCount => State.MatchingCandidateCount(Model);
+
+    private int PageCount => State.PageCount(Model);
+
     private string VisibleCountMessage => VillageWorkforceUiText.VisibleCount(
         Language,
         VisibleCandidates.Count,
-        Model.Counts.Total);
+        MatchingCount);
+
+    private string TopAlternativesMessage => Language switch
+    {
+        TaiwuLanguage.English =>
+            $"Current worker and the top {VillageWorkforceInteractionState.DefaultAlternativeLimit} confirmed alternatives are shown first.",
+        TaiwuLanguage.Chinese =>
+            $"先顯示目前人員與最佳 {VillageWorkforceInteractionState.DefaultAlternativeLimit} 位已確認替代人員。",
+        _ => throw new ArgumentOutOfRangeException(nameof(Language))
+    };
+
+    private string PageLabel => Language switch
+    {
+        TaiwuLanguage.English =>
+            $"{Text(VillageWorkforceUiTextKey.Page)} {State.PageIndex + 1} of {PageCount}",
+        TaiwuLanguage.Chinese =>
+            $"第 {State.PageIndex + 1}／{PageCount} {Text(VillageWorkforceUiTextKey.Page)}",
+        _ => throw new ArgumentOutOfRangeException(nameof(Language))
+    };
 
     private void SetFilter(WorkforceShortlistFilter filter) =>
         State.SetFilter(filter);
@@ -407,9 +476,17 @@
     private void SetNameQuery(ChangeEventArgs args) =>
         State.SetNameQuery(args.Value?.ToString());
 
+    private void ShowAllMatches() => State.ShowAllMatches();
+
+    private void ShowTopAlternatives() => State.ShowTopAlternatives();
+
+    private void PreviousPage() => State.PreviousPage();
+
+    private void NextPage() => State.NextPage(Model);
+
     private async Task ToggleComparisonAsync(int characterId)
     {
-        State.ToggleComparison(characterId);
+        State.ToggleComparison(characterId, Model.Current.CharacterId);
         await ComparisonChanged.InvokeAsync();
     }
 

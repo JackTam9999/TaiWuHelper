@@ -1230,7 +1230,9 @@ public sealed partial class ArchitectureBoundaryTests
             "LoadAsync",
             "LoadDisciplineLabelsAsync",
             "LoadTargetsAsync",
+            "NextPage",
             "NextPageAsync",
+            "PreviousPage",
             "PreviousPageAsync",
             "PrintAsync",
             "RebuildAsync",
@@ -1241,6 +1243,9 @@ public sealed partial class ArchitectureBoundaryTests
             "SearchTargetsAsync",
             "SetDiscipline",
             "SetTarget",
+            "SetTargetGroup",
+            "ShowAllMatches",
+            "ShowTopAlternatives",
             "ToggleEnabled"
         }.Order(StringComparer.Ordinal);
 

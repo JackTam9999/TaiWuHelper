@@ -43,14 +43,15 @@ public sealed partial class VillageWorkforceRenderingTests
         Assert.Contains("64", text);
         Assert.Contains("72", text);
         Assert.Contains("Tied", text);
-        Assert.Contains("Incomplete", text);
+        Assert.Contains("Comparable", text);
         Assert.Contains("type=\"radio\"", html);
         Assert.Contains("type=\"checkbox\"", html);
         Assert.Contains("scope=\"col\"", html);
         Assert.Contains("scope=\"row\"", html);
         Assert.Contains("aria-live=\"polite\"", html);
         Assert.Equal(
-            model.Candidates.Count,
+            new VillageWorkforceInteractionState()
+                .VisibleCandidates(model).Count,
             Regex.Matches(
                 html,
                 "<details class=\"workforce-candidate-evidence\"").Count);
@@ -95,7 +96,7 @@ public sealed partial class VillageWorkforceRenderingTests
         Assert.Contains("存檔基礎技藝資質", text);
         Assert.Contains("資質點數", text);
         Assert.Contains("並列", text);
-        Assert.Contains("資料不完整", text);
+        Assert.Contains("可比較", text);
         Assert.DoesNotContain("41001", html, StringComparison.Ordinal);
     }
 
@@ -113,8 +114,12 @@ public sealed partial class VillageWorkforceRenderingTests
         state.SetNameQuery("Alternative worker 2");
         Assert.Single(state.VisibleCandidates(model));
         state.SetNameQuery(null);
-        state.ToggleComparison(model.Current.CharacterId);
-        state.ToggleComparison(model.Candidates[0].CharacterId);
+        state.ToggleComparison(
+            model.Current.CharacterId,
+            model.Current.CharacterId);
+        state.ToggleComparison(
+            model.Candidates[0].CharacterId,
+            model.Current.CharacterId);
         Assert.True(state.ComparisonReady);
         Assert.True(state.IsSelectionDisabled(model.Candidates[^1].CharacterId));
 
@@ -136,6 +141,46 @@ public sealed partial class VillageWorkforceRenderingTests
         Assert.Contains("Manual checklist", text);
         Assert.Contains("No action was sent to the game", text);
         Assert.Contains("disabled", html);
+    }
+
+    [Fact]
+    public void Initial_shortlist_is_bounded_and_full_results_are_paged()
+    {
+        var candidates = Enumerable.Range(1, 314)
+            .Select(ordinal => Candidate(
+                ordinal,
+                current: ordinal == 1,
+                ordinal == 1
+                    ? VillageWorkforceApiEvaluationState.CurrentOnly
+                    : VillageWorkforceApiEvaluationState.Ranked,
+                ordinal == 1 ? "Current assignment only" : "Ranked",
+                ordinal == 1 ? "needs-review" : "comparable",
+                rank: ordinal == 1 ? null : ordinal - 1,
+                total: ordinal == 1 ? null : 1000 - ordinal))
+            .ToArray();
+        var model = Model(candidates);
+        var state = new VillageWorkforceInteractionState();
+
+        var initial = state.VisibleCandidates(model);
+
+        Assert.Equal(11, initial.Count);
+        Assert.True(initial[0].IsCurrent);
+        Assert.True(state.HasMoreCompactCandidates(model));
+
+        state.ShowAllMatches();
+        var firstPage = state.VisibleCandidates(model);
+        Assert.Equal(VillageWorkforceInteractionState.PageSize, firstPage.Count);
+        Assert.Equal(13, state.PageCount(model));
+        state.NextPage(model);
+        Assert.Equal(1, state.PageIndex);
+        Assert.NotEqual(
+            firstPage[0].CharacterId,
+            state.VisibleCandidates(model)[0].CharacterId);
+
+        state.ToggleComparison(candidates[20].CharacterId, candidates[0].CharacterId);
+        Assert.Equal(
+            [candidates[0].CharacterId, candidates[20].CharacterId],
+            state.SelectedCharacterIds);
     }
 
     [Fact]
@@ -195,7 +240,12 @@ public sealed partial class VillageWorkforceRenderingTests
                 Arg.Any<CancellationToken>())
             .Returns(VillageWorkforceSnapshotReadResult.Complete(
                 snapshot,
-                workerDisplays: null,
+                workerDisplays: [new VillageWorkerDisplay(
+                    snapshot.CurrentAssignments[0].Worker,
+                    "目前掌櫃",
+                    "Current steward",
+                    "太吾村",
+                    "Taiwu Village")],
                 targetDisplays: [new VillageWorkforceTargetDisplay(
                     snapshot.Targets[0].Identity,
                     "茶館",
@@ -215,8 +265,9 @@ public sealed partial class VillageWorkforceRenderingTests
         Assert.Contains("Village workforce planner", text);
         Assert.Contains("Shop manager base aptitude", text);
         Assert.Contains("Tea house", text);
+        Assert.Contains("Current steward", text);
         Assert.Contains("Inspect position", text);
-        Assert.Contains("<select", html);
+        Assert.Equal(2, Regex.Matches(html, "<select").Count);
         Assert.DoesNotContain("41001", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Shop area", html, StringComparison.Ordinal);
         Assert.Empty(finder.ReceivedCalls());
@@ -261,21 +312,23 @@ public sealed partial class VillageWorkforceRenderingTests
             candidates,
             ["Synthetic shared limitation"]);
 
+        var state = new VillageWorkforceInteractionState();
+        state.SetFilter(WorkforceShortlistFilter.All);
         var html = await RenderResultsAsync(
             model,
-            new VillageWorkforceInteractionState(),
+            state,
             comparison: null,
             TaiwuLanguage.English,
             isPrevious: true);
         var text = VisibleText(html);
 
-        foreach (var state in new[]
+        foreach (var stateLabel in new[]
                  {
                      "Ranked", "Tied", "Current assignment only",
                      "Ineligible", "Incomplete", "Unsupported", "Conflicting"
                  })
         {
-            Assert.Contains(state, text);
+            Assert.Contains(stateLabel, text);
         }
 
         Assert.Contains("Previous result", text);
@@ -425,4 +478,32 @@ public sealed partial class VillageWorkforceRenderingTests
             PassedRequirements: 0,
             Requirements: [],
             Components: []);
+
+    private static VillageWorkforceViewModel Model(
+        IReadOnlyList<VillageWorkforceCandidateViewModel> candidates) => new(
+            VillageWorkforceApiStatus.Complete,
+            new DateTimeOffset(2026, 8, 18, 12, 0, 0, TimeSpan.Zero),
+            IsPartial: false,
+            "Shop manager base aptitude",
+            "Synthetic objective",
+            "1.0.0",
+            "Synthetic shop",
+            new VillageWorkforceCountsResponse(
+                Total: candidates.Count,
+                Comparable: candidates.Count(item => item.State is
+                    VillageWorkforceApiEvaluationState.Ranked
+                    or VillageWorkforceApiEvaluationState.Tied),
+                Ranked: candidates.Count(item => item.State ==
+                    VillageWorkforceApiEvaluationState.Ranked),
+                Tied: 0,
+                CurrentOnly: candidates.Count(item => item.State ==
+                    VillageWorkforceApiEvaluationState.CurrentOnly),
+                Ineligible: 0,
+                Incomplete: 0,
+                Unsupported: 0,
+                Conflicting: 0,
+                Visible: candidates.Count),
+            candidates.Single(item => item.IsCurrent),
+            candidates,
+            []);
 }

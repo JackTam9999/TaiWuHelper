@@ -61,11 +61,17 @@
 }
 
 .workforce-fixed-objective,
+.workforce-target-pickers,
 .workforce-target-control,
 .workforce-inspect-action,
 .workforce-name-filter {
     display: grid;
     gap: 8px;
+}
+
+.workforce-target-pickers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .workforce-fixed-objective > span,
@@ -337,6 +343,27 @@
     color: var(--muted);
     font-size: 0.8rem;
     white-space: nowrap;
+}
+
+.workforce-list-actions,
+.workforce-pagination {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+.workforce-list-actions p {
+    margin: 0 auto 0 0;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.workforce-pagination span {
+    min-width: 110px;
+    color: var(--muted);
+    text-align: center;
 }
 
 .workforce-candidate-table,
@@ -615,6 +642,21 @@
 
     .workforce-visible-count {
         white-space: normal;
+    }
+
+    .workforce-target-pickers {
+        grid-template-columns: 1fr;
+    }
+
+    .workforce-list-actions,
+    .workforce-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .workforce-list-actions .secondary-button,
+    .workforce-pagination .secondary-button {
+        width: 100%;
     }
 }
 

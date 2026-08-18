@@ -85,21 +85,38 @@
             <strong>@Text(VillageWorkforceUiTextKey.ObjectiveLabel)</strong>
             <small>@Text(VillageWorkforceUiTextKey.QualificationMeaning)</small>
         </div>
-        <label class="workforce-target-control">
-            <span>@Text(VillageWorkforceUiTextKey.AssignmentTarget)</span>
-            <select value="@DraftTargetValue"
-                    @onchange="SetTarget"
-                    disabled="@(_isLoading || _targetsLoading || _targets.Count == 0)">
-                @if (_targets.Count != 1)
-                {
-                    <option value="">@Text(VillageWorkforceUiTextKey.ChooseTarget)</option>
-                }
-                @foreach (var option in TargetOptions)
-                {
-                    <option value="@option.OptionIndex">@option.Label</option>
-                }
-            </select>
-        </label>
+        <div class="workforce-target-pickers">
+            <label class="workforce-target-control">
+                <span>@Text(VillageWorkforceUiTextKey.Shop)</span>
+                <select value="@DraftGroupValue"
+                        @onchange="SetTargetGroup"
+                        disabled="@(_isLoading || _targetsLoading || _targets.Count == 0)">
+                    @if (TargetGroups.Count != 1)
+                    {
+                        <option value="">@Text(VillageWorkforceUiTextKey.ChooseShop)</option>
+                    }
+                    @foreach (var group in TargetGroups)
+                    {
+                        <option value="@group.GroupIndex">@group.Label</option>
+                    }
+                </select>
+            </label>
+            <label class="workforce-target-control">
+                <span>@Text(VillageWorkforceUiTextKey.AssignmentTarget)</span>
+                <select value="@DraftTargetValue"
+                        @onchange="SetTarget"
+                        disabled="@(_isLoading || _targetsLoading || DraftGroup is null)">
+                    @if (DraftGroup?.Positions.Count != 1)
+                    {
+                        <option value="">@Text(VillageWorkforceUiTextKey.ChooseTarget)</option>
+                    }
+                    @foreach (var option in DraftGroup?.Positions ?? [])
+                    {
+                        <option value="@option.OptionIndex">@option.Label</option>
+                    }
+                </select>
+            </label>
+        </div>
         <div class="workforce-inspect-action">
             <button type="button"
                     class="primary-button"
@@ -162,6 +179,7 @@
         VerifiedVillageWorkforceRules.ObjectiveVersion);
     private readonly VillageWorkforceInteractionState _interaction = new();
     private IReadOnlyList<ShopManagerTarget> _targets = [];
+    private int? _draftGroupIndex;
     private int? _draftTargetIndex;
     private int? _submittedTargetIndex;
     private VillageWorkforceFinderResult? _result;
@@ -179,23 +197,55 @@
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
 
-    private IReadOnlyList<VillageWorkforceTargetOptionViewModel>
-        TargetOptions => _targets.Select((target, index) =>
-            new VillageWorkforceTargetOptionViewModel(
-                index,
-                VillageWorkforceViewModelMapper.TargetLabel(
-                    target,
-                    _snapshotRead?.TargetDisplays.SingleOrDefault(display =>
-                        display.Identity == target.Identity),
-                    Language,
-                    index + 1)))
-            .ToArray();
+    private IReadOnlyList<VillageWorkforceTargetGroupViewModel> TargetGroups =>
+        _targets.Select((target, index) => (Target: target, Index: index))
+            .GroupBy(item => item.Target.Identity.Building)
+            .Select((group, groupIndex) =>
+            {
+                var first = group.First().Target;
+                var display = _snapshotRead?.TargetDisplays.SingleOrDefault(item =>
+                    item.Identity == first.Identity);
+                var positions = group.Select(item =>
+                {
+                    var currentIdentity = _snapshotRead?.Snapshot?
+                        .CurrentAssignments.Single(assignment =>
+                            assignment.Target == item.Target.Identity).Worker;
+                    var currentDisplay = currentIdentity is null
+                        ? null
+                        : _snapshotRead?.WorkerDisplays.SingleOrDefault(worker =>
+                            worker.Identity == currentIdentity);
+                    return new VillageWorkforceTargetOptionViewModel(
+                        item.Index,
+                        VillageWorkforceViewModelMapper.TargetPositionLabel(
+                            item.Target,
+                            currentDisplay,
+                            Language));
+                }).ToArray();
+                return new VillageWorkforceTargetGroupViewModel(
+                    groupIndex,
+                    VillageWorkforceViewModelMapper.TargetGroupLabel(
+                        display,
+                        Language,
+                        groupIndex + 1),
+                    positions);
+            }).ToArray();
+
+    private VillageWorkforceTargetGroupViewModel? DraftGroup =>
+        _draftGroupIndex.HasValue
+        && _draftGroupIndex.Value >= 0
+        && _draftGroupIndex.Value < TargetGroups.Count
+            ? TargetGroups[_draftGroupIndex.Value]
+            : null;
+
+    private string DraftGroupValue => _draftGroupIndex?.ToString() ?? "";
 
     private string DraftTargetValue => _draftTargetIndex?.ToString() ?? "";
 
     private bool DraftValid => _draftTargetIndex.HasValue
         && _draftTargetIndex.Value >= 0
-        && _draftTargetIndex.Value < _targets.Count;
+        && _draftTargetIndex.Value < _targets.Count
+        && DraftGroup?.Positions.Any(option =>
+            option.OptionIndex == _draftTargetIndex.Value) == true;
 
     private bool CanInspect => DraftValid
         && !_isLoading
@@ -249,6 +299,7 @@
             {
                 _snapshotRead = null;
                 _targets = [];
+                _draftGroupIndex = null;
                 _draftTargetIndex = null;
                 _targetNotice = VillageWorkforceViewModelMapper
                     .MapDiscoveryFailure(read.Status, Language);
@@ -257,12 +308,16 @@
 
             _snapshotRead = read;
             _targets = read.Snapshot.Targets;
-            _draftTargetIndex = _targets.Count == 1 ? 0 : null;
+            _draftGroupIndex = TargetGroups.Count == 1 ? 0 : null;
+            _draftTargetIndex = DraftGroup?.Positions.Count == 1
+                ? DraftGroup.Positions[0].OptionIndex
+                : null;
         }
         catch (OperationCanceledException)
         {
             _snapshotRead = null;
             _targets = [];
+            _draftGroupIndex = null;
             _draftTargetIndex = null;
             _targetNotice = new VillageWorkforceNoticeViewModel(
                 Text(VillageWorkforceUiTextKey.CancelledTitle),
@@ -276,6 +331,7 @@
                 "Village workforce targets could not be read safely.");
             _snapshotRead = null;
             _targets = [];
+            _draftGroupIndex = null;
             _draftTargetIndex = null;
             _targetNotice = VillageWorkforceViewModelMapper
                 .MapDiscoveryFailure(
@@ -288,12 +344,27 @@
         }
     }
 
+    private void SetTargetGroup(ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        _draftGroupIndex = int.TryParse(value, out var index)
+            && index >= 0
+            && index < TargetGroups.Count
+                ? index
+                : null;
+        _draftTargetIndex = DraftGroup?.Positions.Count == 1
+            ? DraftGroup.Positions[0].OptionIndex
+            : null;
+    }
+
     private void SetTarget(ChangeEventArgs args)
     {
         var value = args.Value?.ToString();
         _draftTargetIndex = int.TryParse(value, out var index)
             && index >= 0
             && index < _targets.Count
+            && DraftGroup?.Positions.Any(option =>
+                option.OptionIndex == index) == true
                 ? index
                 : null;
     }
