@@ -6,6 +6,7 @@
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
 | Epic merge | Local `master` fast-forwarded to `b5d2be2` |
 | Review branch | `refactor/post-epic-6-review` |
+| Architecture-hardening branch | `refactor/architecture-hardening` from `6424302` |
 | Result | Complete |
 
 ## Outcome
@@ -35,6 +36,24 @@ Nine implementation review batches are committed:
    child component and centralizes shared column labels.
 9. `2891a18` records the formatter-only using-directive cleanup separately
    from behavior and structural changes.
+
+An independent full-architecture review then produced a second bounded pass.
+Nine additional batches close its production and test-quality findings:
+
+1. `da17736` maps unknown target identities to an explicit API `404`.
+2. `f94422f` verifies cached save content and makes the progress database
+   recover after deletion or replacement.
+3. `9fedcc4` requires antiforgery validation on helper-maintenance posts.
+4. `cdd1f68` stops hiding unexpected companion workflow faults.
+5. `ab45d64` pins the internal loopback JSON contract, rejects numeric enums,
+   and removes the legacy save-report type from the response boundary.
+6. `ef20a6c` removes absolute save paths from Domain metadata and injects one
+   registered `TimeProvider` into snapshot readers.
+7. `86e9a65` replaces process-global catalogue coordination with one injected
+   singleton and injects application use cases into controllers/components.
+8. `3f722e7` enforces complete typed companion localization.
+9. `2ef46f8` adds Roslyn semantic capability checks alongside the existing
+   inexpensive source-pattern guards.
 
 ## Findings resolved
 
@@ -105,6 +124,23 @@ dedicated child component. Shared column, policy, and status labels live in one
 formatter rather than being duplicated. Parent rendering tests retain the same
 visible facts and the architecture scan covers both component files.
 
+## Architecture hardening findings resolved
+
+| Finding | Resolution |
+|---|---|
+| Unknown target escaped as an unhandled exception | A typed not-found exception is translated to a stable `404` problem response; unrelated failures still surface as server faults |
+| Loopback maintenance posts were browser-CSRF reachable | Catalogue rebuild and progress-cache clear endpoints require antiforgery validation, with endpoint-metadata tests |
+| Size/mtime cache identity could accept replaced content | Archive reuse and progress-cache hits verify SHA-256 content identity; preserved-metadata replacement tests cover the adversarial case |
+| Deleted/replaced progress database could not self-heal | Schema readiness is revalidated and recreated instead of relying on permanent process state |
+| Companion orchestration hid programmer faults | Only expected typed result states are mapped; cancellation and unexpected exceptions propagate to the host logging/error boundary |
+| API wire tokens followed internal enum serialization defaults | The API remains explicitly internal/loopback, numeric enum values are rejected, request/response fixtures pin tokens, and cross-layer enum exposure is inventoried |
+| Domain metadata retained an absolute save path | Domain snapshots now retain opaque content identity only; infrastructure keeps path context locally |
+| Snapshot timestamps used ambient time | `TimeProvider.System` is registered once and readers accept injected time for deterministic tests |
+| Catalogue lifecycle used static coordination | A DI-owned singleton now owns the process-local gate and rebuilding state; concurrency/status behavior is tested |
+| Presentation constructed application use cases | Controllers and Razor components receive registered use cases from the composition root |
+| Companion localization could regress to prose-key fallback | Every typed identity is verified in English and Chinese, unknown languages throw, and architecture coverage rejects legacy fallback calls in the feature |
+| Regex-only capability tests could miss aliases | Semantic symbol analysis now covers file mutation at protected boundaries and production process, native-control, runtime-patching, and network calls; alias and fully qualified probes prove the guard |
+
 ## Verification
 
 The post-refactor Release solution build completes with zero warnings and zero
@@ -112,7 +148,7 @@ errors. The full default matrix reports:
 
 | Total | Passed | Skipped | Failed |
 |---:|---:|---:|---:|
-| 1,275 | 1,263 | 12 | 0 |
+| 1,299 | 1,287 | 12 | 0 |
 
 The 12 skipped cases are existing opt-in local GameData/save integration
 scenarios; no configured local integration source was present for this run.
@@ -130,5 +166,9 @@ feature. The following boundaries should guide later changes:
 | Target strategy presentation | Adjustment/evidence mapping is isolated behind the existing public facade | Extract another collaborator only when one projection family changes independently |
 | Loadout comparison | Tactical rendering is isolated and parent/child architecture coverage is explicit | Keep tactical behavior in the child and shared labels in the formatter |
 | Other large Razor pages | No correctness or cohesive-responsibility finding remains from this review | Avoid `.razor.cs` or child-component moves based only on file length |
+| API route/version boundary | The HTTP API is an internal loopback implementation with pinned JSON fixtures; it is not an external compatibility promise | Before supporting external clients, introduce API-owned V1 tokens/mappers and versioned routes rather than annotating Domain enums |
+| Legacy prose-key localization | Existing untouched features still use the legacy dictionary and dynamic formatter | Require typed identities for new strings and migrate one feature at a time when it is otherwise being changed |
+| Architecture enforcement | Source-pattern tests remain fast defense in depth; semantic tests cover the highest-risk compiled calls | Expand semantic coverage only with a concrete capability risk; retire a pattern assertion only after equivalent semantic/behavioral coverage exists |
 
-The next functional feature can start from this verified baseline.
+The architecture-hardening branch was fast-forwarded into local `master` after
+this verification. The next functional feature can start from this baseline.
