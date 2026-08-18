@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed |
-| Scope | Ongoing product discovery after Epic 6 selection |
-| Related epics | EPIC-001 through EPIC-006 |
-| Last updated | 2026-08-17 |
+| Status | Ongoing discovery |
+| Scope | Ongoing product discovery after Epic 7 selection |
+| Related epics | EPIC-001 through EPIC-007 |
+| Last updated | 2026-08-18 |
 
 ## Purpose
 
@@ -246,6 +246,9 @@ character, party, save, or game state.
 
 ### PI-010 — Village workforce and building management
 
+**Status:** Promoted as a bounded first vertical to
+[EPIC-007](./epic-007/EPIC.md) on 2026-08-18.
+
 Provide a read-only settlement planning surface that connects villagers,
 roles, buildings, current assignments, resource constraints, and uncovered
 work. Recommendations should be objective-specific, such as production,
@@ -287,22 +290,26 @@ The product owner promoted and completed these discovery ideas:
 4. Target archetypes and counter playbooks — promoted to
    [EPIC-005](./epic-005/EPIC.md) on 2026-08-10 and completed after remediation
    and product-owner approval on 2026-08-11.
+5. Companion role and candidate finder — promoted to
+   [EPIC-006](./epic-006/EPIC.md) on 2026-08-17 and completed after evidence,
+   remediation, comprehensive-capability follow-up, and product-owner approval
+   on 2026-08-18.
 
 ### Active promotion
 
-The companion role and candidate finder was promoted to
-[EPIC-006](./epic-006/EPIC.md) on 2026-08-17. Epic 6 reuses stable character,
-catalogue, progress, evidence, comparison, localization, and accessibility
-foundations while introducing an objective-specific companion-selection
-domain.
+The bounded village workforce and building assignment planner was promoted to
+[EPIC-007](./epic-007/EPIC.md) on 2026-08-18. Epic 7 starts with source
+discovery and one representative assignment comparison. It does not assume
+that aptitude proves productivity, expand into recruitable-companion ranking,
+or attempt a whole-village optimizer.
 
-### Current candidates after Epic 6 selection
+### Current candidates after Epic 7 selection
 
 1. Companion development planner.
-2. Village workforce and building management.
-3. Library and book planning, initially assessed as a village-management slice.
-4. Version-aware observation, recommendation, and outcome persistence.
-5. Shareable recommendation card, which may remain a smaller enhancement
+2. Library and book planning, assessed after the Epic 7 source boundary rather
+   than assumed to share its first assignment vertical.
+3. Version-aware observation, recommendation, and outcome persistence.
+4. Shareable recommendation card, which may remain a smaller enhancement
    because copy and print foundations already exist.
 
 The companion and settlement ideas intentionally remain separate. They may
