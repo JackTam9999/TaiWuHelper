@@ -1489,6 +1489,33 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Village_workforce_adapter_is_read_only_and_avoids_efficiency_guessing()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var source = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "TaiWu.Infrastructure",
+                "SaveGames",
+                "TaiwuVillageWorkforceSnapshotReader.cs"));
+
+        Assert.Contains("GetVillagersForWork(", source);
+        Assert.Contains("GetTaiwuBuildingAreas(", source);
+        Assert.Contains("TryGetElement_ShopManagerDict(", source);
+        Assert.Contains("GetBaseLifeSkillQualifications()", source);
+        Assert.DoesNotContain(
+            "CalcTaiwuVillagerEfficiencyInBuilding(",
+            source);
+        Assert.DoesNotContain("SetShopManager(", source);
+        Assert.DoesNotContain("SetBuilding", source);
+        Assert.DoesNotContain("SetVillager", source);
+        Assert.DoesNotContain("AddElement_", source);
+        Assert.DoesNotContain("RemoveElement_", source);
+        Assert.DoesNotContain("DomainManager.Save", source);
+    }
+
+    [Fact]
     public void Snapshot_adapter_does_not_use_collection_capacity_as_slots()
     {
         var repositoryRoot = FindRepositoryRoot();

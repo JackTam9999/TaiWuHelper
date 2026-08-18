@@ -204,7 +204,7 @@ the exact selected assignment vertical.
 
 ### E7-003 — Project a one-pass read-only settlement snapshot
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -218,21 +218,21 @@ Application/Domain-owned contracts.
 
 #### Acceptance criteria
 
-- [ ] One request opens one bounded archive session rather than one per worker
+- [x] One request opens one bounded archive session rather than one per worker
       or assignment.
-- [ ] The configured save path uses the existing trusted-path and stable-read
+- [x] The configured save path uses the existing trusted-path and stable-read
       guard.
-- [ ] Snapshot identity includes SHA-256, captured time, installed-data version,
+- [x] Snapshot identity includes SHA-256, captured time, installed-data version,
       and rule-compatible source identity without exposing the path.
-- [ ] Worker and target enumeration is stable and language independent.
-- [ ] Exact source states map to typed available, missing, unsupported,
+- [x] Worker and target enumeration is stable and language independent.
+- [x] Exact source states map to typed available, missing, unsupported,
       conflicting, unstable, cancelled, and failed results.
-- [ ] Cancellation is honored before and during bounded projection loops.
-- [ ] No GameData object escapes Infrastructure.
-- [ ] Repeated stable reads produce identical normalized snapshots.
-- [ ] Integration tests prove game-owned source hashes and timestamps remain
+- [x] Cancellation is honored before and during bounded projection loops.
+- [x] No GameData object escapes Infrastructure.
+- [x] Repeated stable reads produce identical normalized snapshots.
+- [x] Integration tests prove game-owned source hashes and timestamps remain
       unchanged.
-- [ ] Architecture tests forbid persistence and mutation capabilities in the
+- [x] Architecture tests forbid persistence and mutation capabilities in the
       settlement reader.
 
 #### Evidence

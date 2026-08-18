@@ -6,6 +6,7 @@ using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.RegionStories;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
+using TaiWu.Application.VillageWorkforce;
 using TaiWu.Infrastructure.Catalogue;
 using TaiWu.Infrastructure.SaveGames;
 
@@ -94,6 +95,15 @@ public static class DependencyInjection
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
                 provider.GetRequiredService<TaiwuGameTextResolver>(),
                 provider.GetRequiredService<TimeProvider>()));
+        services.AddSingleton<IVillageWorkforceSnapshotReader>(provider =>
+            new TaiwuVillageWorkforceSnapshotReader(
+                provider.GetRequiredService<TaiwuArchiveReadSession>(),
+                provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
+                provider.GetRequiredService<TimeProvider>(),
+                provider.GetService<Microsoft.Extensions.Logging.ILogger<
+                    TaiwuVillageWorkforceSnapshotReader>>()
+                ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                    TaiwuVillageWorkforceSnapshotReader>.Instance));
         services.AddSingleton<ICompanionDisciplineDisplaySource>(provider =>
             new TaiwuCompanionDisciplineDisplaySource(
                 provider.GetRequiredService<ITaiwuCatalogueSourcePathProvider>()));
