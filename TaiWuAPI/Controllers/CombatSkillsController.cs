@@ -102,6 +102,7 @@ public sealed class CombatSkillsController(
     }
 
     [HttpPost("catalogue-cache/rebuild")]
+    [ValidateAntiForgeryToken]
     [ProducesResponseType<CombatSkillCatalogueMaintenanceResponse>(
         StatusCodes.Status200OK)]
     public async Task<ActionResult<CombatSkillCatalogueMaintenanceResponse>>
@@ -115,6 +116,7 @@ public sealed class CombatSkillsController(
     }
 
     [HttpPost("progress-cache/clear")]
+    [ValidateAntiForgeryToken]
     [ProducesResponseType<CharacterProgressCacheMaintenanceResponse>(
         StatusCodes.Status200OK)]
     public async Task<ActionResult<CharacterProgressCacheMaintenanceResponse>>

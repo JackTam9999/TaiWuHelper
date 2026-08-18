@@ -363,6 +363,11 @@ public sealed class CombatSkillsControllerTests
                 .Select(attribute => attribute!.Template!)
                 .Order(StringComparer.Ordinal)
                 .ToArray());
+        Assert.All(
+            actions.Where(action =>
+                action.GetCustomAttribute<HttpPostAttribute>() is not null),
+            action => Assert.NotNull(
+                action.GetCustomAttribute<ValidateAntiForgeryTokenAttribute>()));
     }
 
     [Theory]

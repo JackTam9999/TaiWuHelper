@@ -907,6 +907,11 @@ public sealed partial class ArchitectureBoundaryTests
                 .Select(attribute => attribute!.Template!)
                 .Order(StringComparer.Ordinal)
                 .ToArray());
+        Assert.All(
+            actions.Where(action =>
+                action.GetCustomAttribute<HttpPostAttribute>() is not null),
+            action => Assert.NotNull(
+                action.GetCustomAttribute<ValidateAntiForgeryTokenAttribute>()));
 
         var repositoryRoot = FindRepositoryRoot();
         var sources = controllers.Select(controller => File.ReadAllText(
