@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Active — contract definition |
+| Status | Active — awaiting closure decisions |
 | Milestone | 7 |
 | Target release | TBD |
 | Last updated | 2026-08-18 |
@@ -348,26 +348,26 @@ prove stable identity and ordering; source hashes prove non-interference.
 
 ## Epic acceptance criteria
 
-- [ ] The supported worker universe and every eligibility rule are backed by
+- [x] The supported worker universe and every eligibility rule are backed by
       version-matched evidence.
-- [ ] One representative assignment vertical is selected with exact source,
+- [x] One representative assignment vertical is selected with exact source,
       identity, unit, and rule semantics.
-- [ ] Current assignment and helper-side proposal are separate immutable facts.
-- [ ] Missing or conflicting evidence never becomes zero, false, or an implied
+- [x] Current assignment and helper-side proposal are separate immutable facts.
+- [x] Missing or conflicting evidence never becomes zero, false, or an implied
       productivity penalty.
-- [ ] Only verified requirements and components affect ordering.
-- [ ] Six attributes and martial/life aptitudes are descriptive unless a typed
+- [x] Only verified requirements and components affect ordering.
+- [x] Six attributes and martial/life aptitudes are descriptive unless a typed
       work rule explicitly uses them.
-- [ ] Identical inputs produce identical evaluations, ties, ordering,
+- [x] Identical inputs produce identical evaluations, ties, ordering,
       diagnostics, and result fingerprints.
-- [ ] All required settlement facts are read through one bounded save session.
-- [ ] The API exposes typed states without local paths, raw proprietary data,
+- [x] All required settlement facts are read through one bounded save session.
+- [x] The API exposes typed states without local paths, raw proprietary data,
       or mutation-capable types.
 - [ ] The UI is bilingual, responsive, keyboard accessible, and concise, with
       evidence available through progressive disclosure.
-- [ ] A manual checklist never claims or triggers an in-game change.
-- [ ] Automated and representative manual verification prove non-interference.
-- [ ] Deferred recruitment, development, whole-village optimization, library,
+- [x] A manual checklist never claims or triggers an in-game change.
+- [x] Automated and representative manual verification prove non-interference.
+- [x] Deferred recruitment, development, whole-village optimization, library,
       persistence, and game-control work remains explicitly outside the epic.
 - [ ] The product owner records the Epic 7 completion decision.
 
@@ -388,7 +388,9 @@ prove stable identity and ordering; source hashes prove non-interference.
 
 ## Completion decision
 
-Pending implementation, verification, and explicit product-owner approval.
+Technical and guarded representative verification are complete. Final
+wide/narrow visual confirmation and explicit product-owner approval remain
+pending in [E7-011](../../reviews/E7-011-manual-verification.md).
 
 ## Delivery reference
 

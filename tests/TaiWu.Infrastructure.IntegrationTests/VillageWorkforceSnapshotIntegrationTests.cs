@@ -116,6 +116,152 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
             guardedPaths.Length);
     }
 
+    [Fact]
+    public async Task Representative_finder_preserves_normalized_facts_and_is_information_only()
+    {
+        var savePath = RequireSavePath();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SaveGames:DefaultSaveFilePath"] = savePath
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddTaiwuInfrastructure();
+        using var provider = services.BuildServiceProvider();
+        var reader = provider
+            .GetRequiredService<IVillageWorkforceSnapshotReader>();
+        var finder = new FindVillageWorkforce(reader);
+        var guardedPaths = new[]
+        {
+            savePath,
+            Path.Combine(AppContext.BaseDirectory, "GameData.dll"),
+            Path.Combine(AppContext.BaseDirectory, "GameData.Shared.dll")
+        };
+        Assert.All(guardedPaths, path => Assert.True(File.Exists(path)));
+        var before = await CaptureAsync(guardedPaths);
+
+        var discovery = await reader.ReadAsync(
+            VillageWorkforceSnapshotReadRequest.Current,
+            TestContext.Current.CancellationToken);
+        var snapshot = Assert.IsType<VillageWorkforceSnapshot>(
+            discovery.Snapshot);
+        Assert.NotEmpty(snapshot.Targets);
+        var target = snapshot.Targets[0];
+        var objective = new WorkforceObjectiveIdentity(
+            WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
+            VerifiedVillageWorkforceRules.ObjectiveVersion);
+        var baseline = await finder.ExecuteAsync(
+            new VillageWorkforceFinderRequest(target.Identity, objective),
+            TestContext.Current.CancellationToken);
+        Assert.True(baseline.HasAuthoritativeResult);
+        var evaluationSet = Assert.IsType<VillageWorkforceEvaluationSet>(
+            baseline.EvaluationSet);
+        var shortlist = Assert.IsType<VillageWorkforceShortlist>(
+            baseline.Shortlist);
+        var proposed = Assert.Single(
+            shortlist.Comparable
+                .Where(item => item.Evaluation.Worker
+                    != evaluationSet.CurrentWorker)
+                .Take(1))
+            .Evaluation.Worker;
+        var request = new VillageWorkforceFinderRequest(
+            target.Identity,
+            objective,
+            firstComparisonWorker: evaluationSet.CurrentWorker,
+            secondComparisonWorker: proposed,
+            proposedWorker: proposed);
+
+        var first = await finder.ExecuteAsync(
+            request,
+            TestContext.Current.CancellationToken);
+        var second = await finder.ExecuteAsync(
+            request,
+            TestContext.Current.CancellationToken);
+        var after = await CaptureAsync(guardedPaths);
+
+        Assert.Equal(before, after);
+        Assert.True(first.Status is VillageWorkforceFinderStatus.Complete
+            or VillageWorkforceFinderStatus.Partial);
+        Assert.Equal(first.Status, second.Status);
+        Assert.Equal(
+            first.Snapshot?.SourceVersions,
+            second.Snapshot?.SourceVersions);
+        Assert.Equal(
+            first.EvaluationSet?.ResultIdentity.Target,
+            second.EvaluationSet?.ResultIdentity.Target);
+        Assert.Equal(
+            first.EvaluationSet?.ResultIdentity.Objective,
+            second.EvaluationSet?.ResultIdentity.Objective);
+        Assert.Equal(
+            first.EvaluationSet?.ResultIdentity.RuleVersion,
+            second.EvaluationSet?.ResultIdentity.RuleVersion);
+        Assert.Equal(first.Shortlist?.Counts, second.Shortlist?.Counts);
+        Assert.Equal(
+            first.Shortlist?.Comparable.Select(item => (
+                item.CompetitionRank,
+                item.Evaluation.Worker.CharacterId,
+                item.Evaluation.State,
+                item.Evaluation.Result?.Unit,
+                item.Evaluation.Result?.Value)),
+            second.Shortlist?.Comparable.Select(item => (
+                item.CompetitionRank,
+                item.Evaluation.Worker.CharacterId,
+                item.Evaluation.State,
+                item.Evaluation.Result?.Unit,
+                item.Evaluation.Result?.Value)));
+        Assert.Equal(first.Comparison?.Outcome, second.Comparison?.Outcome);
+        Assert.Equal(
+            first.ManualPlan?.Checklist.Select(item => (
+                item.Kind,
+                item.Category)),
+            second.ManualPlan?.Checklist.Select(item => (
+                item.Kind,
+                item.Category)));
+        Assert.NotNull(first.Comparison);
+        var manualPlan = Assert.IsType<VillageWorkforceManualPlan>(
+            first.ManualPlan);
+        Assert.Equal(
+            WorkforceAssignmentOrigin.ProposedHelper,
+            manualPlan.ProposedAssignment.Origin);
+        Assert.Contains(
+            manualPlan.Checklist,
+            item => item.Kind
+                == WorkforceChecklistItemKind.NoActionWasSentToGame);
+        Assert.Contains(
+            manualPlan.Checklist,
+            item => item.Kind
+                == WorkforceChecklistItemKind.EfficiencyWasNotCalculated);
+        Assert.All(
+            first.Shortlist!.Comparable,
+            candidate =>
+            {
+                Assert.Equal(
+                    WorkforceUnit.BaseQualificationPoint,
+                    candidate.Evaluation.Result?.Unit);
+                var component = Assert.Single(
+                    candidate.Evaluation.Components);
+                Assert.Equal(
+                    target.RequiredDiscipline,
+                    component.Identity.Discipline);
+            });
+
+        output.WriteLine(
+            "E7-011 representative workforce: status={0}; candidates={1}; "
+            + "rankedOrTied={2}; reviewStates={3}; comparison={4}; "
+            + "manualChecklist={5}; guardedFiles={6}.",
+            first.Status,
+            first.Shortlist.Counts.Total,
+            first.Shortlist.Counts.Ranked + first.Shortlist.Counts.Tied,
+            first.Shortlist.Counts.Incomplete
+                + first.Shortlist.Counts.Unsupported
+                + first.Shortlist.Counts.Conflicting,
+            first.Comparison is not null,
+            manualPlan.Checklist.Length,
+            guardedPaths.Length);
+    }
+
     private static string RequireSavePath()
     {
         var configured = Environment.GetEnvironmentVariable(SavePathVariable);

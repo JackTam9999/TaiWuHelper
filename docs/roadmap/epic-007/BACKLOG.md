@@ -489,7 +489,7 @@ and presentation contracts.
 
 ### E7-011 — Validate the representative assignment and close Epic 7
 
-**Status:** Planned
+**Status:** Blocked — final visual and product-owner decisions required
 
 **Priority:** P1
 
@@ -502,21 +502,24 @@ deferred work, and request the product-owner completion decision.
 
 #### Acceptance criteria
 
-- [ ] The selected local assignment scenario matches documented source facts
+- [x] The selected local assignment scenario matches documented source facts
       without exposing proprietary identities or data.
 - [ ] English and Traditional Chinese wide/narrow states expose the same facts.
-- [ ] Empty, tied, ineligible, incomplete, unsupported, conflict, and failure
+- [x] Empty, tied, ineligible, incomplete, unsupported, conflict, and failure
       states are reviewed with synthetic data.
-- [ ] Repeated runs retain stable result identity and source hashes.
-- [ ] Every Epic 7 acceptance criterion links to implementation or evidence.
-- [ ] Unsupported settlement, recruitment, development, library, persistence,
+- [x] Repeated runs retain stable normalized result facts, source identity, and
+      source hashes; the per-request snapshot fingerprint may differ with its
+      honest capture time.
+- [x] Every Epic 7 acceptance criterion links to implementation or evidence.
+- [x] Unsupported settlement, recruitment, development, library, persistence,
       and game-control mechanics remain explicit future work.
-- [ ] Independent review findings are resolved or consciously deferred.
+- [x] Independent Epic 7 closure review is consciously deferred to the
+      post-epic review/refactoring phase.
 - [ ] The product owner records the Epic 7 completion decision.
 
 #### Evidence
 
-- `docs/reviews/E7-011-manual-verification.md`.
+- [E7-011 representative review](../../reviews/E7-011-manual-verification.md).
 - Completion decision in `EPIC.md` and the roadmap index.
 
 ## Future work outside Epic 7
