@@ -158,7 +158,7 @@ public sealed class SemanticCapabilityBoundaryTests
                 var symbol = ResolveMethod(model, invocation);
                 if (symbol is null
                     || DescribeViolation(relativePath, symbol) is not
-                        { } description)
+                    { } description)
                 {
                     continue;
                 }

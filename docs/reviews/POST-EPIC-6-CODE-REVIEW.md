@@ -129,11 +129,11 @@ visible facts and the architecture scan covers both component files.
 | Finding | Resolution |
 |---|---|
 | Unknown target escaped as an unhandled exception | A typed not-found exception is translated to a stable `404` problem response; unrelated failures still surface as server faults |
-| Loopback maintenance posts were browser-CSRF reachable | Catalogue rebuild and progress-cache clear endpoints require antiforgery validation, with endpoint-metadata tests |
+| Loopback maintenance posts were browser-CSRF reachable | Catalogue rebuild and progress-cache clear endpoints require antiforgery validation, with hosted missing-token and valid-token HTTP coverage |
 | Size/mtime cache identity could accept replaced content | Archive reuse and progress-cache hits verify SHA-256 content identity; preserved-metadata replacement tests cover the adversarial case |
 | Deleted/replaced progress database could not self-heal | Schema readiness is revalidated and recreated instead of relying on permanent process state |
 | Companion orchestration hid programmer faults | Only expected typed result states are mapped; cancellation and unexpected exceptions propagate to the host logging/error boundary |
-| API wire tokens followed internal enum serialization defaults | The API remains explicitly internal/loopback, numeric enum values are rejected, request/response fixtures pin tokens, and cross-layer enum exposure is inventoried |
+| API wire tokens followed internal enum serialization defaults | The API remains explicitly internal/loopback, numeric enum values are rejected, selected request tokens are pinned, and cross-layer contract types—including nested collection members—are inventoried |
 | Domain metadata retained an absolute save path | Domain snapshots now retain opaque content identity only; infrastructure keeps path context locally |
 | Snapshot timestamps used ambient time | `TimeProvider.System` is registered once and readers accept injected time for deterministic tests |
 | Catalogue lifecycle used static coordination | A DI-owned singleton now owns the process-local gate and rebuilding state; concurrency/status behavior is tested |

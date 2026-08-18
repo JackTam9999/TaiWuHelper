@@ -13,19 +13,12 @@ using TaiWuAPI.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services
-        .AddDataProtection()
-        .UseEphemeralDataProtectionProvider();
-}
-
 builder.WebHost.ConfigureKestrel(
     options => options.ListenLocalhost(5056));
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services
-    .AddControllers()
+    .AddControllersWithViews()
     .AddJsonOptions(ApiJsonOptions.Configure);
 builder.Services
     .AddRazorComponents()
@@ -59,6 +52,13 @@ builder.Services
     .Validate(
         options => options.HasValidSaveFilePath(),
         SaveGameOptions.ValidationMessage);
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services
+        .AddDataProtection()
+        .UseEphemeralDataProtectionProvider();
+}
 
 var app = builder.Build();
 

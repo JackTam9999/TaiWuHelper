@@ -21,8 +21,7 @@ public sealed class LoopbackApiContractTests
                 "TaiWuAPI.Contracts",
                 StringComparison.Ordinal) == true)
             .SelectMany(type => type.GetProperties())
-            .Select(property => Nullable.GetUnderlyingType(property.PropertyType)
-                ?? property.PropertyType)
+            .SelectMany(property => FlattenType(property.PropertyType))
             .Where(type => layerAssemblies.Contains(type.Assembly))
             .Select(type => type.FullName!)
             .Distinct(StringComparer.Ordinal)
@@ -35,6 +34,27 @@ public sealed class LoopbackApiContractTests
             || typeName.StartsWith("TaiWu.Domain.", StringComparison.Ordinal)));
     }
 
+    private static IEnumerable<Type> FlattenType(Type type)
+    {
+        yield return type;
+
+        if (type.HasElementType && type.GetElementType() is { } elementType)
+        {
+            foreach (var nestedType in FlattenType(elementType))
+            {
+                yield return nestedType;
+            }
+        }
+
+        foreach (var genericArgument in type.GetGenericArguments())
+        {
+            foreach (var nestedType in FlattenType(genericArgument))
+            {
+                yield return nestedType;
+            }
+        }
+    }
+
     private static readonly string[] ExpectedCrossLayerContractTypes =
     [
         "TaiWu.Application.CombatRecommendations.TargetPlaybookCounterAvailabilityState",
@@ -45,6 +65,7 @@ public sealed class LoopbackApiContractTests
         "TaiWu.Application.CombatSkills.CharacterProgressReadStatus",
         "TaiWu.Application.CombatSkills.ClearCharacterCombatSkillProgressCacheStatus",
         "TaiWu.Application.CombatSkills.CombatSkillCatalogueStatus",
+        "TaiWu.Application.CombatSkills.CombatSkillQueryIssue",
         "TaiWu.Application.CombatSkills.EnsureCombatSkillCatalogueStatus",
         "TaiWu.Application.CombatSkills.TargetSkillMatchKind",
         "TaiWu.Application.CombatSkills.TargetSkillSnapshotPresence",
@@ -88,6 +109,7 @@ public sealed class LoopbackApiContractTests
         "TaiWu.Domain.CombatSnapshots.TargetObservationContext",
         "TaiWu.Domain.CombatThreats.TargetThreatActivationTiming",
         "TaiWu.Domain.CombatThreats.TargetThreatSeverity",
+        "TaiWu.Domain.CombatThreats.TargetThreatSourceKind",
         "TaiWu.Domain.CompanionCandidates.CandidateConflictDecisionKind",
         "TaiWu.Domain.CompanionCandidates.CandidateDisciplineDomain",
         "TaiWu.Domain.CompanionCandidates.CandidateEvidenceSourceKind",
