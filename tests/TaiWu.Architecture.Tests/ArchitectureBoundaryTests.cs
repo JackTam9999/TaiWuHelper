@@ -1512,6 +1512,8 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("GetVillagersForWork(", source);
         Assert.Contains("GetTaiwuBuildingAreas(", source);
         Assert.Contains("TryGetElement_ShopManagerDict(", source);
+        Assert.Contains("GetBaseMainAttributes()", source);
+        Assert.Contains("GetBaseCombatSkillQualifications()", source);
         Assert.Contains("GetBaseLifeSkillQualifications()", source);
         Assert.DoesNotContain(
             "CalcTaiwuVillagerEfficiencyInBuilding(",

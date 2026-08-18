@@ -73,7 +73,12 @@ public sealed class VillageWorkforceSnapshotContractsTests
                 "範例人員",
                 "Synthetic worker",
                 "太吾村",
-                "Taiwu Village")],
+                "Taiwu Village",
+                new VillageWorkerCapabilityDisplay(
+                    worker,
+                    Enumerable.Repeat<short>(50, 6),
+                    Enumerable.Repeat<short>(60, 14),
+                    Enumerable.Repeat<short>(70, 16)))],
             [new VillageWorkforceTargetDisplay(
                 target,
                 "茶館",
@@ -85,6 +90,8 @@ public sealed class VillageWorkforceSnapshotContractsTests
 
         Assert.Equal("Synthetic worker", Assert.Single(
             complete.WorkerDisplays).EnglishName);
+        Assert.Equal(70, Assert.Single(complete.WorkerDisplays)
+            .Capability!.LifeSkillDisciplines[0]);
         Assert.Equal("茶館", Assert.Single(
             complete.TargetDisplays).TraditionalChineseBuildingName);
         Assert.Throws<ArgumentException>(() =>
@@ -96,6 +103,24 @@ public sealed class VillageWorkforceSnapshotContractsTests
                     "Other",
                     null,
                     null)]));
+        Assert.Throws<ArgumentException>(() =>
+            new VillageWorkerCapabilityDisplay(
+                worker,
+                Enumerable.Repeat<short>(1, 5),
+                Enumerable.Repeat<short>(1, 14),
+                Enumerable.Repeat<short>(1, 16)));
+        Assert.Throws<ArgumentException>(() =>
+            new VillageWorkerDisplay(
+                worker,
+                null,
+                null,
+                null,
+                null,
+                new VillageWorkerCapabilityDisplay(
+                    new VillageWorkerIdentity(999),
+                    Enumerable.Repeat<short>(1, 6),
+                    Enumerable.Repeat<short>(1, 14),
+                    Enumerable.Repeat<short>(1, 16))));
     }
 
     private static VillageWorkforceSnapshot Snapshot()

@@ -87,6 +87,14 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
         Assert.Contains(firstRead.WorkerDisplays, display =>
             display.TraditionalChineseName is not null
             && display.EnglishName is not null);
+        Assert.All(firstRead.WorkerDisplays, display =>
+        {
+            var capability = Assert.IsType<VillageWorkerCapabilityDisplay>(
+                display.Capability);
+            Assert.Equal(6, capability.MainAttributes.Length);
+            Assert.Equal(14, capability.MartialDisciplines.Length);
+            Assert.Equal(16, capability.LifeSkillDisciplines.Length);
+        });
         Assert.NotEqual(first.CapturedAt, second.CapturedAt);
         Assert.Equal(first.Fingerprint, second.Fingerprint);
         Assert.NotEmpty(first.Workers);
@@ -133,7 +141,7 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
     }
 
     [Fact]
-    public async Task Representative_finder_preserves_normalized_facts_and_is_information_only()
+    public async Task Representative_loaded_snapshot_preserves_facts_and_is_information_only()
     {
         var savePath = RequireSavePath();
         var configuration = new ConfigurationBuilder()
@@ -148,7 +156,7 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
         using var provider = services.BuildServiceProvider();
         var reader = provider
             .GetRequiredService<IVillageWorkforceSnapshotReader>();
-        var finder = new FindVillageWorkforce(reader);
+        var builder = new BuildVillageWorkforce();
         var guardedPaths = new[]
         {
             savePath,
@@ -168,7 +176,8 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
         var objective = new WorkforceObjectiveIdentity(
             WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
             VerifiedVillageWorkforceRules.ObjectiveVersion);
-        var baseline = await finder.ExecuteAsync(
+        var baseline = builder.Execute(
+            discovery,
             new VillageWorkforceFinderRequest(target.Identity, objective),
             TestContext.Current.CancellationToken);
         Assert.True(baseline.HasAuthoritativeResult);
@@ -189,10 +198,12 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
             secondComparisonWorker: proposed,
             proposedWorker: proposed);
 
-        var first = await finder.ExecuteAsync(
+        var first = builder.Execute(
+            discovery,
             request,
             TestContext.Current.CancellationToken);
-        var second = await finder.ExecuteAsync(
+        var second = builder.Execute(
+            discovery,
             request,
             TestContext.Current.CancellationToken);
         var after = await CaptureAsync(guardedPaths);

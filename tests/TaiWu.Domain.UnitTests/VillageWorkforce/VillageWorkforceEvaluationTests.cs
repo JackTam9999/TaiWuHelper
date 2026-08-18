@@ -171,7 +171,7 @@ public sealed class VillageWorkforceEvaluationTests
             snapshot.Workers[0].Identity,
             61);
         var differentSnapshot = VillageWorkforceFixtures.Snapshot(
-            capturedAt: snapshot.CapturedAt.AddSeconds(1));
+            target: VillageWorkforceFixtures.Target(buildingIndex: 8));
         var differentResult = VillageWorkforceFixtures.RankedEvaluation(
             differentSnapshot,
             differentSnapshot.Workers[1].Identity,

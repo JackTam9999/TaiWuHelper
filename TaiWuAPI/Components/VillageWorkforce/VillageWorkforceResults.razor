@@ -47,7 +47,10 @@
 
     <div class="workforce-shared-scope" role="note">
         <p>@Text(VillageWorkforceUiTextKey.QualificationMeaning)</p>
-        <p>@Text(VillageWorkforceUiTextKey.NamesUnavailable)</p>
+        <p>
+            <strong>@Text(VillageWorkforceUiTextKey.DescriptiveCapabilityContext):</strong>
+            @Text(VillageWorkforceUiTextKey.DescriptiveCapabilityMeaning)
+        </p>
         @if (Model.IsPartial)
         {
             <p><strong>@Text(VillageWorkforceUiTextKey.PartialMessage)</strong></p>
@@ -70,6 +73,14 @@
             <span class="workforce-state @Model.Current.StateCssClass">
                 @Model.Current.StateLabel
             </span>
+            @if (Model.Current.CapabilitySummary is { } currentCapability)
+            {
+                <dl class="workforce-capability-summary">
+                    @CapabilityCategory(currentCapability.MainAttributes)
+                    @CapabilityCategory(currentCapability.MartialDisciplines)
+                    @CapabilityCategory(currentCapability.LifeSkillDisciplines)
+                </dl>
+            }
         </div>
         <div class="workforce-current-value">
             <span>@Text(VillageWorkforceUiTextKey.SavedBaseQualification)</span>
@@ -205,6 +216,14 @@
                                 @if (candidate.IsCurrent)
                                 {
                                     <small>@Text(VillageWorkforceUiTextKey.CurrentWorker)</small>
+                                }
+                                @if (candidate.CapabilitySummary is { } capability)
+                                {
+                                    <dl class="workforce-capability-summary workforce-capability-compact">
+                                        @CapabilityCategory(capability.MainAttributes)
+                                        @CapabilityCategory(capability.MartialDisciplines)
+                                        @CapabilityCategory(capability.LifeSkillDisciplines)
+                                    </dl>
                                 }
                             </th>
                             <td data-label="@Text(VillageWorkforceUiTextKey.SavedBaseQualification)">
@@ -376,6 +395,21 @@
                         <td>@Value(Comparison.SecondValue, Comparison.UnitLabel)</td>
                     </tr>
                     <tr>
+                        <th scope="row">@Text(VillageWorkforceUiTextKey.MainAttributeAverage)</th>
+                        <td>@CapabilityValue(Comparison.First.CapabilitySummary?.MainAttributes)</td>
+                        <td>@CapabilityValue(Comparison.Second.CapabilitySummary?.MainAttributes)</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">@Text(VillageWorkforceUiTextKey.MartialAptitudeAverage)</th>
+                        <td>@CapabilityValue(Comparison.First.CapabilitySummary?.MartialDisciplines)</td>
+                        <td>@CapabilityValue(Comparison.Second.CapabilitySummary?.MartialDisciplines)</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">@Text(VillageWorkforceUiTextKey.LifeSkillAptitudeAverage)</th>
+                        <td>@CapabilityValue(Comparison.First.CapabilitySummary?.LifeSkillDisciplines)</td>
+                        <td>@CapabilityValue(Comparison.Second.CapabilitySummary?.LifeSkillDisciplines)</td>
+                    </tr>
+                    <tr>
                         <th scope="row">@Text(VillageWorkforceUiTextKey.RelativeResult)</th>
                         <td colspan="2">@Comparison.Outcome</td>
                     </tr>
@@ -511,6 +545,27 @@
     private string Value(decimal? value, string unit) => value.HasValue
         ? $"{value.Value} {unit}"
         : Text(VillageWorkforceUiTextKey.Unavailable);
+
+    private RenderFragment CapabilityCategory(
+        VillageWorkerCapabilityCategoryViewModel category) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.OpenElement(1, "dt");
+        builder.AddContent(2, category.Label);
+        builder.CloseElement();
+        builder.OpenElement(3, "dd");
+        builder.AddContent(4, category.AverageLabel);
+        builder.OpenElement(5, "small");
+        builder.AddContent(6, category.CoverageLabel);
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private string CapabilityValue(
+        VillageWorkerCapabilityCategoryViewModel? category) => category is null
+        ? Text(VillageWorkforceUiTextKey.Unavailable)
+        : $"{category.AverageLabel} · {category.CoverageLabel}";
 
     private string Text(VillageWorkforceUiTextKey key) =>
         VillageWorkforceUiText.Get(Language, key);

@@ -34,17 +34,24 @@ local paths, or structural IDs. The name filter operates on the real displayed
 worker name.
 
 Shared formula, evidence, and information-only wording is not copied into each
-row. The current worker appears in the current-assignment summary and once in
-the canonical candidate order: the first occurrence establishes current state,
-while the second establishes its comparison position.
+row. The current worker appears once in the current-assignment summary. The
+alternative list omits that duplicate row; choosing an alternative pairs it
+with the current worker for comparison.
 
 ## Interaction and accessibility
 
 The page uses native select, radio, checkbox, button, table, and details
-semantics. Explicit inspection moves focus to the new result heading or safe
-error summary. Filter changes announce visible/full counts without changing
-immutable counts or ranks. A third comparison checkbox is disabled after two
-selections, with visible explanatory text.
+semantics. Shop and manager position are separate selectors, and the position
+label includes its current worker. Explicit inspection moves focus to the new
+result heading or safe error summary. The initial result renders ten comparable
+alternatives; explicit expansion and every other large filter use 25-row pages.
+Filter changes announce visible/full counts without changing immutable counts
+or ranks. A third comparison checkbox is disabled after two selections, with
+visible explanatory text.
+
+Six-attribute, martial-aptitude, and life-skill-aptitude averages render as
+descriptive saved context with 6/6, 14/14, and 16/16 coverage. They are excluded
+from the verified workforce score, ordering, result identity, and fingerprint.
 
 Filtering, name queries, comparison, language remapping, and responsive reflow
 use the already-authoritative immutable result. They cannot call the snapshot
@@ -74,7 +81,7 @@ Focused Release tests cover:
 The Release solution build passes with zero warnings and zero errors. The live
 localhost route returned HTTP 200 and completed the configured target discovery
 read. The read remained bounded to the existing immutable archive session.
-The full default Release matrix passed 1,392 tests, skipped 14 explicitly
+The full default Release matrix passed 1,398 tests, skipped 15 explicitly
 environment-gated integrations, and failed none.
 
 The in-app browser runtime could not initialize in this workspace because its

@@ -30,7 +30,18 @@ public sealed record VillageWorkforceCandidateViewModel(
     string DecisiveEvidence,
     int PassedRequirements,
     IReadOnlyList<VillageWorkforceRequirementViewModel> Requirements,
-    IReadOnlyList<VillageWorkforceComponentViewModel> Components);
+    IReadOnlyList<VillageWorkforceComponentViewModel> Components,
+    VillageWorkerCapabilitySummaryViewModel? CapabilitySummary = null);
+
+public sealed record VillageWorkerCapabilityCategoryViewModel(
+    string Label,
+    string AverageLabel,
+    string CoverageLabel);
+
+public sealed record VillageWorkerCapabilitySummaryViewModel(
+    VillageWorkerCapabilityCategoryViewModel MainAttributes,
+    VillageWorkerCapabilityCategoryViewModel MartialDisciplines,
+    VillageWorkerCapabilityCategoryViewModel LifeSkillDisciplines);
 
 public sealed record VillageWorkforceRequirementViewModel(
     int Order,

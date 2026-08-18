@@ -110,7 +110,7 @@ public sealed partial class VillageWorkforceRenderingTests
             targetOrdinal: 1);
         var state = new VillageWorkforceInteractionState();
         state.SetFilter(WorkforceShortlistFilter.Comparable);
-        Assert.Equal(3, state.VisibleCandidates(model).Count);
+        Assert.Equal(2, state.VisibleCandidates(model).Count);
         state.SetNameQuery("Alternative worker 2");
         Assert.Single(state.VisibleCandidates(model));
         state.SetNameQuery(null);
@@ -144,7 +144,7 @@ public sealed partial class VillageWorkforceRenderingTests
     }
 
     [Fact]
-    public void Initial_shortlist_is_bounded_and_full_results_are_paged()
+    public async Task Initial_shortlist_is_bounded_and_full_results_are_paged()
     {
         var candidates = Enumerable.Range(1, 314)
             .Select(ordinal => Candidate(
@@ -163,9 +163,21 @@ public sealed partial class VillageWorkforceRenderingTests
 
         var initial = state.VisibleCandidates(model);
 
-        Assert.Equal(11, initial.Count);
-        Assert.True(initial[0].IsCurrent);
+        Assert.Equal(10, initial.Count);
+        Assert.DoesNotContain(initial, candidate => candidate.IsCurrent);
         Assert.True(state.HasMoreCompactCandidates(model));
+
+        var compactHtml = await RenderResultsAsync(
+            model,
+            state,
+            comparison: null,
+            TaiwuLanguage.English);
+        Assert.Equal(
+            VillageWorkforceInteractionState.DefaultAlternativeLimit,
+            Regex.Matches(
+                compactHtml,
+                "<details class=\"workforce-candidate-evidence\"").Count);
+        Assert.Contains("Show all matching workers", compactHtml);
 
         state.ShowAllMatches();
         var firstPage = state.VisibleCandidates(model);
@@ -181,10 +193,12 @@ public sealed partial class VillageWorkforceRenderingTests
         Assert.Equal(
             [candidates[0].CharacterId, candidates[20].CharacterId],
             state.SelectedCharacterIds);
+        state.ToggleComparison(candidates[20].CharacterId, candidates[0].CharacterId);
+        Assert.Empty(state.SelectedCharacterIds);
     }
 
     [Fact]
-    public void Display_enrichment_drives_labels_locations_and_real_name_search()
+    public async Task Display_enrichment_drives_labels_search_and_descriptive_context()
     {
         var snapshot = VillageWorkforcePresentationTestData.Snapshot();
         var displays = snapshot.Workers.Select((worker, index) =>
@@ -193,7 +207,13 @@ public sealed partial class VillageWorkforceRenderingTests
                 $"範例人員{index + 1}",
                 $"Synthetic Person {index + 1}",
                 "太吾村",
-                "Taiwu Village")).ToArray();
+                "Taiwu Village",
+                new VillageWorkerCapabilityDisplay(
+                    worker.Identity,
+                    Enumerable.Repeat<short>(checked((short)(50 + index)), 6),
+                    Enumerable.Repeat<short>(checked((short)(60 + index)), 14),
+                    Enumerable.Repeat<short>(checked((short)(70 + index)), 16))))
+            .ToArray();
         var read = VillageWorkforceSnapshotReadResult.Complete(
             snapshot,
             displays,
@@ -224,10 +244,31 @@ public sealed partial class VillageWorkforceRenderingTests
         {
             Assert.StartsWith("Synthetic Person", candidate.Label);
             Assert.Equal("Taiwu Village", candidate.LocationLabel);
+            Assert.NotNull(candidate.CapabilitySummary);
+            Assert.Equal("6/6", candidate.CapabilitySummary!
+                .MainAttributes.CoverageLabel);
+            Assert.Equal("14/14", candidate.CapabilitySummary
+                .MartialDisciplines.CoverageLabel);
+            Assert.Equal("16/16", candidate.CapabilitySummary
+                .LifeSkillDisciplines.CoverageLabel);
         });
         state.SetNameQuery("Person 2");
         Assert.Equal("Synthetic Person 2", Assert.Single(
             state.VisibleCandidates(model)).Label);
+
+        var html = await RenderResultsAsync(
+            model,
+            new VillageWorkforceInteractionState(),
+            comparison: null,
+            TaiwuLanguage.English);
+        var text = VisibleText(html);
+        Assert.Contains("Six attributes average", text);
+        Assert.Contains("Martial aptitudes average", text);
+        Assert.Contains("Life-skill aptitudes average", text);
+        Assert.Single(Regex.Matches(
+            text,
+            "descriptive saved context only",
+            RegexOptions.IgnoreCase));
     }
 
     [Fact]

@@ -230,6 +230,48 @@
     margin: 4px 0 10px;
 }
 
+.workforce-capability-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 0;
+}
+
+.workforce-capability-summary > div {
+    min-width: 120px;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    background: rgba(8, 18, 19, 0.34);
+}
+
+.workforce-capability-summary dt,
+.workforce-capability-summary dd {
+    margin: 0;
+}
+
+.workforce-capability-summary dt {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.workforce-capability-summary dd {
+    margin-top: 3px;
+    color: var(--ink);
+    font-size: 0.86rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.workforce-capability-summary dd small {
+    display: inline;
+    margin: 0 0 0 5px;
+}
+
+.workforce-capability-compact {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
 .workforce-worker-location {
     margin: 4px 0 0;
     color: var(--muted);

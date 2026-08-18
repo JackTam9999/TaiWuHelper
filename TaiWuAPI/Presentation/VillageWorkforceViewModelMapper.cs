@@ -3,6 +3,8 @@ using TaiWu.Application.VillageWorkforce;
 using TaiWu.Domain.VillageWorkforce;
 using TaiWuAPI.Contracts.VillageWorkforce;
 using TaiWuAPI.Localization;
+using System.Collections.Immutable;
+using System.Globalization;
 
 namespace TaiWuAPI.Presentation;
 
@@ -225,7 +227,43 @@ public static class VillageWorkforceViewModelMapper
             decisive,
             requirements.Count(item => item.Passed),
             requirements,
-            components);
+            components,
+            MapCapability(display?.Capability, language));
+    }
+
+    private static VillageWorkerCapabilitySummaryViewModel? MapCapability(
+        VillageWorkerCapabilityDisplay? capability,
+        TaiwuLanguage language) => capability is null
+        ? null
+        : new VillageWorkerCapabilitySummaryViewModel(
+            MapCapabilityCategory(
+                capability.MainAttributes,
+                VillageWorkforceUiTextKey.MainAttributeAverage,
+                language),
+            MapCapabilityCategory(
+                capability.MartialDisciplines,
+                VillageWorkforceUiTextKey.MartialAptitudeAverage,
+                language),
+            MapCapabilityCategory(
+                capability.LifeSkillDisciplines,
+                VillageWorkforceUiTextKey.LifeSkillAptitudeAverage,
+                language));
+
+    private static VillageWorkerCapabilityCategoryViewModel
+        MapCapabilityCategory(
+            ImmutableArray<short> values,
+            VillageWorkforceUiTextKey label,
+            TaiwuLanguage language)
+    {
+        var average = Math.Round(
+            values.Average(value => (decimal)value),
+            2,
+            MidpointRounding.AwayFromZero);
+        return new VillageWorkerCapabilityCategoryViewModel(
+            VillageWorkforceUiText.Get(language, label),
+            average.ToString("0.##", CultureInfo.InvariantCulture),
+            $"{values.Length.ToString(CultureInfo.InvariantCulture)}/"
+                + values.Length.ToString(CultureInfo.InvariantCulture));
     }
 
     public static string TargetLabel(

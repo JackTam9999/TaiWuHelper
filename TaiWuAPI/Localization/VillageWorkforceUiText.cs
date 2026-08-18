@@ -34,6 +34,11 @@ public enum VillageWorkforceUiTextKey
     VerifiedRule,
     SharedScope,
     QualificationMeaning,
+    DescriptiveCapabilityContext,
+    DescriptiveCapabilityMeaning,
+    MainAttributeAverage,
+    MartialAptitudeAverage,
+    LifeSkillAptitudeAverage,
     NamesUnavailable,
     CurrentAssignment,
     CurrentWorker,
@@ -187,6 +192,17 @@ public static class VillageWorkforceUiText
             VillageWorkforceUiTextKey.QualificationMeaning =>
                 ("Saved base life-skill qualification is the only ordering component. It is not current attainment, efficiency, output, revenue, or a percentage.",
                  "存檔基礎技藝資質是唯一排序項目；不代表目前造詣、效率、產出、收益或百分比。"),
+            VillageWorkforceUiTextKey.DescriptiveCapabilityContext =>
+                ("Descriptive capability context", "描述性能力資料"),
+            VillageWorkforceUiTextKey.DescriptiveCapabilityMeaning =>
+                ("Six-attribute, martial-aptitude, and life-skill-aptitude averages are descriptive saved context only. They do not affect this workforce rank or recommendation.",
+                 "六項主要屬性、武學資質與技藝資質平均值只屬描述性的存檔資料，不會影響本次人力名次或建議。"),
+            VillageWorkforceUiTextKey.MainAttributeAverage =>
+                ("Six attributes average", "六項主要屬性平均"),
+            VillageWorkforceUiTextKey.MartialAptitudeAverage =>
+                ("Martial aptitudes average", "武學資質平均"),
+            VillageWorkforceUiTextKey.LifeSkillAptitudeAverage =>
+                ("Life-skill aptitudes average", "技藝資質平均"),
             VillageWorkforceUiTextKey.NamesUnavailable =>
                 ("Verified worker and building names are unavailable at this source boundary, so localized ordinal labels are used and raw IDs stay hidden.",
                  "此資料來源邊界沒有已驗證的人員與建築名稱，因此使用本地化順序標籤並隱藏原始 ID。"),

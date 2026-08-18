@@ -205,10 +205,10 @@ Canonical order is:
 4. conflicting workers; and
 5. confirmed ineligible workers.
 
-The current worker remains visible in the appropriate group and also appears
-in the current-assignment summary. That intentional two-location reference is
-not duplicated detail: one establishes current state, while the other shows
-the worker's position in the complete comparison.
+The current worker appears once in the dedicated current-assignment summary.
+The worker list contains alternatives only, avoiding a repeated current row.
+Selecting an alternative for comparison pairs it with the current worker by
+default, while the immutable result still retains the current evaluation.
 
 No row receives a winner crown, best-person badge, percentage bar, universal
 grade, recruitable-companion label, or green/red worth indicator.
@@ -235,14 +235,14 @@ reason. It never renders zero, a blank cell, or an estimated value.
 
 ## Descriptive capability context
 
-When supported worker facts are available, comparison may include a separate
-collapsed `Saved capability context` section containing:
+When supported worker facts are available, the current summary, alternative
+rows, and comparison expose three compact averages with explicit coverage:
 
 - six base attributes;
 - martial-discipline aptitudes; and
 - life-skill-discipline aptitudes.
 
-The section is descriptive. It cannot affect work ordering unless the selected
+This context is descriptive. It cannot affect work ordering unless the selected
 versioned rule names one exact field. It does not reuse Epic 6's comprehensive
 breadth index as a settlement score. Values unrelated to the objective remain
 visually separated from verified work components.
@@ -261,8 +261,13 @@ Stable worker identity orders rendering inside a tie only and is not printed.
 ## Filters and name query
 
 The status filter is one native radio or pressed-button group in this order:
-All, Comparable, Needs review, Ineligible. `Needs review` groups incomplete,
+All, Comparable, Needs review, Ineligible. `Comparable` is the initial filter
+and shows at most the top ten alternatives. `Needs review` groups incomplete,
 unsupported, and conflicting workers while preserving exact subheadings.
+
+An explicit action expands the comparable set. Any expanded or other filtered
+set renders in pages of at most 25 rows, so representative saves do not create
+hundreds of table rows at once.
 
 The optional name query filters localized display names only after status
 filtering. It never expands the candidate universe or rereads the save.
@@ -273,9 +278,10 @@ region.
 
 ## Comparison interaction
 
-At most two workers may be selected. The current worker is not automatically
-selected, but the first comparison action may offer a clearly labelled
-`Compare with current worker` shortcut when current evidence is available.
+At most two workers may be selected. Selecting an alternative first
+automatically pairs it with the current worker. Selecting the current worker
+explicitly remains supported by presentation state even though its repeated
+candidate row is omitted.
 
 After two selections:
 

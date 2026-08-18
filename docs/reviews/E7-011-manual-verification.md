@@ -139,7 +139,7 @@ browser connection failed.
 | Gate | Result |
 |---|---|
 | Release solution build | Passed, 0 warnings, 0 errors |
-| Full default matrix | 1,410 total; 1,395 passed; 15 explicit local-source skips; 0 failed |
+| Full default matrix | 1,413 total; 1,398 passed; 15 explicit local-source skips; 0 failed |
 | Configured representative workflow | Passed, 0 skipped |
 | Representative source guard | 3 of 3 files unchanged |
 | Live `/village-workforce` route | HTTP 200; opened for product-owner review |

@@ -63,6 +63,13 @@ public sealed class VillageWorkforceInteractionState
     {
         if (_selectedCharacterIds.Remove(characterId))
         {
+            if (characterId != currentCharacterId
+                && _selectedCharacterIds.Count == 1
+                && _selectedCharacterIds[0] == currentCharacterId)
+            {
+                _selectedCharacterIds.Clear();
+            }
+
             return;
         }
 
@@ -86,7 +93,7 @@ public sealed class VillageWorkforceInteractionState
         if (UsesCompactSummary)
         {
             return matching
-                .Take(DefaultAlternativeLimit + 1)
+                .Take(DefaultAlternativeLimit)
                 .ToArray();
         }
 
@@ -101,7 +108,7 @@ public sealed class VillageWorkforceInteractionState
 
     public bool HasMoreCompactCandidates(VillageWorkforceViewModel model) =>
         UsesCompactSummary
-        && MatchingCandidateCount(model) > DefaultAlternativeLimit + 1;
+        && MatchingCandidateCount(model) > DefaultAlternativeLimit;
 
     public int PageCount(VillageWorkforceViewModel model)
     {
@@ -151,9 +158,8 @@ public sealed class VillageWorkforceInteractionState
         MatchingCandidates(VillageWorkforceViewModel model)
     {
         var matching = model.Candidates
-            .Where(candidate => candidate.IsCurrent
-                && Filter == WorkforceShortlistFilter.Comparable
-                || MatchesFilter(candidate))
+            .Where(candidate => !candidate.IsCurrent)
+            .Where(MatchesFilter)
             .Where(item => string.IsNullOrWhiteSpace(NameQuery)
                 || item.Label.Contains(
                     NameQuery,
@@ -164,10 +170,7 @@ public sealed class VillageWorkforceInteractionState
             return matching;
         }
 
-        return matching
-            .OrderByDescending(candidate => candidate.IsCurrent)
-            .ThenBy(candidate => candidate.DisplayOrdinal)
-            .ToArray();
+        return matching;
     }
 
     private bool MatchesFilter(VillageWorkforceCandidateViewModel candidate) =>

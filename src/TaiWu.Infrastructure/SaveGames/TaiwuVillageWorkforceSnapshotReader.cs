@@ -274,7 +274,7 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
             .Distinct()
             .OrderBy(item => item.Type)
             .ToArray();
-        var workers = candidateSet
+        var projectedWorkers = candidateSet
             .Union(currentWorkerSet)
             .Order()
             .Select(characterId => ProjectWorker(
@@ -287,10 +287,12 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                 gameDataProvenance,
                 cancellationToken))
             .ToArray();
-        var workerDisplays = workers.Select(worker => ProjectWorkerDisplay(
-            worker.Identity,
+        var workers = projectedWorkers.Select(item => item.Profile).ToArray();
+        var workerDisplays = projectedWorkers.Select(item => ProjectWorkerDisplay(
+            item.Profile.Identity,
             traditionalChinese,
-            english)).ToArray();
+            english,
+            item.Capability)).ToArray();
         var diagnostics = new List<WorkforceDiagnostic>();
         if (candidateEntries.Any(characterId => characterId <= 0))
         {
@@ -329,7 +331,7 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
             isPartial);
     }
 
-    private static VillageWorkerProfile ProjectWorker(
+    private static ProjectedWorker ProjectWorker(
         int characterId,
         bool isCandidate,
         bool isCurrent,
@@ -371,20 +373,66 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                     new WorkforceUnavailableReason(
                         "CHARACTER_PROFILE_MISSING"),
                     [])));
-            return new VillageWorkerProfile(
-                new VillageWorkerIdentity(characterId),
-                WorkforceWorkerState.Incomplete,
-                sourceVersions,
-                facts,
-                [new WorkforceDiagnostic(
-                    "CHARACTER_PROFILE_MISSING",
-                    WorkforceDiagnosticSeverity.Error,
-                    [])]);
+            return new ProjectedWorker(
+                new VillageWorkerProfile(
+                    new VillageWorkerIdentity(characterId),
+                    WorkforceWorkerState.Incomplete,
+                    sourceVersions,
+                    facts,
+                    [new WorkforceDiagnostic(
+                        "CHARACTER_PROFILE_MISSING",
+                        WorkforceDiagnosticSeverity.Error,
+                        [])]),
+                null);
         }
 
         var unsupported = false;
         var baseLifeSkillQualifications =
             character.GetBaseLifeSkillQualifications();
+        VillageWorkerCapabilityDisplay? capability = null;
+        try
+        {
+            var mainSource = character.GetBaseMainAttributes();
+            var mainAttributes = new short[
+                VillageWorkerCapabilityDisplay.MainAttributeCount];
+            for (sbyte type = 0; type < mainAttributes.Length; type++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                mainAttributes[type] = mainSource[type];
+            }
+
+            var martialSource = character.GetBaseCombatSkillQualifications();
+            var martialDisciplines = new short[
+                VillageWorkerCapabilityDisplay.MartialDisciplineCount];
+            for (sbyte type = 0; type < martialDisciplines.Length; type++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                martialDisciplines[type] = martialSource[type];
+            }
+
+            var lifeSkillDisciplines = new short[
+                VillageWorkerCapabilityDisplay.LifeSkillDisciplineCount];
+            for (sbyte type = 0; type < lifeSkillDisciplines.Length; type++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                lifeSkillDisciplines[type] = baseLifeSkillQualifications[type];
+            }
+
+            capability = new VillageWorkerCapabilityDisplay(
+                new VillageWorkerIdentity(characterId),
+                mainAttributes,
+                martialDisciplines,
+                lifeSkillDisciplines);
+        }
+        catch (Exception exception) when (exception is
+            IndexOutOfRangeException
+                or ArgumentOutOfRangeException
+                or InvalidOperationException
+                or NullReferenceException)
+        {
+            capability = null;
+        }
+
         foreach (var discipline in requiredDisciplines)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -427,23 +475,26 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
             : isCandidate
                 ? WorkforceWorkerState.Eligible
                 : WorkforceWorkerState.CurrentOnly;
-        return new VillageWorkerProfile(
-            new VillageWorkerIdentity(characterId),
-            state,
-            sourceVersions,
-            facts,
-            unsupported
-                ? [new WorkforceDiagnostic(
-                    "BASE_QUALIFICATION_UNSUPPORTED",
-                    WorkforceDiagnosticSeverity.Error,
-                    [])]
-                : []);
+        return new ProjectedWorker(
+            new VillageWorkerProfile(
+                new VillageWorkerIdentity(characterId),
+                state,
+                sourceVersions,
+                facts,
+                unsupported
+                    ? [new WorkforceDiagnostic(
+                        "BASE_QUALIFICATION_UNSUPPORTED",
+                        WorkforceDiagnosticSeverity.Error,
+                        [])]
+                    : []),
+            capability);
     }
 
     private static VillageWorkerDisplay ProjectWorkerDisplay(
         VillageWorkerIdentity identity,
         TaiwuGameTextContext traditionalChinese,
-        TaiwuGameTextContext english)
+        TaiwuGameTextContext english,
+        VillageWorkerCapabilityDisplay? capability)
     {
         try
         {
@@ -451,7 +502,13 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                     identity.CharacterId,
                     out Character character))
             {
-                return new VillageWorkerDisplay(identity, null, null, null, null);
+                return new VillageWorkerDisplay(
+                    identity,
+                    null,
+                    null,
+                    null,
+                    null,
+                    capability);
             }
 
             var location = character.GetLocation();
@@ -460,11 +517,18 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                 SafeName(traditionalChinese.ResolveCharacterName(character)),
                 SafeName(english.ResolveCharacterName(character)),
                 traditionalChinese.ResolveLocationName(location),
-                english.ResolveLocationName(location));
+                english.ResolveLocationName(location),
+                capability);
         }
         catch (Exception exception) when (IsSafeReadFailure(exception))
         {
-            return new VillageWorkerDisplay(identity, null, null, null, null);
+            return new VillageWorkerDisplay(
+                identity,
+                null,
+                null,
+                null,
+                null,
+                capability);
         }
     }
 
@@ -535,4 +599,8 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                 identity,
                 message);
     }
+
+    private sealed record ProjectedWorker(
+        VillageWorkerProfile Profile,
+        VillageWorkerCapabilityDisplay? Capability);
 }

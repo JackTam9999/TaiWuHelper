@@ -556,11 +556,12 @@ deferred work, and request the product-owner completion decision.
 
 ### E7-R4 — Restore descriptive context and close review gaps
 
-**Status:** Pending
+**Status:** Complete — automated; E7-011 retains product-owner visual acceptance
 
-- [ ] Show six attributes and martial/life aptitudes as display-only context.
-- [ ] Add representative-scale rendering and single-read regression coverage.
-- [ ] Re-run the full Release matrix and bilingual wide/narrow review.
+- [x] Show six attributes and martial/life aptitudes as display-only context.
+- [x] Add representative-scale rendering and single-read regression coverage.
+- [x] Re-run the full Release matrix plus bilingual rendering and responsive
+      contract review; live product-owner visual acceptance remains E7-011.
 
 ## Future work outside Epic 7
 
