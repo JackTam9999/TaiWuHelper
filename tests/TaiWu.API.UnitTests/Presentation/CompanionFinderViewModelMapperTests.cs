@@ -508,6 +508,33 @@ public sealed class CompanionFinderViewModelMapperTests
         }
     }
 
+    [Fact]
+    public void Companion_ui_text_rejects_unknown_languages()
+    {
+        var unknown = (TaiwuLanguage)int.MaxValue;
+
+        foreach (var key in Enum.GetValues<CompanionFinderUiTextKey>())
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(
+                () => CompanionFinderUiText.Get(unknown, key));
+        }
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => CompanionFinderUiText.RequirementSummary(unknown, 1, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => CompanionFinderUiText.RoleLabel(
+                unknown,
+                CandidateDisciplineDomain.Martial));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => CompanionFinderUiText.MainAttributeLabel(
+                unknown,
+                CandidateMainAttribute.Strength));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => CompanionFinderUiText.FilterLabel(
+                unknown,
+                CompanionRoleShortlistFilter.All));
+    }
+
     [Theory]
     [InlineData(TaiwuLanguage.English, 5, 5, "All 5 requirements passed")]
     [InlineData(TaiwuLanguage.English, 4, 5, "1 of 5 requirements needs review")]

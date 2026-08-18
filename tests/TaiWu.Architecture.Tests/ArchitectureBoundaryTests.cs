@@ -69,6 +69,42 @@ public sealed partial class ArchitectureBoundaryTests
     ];
 
     [Fact]
+    public void Companion_presentation_uses_typed_localization_identities()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var files = new[]
+            {
+                Path.Combine(
+                    repositoryRoot,
+                    "TaiWuAPI",
+                    "Components",
+                    "Pages",
+                    "CompanionFinder.razor")
+            }
+            .Concat(Directory.GetFiles(
+                Path.Combine(
+                    repositoryRoot,
+                    "TaiWuAPI",
+                    "Components",
+                    "Companions"),
+                "*.razor",
+                SearchOption.AllDirectories))
+            .Concat(Directory.GetFiles(
+                Path.Combine(repositoryRoot, "TaiWuAPI", "Presentation"),
+                "CompanionFinder*.cs",
+                SearchOption.TopDirectoryOnly));
+
+        foreach (var file in files)
+        {
+            var source = File.ReadAllText(file);
+            Assert.DoesNotMatch(
+                @"(?<![A-Za-z])UiText\.Get\s*\(",
+                source);
+            Assert.DoesNotContain("DynamicUiText.", source);
+        }
+    }
+
+    [Fact]
     public void Inner_layers_do_not_reference_outer_or_GameData_assemblies()
     {
         AssertHasNoReferences(
