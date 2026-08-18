@@ -63,9 +63,10 @@ Stable target identity contains `AreaId`, `BlockId`,
 saved character ID. These values remain internal. Localized names and ordinal
 slot labels are display only.
 
-The rule, source mapping, objective, target kind, candidate universe, and
-fingerprint schema all begin at version `1`. A different installed GameData
-version is unsupported until another evidence gate publishes a new mapping.
+The rule uses semantic version `1.0.0`; source mapping, objective, target kind,
+candidate universe, and fingerprint schema begin at version `1`. A different
+installed GameData version is unsupported until another evidence gate
+publishes a new mapping.
 
 ## Candidate and assignment states
 
@@ -146,7 +147,7 @@ the Epic 6 comprehensive capability score.
 
 The numeric heading is **Saved base life-skill qualification**. The required
 discipline is always named. The result applies only to the selected shop and
-manager slot under rule version 1.
+manager slot under rule version `1.0.0`.
 
 It is explicitly not:
 

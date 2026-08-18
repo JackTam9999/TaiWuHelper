@@ -13,7 +13,8 @@
 Provide presentation-neutral, infrastructure-neutral contracts for one
 coherent village workforce snapshot and the version-1 occupied shop-manager
 replacement comparison. These types establish invariants only. Save projection
-is delivered by E7-003 and rule evaluation by E7-004.
+is delivered by E7-003, verified rule definitions by E7-004, and rule
+evaluation by E7-005.
 
 ## Stable identities
 
@@ -25,7 +26,7 @@ is delivered by E7-003 and rule evaluation by E7-004.
 | `ShopManagerTargetIdentity` | Building plus occupied manager-list position | Position `0..127`; target kind is typed |
 | `LifeSkillDisciplineIdentity` | Required installed life-skill type | Verified range `0..15` |
 | `WorkforceObjectiveIdentity` | Objective kind plus version | Defined enum and stable version token |
-| `WorkforceRuleVersion` | Evaluation-rule version | Stable nonblank token |
+| `WorkforceRuleVersion` | Evaluation-rule version | Valid `MAJOR.MINOR.PATCH` semantic version |
 | `WorkforceSourceVersions` | Save revision, GameData, mapping, universe and fingerprint versions | Exact SHA-256 plus stable version tokens |
 | `WorkforceResultIdentity` | Snapshot, objective, rule and target boundary | Typed constituent identities |
 
@@ -129,6 +130,20 @@ qualification result without becoming an eligible proposal.
 result. It derives `Higher`, `Lower` or `Equal` only from two rankable exact
 values. Missing/unsupported states yield `Unavailable`; a conflicting state
 yields `Conflicting`.
+
+## Versioned rule definitions
+
+E7-004 adds immutable source-version, hard-requirement, component, limitation,
+definition and typed resolution contracts. The verified rule catalogue
+resolves only the exact objective, GameData, mapping, candidate-universe,
+fingerprint-schema and target-kind tuple documented in
+[Village workforce rules](./VILLAGE-WORKFORCE-RULES.md). Unsupported versions
+return a typed result without a fallback rule.
+
+The one numeric component names its exact source fact, identity normalization,
+base-qualification-point unit, higher-is-better direction and weight one.
+Definition construction rejects duplicate identities, invalid component
+shapes and inconsistent profile/provenance fact references.
 
 ## Fingerprints
 

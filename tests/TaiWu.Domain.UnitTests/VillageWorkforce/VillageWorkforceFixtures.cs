@@ -106,7 +106,7 @@ internal static class VillageWorkforceFixtures
             new WorkforceObjectiveIdentity(
                 WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
                 "1"),
-            new WorkforceRuleVersion("1"),
+            new WorkforceRuleVersion("1.0.0"),
             target.Identity);
         var evidence = new[] { SaveEvidence("QUALIFICATION") };
         var requirements = Enum.GetValues<WorkforceRequirementKind>()

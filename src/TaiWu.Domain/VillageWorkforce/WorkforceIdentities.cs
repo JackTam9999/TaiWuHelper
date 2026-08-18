@@ -152,12 +152,36 @@ public sealed record WorkforceRuleVersion
 {
     public WorkforceRuleVersion(string value)
     {
-        Value = WorkforceText.Version(value, nameof(value));
+        Value = WorkforceText.SemanticVersion(value, nameof(value));
     }
 
     public string Value { get; }
 
     internal string StableKey => Value;
+}
+
+public sealed record WorkforceRuleIdentity
+{
+    public WorkforceRuleIdentity(string value)
+    {
+        Value = WorkforceText.Stable(value, nameof(value));
+    }
+
+    public string Value { get; }
+
+    internal string StableKey => Value;
+}
+
+public sealed record WorkforceRuleLimitation
+{
+    public WorkforceRuleLimitation(string identity)
+    {
+        Identity = WorkforceText.Stable(identity, nameof(identity));
+    }
+
+    public string Identity { get; }
+
+    internal string StableKey => Identity;
 }
 
 public sealed record WorkforceSourceVersions

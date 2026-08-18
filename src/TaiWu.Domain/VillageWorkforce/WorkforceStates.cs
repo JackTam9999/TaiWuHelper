@@ -79,9 +79,27 @@ public enum WorkforceRequirementOutcome
     Conflicting = 4
 }
 
+public enum WorkforceEvidenceRequirementKind
+{
+    SourceVersions = 0,
+    SupportedTarget = 1,
+    ConfirmedFact = 2,
+    MatchingProvenance = 3
+}
+
 public enum WorkforceComponentKind
 {
     RequiredBaseLifeSkillQualification = 0
+}
+
+public enum WorkforceNormalizationKind
+{
+    Identity = 0
+}
+
+public enum WorkforceScoreDirection
+{
+    HigherIsBetter = 0
 }
 
 public enum WorkforceUnit
@@ -114,4 +132,15 @@ public enum WorkforceDiagnosticSeverity
     Information = 0,
     Warning = 1,
     Error = 2
+}
+
+public enum WorkforceRuleResolutionStatus
+{
+    Resolved = 0,
+    UnsupportedObjectiveVersion = 1,
+    UnsupportedGameDataVersion = 2,
+    UnsupportedMappingVersion = 3,
+    UnsupportedCandidateUniverseVersion = 4,
+    UnsupportedFingerprintSchemaVersion = 5,
+    UnsupportedTargetKind = 6
 }

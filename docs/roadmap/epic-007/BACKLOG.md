@@ -244,7 +244,7 @@ Application/Domain-owned contracts.
 
 ### E7-004 — Define versioned assignment and work-objective rules
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -257,19 +257,19 @@ gate. Raw source labels remain display evidence and cannot select a rule.
 
 #### Acceptance criteria
 
-- [ ] Every rule has a stable identity, semantic version, supported source
+- [x] Every rule has a stable identity, semantic version, supported source
       version, target kind, evidence requirements, and limitation.
-- [ ] Membership, availability, vacancy, and target compatibility are distinct
+- [x] Membership, availability, vacancy, and target compatibility are distinct
       hard requirements where the evidence supports them.
-- [ ] Every numeric component names its source fact, normalization rule, unit,
+- [x] Every numeric component names its source fact, normalization rule, unit,
       direction, and weight.
-- [ ] Descriptive six-attribute and martial/life summaries remain outside the
+- [x] Descriptive six-attribute and martial/life summaries remain outside the
       work result unless an explicit rule references one exact field.
-- [ ] Unsupported versions produce a typed unsupported result, not a fallback
+- [x] Unsupported versions produce a typed unsupported result, not a fallback
       rule.
-- [ ] Duplicate identities, invalid weights, mismatched units, or unknown
+- [x] Duplicate identities, invalid weights, mismatched units, or unknown
       source fields are rejected.
-- [ ] Unit tests pin every delivered rule and supported-version boundary.
+- [x] Unit tests pin every delivered rule and supported-version boundary.
 
 #### Evidence
 

@@ -95,7 +95,7 @@ public sealed class VillageWorkforceSnapshotTests
             new WorkforceObjectiveIdentity(
                 WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
                 "1"),
-            new WorkforceRuleVersion("1"),
+            new WorkforceRuleVersion("1.0.0"),
             snapshot.Targets[0].Identity);
         var proposed = new ProposedShopManagerAssignment(
             resultIdentity,

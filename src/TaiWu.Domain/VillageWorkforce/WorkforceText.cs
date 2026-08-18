@@ -30,6 +30,41 @@ internal static class WorkforceText
     public static string Version(string value, string parameterName) =>
         Stable(value, parameterName);
 
+    public static string SemanticVersion(string value, string parameterName)
+    {
+        var normalized = Stable(value, parameterName);
+        var buildParts = normalized.Split('+');
+        if (buildParts.Length > 2
+            || (buildParts.Length == 2
+                && !ValidIdentifiers(buildParts[1], allowLeadingZero: true)))
+        {
+            throw InvalidSemanticVersion(parameterName);
+        }
+
+        var precedence = buildParts[0];
+        var prereleaseSeparator = precedence.IndexOf('-');
+        var core = prereleaseSeparator < 0
+            ? precedence
+            : precedence[..prereleaseSeparator];
+        var prerelease = prereleaseSeparator < 0
+            ? null
+            : precedence[(prereleaseSeparator + 1)..];
+        if (prerelease is not null
+            && !ValidIdentifiers(prerelease, allowLeadingZero: false))
+        {
+            throw InvalidSemanticVersion(parameterName);
+        }
+
+        var coreParts = core.Split('.');
+        if (coreParts.Length != 3
+            || coreParts.Any(part => !ValidNumericIdentifier(part)))
+        {
+            throw InvalidSemanticVersion(parameterName);
+        }
+
+        return normalized;
+    }
+
     public static string EnumKey<T>(T value) where T : struct, Enum =>
         Convert.ToInt32(value, CultureInfo.InvariantCulture)
             .ToString(CultureInfo.InvariantCulture);
@@ -66,4 +101,27 @@ internal static class WorkforceText
 
         return value.ToUpperInvariant();
     }
+
+    private static bool ValidIdentifiers(
+        string value,
+        bool allowLeadingZero) =>
+        value.Length > 0
+        && value.Split('.').All(identifier =>
+            identifier.Length > 0
+            && identifier.All(character =>
+                char.IsAsciiLetterOrDigit(character) || character == '-')
+            && (allowLeadingZero
+                || !identifier.All(char.IsAsciiDigit)
+                || ValidNumericIdentifier(identifier)));
+
+    private static bool ValidNumericIdentifier(string value) =>
+        value.Length > 0
+        && value.All(char.IsAsciiDigit)
+        && (value.Length == 1 || value[0] != '0');
+
+    private static ArgumentException InvalidSemanticVersion(
+        string parameterName) =>
+        new(
+            "A rule version must be a valid MAJOR.MINOR.PATCH semantic version.",
+            parameterName);
 }
