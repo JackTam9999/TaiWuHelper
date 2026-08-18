@@ -1,0 +1,130 @@
+using TaiWu.Application.Localization;
+using TaiWu.Domain.CombatRecommendations;
+using TaiWuAPI.Contracts.CompanionCandidates;
+using Xunit;
+
+namespace TaiWu.Architecture.Tests;
+
+public sealed class LoopbackApiContractTests
+{
+    [Fact]
+    public void Cross_layer_contract_types_are_explicitly_inventoried()
+    {
+        var contractAssembly = typeof(CompanionFinderResponse).Assembly;
+        var layerAssemblies = new[]
+        {
+            typeof(TaiwuLanguage).Assembly,
+            typeof(RecommendationPolicy).Assembly
+        };
+        var actual = contractAssembly.GetExportedTypes()
+            .Where(type => type.Namespace?.StartsWith(
+                "TaiWuAPI.Contracts",
+                StringComparison.Ordinal) == true)
+            .SelectMany(type => type.GetProperties())
+            .Select(property => Nullable.GetUnderlyingType(property.PropertyType)
+                ?? property.PropertyType)
+            .Where(type => layerAssemblies.Contains(type.Assembly))
+            .Select(type => type.FullName!)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(ExpectedCrossLayerContractTypes, actual);
+        Assert.All(actual, typeName => Assert.True(
+            typeName.StartsWith("TaiWu.Application.", StringComparison.Ordinal)
+            || typeName.StartsWith("TaiWu.Domain.", StringComparison.Ordinal)));
+    }
+
+    private static readonly string[] ExpectedCrossLayerContractTypes =
+    [
+        "TaiWu.Application.CombatRecommendations.TargetPlaybookCounterAvailabilityState",
+        "TaiWu.Application.CombatRecommendations.TargetRecommendationChangeCause",
+        "TaiWu.Application.CombatRecommendations.TargetRecommendationImpactKind",
+        "TaiWu.Application.CombatRecommendations.TargetThreatImpactKind",
+        "TaiWu.Application.CombatSkills.CatalogueRecoveryStatus",
+        "TaiWu.Application.CombatSkills.CharacterProgressReadStatus",
+        "TaiWu.Application.CombatSkills.ClearCharacterCombatSkillProgressCacheStatus",
+        "TaiWu.Application.CombatSkills.CombatSkillCatalogueStatus",
+        "TaiWu.Application.CombatSkills.EnsureCombatSkillCatalogueStatus",
+        "TaiWu.Application.CombatSkills.TargetSkillMatchKind",
+        "TaiWu.Application.CombatSkills.TargetSkillSnapshotPresence",
+        "TaiWu.Application.CompanionCandidates.CompanionCandidateEnrichmentState",
+        "TaiWu.Application.CompanionCandidates.CompanionCandidateEnrichmentStatus",
+        "TaiWu.Application.CompanionCandidates.CompanionCandidateSnapshotReadStatus",
+        "TaiWu.Application.CompanionCandidates.CompanionDetailedProgressState",
+        "TaiWu.Application.CompanionCandidates.CompanionFinderStatus",
+        "TaiWu.Application.CompanionCandidates.CompanionMembershipEvidenceState",
+        "TaiWu.Application.CompanionCandidates.CompanionSkillDefinitionState",
+        "TaiWu.Application.Localization.TaiwuLanguage",
+        "TaiWu.Application.Targets.TargetLookupKind",
+        "TaiWu.Application.Targets.TargetLookupStatus",
+        "TaiWu.Domain.CombatCounters.CombatCounterAccessIssueCode",
+        "TaiWu.Domain.CombatCounters.CombatCounterActivationTiming",
+        "TaiWu.Domain.CombatCounters.CombatCounterStrength",
+        "TaiWu.Domain.CombatRecommendations.BattlePlanInstructionKind",
+        "TaiWu.Domain.CombatRecommendations.CombatLoadoutGenerationDiagnosticCode",
+        "TaiWu.Domain.CombatRecommendations.ManualLoadoutChangeKind",
+        "TaiWu.Domain.CombatRecommendations.RecommendationCaveatKind",
+        "TaiWu.Domain.CombatRecommendations.RecommendationPolicy",
+        "TaiWu.Domain.CombatRecommendations.RecommendationScoreComponentKind",
+        "TaiWu.Domain.CombatSkills.CatalogueFieldStatus",
+        "TaiWu.Domain.CombatSkills.CatalogueLanguage",
+        "TaiWu.Domain.CombatSkills.CatalogueSourceKind",
+        "TaiWu.Domain.CombatSkills.CombatSkillPowerContext",
+        "TaiWu.Domain.CombatSkills.CombatSkillStudyDetailGroup",
+        "TaiWu.Domain.CombatSkills.RawCombatSkillDescriptionKind",
+        "TaiWu.Domain.CombatSkills.SkillProgressFieldStatus",
+        "TaiWu.Domain.CombatSkills.SkillProgressSourceKind",
+        "TaiWu.Domain.CombatSnapshots.CombatRequirementCriticality",
+        "TaiWu.Domain.CombatSnapshots.CombatResourceKind",
+        "TaiWu.Domain.CombatSnapshots.CombatSkillElement",
+        "TaiWu.Domain.CombatSnapshots.PracticeDirection",
+        "TaiWu.Domain.CombatSnapshots.SkillActivationState",
+        "TaiWu.Domain.CombatSnapshots.SkillCategory",
+        "TaiWu.Domain.CombatSnapshots.SnapshotDataSource",
+        "TaiWu.Domain.CombatSnapshots.SnapshotEvidenceStatus",
+        "TaiWu.Domain.CombatSnapshots.TargetLoadoutCoverageKind",
+        "TaiWu.Domain.CombatSnapshots.TargetLoadoutMergeStatus",
+        "TaiWu.Domain.CombatSnapshots.TargetObservationContext",
+        "TaiWu.Domain.CombatThreats.TargetThreatActivationTiming",
+        "TaiWu.Domain.CombatThreats.TargetThreatSeverity",
+        "TaiWu.Domain.CompanionCandidates.CandidateConflictDecisionKind",
+        "TaiWu.Domain.CompanionCandidates.CandidateDisciplineDomain",
+        "TaiWu.Domain.CompanionCandidates.CandidateEvidenceSourceKind",
+        "TaiWu.Domain.CompanionCandidates.CandidateFactValueKind",
+        "TaiWu.Domain.CompanionCandidates.CandidateMainAttribute",
+        "TaiWu.Domain.CompanionCandidates.CandidateProfileField",
+        "TaiWu.Domain.CompanionCandidates.CompanionCapabilityCategory",
+        "TaiWu.Domain.CompanionCandidates.CompanionCapabilitySummaryFormula",
+        "TaiWu.Domain.CompanionCandidates.CompanionCapabilitySummaryState",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleCandidateRankingState",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleComparisonEvidenceState",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleComparisonOutcome",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleEvaluationState",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleExplanationKind",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleGateOutcome",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleNormalizationKind",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleRequirementKind",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleScoreDirection",
+        "TaiWu.Domain.CompanionRoles.CompanionRoleShortlistFilter",
+        "TaiWu.Domain.LoadoutComparisons.LoadoutComparisonBaselineField",
+        "TaiWu.Domain.LoadoutComparisons.LoadoutComparisonColumnKind",
+        "TaiWu.Domain.LoadoutComparisons.LoadoutComparisonColumnStatus",
+        "TaiWu.Domain.LoadoutComparisons.LoadoutComparisonMembership",
+        "TaiWu.Domain.LoadoutComparisons.LoadoutComparisonSkillActionKind",
+        "TaiWu.Domain.TargetArchetypes.TargetArchetypeMatchState",
+        "TaiWu.Domain.TargetPlaybookComposition.TargetPlaybookAdjustmentAction",
+        "TaiWu.Domain.TargetPlaybookComposition.TargetPlaybookAdjustmentEvidenceKind",
+        "TaiWu.Domain.TargetPlaybookComposition.TargetPlaybookAdjustmentEvidenceState",
+        "TaiWu.Domain.TargetPlaybookComposition.TargetPlaybookCompositionConflictKind",
+        "TaiWu.Domain.TargetPlaybookComposition.TargetPlaybookResponseReferenceKind",
+        "TaiWu.Domain.TargetPlaybooks.TargetCounterPlaybookGapKind",
+        "TaiWu.Domain.TargetPlaybooks.TargetCounterPlaybookResolutionStatus",
+        "TaiWu.Domain.TargetPlaybooks.TargetResponsePriority",
+        "TaiWu.Domain.TargetProfiles.TargetProfileDiagnosticSeverity",
+        "TaiWu.Domain.TargetProfiles.TargetProfileDimension",
+        "TaiWu.Domain.TargetProfiles.TargetProfileEvidenceSourceKind",
+        "TaiWu.Domain.TargetProfiles.TargetProfileEvidenceState",
+        "TaiWu.Domain.TargetProfiles.TargetProfileFacetValueKind"
+    ];
+}

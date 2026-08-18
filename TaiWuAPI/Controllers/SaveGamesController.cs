@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using TaiWu.Application.SaveGames;
-using TaiWu.Domain.SaveGames;
 using TaiWuAPI.Configuration;
+using TaiWuAPI.Contracts.SaveGames;
 
 namespace TaiWuAPI.Controllers;
 
@@ -13,9 +13,9 @@ public sealed class SaveGamesController(
     IOptions<SaveGameOptions> options) : ControllerBase
 {
     [HttpGet("read")]
-    [ProducesResponseType<SaveGameReport>(StatusCodes.Status200OK)]
+    [ProducesResponseType<SaveGameResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<SaveGameReport>> ReadConfigured(
+    public async Task<ActionResult<SaveGameResponse>> ReadConfigured(
         [FromQuery] int? targetCharacterId,
         CancellationToken cancellationToken)
     {
@@ -26,7 +26,7 @@ public sealed class SaveGamesController(
                     options.Value.DefaultSaveFilePath,
                     targetCharacterId),
                 cancellationToken);
-            return Ok(report);
+            return Ok(SaveGameResponseMapper.Map(report));
         }
         catch (Exception exception)
             when (exception is ArgumentException

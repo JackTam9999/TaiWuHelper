@@ -6,6 +6,7 @@ using System.Reflection;
 using TaiWu.Application.SaveGames;
 using TaiWu.Domain.SaveGames;
 using TaiWuAPI.Configuration;
+using TaiWuAPI.Contracts.SaveGames;
 using TaiWuAPI.Controllers;
 using Xunit;
 
@@ -33,7 +34,10 @@ public sealed class SaveGamesControllerTests
             cancellationToken);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
-        Assert.Same(expected, ok.Value);
+        var response = Assert.IsType<SaveGameResponse>(ok.Value);
+        Assert.Equal("1", response.SchemaVersion);
+        Assert.Equal(expected.Lines, response.Lines);
+        Assert.Equal("TAIWU|21396", response.LegacyText);
         await reader.Received(1).ReadAsync(
             Arg.Is<SaveGameReadRequest>(request =>
                 request != null
@@ -104,7 +108,7 @@ public sealed class SaveGamesControllerTests
             action.GetCustomAttribute<HttpGetAttribute>());
         Assert.Equal("read", get.Template);
         Assert.Equal(
-            typeof(Task<ActionResult<SaveGameReport>>),
+            typeof(Task<ActionResult<SaveGameResponse>>),
             action.ReturnType);
     }
 

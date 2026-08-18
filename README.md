@@ -84,8 +84,16 @@ saves, update the local user-secret configuration and restart the API. Kestrel
 binds only to localhost on port `5056`; the helper is not a remotely exposed
 service.
 
-The response contains `lines`, preserving the original reader's diagnostic
-format.
+The HTTP surface is an internal loopback integration boundary, not a supported
+external-client API. Current routes therefore remain unversioned. JSON enums
+accept named tokens only (numeric enum values are rejected), and contract tests
+pin the current request tokens. A future externally supported API must introduce
+API-owned versioned contracts and routes instead of changing these internal
+tokens in place.
+
+The response contains a `schemaVersion`, immutable `lines`, and `legacyText`,
+preserving the original reader's diagnostic format without exposing its Domain
+object directly.
 
 ## Tests
 

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.DataProtection;
-using System.Text.Json.Serialization;
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.CompanionCandidates;
@@ -27,9 +26,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services
     .AddControllers()
-    .AddJsonOptions(options =>
-        options.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter()));
+    .AddJsonOptions(ApiJsonOptions.Configure);
 builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
