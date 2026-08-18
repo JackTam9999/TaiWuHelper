@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Active — evidence discovery |
+| Status | Active — contract definition |
 | Milestone | 7 |
 | Target release | TBD |
 | Last updated | 2026-08-18 |
@@ -244,7 +244,7 @@ to verify manually. It never marks an in-game change complete.
 
 ## Initial delivery boundary
 
-E7-000 will select the first vertical only after it verifies:
+E7-000 selected the first vertical after verifying:
 
 1. the worker candidate universe and availability facts;
 2. one stable assignment-target identity;
@@ -255,11 +255,17 @@ E7-000 will select the first vertical only after it verifies:
 7. at least one representative current-assignment and alternative-worker
    scenario that can be described without committing proprietary data.
 
-The preferred first vertical is a single existing assignment comparison rather
-than a whole-village optimizer. If no output formula is standalone-safe, the
-delivery may use a verified requirement-and-input comparison without claiming
-predicted production. If even assignment eligibility cannot be verified,
-E7-000 must stop and record the blocker instead of implementing guessed rules.
+The first vertical compares one existing shop manager slot with alternatives
+from the public work-candidate result. Its only ordering component is the saved
+base life-skill qualification selected by the shop's typed required-discipline
+field. It does not claim current modified attainment, efficiency, production,
+capacity, or success probability. Current manager assignments remain factual
+save evidence even when a manager is outside the alternative universe.
+
+Complete village membership is not exposed through the supported public source
+surface and remains unsupported. The exact evidence boundary and deferred
+mechanics are recorded in
+[E7-000-village-workforce-evidence](../../scenarios/E7-000-village-workforce-evidence.md).
 
 ## Functional scope
 

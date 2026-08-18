@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed — evidence-gated |
+| Status | Draft — first vertical selected |
 | Epic | [EPIC-007](./EPIC.md) |
 | Backlog item | [E7-001](./BACKLOG.md#e7-001--define-workforce-evaluation-comparison-and-ui-semantics) |
 | Route | `/village-workforce` |
@@ -15,10 +15,12 @@ with verified eligible alternatives for one selected settlement assignment.
 The page is an information-only planner. It does not assign workers, change
 buildings, collect resources, recruit characters, or control the game.
 
-E7-000 owns the final first-vertical vocabulary. Until that evidence gate is
-complete, `work objective` and `assignment target` are provisional neutral
-terms rather than claims that every building exposes the same slot or output
-model.
+E7-000 selected a shop manager slot as the first assignment target and the
+shop-required saved base life-skill qualification as its only ordering
+component. `Work objective` remains a scope label, not a productivity claim.
+The result must say `Saved base qualification`, never efficiency, output,
+percentage, or predicted production. E7-001 finalizes the typed states and
+bilingual wording for this boundary.
 
 ## Design principles
 

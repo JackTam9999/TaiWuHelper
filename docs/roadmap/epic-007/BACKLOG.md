@@ -74,7 +74,7 @@ Every completed item must:
 
 ### E7-000 — Verify settlement sources and select the first assignment vertical
 
-**Status:** In progress
+**Status:** Complete
 
 **Priority:** P0
 
@@ -91,30 +91,30 @@ semantics and standalone runtime safety are established.
 
 #### Acceptance criteria
 
-- [ ] The inspected Taiwu and GameData versions are recorded.
-- [ ] The worker candidate universe records its owning source, inclusion and
+- [x] The inspected Taiwu and GameData versions are recorded.
+- [x] The worker candidate universe records its owning source, inclusion and
       exclusion rules, runtime types, completeness, and precedence.
-- [ ] Village or settlement membership is distinguished from Taiwu-group,
+- [x] Village or settlement membership is distinguished from Taiwu-group,
       location, target-lookup, and recruitability facts.
-- [ ] Candidate availability and current-assignment facts record exact owners,
+- [x] Candidate availability and current-assignment facts record exact owners,
       types, cardinality, meanings, and unsupported states.
-- [ ] Building, position, work-slot, or assignment-target identity is stable
+- [x] Building, position, work-slot, or assignment-target identity is stable
       and language independent.
-- [ ] Every considered attribute, aptitude, feature, skill, resource, or status
+- [x] Every considered attribute, aptitude, feature, skill, resource, or status
       records exact unit, range, version, and mechanical meaning.
-- [ ] Any proposed productivity or output value has a verified formula and unit
+- [x] Any proposed productivity or output value has a verified formula and unit
       or is explicitly excluded from the first vertical.
-- [ ] Context-dependent getters are probed for standalone safety and rejected
+- [x] Context-dependent getters are probed for standalone safety and rejected
       where live special-effect or process context is required.
-- [ ] Localized labels and raw descriptions are rejected as mechanics by
+- [x] Localized labels and raw descriptions are rejected as mechanics by
       themselves.
-- [ ] The first vertical is narrow enough to compare one current assignment
+- [x] The first vertical is narrow enough to compare one current assignment
       with eligible alternatives without solving the whole settlement.
-- [ ] At least one current-assignment, alternative-worker, tie or incomplete,
+- [x] At least one current-assignment, alternative-worker, tie or incomplete,
       and unsupported scenario is defined with synthetic fixtures.
-- [ ] One stable local-save probe records cold/warm timing, cancellation, and
+- [x] One stable local-save probe records cold/warm timing, cancellation, and
       before/after hashes without committing proprietary data or identities.
-- [ ] Unverified recruitment, development, construction, resource routing, and
+- [x] Unverified recruitment, development, construction, resource routing, and
       library mechanics are listed as deferred rather than partial rules.
 
 #### Evidence
