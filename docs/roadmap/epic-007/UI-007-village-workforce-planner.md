@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Draft — first vertical selected |
+| Status | Accepted — shop manager-slot semantics defined |
 | Epic | [EPIC-007](./EPIC.md) |
 | Backlog item | [E7-001](./BACKLOG.md#e7-001--define-workforce-evaluation-comparison-and-ui-semantics) |
 | Route | `/village-workforce` |
@@ -15,6 +15,9 @@ with verified eligible alternatives for one selected settlement assignment.
 The page is an information-only planner. It does not assign workers, change
 buildings, collect resources, recruit characters, or control the game.
 
+The exact state, score, tie, comparison, and lifecycle rules are defined by the
+[village workforce evaluation contract](../../architecture/VILLAGE-WORKFORCE-EVALUATION-CONTRACT.md).
+
 E7-000 selected a shop manager slot as the first assignment target and the
 shop-required saved base life-skill qualification as its only ordering
 component. `Work objective` remains a scope label, not a productivity claim.
@@ -24,9 +27,10 @@ bilingual wording for this boundary.
 
 ## Design principles
 
-1. Ask for the objective and assignment target before evaluating workers.
+1. Show the fixed objective, then ask for the shop and manager position before
+   evaluating workers.
 2. Show the current assignment and concise result summary before alternatives.
-3. Put shared scope, formula, and evidence limitations once above the result.
+3. Put shared scope, component, and evidence limitations once above the result.
 4. Keep worker-specific gates and components in collapsed disclosures.
 5. Never style one person as universally best or as a recruitable companion.
 6. Preserve exact unavailable, unsupported, conflict, and tie states.
@@ -41,7 +45,7 @@ The page contains these regions in DOM and keyboard order:
 
 1. skip link and page heading;
 2. information-only and source-boundary notices;
-3. work objective and assignment-target controls;
+3. fixed objective scope and shop/manager-position controls;
 4. inspect/retry action;
 5. result heading, snapshot freshness, and shared limitations;
 6. current-assignment summary;
@@ -52,7 +56,7 @@ The page contains these regions in DOM and keyboard order:
 11. manual reassignment checklist; and
 12. evidence, scope, and deferred-mechanics disclosures.
 
-The main result never repeats the same formula, evidence disclaimer, or
+The main result never repeats the same component rule, evidence disclaimer, or
 information-only warning inside each worker row.
 
 ## Initial load
@@ -60,9 +64,9 @@ information-only warning inside each worker row.
 Before a supported target is selected, the page shows:
 
 - the page purpose;
-- the exact supported settlement boundary when E7-000 defines it;
+- the exact supported work-candidate boundary selected by E7-000;
 - a statement that aptitude alone does not prove productivity;
-- an objective control;
+- the fixed `Shop manager base aptitude` objective scope;
 - a target control populated only from the current immutable target catalogue
   or settlement snapshot boundary;
 - a disabled inspect action until required controls are valid; and
@@ -80,32 +84,31 @@ Synthetic labels illustrate structure only.
 │ Compare one current assignment with verified alternatives.                │
 │ The helper will not assign a worker or change the game.                    │
 ├ Objective ──────────────────────────────────────────────────────────────────┤
-│ Work objective [Verified objective ▼]  Assignment [Synthetic target ▼]     │
-│ [Inspect assignment]                                                       │
+│ Objective: Shop manager base aptitude                                      │
+│ Shop [Synthetic shop ▼]  Manager position [Position 1 ▼] [Inspect position]│
 ├ Result · Synthetic target ──────────────────────────────────────────────────┤
 │ Snapshot: current · Rules: verified version · Evidence: complete            │
 │ Shared limitation: this result applies only to the selected assignment.     │
 ├ Current assignment ─────────────────────────────────────────────────────────┤
 │ Synthetic Worker A · Confirmed current worker                               │
-│ Verified components: 2/2 · Current result: 64 units                         │
+│ Saved base life-skill qualification: 64 points                              │
 ├ Alternatives ───────────────────────────────────────────────────────────────┤
 │ Total 4 · Comparable 2 · Needs review 1 · Ineligible 1                       │
 │ Show (●) All (○) Comparable (○) Needs review (○) Ineligible  Name [       ] │
-├ Rank │ Worker             │ Work result │ State       │ Compare             ┤
-│ 1    │ Synthetic Worker B │ 72 units    │ Ranked      │ [ ]                 │
-│ 2    │ Synthetic Worker A │ 64 units    │ Current     │ [x]                 │
+├ Rank │ Worker             │ Base qualification │ State  │ Compare             ┤
+│ 1    │ Synthetic Worker B │ 72 points          │ Ranked │ [ ]                │
+│ 2    │ Synthetic Worker A │ 64 points          │ Current│ [x]                │
 │ —    │ Synthetic Worker C │ Unavailable │ Incomplete  │ [ ]                 │
 ├ Comparison ─────────────────────────────────────────────────────────────────┤
 │ Fact                     │ Worker A (current) │ Worker B (alternative)      │
 │ Eligibility              │ Eligible           │ Eligible                    │
-│ Verified component one   │ 60                 │ 75                          │
-│ Verified component two   │ 68                 │ 69                          │
-│ Work-local result        │ 64 units           │ 72 units                    │
+│ Required life skill      │ Synthetic skill    │ Synthetic skill             │
+│ Saved base qualification │ 64 points          │ 72 points                   │
 │ Relative result          │ Lower               │ Higher                      │
 ├ Manual checklist ───────────────────────────────────────────────────────────┤
-│ □ Confirm the target and current worker in the game.                        │
-│ □ Review the verified requirements and unresolved cautions.                │
-│ □ If desired, make the change manually in the game.                         │
+│ • Confirm the target and current worker in the game.                        │
+│ • Review the verified requirements and unresolved cautions.                │
+│ • If desired, make the change manually in the game.                         │
 └ No action is sent to the game. ─────────────────────────────────────────────┘
 ```
 
@@ -117,38 +120,37 @@ Below 960 CSS pixels, the same facts use heading-led cards.
 ┌ 村莊人力規劃 · 僅供參考 ───────────────────┐
 │ 比較目前指派與有證據支持的替代人選。          │
 │ 太吾助手不會指派人員或改變遊戲。              │
-├ 工作目標 [已驗證目標 ▼]                      │
-│ 指派位置 [範例位置 ▼]                        │
-│ [檢查指派]                                    │
+├ 目標：商鋪管理基礎資質                        │
+│ 商鋪 [範例商鋪 ▼] 管理位置 [位置 1 ▼]        │
+│ [檢查位置]                                    │
 ├ 目前指派                                      │
 │ 範例人員甲 · 已確認目前人員                   │
-│ 已確認項目 2/2 · 結果 64 單位                │
+│ 存檔基礎技藝資質：64 點                       │
 ├ 第 1 名                                        │
 │ 範例人員乙                                    │
-│ 結果：72 單位 · 狀態：已排序                 │
+│ 資質：72 點 · 狀態：已排序                   │
 │ [選取作比較] [查看證據]                       │
 ├ 比較：範例人員甲／範例人員乙                 │
-│ 目前人員：64 單位                             │
-│ 替代人員：72 單位                             │
+│ 目前人員：64 點                               │
+│ 替代人員：72 點                               │
 │ 相對結果：替代人員較高                        │
 ├ 手動檢查清單                                  │
-│ □ 在遊戲中確認位置與目前人員。                │
-│ □ 檢查需求與未解決注意事項。                  │
-│ □ 如有需要，請自行在遊戲中調整。              │
+│ • 在遊戲中確認位置與目前人員。                │
+│ • 檢查需求與未解決注意事項。                  │
+│ • 如有需要，請自行在遊戲中調整。              │
 └ 不會向遊戲傳送任何操作。 ─────────────────────┘
 ```
 
 ## Objective and target controls
 
-The objective control uses stable identities from the delivered rule
-catalogue. The target control uses stable target identity internally and only
-localized display text visibly. Numeric IDs and raw source keys are never
-printed.
+The single objective renders as a named scope summary rather than a fake
+selector. Shop and manager-position controls use stable target identity
+internally and only localized display text and position ordinals visibly.
+Numeric IDs and raw source keys are never printed.
 
-If the first vertical supports only one objective, it renders as a named scope
-summary rather than a fake selector. If it supports only one current target,
-the target is displayed as a confirmed value. Controls must reflect actual
-cardinality; the UI does not imply options that sources cannot supply.
+If only one current target or position is available, it is displayed as a
+confirmed value. Controls must reflect actual cardinality; the UI does not
+imply options that sources cannot supply.
 
 Changing the draft objective or target leaves the prior result visibly marked
 `Previous result` until the player explicitly inspects the new draft. A draft
@@ -161,7 +163,7 @@ The result heading owns information shared by every worker:
 - selected objective and target;
 - snapshot freshness and source state;
 - rule identity/version in friendly form;
-- exact score/output meaning and unit;
+- exact saved-base qualification meaning and unit;
 - evidence-completeness limitation;
 - information-only/manual-action statement; and
 - total, comparable, needs-review, and ineligible counts.
@@ -179,7 +181,7 @@ passed/total gate count and component-coverage count.
 The current-assignment region always precedes alternatives and shows:
 
 - target identity;
-- current worker or explicit unassigned/unavailable state;
+- current worker or explicit incomplete/unavailable state;
 - source and freshness state;
 - eligibility/evaluation state under the selected objective;
 - exact result when supported; and
@@ -211,11 +213,12 @@ the worker's position in the complete comparison.
 No row receives a winner crown, best-person badge, percentage bar, universal
 grade, recruitable-companion label, or green/red worth indicator.
 
-## Work-result presentation
+## Qualification-result presentation
 
-Every numeric result is headed with the exact verified work-local name and
-unit selected by E7-000. It is never shown as a percentage unless the source
-unit is verified to be a percentage.
+Every numeric result is headed `Saved base life-skill qualification` with the
+target-required discipline and `qualification points` unit. It is never shown
+as a percentage, current attainment, efficiency, output, or predicted
+production.
 
 The following message remains adjacent to the result heading:
 
@@ -290,11 +293,12 @@ than a numeric difference.
 ## Manual reassignment checklist
 
 The checklist appears only when the result can describe a current assignment
-and one selected alternative. Its items are static information, not interactive
-completion tracking. They may include:
+and one selected alternative. It is a semantic list of static information,
+not checkboxes or interactive completion tracking. Items include:
 
 - confirm the target and current assignment in the game;
-- review vacancy, availability, and hard requirements;
+- review availability, hard requirements, and whether reassignment is
+  currently permitted in the game;
 - review resource or dependency cautions supported by evidence;
 - review unresolved evidence that could change the decision; and
 - make any desired change manually in the game.
@@ -321,7 +325,7 @@ exists. No custom roving focus is required.
 | No valid draft | Scope explanation and disabled inspect action | Select required objective/target |
 | Loading | Busy status and no mixed old/new active result | Atomic success or failure |
 | Available result | Objective, target, current assignment, shared limitation, counts, worker groups | Filter, compare, or inspect another target |
-| Unassigned target | Explicit unassigned state; no fabricated current worker | Compare eligible alternatives when supported |
+| No occupied supported target | Empty target catalogue and no fabricated vacancy | Review another stable save revision |
 | Missing current assignment | Exact missing/incomplete evidence state | Review alternatives without claiming current state |
 | One comparable worker | Stable rank with no superiority claim beyond scope | Review evidence |
 | No comparable workers | Zero count plus honest unranked groups | Review reasons or select another target |
@@ -340,16 +344,17 @@ exists. No custom roving focus is required.
 
 ## Bilingual terminology
 
-Final terminology is confirmed by E7-001 after E7-000 selects the first
-vertical. Initial meanings are:
+E7-001 confirms these first-vertical meanings:
 
 | Contract term | English | Traditional Chinese |
 |---|---|---|
 | page heading | Village workforce planner | 村莊人力規劃 |
 | information only | Information only | 僅供參考 |
-| work objective | Work objective | 工作目標 |
-| assignment target | Assignment target | 指派位置 |
-| inspect action | Inspect assignment | 檢查指派 |
+| work objective | Shop manager base aptitude | 商鋪管理基礎資質 |
+| assignment target | Shop manager position | 商鋪管理位置 |
+| saved component | Saved base life-skill qualification | 存檔基礎技藝資質 |
+| unit | Qualification points | 資質點數 |
+| inspect action | Inspect position | 檢查位置 |
 | current assignment | Current assignment | 目前指派 |
 | current worker | Current worker | 目前人員 |
 | alternative worker | Alternative worker | 替代人員 |
@@ -416,7 +421,7 @@ for the player to review and act on manually in the game.
 
 - Mapper tests cover every snapshot, target, assignment, worker, evaluation,
   comparison, manual-plan, and source state.
-- Rendering tests cover objective/target controls, loading, current/unassigned,
+- Rendering tests cover objective/target controls, loading, current/no-target,
   ranked, tied, needs-review, ineligible, comparison, checklist, previous-result,
   focus, bilingual, and raw-ID-hiding behavior.
 - Localization tests require nonblank English and Traditional Chinese for every

@@ -82,8 +82,10 @@ The first delivery vertical is:
 A target is an existing Taiwu-area building block whose typed configuration
 has `IsShop = true` and a non-negative `RequireLifeSkillType`. Its stable
 assignment identity is the `BuildingBlockKey` plus manager-slot index. The
-current worker, when present, is the character ID at that index in the saved
-shop-manager collection. An absent list entry is an explicit unassigned slot.
+current worker is the positive character ID at that index in the saved
+shop-manager collection. Version 1 exposes occupied saved positions only; the
+installed sources did not establish vacancy capacity or create selectable
+unassigned positions.
 
 For each comparable alternative, the only ordering component is the exact
 saved base life-skill qualification at the target's required discipline index.
@@ -104,7 +106,7 @@ Metadata and method-body inspection showed that
 `CalcTaiwuVillagerEfficiencyInBuilding` depends on the Taiwu-village location,
 the saved shop-manager collection and slot position, character work state and
 age, current life-skill attainment, and an installed global divisor. It cannot
-evaluate an unassigned alternative without first appearing in the current
+evaluate an alternative without that character first appearing in the current
 manager collection, and current attainment enters live special-effect logic.
 
 The guarded run confirmed the boundary:
@@ -132,7 +134,9 @@ The stable aggregate run reported:
 | Saved map-work records | 252 |
 | Supported shop targets | 31 |
 | Shop targets with current manager collections | 31 |
+| Raw manager entries | 217 |
 | Current manager slots across targets | 217 |
+| Explicit unoccupied manager entries | 0 |
 | Candidate/target qualification pairs | 2,976 |
 | Qualification read failures | 0 |
 | Targets with at least two distinct qualification values | 31 |
@@ -157,7 +161,7 @@ dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.Int
 | Scenario | Synthetic evidence | Expected state |
 |---|---|---|
 | `E7-REP-SYN-CURRENT-001` | Supported shop slot has a saved current manager and two candidate-universe alternatives | Preserve current marker; compare all available base qualifications under the same target rule |
-| `E7-REP-SYN-UNASSIGNED-001` | Supported shop slot has no saved manager | Show `Unassigned`; alternatives remain comparable without inventing a current worker |
+| `E7-REP-SYN-NO-TARGET-001` | Snapshot has no occupied supported shop-manager position | Empty target catalogue; do not invent a vacant slot |
 | `E7-REP-SYN-ORDER-001` | Two alternatives have distinct base qualification in the required discipline | Higher exact value orders first for this target only |
 | `E7-REP-SYN-TIE-001` | Two alternatives have equal base qualification | Shared rank and visible tie; identity orders display only |
 | `E7-REP-SYN-CURRENT-OUTSIDE-001` | Current manager is not in the selected alternative universe | Preserve factual current assignment but do not silently make it an eligible proposal |
@@ -191,7 +195,7 @@ The first vertical does not implement or infer:
    first objective-local ordering component.
 5. Reject current attainment and building-efficiency calculation in standalone
    mode; make no productivity or output claim.
-6. Keep exact ties, missing evidence, unsupported versions, conflicts, and
-   unassigned slots explicit.
+6. Keep exact ties, missing evidence, unsupported versions, conflicts, and an
+   empty occupied-target catalogue explicit.
 7. Preserve one-snapshot reads, deterministic projection, cancellation,
    performance budgets, and byte-for-byte non-interference.

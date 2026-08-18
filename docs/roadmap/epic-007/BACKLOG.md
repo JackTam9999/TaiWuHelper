@@ -127,7 +127,7 @@ semantics and standalone runtime safety are established.
 
 ### E7-001 — Define workforce evaluation, comparison, and UI semantics
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -140,20 +140,20 @@ semantics before implementing public Domain or API contracts.
 
 #### Acceptance criteria
 
-- [ ] Stable identities exist for the work objective, target kind, eligibility
+- [x] Stable identities exist for the work objective, target kind, eligibility
       state, requirement kind, component kind, evaluation state, and result.
-- [ ] Current and proposed assignments have different origins and lifecycle.
-- [ ] Hard gates are visibly evaluated before any suitability component.
-- [ ] Score, output, or comparison units and limitations are defined exactly.
-- [ ] Missing, unsupported, partial, stale, and conflicting states have honest
+- [x] Current and proposed assignments have different origins and lifecycle.
+- [x] Hard gates are visibly evaluated before any suitability component.
+- [x] Score, output, or comparison units and limitations are defined exactly.
+- [x] Missing, unsupported, partial, stale, and conflicting states have honest
       UI behavior with no zero fallback.
-- [ ] Tie rank and deterministic order inside ties are defined separately.
-- [ ] Filters and name queries never alter immutable evaluation facts.
-- [ ] The manual checklist is information-only and cannot claim completion.
-- [ ] Shared limitations appear once per result; per-worker disclosures contain
+- [x] Tie rank and deterministic order inside ties are defined separately.
+- [x] Filters and name queries never alter immutable evaluation facts.
+- [x] The manual checklist is information-only and cannot claim completion.
+- [x] Shared limitations appear once per result; per-worker disclosures contain
       only worker-specific evidence to avoid repeated information.
-- [ ] Wide and narrow layouts expose identical facts in one DOM.
-- [ ] English and Traditional Chinese terms are defined before implementation.
+- [x] Wide and narrow layouts expose identical facts in one DOM.
+- [x] English and Traditional Chinese terms are defined before implementation.
 
 #### Evidence
 

@@ -239,7 +239,7 @@ ties and does not silently select a winner.
 ### Manual reassignment checklist
 
 An information-only list describing the current assignment, the proposed
-helper-side alternative, prerequisites, resource or vacancy cautions, and facts
+helper-side alternative, prerequisites, reassignment cautions, and facts
 to verify manually. It never marks an in-game change complete.
 
 ## Initial delivery boundary
@@ -336,7 +336,7 @@ prove stable identity and ordering; source hashes prove non-interference.
 - configured save missing, unreadable, unstable, or unsupported;
 - settlement snapshot loading, available, partial, unsupported, or failed;
 - assignment target available, missing, incomplete, or conflicting;
-- current assignment confirmed, unassigned, incomplete, or unsupported;
+- current assignment confirmed, incomplete, conflicting, or unsupported;
 - worker eligible and comparable;
 - worker ineligible with hard-gate reasons;
 - worker incomplete, unsupported, or conflicting with no zero fallback;

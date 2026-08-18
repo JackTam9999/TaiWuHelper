@@ -66,7 +66,9 @@ internal static class TaiwuVillageWorkforceEvidenceProbe
         var evaluatedPairs = 0;
         var failedPairs = 0;
         var targetsWithCurrentManagers = 0;
+        var managerEntryCount = 0;
         var currentManagerCount = 0;
+        var unoccupiedManagerEntryCount = 0;
         var comparableTargetCount = 0;
         var currentEfficiencyValues = 0;
         var alternativeEfficiencySentinels = 0;
@@ -77,21 +79,36 @@ internal static class TaiwuVillageWorkforceEvidenceProbe
         foreach (var target in shopTargets)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var currentManagers =
+            var managerEntries =
                 buildingDomain.TryGetElement_ShopManagerDict(
                     target.Key,
                     out var managerList)
                     ? managerList.GetCollection()
-                        .Where(characterId => characterId > 0)
-                        .Distinct()
-                        .Order()
                         .ToArray()
                     : [];
+            managerEntryCount += managerEntries.Length;
+            var currentManagerSlots = managerEntries
+                .Select((characterId, slotIndex) =>
+                    (CharacterId: characterId, SlotIndex: slotIndex))
+                .Where(value => value.CharacterId > 0)
+                .ToArray();
+            unoccupiedManagerEntryCount += managerEntries.Length
+                - currentManagerSlots.Length;
+            var currentManagers = currentManagerSlots
+                .Select(value => value.CharacterId)
+                .Distinct()
+                .Order()
+                .ToArray();
             if (currentManagers.Length > 0)
             {
                 targetsWithCurrentManagers++;
                 currentManagerCount += currentManagers.Length;
             }
+
+            signatureFacts.AddRange(currentManagerSlots.Select(value =>
+                $"manager:{target.Key.AreaId}:{target.Key.BlockId}:"
+                + $"{target.Key.BuildingBlockIndex}:{value.SlotIndex}:"
+                + $"{value.CharacterId}"));
 
             var currentManagerSet = currentManagers.ToHashSet();
             var candidates = availableWorkers
@@ -222,7 +239,9 @@ internal static class TaiwuVillageWorkforceEvidenceProbe
             shopTargets.Length,
             targetSkillProfile,
             targetsWithCurrentManagers,
+            managerEntryCount,
             currentManagerCount,
+            unoccupiedManagerEntryCount,
             evaluatedPairs,
             failedPairs,
             failureTypeProfile,
@@ -251,7 +270,9 @@ internal sealed record VillageWorkforceProbe(
     int ShopTargetCount,
     string TargetSkillProfile,
     int ShopTargetsWithCurrentManagers,
+    int ManagerEntryCount,
     int CurrentManagerCount,
+    int UnoccupiedManagerEntryCount,
     int EvaluatedPairCount,
     int EvaluationFailureCount,
     string FailureTypeProfile,

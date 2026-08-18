@@ -61,6 +61,7 @@ public sealed class VillageWorkforceEvidenceIntegrationTests(
         Assert.True(first.ShopTargetCount > 0);
         Assert.True(first.EvaluatedPairCount > 0);
         Assert.Equal(0, first.EvaluationFailureCount);
+        Assert.True(first.ManagerEntryCount >= first.CurrentManagerCount);
         Assert.True(first.ComparableTargetCount > 0);
         Assert.True(first.AlternativeEfficiencySentinelCount > 0
             || first.EfficiencyFailureCount > 0);
@@ -100,14 +101,15 @@ public sealed class VillageWorkforceEvidenceIntegrationTests(
             + "areas={2}; buildings={3}; candidateUniverse={4}; "
             + "broadlyAvailableWorkers={5}; workRecords={6}; "
             + "workTypes={7}; shopTargets={8}; targetSkills={9}; "
-            + "managedTargets={10}; managers={11}; "
-            + "evaluatedPairs={12}; failedPairs={13}; failures={14}; "
-            + "comparableTargets={15}; currentEfficiencyValues={16}; "
-            + "alternativeEfficiencySentinels={17}; "
-            + "efficiencyFailures={18}; efficiencyFailureTypes={19}; "
-            + "qualificationRange={20}..{21}; "
-            + "distinctQualification={22}; coldMs={23:F0}; "
-            + "warmMs={24:F0}; guardedFiles={25}.",
+            + "managedTargets={10}; managerEntries={11}; managers={12}; "
+            + "unoccupiedManagerEntries={13}; evaluatedPairs={14}; "
+            + "failedPairs={15}; failures={16}; comparableTargets={17}; "
+            + "currentEfficiencyValues={18}; "
+            + "alternativeEfficiencySentinels={19}; "
+            + "efficiencyFailures={20}; efficiencyFailureTypes={21}; "
+            + "qualificationRange={22}..{23}; "
+            + "distinctQualification={24}; coldMs={25:F0}; "
+            + "warmMs={26:F0}; guardedFiles={27}.",
             evidence.GameDataVersion,
             evidence.SharedVersion,
             evidence.AreaCount,
@@ -119,7 +121,9 @@ public sealed class VillageWorkforceEvidenceIntegrationTests(
             evidence.ShopTargetCount,
             evidence.TargetSkillProfile,
             evidence.ShopTargetsWithCurrentManagers,
+            evidence.ManagerEntryCount,
             evidence.CurrentManagerCount,
+            evidence.UnoccupiedManagerEntryCount,
             evidence.EvaluatedPairCount,
             evidence.EvaluationFailureCount,
             evidence.FailureTypeProfile,
