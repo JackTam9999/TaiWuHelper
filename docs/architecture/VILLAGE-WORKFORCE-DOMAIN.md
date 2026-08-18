@@ -145,6 +145,16 @@ base-qualification-point unit, higher-is-better direction and weight one.
 Definition construction rejects duplicate identities, invalid component
 shapes and inconsistent profile/provenance fact references.
 
+## Deterministic evaluation
+
+E7-005 adds `VillageWorkforceEvaluator` and the immutable
+`VillageWorkforceEvaluationSet`. The evaluator records all target-specific
+hard gates before creating a component, maps unavailable evidence to typed
+unrankable states, preserves current-only values as descriptive, and marks
+exact equal totals as ties. The evaluation set retains the rule fingerprint,
+current worker and every canonical evaluation fingerprint. See
+[Village workforce evaluator](./VILLAGE-WORKFORCE-EVALUATOR.md).
+
 ## Fingerprints
 
 Worker, target, snapshot, proposal, evaluation and comparison fingerprints use

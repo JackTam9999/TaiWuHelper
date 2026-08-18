@@ -120,7 +120,8 @@ public sealed record WorkforceComponentDefinition
         WorkforceNormalizationKind normalization,
         WorkforceUnit unit,
         WorkforceScoreDirection direction,
-        decimal weight)
+        decimal weight,
+        string explanationIdentity)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
         SourceFact = sourceFact
@@ -171,6 +172,9 @@ public sealed record WorkforceComponentDefinition
         Unit = unit;
         Direction = direction;
         Weight = weight;
+        ExplanationIdentity = WorkforceText.Stable(
+            explanationIdentity,
+            nameof(explanationIdentity));
     }
 
     public WorkforceComponentIdentity Identity { get; }
@@ -185,13 +189,16 @@ public sealed record WorkforceComponentDefinition
 
     public decimal Weight { get; }
 
+    public string ExplanationIdentity { get; }
+
     internal string StableKey => string.Join('|',
         Identity.StableKey,
         SourceFact.StableKey,
         WorkforceText.EnumKey(Normalization),
         WorkforceText.EnumKey(Unit),
         WorkforceText.EnumKey(Direction),
-        WorkforceText.Number(Weight));
+        WorkforceText.Number(Weight),
+        ExplanationIdentity);
 }
 
 public sealed class WorkforceRuleDefinition
@@ -558,7 +565,9 @@ public static class VerifiedVillageWorkforceRules
                 WorkforceNormalizationKind.Identity,
                 WorkforceUnit.BaseQualificationPoint,
                 WorkforceScoreDirection.HigherIsBetter,
-                weight: 1m)],
+                weight: 1m,
+                explanationIdentity:
+                    "REQUIRED_BASE_LIFE_SKILL_QUALIFICATION_EXACT_VALUE")],
             [
                 new WorkforceRuleLimitation(
                     "SAVED_BASE_QUALIFICATION_ONLY"),

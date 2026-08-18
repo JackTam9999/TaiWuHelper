@@ -29,7 +29,8 @@ public sealed record WorkforceRequirementEvaluation
         WorkforceRequirementKind requirement,
         WorkforceRequirementOutcome outcome,
         string reasonIdentity,
-        IEnumerable<WorkforceEvidenceReference> evidence)
+        IEnumerable<WorkforceEvidenceReference> evidence,
+        IEnumerable<WorkforceConflictValue>? conflicts = null)
     {
         WorkforceText.Defined(requirement, nameof(requirement));
         WorkforceText.Defined(outcome, nameof(outcome));
@@ -39,6 +40,14 @@ public sealed record WorkforceRequirementEvaluation
             reasonIdentity,
             nameof(reasonIdentity));
         Evidence = CopyEvidence(evidence, nameof(evidence));
+        Conflicts = CopyConflicts(conflicts ?? [], nameof(conflicts));
+        if (!Conflicts.IsEmpty
+            && Outcome != WorkforceRequirementOutcome.Conflicting)
+        {
+            throw new ArgumentException(
+                "Only a conflicting requirement may retain conflict values.",
+                nameof(conflicts));
+        }
     }
 
     public WorkforceRequirementKind Requirement { get; }
@@ -49,11 +58,14 @@ public sealed record WorkforceRequirementEvaluation
 
     public ImmutableArray<WorkforceEvidenceReference> Evidence { get; }
 
+    public ImmutableArray<WorkforceConflictValue> Conflicts { get; }
+
     internal string StableKey => string.Join('|',
         WorkforceText.EnumKey(Requirement),
         WorkforceText.EnumKey(Outcome),
         ReasonIdentity,
-        string.Join("||", Evidence.Select(item => item.StableKey)));
+        string.Join("||", Evidence.Select(item => item.StableKey)),
+        string.Join("||", Conflicts.Select(item => item.StableKey)));
 
     internal static ImmutableArray<WorkforceEvidenceReference> CopyEvidence(
         IEnumerable<WorkforceEvidenceReference> evidence,
@@ -80,6 +92,32 @@ public sealed record WorkforceRequirementEvaluation
             item => item.StableKey,
             StringComparer.Ordinal)];
     }
+
+    private static ImmutableArray<WorkforceConflictValue> CopyConflicts(
+        IEnumerable<WorkforceConflictValue> conflicts,
+        string parameterName)
+    {
+        ArgumentNullException.ThrowIfNull(conflicts);
+        var copied = conflicts.ToImmutableArray();
+        if (copied.Any(item => item is null))
+        {
+            throw new ArgumentException(
+                "Requirement conflicts cannot contain null entries.",
+                parameterName);
+        }
+
+        if (copied.GroupBy(item => item.StableKey, StringComparer.Ordinal)
+            .Any(group => group.Count() > 1))
+        {
+            throw new ArgumentException(
+                "Requirement conflicts cannot contain duplicates.",
+                parameterName);
+        }
+
+        return [.. copied.OrderBy(
+            item => item.StableKey,
+            StringComparer.Ordinal)];
+    }
 }
 
 public sealed record WorkforceScoreComponent
@@ -90,6 +128,7 @@ public sealed record WorkforceScoreComponent
         decimal normalizedValue,
         decimal weight,
         decimal contribution,
+        string explanationIdentity,
         IEnumerable<WorkforceEvidenceReference> evidence)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
@@ -119,6 +158,9 @@ public sealed record WorkforceScoreComponent
         NormalizedValue = normalizedValue;
         Weight = weight;
         Contribution = contribution;
+        ExplanationIdentity = WorkforceText.Stable(
+            explanationIdentity,
+            nameof(explanationIdentity));
         Evidence = WorkforceRequirementEvaluation.CopyEvidence(
             evidence,
             nameof(evidence));
@@ -136,6 +178,8 @@ public sealed record WorkforceScoreComponent
 
     public decimal Contribution { get; }
 
+    public string ExplanationIdentity { get; }
+
     public ImmutableArray<WorkforceEvidenceReference> Evidence { get; }
 
     internal string StableKey => string.Join('|',
@@ -145,6 +189,7 @@ public sealed record WorkforceScoreComponent
         WorkforceText.Number(NormalizedValue),
         WorkforceText.Number(Weight),
         WorkforceText.Number(Contribution),
+        ExplanationIdentity,
         string.Join("||", Evidence.Select(item => item.StableKey)));
 }
 

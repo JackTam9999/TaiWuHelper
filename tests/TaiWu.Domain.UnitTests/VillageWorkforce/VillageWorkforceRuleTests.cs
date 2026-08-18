@@ -56,6 +56,9 @@ public sealed class VillageWorkforceRuleTests
         Assert.Equal(WorkforceScoreDirection.HigherIsBetter, component.Direction);
         Assert.Equal(1m, component.Weight);
         Assert.Equal(
+            "REQUIRED_BASE_LIFE_SKILL_QUALIFICATION_EXACT_VALUE",
+            component.ExplanationIdentity);
+        Assert.Equal(
             [
                 "NO_EFFICIENCY_OUTPUT_OR_REVENUE",
                 "OCCUPIED_SHOP_REPLACEMENT_ONLY",
@@ -137,7 +140,8 @@ public sealed class VillageWorkforceRuleTests
                 component.Normalization,
                 component.Unit,
                 component.Direction,
-                weight: 0m));
+                weight: 0m,
+                explanationIdentity: component.ExplanationIdentity));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new WorkforceComponentDefinition(
                 component.Identity,
@@ -145,7 +149,8 @@ public sealed class VillageWorkforceRuleTests
                 component.Normalization,
                 (WorkforceUnit)99,
                 component.Direction,
-                component.Weight));
+                component.Weight,
+                component.ExplanationIdentity));
         Assert.Throws<ArgumentException>(() =>
             new WorkforceComponentDefinition(
                 component.Identity,
@@ -154,7 +159,8 @@ public sealed class VillageWorkforceRuleTests
                 component.Normalization,
                 component.Unit,
                 component.Direction,
-                component.Weight));
+                component.Weight,
+                component.ExplanationIdentity));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new WorkforceFactIdentity((WorkforceFactKind)99));
     }

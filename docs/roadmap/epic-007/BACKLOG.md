@@ -278,7 +278,7 @@ gate. Raw source labels remain display evidence and cannot select a rule.
 
 ### E7-005 — Evaluate worker eligibility and deterministic suitability
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -291,19 +291,19 @@ component, tie, missing fact, conflict, and limitation.
 
 #### Acceptance criteria
 
-- [ ] Candidate-universe eligibility and assignment hard gates run before
+- [x] Candidate-universe eligibility and assignment hard gates run before
       numeric components.
-- [ ] A failed gate cannot be hidden as a score penalty or overridden by a high
+- [x] A failed gate cannot be hidden as a score penalty or overridden by a high
       aptitude.
-- [ ] Missing required evidence makes the evaluation unrankable without a zero
+- [x] Missing required evidence makes the evaluation unrankable without a zero
       component.
-- [ ] Every available component retains raw value, normalized value, weight,
+- [x] Every available component retains raw value, normalized value, weight,
       contribution, unit, evidence reference, and explanation identity.
-- [ ] Exact ties remain ties; a stable identity orders rendering only.
-- [ ] Current worker status does not automatically confer rank or advantage.
-- [ ] Identical language-independent inputs produce identical evaluations and
+- [x] Exact ties remain ties; a stable identity orders rendering only.
+- [x] Current worker status does not automatically confer rank or advantage.
+- [x] Identical language-independent inputs produce identical evaluations and
       fingerprints.
-- [ ] Tests cover ranked, tied, ineligible, incomplete, unsupported,
+- [x] Tests cover ranked, tied, ineligible, incomplete, unsupported,
       conflicting, and current-worker cases.
 
 #### Evidence

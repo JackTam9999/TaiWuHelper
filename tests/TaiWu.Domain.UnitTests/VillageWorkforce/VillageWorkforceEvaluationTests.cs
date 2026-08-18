@@ -72,6 +72,7 @@ public sealed class VillageWorkforceEvaluationTests
             0.6m,
             1m,
             0.6m,
+            "QUALIFICATION_EXACT_VALUE",
             []));
         Assert.Throws<ArgumentOutOfRangeException>(
             () => new WorkforceScoreComponent(
@@ -80,6 +81,7 @@ public sealed class VillageWorkforceEvaluationTests
                 60m,
                 2m,
                 120m,
+                "QUALIFICATION_EXACT_VALUE",
                 []));
     }
 

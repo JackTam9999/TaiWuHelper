@@ -6,7 +6,7 @@ internal static class VillageWorkforceFixtures
 {
     public static readonly WorkforceSourceVersions Versions = new(
         new string('A', 64),
-        "1.0.0+supported",
+        VerifiedVillageWorkforceRules.SupportedGameDataVersion,
         "1",
         "1",
         "1");
@@ -20,7 +20,7 @@ internal static class VillageWorkforceFixtures
     public static readonly WorkforceProvenance GameDataProvenance = new(
         WorkforceEvidenceSourceKind.InstalledGameData,
         "GAMEDATA",
-        "1.0.0+supported",
+        VerifiedVillageWorkforceRules.SupportedGameDataVersion,
         "ASSEMBLY_A");
 
     public static WorkforceEvidenceReference SaveEvidence(string identity) =>
@@ -123,6 +123,7 @@ internal static class VillageWorkforceFixtures
             qualification,
             1m,
             qualification,
+            "QUALIFICATION_EXACT_VALUE",
             evidence);
         return new WorkforceEvaluation(
             resultIdentity,

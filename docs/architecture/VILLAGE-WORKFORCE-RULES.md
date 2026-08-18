@@ -95,6 +95,7 @@ Version `1.0.0` has exactly one component:
 | Unit | `BaseQualificationPoint` |
 | Direction | `HigherIsBetter` |
 | Weight | `1` |
+| Explanation identity | `REQUIRED_BASE_LIFE_SKILL_QUALIFICATION_EXACT_VALUE` |
 
 The component constructor rejects a different discipline, membership source,
 unknown source field, non-identity normalization, mismatched or unknown unit,
