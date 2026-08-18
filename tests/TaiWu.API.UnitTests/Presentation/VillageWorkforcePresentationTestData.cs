@@ -9,15 +9,24 @@ internal static class VillageWorkforcePresentationTestData
     private const string SaveSha =
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-    public static VillageWorkforceSnapshot Snapshot()
-    {
-        var workers = new[]
-        {
+    public static VillageWorkforceSnapshot Snapshot() =>
+        Snapshot(
+        [
             Worker(41001, 64),
             Worker(41002, 72),
             Worker(41003, 72),
-            Worker(41004, null)
-        };
+            Worker(
+                41004,
+                null,
+                WorkforceEvidenceState.Incomplete)
+        ],
+        currentCharacterId: 41001);
+
+    public static VillageWorkforceSnapshot Snapshot(
+        IEnumerable<VillageWorkerProfile> workers,
+        int currentCharacterId)
+    {
+        var copiedWorkers = workers.ToArray();
         var target = new ShopManagerTarget(
             new ShopManagerTargetIdentity(
                 new ShopBuildingIdentity(11, 22, 33),
@@ -30,18 +39,19 @@ internal static class VillageWorkforcePresentationTestData
             new SettlementIdentity(44),
             new DateTimeOffset(2026, 8, 18, 12, 0, 0, TimeSpan.Zero),
             Versions(),
-            workers,
+            copiedWorkers,
             [target],
             [new CurrentShopManagerAssignment(
                 target.Identity,
-                workers[0].Identity,
+                new VillageWorkerIdentity(currentCharacterId),
                 SaveProvenance())],
             []);
     }
 
-    public static async Task<VillageWorkforceFinderResult> ResultAsync()
+    public static async Task<VillageWorkforceFinderResult> ResultAsync(
+        VillageWorkforceSnapshot? snapshot = null)
     {
-        var snapshot = Snapshot();
+        snapshot ??= Snapshot();
         var reader = Substitute.For<IVillageWorkforceSnapshotReader>();
         reader.ReadAsync(
                 VillageWorkforceSnapshotReadRequest.Current,
@@ -56,33 +66,57 @@ internal static class VillageWorkforcePresentationTestData
                     VerifiedVillageWorkforceRules.ObjectiveVersion)));
     }
 
-    private static VillageWorkerProfile Worker(
+    public static VillageWorkerProfile Worker(
         int characterId,
-        short? qualification)
+        short? qualification,
+        WorkforceEvidenceState qualificationState =
+            WorkforceEvidenceState.Confirmed,
+        WorkforceWorkerState workerState = WorkforceWorkerState.Eligible,
+        bool candidate = true)
     {
         var save = SaveProvenance();
         var qualificationIdentity = new WorkforceFactIdentity(
             WorkforceFactKind.BaseLifeSkillQualification,
             new LifeSkillDisciplineIdentity(6));
-        var qualificationFact = qualification.HasValue
-            ? WorkforceFact.Confirmed(
+        var qualificationFact = qualificationState switch
+        {
+            WorkforceEvidenceState.Confirmed => WorkforceFact.Confirmed(
                 qualificationIdentity,
-                WorkforceFactValue.Int16(qualification.Value),
+                WorkforceFactValue.Int16(qualification
+                    ?? throw new ArgumentNullException(nameof(qualification))),
                 save,
-                [new WorkforceEvidenceReference("QUALIFICATION", save)])
-            : WorkforceFact.Incomplete(
+                [new WorkforceEvidenceReference("QUALIFICATION", save)]),
+            WorkforceEvidenceState.Incomplete => WorkforceFact.Incomplete(
                 qualificationIdentity,
                 new WorkforceUnavailableReason("QUALIFICATION_MISSING"),
-                [new WorkforceEvidenceReference("QUALIFICATION", save)]);
+                [new WorkforceEvidenceReference("QUALIFICATION", save)]),
+            WorkforceEvidenceState.Unsupported => WorkforceFact.Unsupported(
+                qualificationIdentity,
+                new WorkforceUnavailableReason("QUALIFICATION_UNSUPPORTED"),
+                [new WorkforceEvidenceReference("QUALIFICATION", save)]),
+            WorkforceEvidenceState.Conflicting => WorkforceFact.Conflicting(
+                qualificationIdentity,
+                [
+                    new WorkforceConflictValue(
+                        WorkforceFactValue.Int16(41),
+                        save),
+                    new WorkforceConflictValue(
+                        WorkforceFactValue.Int16(42),
+                        save)
+                ],
+                [new WorkforceEvidenceReference("QUALIFICATION", save)]),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(qualificationState))
+        };
         return new VillageWorkerProfile(
             new VillageWorkerIdentity(characterId),
-            WorkforceWorkerState.Eligible,
+            workerState,
             Versions(),
             [
                 WorkforceFact.Confirmed(
                     new WorkforceFactIdentity(
                         WorkforceFactKind.CandidateUniverseMembership),
-                    WorkforceFactValue.Boolean(true),
+                    WorkforceFactValue.Boolean(candidate),
                     save,
                     [new WorkforceEvidenceReference("WORK_CANDIDATE", save)]),
                 qualificationFact

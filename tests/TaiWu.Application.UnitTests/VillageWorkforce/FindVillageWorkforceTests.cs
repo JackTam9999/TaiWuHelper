@@ -344,6 +344,64 @@ public sealed class FindVillageWorkforceTests
             Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Identical_requests_repeat_every_semantic_identity_and_order()
+    {
+        var snapshot = Snapshot([
+            Worker(101, 60),
+            Worker(202, 80),
+            Worker(303, 80)
+        ]);
+        var reader = Reader(
+            VillageWorkforceSnapshotReadResult.Complete(snapshot));
+        var request = Request(
+            snapshot,
+            firstComparisonWorker: new VillageWorkerIdentity(202),
+            secondComparisonWorker: new VillageWorkerIdentity(303),
+            proposedWorker: new VillageWorkerIdentity(202));
+        var workflow = new FindVillageWorkforce(reader);
+
+        var first = await workflow.ExecuteAsync(
+            request,
+            TestContext.Current.CancellationToken);
+        var second = await workflow.ExecuteAsync(
+            request,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(first.Fingerprint, second.Fingerprint);
+        Assert.Equal(
+            first.EvaluationSet?.Fingerprint,
+            second.EvaluationSet?.Fingerprint);
+        Assert.Equal(
+            first.Shortlist?.Fingerprint,
+            second.Shortlist?.Fingerprint);
+        Assert.Equal(
+            first.Comparison?.Fingerprint,
+            second.Comparison?.Fingerprint);
+        Assert.Equal(
+            first.ManualPlan?.Fingerprint,
+            second.ManualPlan?.Fingerprint);
+        Assert.Equal(
+            first.Shortlist?.Comparable.Select(item => (
+                item.CompetitionRank,
+                item.Evaluation.Worker.CharacterId)),
+            second.Shortlist?.Comparable.Select(item => (
+                item.CompetitionRank,
+                item.Evaluation.Worker.CharacterId)));
+        Assert.Equal(
+            first.EvaluationSet?.Evaluations.Select(item => (
+                item.Worker.CharacterId,
+                item.State,
+                item.Fingerprint)),
+            second.EvaluationSet?.Evaluations.Select(item => (
+                item.Worker.CharacterId,
+                item.State,
+                item.Fingerprint)));
+        await reader.Received(2).ReadAsync(
+            VillageWorkforceSnapshotReadRequest.Current,
+            TestContext.Current.CancellationToken);
+    }
+
     private const string ShaA =
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     private const string ShaB =

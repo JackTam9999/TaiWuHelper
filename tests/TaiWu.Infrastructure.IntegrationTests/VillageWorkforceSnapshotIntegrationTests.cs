@@ -8,6 +8,7 @@ using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
 
+[Collection(TaiwuArchivePerformanceCollection.Name)]
 public sealed class VillageWorkforceSnapshotIntegrationTests(
     ITestOutputHelper output)
 {

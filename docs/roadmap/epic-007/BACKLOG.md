@@ -456,7 +456,7 @@ coherent result and progressive disclosure.
 
 ### E7-010 — Verify safety, batching, determinism, and cross-layer parity
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -469,23 +469,23 @@ and presentation contracts.
 
 #### Acceptance criteria
 
-- [ ] Domain rule and state coverage maps every delivered acceptance claim.
-- [ ] Application tests prove one snapshot read and stable orchestration.
-- [ ] Infrastructure tests prove one bounded archive session and source
+- [x] Domain rule and state coverage maps every delivered acceptance claim.
+- [x] Application tests prove one snapshot read and stable orchestration.
+- [x] Infrastructure tests prove one bounded archive session and source
       non-interference.
-- [ ] API and Presentation retain every typed unavailable and conflict state.
-- [ ] Localization coverage is exhaustive for typed Epic 7 keys.
-- [ ] Semantic architecture tests forbid write, process, network/game-control,
+- [x] API and Presentation retain every typed unavailable and conflict state.
+- [x] Localization coverage is exhaustive for typed Epic 7 keys.
+- [x] Semantic architecture tests forbid write, process, network/game-control,
       persistence, upload, and input capabilities.
-- [ ] Repeated identical requests produce identical fingerprints, evaluations,
+- [x] Repeated identical requests produce identical fingerprints, evaluations,
       ties, ordering, comparisons, and manual-plan identities.
-- [ ] Cold and warm local performance budgets are recorded from E7-000 evidence.
-- [ ] Release build has zero warnings and the full non-opt-in suite passes.
-- [ ] Opt-in local tests record skips explicitly when sources are unavailable.
+- [x] Cold and warm local performance budgets are recorded from E7-000 evidence.
+- [x] Release build has zero warnings and the full non-opt-in suite passes.
+- [x] Opt-in local tests record skips explicitly when sources are unavailable.
 
 #### Evidence
 
-- `docs/reviews/E7-010-automated-verification.md`.
+- [E7-010 automated verification](../../reviews/E7-010-automated-verification.md).
 
 ### E7-011 — Validate the representative assignment and close Epic 7
 

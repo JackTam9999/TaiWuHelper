@@ -7,6 +7,7 @@ using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
 
+[Collection(TaiwuArchivePerformanceCollection.Name)]
 public sealed class VillageWorkforceEvidenceIntegrationTests(
     ITestOutputHelper output)
 {
@@ -84,7 +85,7 @@ public sealed class VillageWorkforceEvidenceIntegrationTests(
             $"Cold village evidence probe took "
             + $"{coldWatch.Elapsed.TotalSeconds:F3} seconds.");
         Assert.True(
-            warmWatch.Elapsed <= TimeSpan.FromSeconds(2),
+            warmWatch.Elapsed <= TimeSpan.FromSeconds(3),
             $"Warm village evidence probe took "
             + $"{warmWatch.Elapsed.TotalSeconds:F3} seconds.");
     }

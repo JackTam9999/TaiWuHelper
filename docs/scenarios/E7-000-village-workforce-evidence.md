@@ -145,10 +145,25 @@ The stable aggregate run reported:
 | Guarded files unchanged | 3 of 3 |
 
 Both projections produced the same aggregate signature. The cold run passed
-the 30-second budget and the warm run passed the 2-second budget. Cancellation
-is checked while enumerating areas, targets, and candidate pairs. Every fact
-came from one archive-session callback per projection; no candidate or target
-caused another archive open.
+the 30-second budget. The 1.881-second warm observation was the original
+pre-hardening baseline. Cancellation is checked while enumerating areas,
+targets, and candidate pairs. Every fact came from one archive-session callback
+per projection; no candidate or target caused another archive open.
+
+### E7-010 cache-hardening reconciliation
+
+The archive cache now verifies the full source fingerprint before and after a
+reused projection. This deliberately detects same-size, same-timestamp source
+replacement and changes made during a read; removing either verification would
+weaken the read-only freshness boundary. Sequential Release measurements after
+that hardening were 2.753 seconds for this aggregate probe and 2.714 seconds for
+the production snapshot projection. The current warm budget is therefore three
+seconds, while the cold budget remains 30 seconds.
+
+The two real-save workforce probes share a non-parallel performance collection.
+Their stopwatches consequently measure archive work rather than time spent
+waiting for another opt-in cold-load test to release the process-wide GameData
+reader lock.
 
 Verification command:
 
