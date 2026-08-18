@@ -31,6 +31,24 @@ public sealed partial class ArchitectureBoundaryTests
         "Query"
     ];
 
+    [Fact]
+    public void Snapshot_metadata_is_path_free_and_ambient_clocks_are_injected()
+    {
+        Assert.DoesNotContain(
+            typeof(CombatSnapshotMetadata).GetProperties(),
+            property => property.Name.Contains(
+                "Path",
+                StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            typeof(TaiwuCombatSnapshotReader).GetConstructors()
+                .SelectMany(constructor => constructor.GetParameters()),
+            parameter => parameter.ParameterType == typeof(TimeProvider));
+        Assert.Contains(
+            typeof(TaiwuTargetLookupReader).GetConstructors()
+                .SelectMany(constructor => constructor.GetParameters()),
+            parameter => parameter.ParameterType == typeof(TimeProvider));
+    }
+
     private static readonly (string Description, Regex Pattern)[] SaveAdapterForbiddenApis =
     [
         ("file write", FileWritePattern()),

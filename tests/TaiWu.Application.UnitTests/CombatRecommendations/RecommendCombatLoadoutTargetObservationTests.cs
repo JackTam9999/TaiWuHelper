@@ -15,6 +15,8 @@ namespace TaiWu.Application.UnitTests.CombatRecommendations;
 
 public sealed class RecommendCombatLoadoutTargetObservationTests
 {
+    private const string TestSavePath = @"C:\Taiwu\local.sav";
+
     private static readonly DateTimeOffset SaveTime = DateTimeOffset.Parse(
         "2026-08-07T20:00:00Z");
 
@@ -31,7 +33,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 Arg.Any<CancellationToken>())
             .Returns(snapshot);
         var request = new RecommendCombatLoadoutRequest(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Balanced,
             language: TaiWu.Application.Localization.TaiwuLanguage.English,
@@ -51,7 +53,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
 
         var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -131,7 +133,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             reader,
             resolver);
         var observedRequest = new RecommendCombatLoadoutRequest(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Balanced,
             targetObservation: new TargetObservationRequest(
@@ -149,7 +151,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 ]));
         var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -162,7 +164,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             TestContext.Current.CancellationToken);
         var cleared = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -349,7 +351,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 Arg.Any<CancellationToken>())
             .Returns(snapshot);
         var request = new RecommendCombatLoadoutRequest(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Balanced,
             targetObservation: new TargetObservationRequest(
@@ -426,7 +428,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             .Returns(snapshot);
         var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -504,7 +506,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             .Returns(snapshot);
         var saveOnly = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -605,7 +607,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
                 Arg.Any<CancellationToken>())
             .Returns(snapshot);
         var request = new RecommendCombatLoadoutRequest(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Balanced,
             targetObservation: new TargetObservationRequest(
@@ -670,7 +672,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
             .Returns(snapshot);
         var saveOnly = new RecommendCombatLoadout(reader);
         var saveOnlyRequest = new RecommendCombatLoadoutRequest(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Balanced);
         var initial = await saveOnly.ExecuteAsync(
@@ -819,7 +821,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
     {
         var snapshot = Snapshot();
         return new RecommendCombatLoadoutRequest(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Balanced,
             targetObservation: new TargetObservationRequest(
@@ -835,7 +837,7 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         string visibleName,
         int skillId,
         PracticeDirection direction) => new(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Balanced,
             targetObservation: new TargetObservationRequest(
@@ -860,7 +862,6 @@ public sealed class RecommendCombatLoadoutTargetObservationTests
         var skills = targetSkills ?? [TargetSkill(719, "Target Art")];
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                @"C:\Taiwu\local.sav",
                 new string('A', 64),
                 SaveTime,
                 SnapshotValue<DateTimeOffset>.Available(SaveTime),

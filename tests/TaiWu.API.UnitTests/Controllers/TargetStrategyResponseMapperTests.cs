@@ -19,6 +19,9 @@ namespace TaiWu.API.UnitTests.Controllers;
 
 public sealed class TargetStrategyResponseMapperTests
 {
+    private const string PrivateSavePath =
+        @"C:\private\never-expose\local.sav";
+
     [Fact]
     public async Task Complete_strategy_maps_in_stable_bilingual_order()
     {
@@ -134,7 +137,7 @@ public sealed class TargetStrategyResponseMapperTests
 
         var json = JsonSerializer.Serialize(
             CombatRecommendationResponseMapper.Map(recommendation));
-        Assert.DoesNotContain(snapshot.Metadata.SavePath, json);
+        Assert.DoesNotContain(PrivateSavePath, json);
         Assert.DoesNotContain(
             "開始施展此功法時",
             json,
@@ -522,7 +525,7 @@ public sealed class TargetStrategyResponseMapperTests
             .Returns(snapshot);
         return await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                PrivateSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -595,7 +598,6 @@ public sealed class TargetStrategyResponseMapperTests
         CombatLoadoutSnapshot targetLoadout,
         string gameDataVersion) => new(
         new CombatSnapshotMetadata(
-            @"C:\private\never-expose\local.sav",
             new string('A', 64),
             DateTimeOffset.Parse("2026-08-10T12:00:00Z"),
             SnapshotValue<DateTimeOffset>.Available(

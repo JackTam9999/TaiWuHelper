@@ -551,8 +551,8 @@ public sealed class LocalGameDataIntegrationTests
                     TaiwuLanguage.Chinese),
                 TestContext.Current.CancellationToken);
 
-            AssertGoldenSnapshot(first, savePath);
-            AssertGoldenSnapshot(second, savePath);
+            AssertGoldenSnapshot(first);
+            AssertGoldenSnapshot(second);
             AssertLocalizedNames(first);
             AssertLocalizedLocation(targetLookup);
             AssertRepeatable(first, second);
@@ -992,19 +992,13 @@ public sealed class LocalGameDataIntegrationTests
     }
 
     private static void AssertGoldenSnapshot(
-        Domain.CombatSnapshots.CombatSnapshot snapshot,
-        string expectedSavePath)
+        Domain.CombatSnapshots.CombatSnapshot snapshot)
     {
         Assert.Equal(GoldenPlayerId, snapshot.Player.CharacterId);
         Assert.Equal(GoldenTargetId, snapshot.Target.CharacterId);
         Assert.True(snapshot.Target.Age.IsAvailable);
         Assert.InRange(snapshot.Target.Age.Value, 1, 200);
-        Assert.True(
-            string.Equals(
-                Path.GetFullPath(snapshot.Metadata.SavePath),
-                expectedSavePath,
-                StringComparison.OrdinalIgnoreCase),
-            "The snapshot did not retain the configured save source.");
+        Assert.Equal(64, snapshot.Metadata.SaveSha256.Length);
     }
 
     private static void AssertRepeatable(

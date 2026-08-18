@@ -686,7 +686,6 @@ public sealed class TargetThreatAnalyzerTests
     {
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                @"C:\Taiwu\local.sav",
                 new string('A', 64),
                 DateTimeOffset.Parse("2026-07-30T12:00:00Z"),
                 SnapshotValue<DateTimeOffset>.Available(

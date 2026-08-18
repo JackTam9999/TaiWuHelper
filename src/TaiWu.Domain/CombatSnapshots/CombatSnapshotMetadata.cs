@@ -3,19 +3,11 @@ namespace TaiWu.Domain.CombatSnapshots;
 public sealed record CombatSnapshotMetadata
 {
     public CombatSnapshotMetadata(
-        string savePath,
         string saveSha256,
         DateTimeOffset capturedAt,
         SnapshotValue<DateTimeOffset> saveLastWriteTimeUtc,
         SnapshotValue<string> gameDataVersion)
     {
-        if (string.IsNullOrWhiteSpace(savePath))
-        {
-            throw new ArgumentException(
-                "A snapshot requires its save source path.",
-                nameof(savePath));
-        }
-
         if (string.IsNullOrWhiteSpace(saveSha256)
             || saveSha256.Length != 64
             || !saveSha256.All(Uri.IsHexDigit))
@@ -25,7 +17,6 @@ public sealed record CombatSnapshotMetadata
                 nameof(saveSha256));
         }
 
-        SavePath = savePath;
         SaveSha256 = saveSha256.ToUpperInvariant();
         CapturedAtUtc = capturedAt.ToUniversalTime();
         SaveLastWriteTimeUtc = saveLastWriteTimeUtc
@@ -33,8 +24,6 @@ public sealed record CombatSnapshotMetadata
         GameDataVersion = gameDataVersion
             ?? throw new ArgumentNullException(nameof(gameDataVersion));
     }
-
-    public string SavePath { get; }
 
     public string SaveSha256 { get; }
 

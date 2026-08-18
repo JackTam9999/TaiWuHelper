@@ -268,7 +268,6 @@ public sealed class CombatSnapshotObservationMergerTests
 
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                "local.sav",
                 new string('A', 64),
                 SaveModifiedAt.AddMinutes(1),
                 saveTimestampAvailable

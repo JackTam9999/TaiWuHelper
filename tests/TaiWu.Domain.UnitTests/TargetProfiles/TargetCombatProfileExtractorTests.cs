@@ -538,7 +538,6 @@ public sealed class TargetCombatProfileExtractorTests
         string targetName = "Target",
         IEnumerable<SnapshotWarning>? warnings = null) => new(
             new CombatSnapshotMetadata(
-                @"C:\local\save.sav",
                 new string('A', 64),
                 DateTimeOffset.Parse("2026-08-10T12:00:00Z"),
                 SnapshotValue<DateTimeOffset>.Available(

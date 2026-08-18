@@ -15,6 +15,8 @@ namespace TaiWu.Application.UnitTests.LoadoutComparisons;
 
 public sealed class CombatLoadoutComparisonBuilderTests
 {
+    private const string TestSavePath = @"C:\Taiwu\local.sav";
+
     [Fact]
     public async Task Builds_current_and_all_policy_columns_from_one_result()
     {
@@ -512,7 +514,7 @@ public sealed class CombatLoadoutComparisonBuilderTests
             .Returns(snapshot);
         return await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -641,7 +643,6 @@ public sealed class CombatLoadoutComparisonBuilderTests
     {
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                @"C:\Taiwu\local.sav",
                 new string('A', 64),
                 DateTimeOffset.Parse("2026-07-30T12:00:00Z"),
                 SnapshotValue<DateTimeOffset>.Available(

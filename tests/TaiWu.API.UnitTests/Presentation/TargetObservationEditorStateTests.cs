@@ -370,7 +370,6 @@ public sealed class TargetObservationEditorStateTests
 
     private static CombatSnapshot Snapshot() => new(
         new CombatSnapshotMetadata(
-            "local.sav",
             new string('A', 64),
             ObservedAt,
             SnapshotValue<DateTimeOffset>.Available(

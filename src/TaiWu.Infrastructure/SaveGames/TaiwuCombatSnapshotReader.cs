@@ -12,7 +12,8 @@ namespace TaiWu.Infrastructure.SaveGames;
 
 internal sealed class TaiwuCombatSnapshotReader(
     TaiwuArchiveReadSession readSession,
-    TaiwuGameTextResolver textResolver) : ICombatSnapshotReader
+    TaiwuGameTextResolver textResolver,
+    TimeProvider timeProvider) : ICombatSnapshotReader
 {
     public Task<CombatSnapshot> ReadAsync(
         CombatSnapshotReadRequest request,
@@ -30,6 +31,7 @@ internal sealed class TaiwuCombatSnapshotReader(
                     textResolver.CreateContext(
                         request.SaveFilePath,
                         request.Language),
+                    timeProvider.GetUtcNow(),
                     token);
                 return request.CurrentLoadoutObservation is null
                     ? snapshot
@@ -44,6 +46,7 @@ internal sealed class TaiwuCombatSnapshotReader(
         TaiwuArchiveReadContext readContext,
         int targetCharacterId,
         TaiwuGameTextContext text,
+        DateTimeOffset capturedAtUtc,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -95,9 +98,8 @@ internal sealed class TaiwuCombatSnapshotReader(
 
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                readContext.SaveFilePath,
                 readContext.SourceFingerprint.Sha256,
-                DateTimeOffset.UtcNow,
+                capturedAtUtc,
                 SnapshotValue<DateTimeOffset>.Available(
                     readContext.SourceFingerprint.LastWriteTimeUtc),
                 GetGameDataVersion()),

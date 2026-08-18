@@ -112,7 +112,6 @@ public sealed class CombatSnapshotModelTests
     public void Metadata_normalizes_hash_and_time_to_utc()
     {
         var metadata = new CombatSnapshotMetadata(
-            "local.sav",
             new string('a', 64),
             new DateTimeOffset(2026, 7, 29, 23, 0, 0, TimeSpan.FromHours(1)),
             SnapshotValue<DateTimeOffset>.Unavailable(
@@ -155,7 +154,6 @@ public sealed class CombatSnapshotModelTests
         IEnumerable<SnapshotWarning> warnings)
     {
         var metadata = new CombatSnapshotMetadata(
-            "local.sav",
             new string('B', 64),
             DateTimeOffset.UtcNow,
             SnapshotValue<DateTimeOffset>.Available(DateTimeOffset.UtcNow),

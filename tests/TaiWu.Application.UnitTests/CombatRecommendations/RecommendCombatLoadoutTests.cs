@@ -12,6 +12,8 @@ namespace TaiWu.Application.UnitTests.CombatRecommendations;
 
 public sealed class RecommendCombatLoadoutTests
 {
+    private const string TestSavePath = @"C:\Taiwu\local.sav";
+
     [Fact]
     public async Task Execute_orchestrates_read_analysis_generation_and_plan()
     {
@@ -23,7 +25,7 @@ public sealed class RecommendCombatLoadoutTests
             snapshot.Player.EquippedSkills,
             snapshot.Player.GenericSlotAllocation);
         var request = new RecommendCombatLoadoutRequest(
-            snapshot.Metadata.SavePath,
+            TestSavePath,
             snapshot.Target.CharacterId,
             RecommendationPolicy.Safe,
             observation,
@@ -97,7 +99,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await useCase.ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Safe),
             TestContext.Current.CancellationToken);
@@ -151,7 +153,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -195,7 +197,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Safe),
             TestContext.Current.CancellationToken);
@@ -257,7 +259,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -324,7 +326,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await new RecommendCombatLoadout(reader).ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -383,7 +385,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await useCase.ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Safe),
             TestContext.Current.CancellationToken);
@@ -458,7 +460,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await useCase.ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Safe),
             TestContext.Current.CancellationToken);
@@ -546,7 +548,7 @@ public sealed class RecommendCombatLoadoutTests
 
         var result = await useCase.ExecuteAsync(
             new RecommendCombatLoadoutRequest(
-                snapshot.Metadata.SavePath,
+                TestSavePath,
                 snapshot.Target.CharacterId,
                 RecommendationPolicy.Balanced),
             TestContext.Current.CancellationToken);
@@ -639,7 +641,6 @@ public sealed class RecommendCombatLoadoutTests
     {
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                @"C:\Taiwu\local.sav",
                 new string('A', 64),
                 DateTimeOffset.Parse("2026-07-30T12:00:00Z"),
                 SnapshotValue<DateTimeOffset>.Available(

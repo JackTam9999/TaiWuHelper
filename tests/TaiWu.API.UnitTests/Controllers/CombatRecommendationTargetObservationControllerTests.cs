@@ -397,7 +397,6 @@ public sealed class CombatRecommendationTargetObservationControllerTests
             SnapshotValue<int>.Available(2719));
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                ConfiguredSavePath,
                 new string('A', 64),
                 SaveTime,
                 SnapshotValue<DateTimeOffset>.Available(SaveTime),

@@ -8,7 +8,8 @@ namespace TaiWu.Infrastructure.SaveGames;
 
 internal sealed class TaiwuTargetLookupReader(
     TaiwuArchiveReadSession readSession,
-    TaiwuGameTextResolver textResolver) : ITargetLookupReader
+    TaiwuGameTextResolver textResolver,
+    TimeProvider timeProvider) : ITargetLookupReader
 {
     public Task<TargetLookupSnapshot> ReadAsync(
         TargetLookupReadRequest request,
@@ -23,6 +24,7 @@ internal sealed class TaiwuTargetLookupReader(
                 textResolver.CreateContext(
                     request.SaveFilePath,
                     request.Language),
+                timeProvider.GetUtcNow(),
                 token),
             cancellationToken);
     }
@@ -30,6 +32,7 @@ internal sealed class TaiwuTargetLookupReader(
     private static TargetLookupSnapshot ProjectTargets(
         TaiwuArchiveReadContext readContext,
         TaiwuGameTextContext text,
+        DateTimeOffset capturedAtUtc,
         CancellationToken cancellationToken)
     {
         List<TargetLookupWarning> warnings = [];
@@ -67,7 +70,7 @@ internal sealed class TaiwuTargetLookupReader(
         }
 
         return new TargetLookupSnapshot(
-            DateTimeOffset.UtcNow,
+            capturedAtUtc,
             GetGameDataVersion(),
             entries,
             warnings);

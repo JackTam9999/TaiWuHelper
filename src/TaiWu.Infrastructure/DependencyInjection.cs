@@ -16,6 +16,7 @@ public static class DependencyInjection
     public static IServiceCollection AddTaiwuInfrastructure(
         this IServiceCollection services)
     {
+        services.AddSingleton(TimeProvider.System);
         services.AddSingleton<
             IReadOnlyFileFingerprintProvider,
             ReadOnlyFileFingerprintProvider>();
@@ -27,7 +28,7 @@ public static class DependencyInjection
             provider.GetRequiredService<IReadOnlyFileRevisionProvider>(),
             provider.GetRequiredService<IReadOnlyFileFingerprintProvider>(),
             provider.GetRequiredService<ITaiwuArchiveLoader>(),
-            TimeProvider.System,
+            provider.GetRequiredService<TimeProvider>(),
             provider.GetService<Microsoft.Extensions.Logging.ILogger<
                 TaiwuArchiveReadSession>>()
             ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<
@@ -75,7 +76,7 @@ public static class DependencyInjection
                 provider.GetRequiredService<IReadOnlyFileRevisionProvider>(),
                 provider.GetRequiredService<
                     SqliteCharacterCombatSkillProgressCache>(),
-                TimeProvider.System,
+                provider.GetRequiredService<TimeProvider>(),
                 provider.GetService<Microsoft.Extensions.Logging.ILogger<
                     TaiwuCharacterCombatSkillProgressReader>>()
                 ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<
@@ -85,14 +86,14 @@ public static class DependencyInjection
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
                 provider.GetRequiredService<TaiwuGameTextResolver>(),
-                TimeProvider.System));
+                provider.GetRequiredService<TimeProvider>()));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
         services.AddSingleton<ICompanionCandidateSnapshotReader>(provider =>
             new TaiwuCompanionCandidateSnapshotReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
                 provider.GetRequiredService<TaiwuGameTextResolver>(),
-                TimeProvider.System));
+                provider.GetRequiredService<TimeProvider>()));
         services.AddSingleton<ICompanionDisciplineDisplaySource>(provider =>
             new TaiwuCompanionDisciplineDisplaySource(
                 provider.GetRequiredService<ITaiwuCatalogueSourcePathProvider>()));
@@ -101,7 +102,7 @@ public static class DependencyInjection
             new TaiwuRegionStoryProgressReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),
                 provider.GetRequiredService<TaiwuGameTextResolver>(),
-                TimeProvider.System));
+                provider.GetRequiredService<TimeProvider>()));
         services.AddSingleton<ITargetLookupReader, TaiwuTargetLookupReader>();
         return services;
     }

@@ -449,7 +449,6 @@ public sealed class TargetLoadoutObservationMergerTests
         IEnumerable<SnapshotWarning>? warnings = null)
     {
         var metadata = new CombatSnapshotMetadata(
-            "C:\\game\\local.sav",
             new string('A', 64),
             SaveTime.AddSeconds(1),
             saveTimeAvailable

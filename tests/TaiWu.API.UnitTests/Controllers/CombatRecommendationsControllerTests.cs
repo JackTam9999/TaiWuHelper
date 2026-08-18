@@ -617,7 +617,6 @@ public sealed class CombatRecommendationsControllerTests
             SnapshotValue<int>.Available(911));
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                ConfiguredSavePath,
                 new string('A', 64),
                 DateTimeOffset.Parse("2026-07-30T12:00:00Z"),
                 SnapshotValue<DateTimeOffset>.Available(
@@ -714,7 +713,6 @@ public sealed class CombatRecommendationsControllerTests
     {
         return new CombatSnapshot(
             new CombatSnapshotMetadata(
-                ConfiguredSavePath,
                 new string('B', 64),
                 DateTimeOffset.Parse("2026-08-08T12:00:00Z"),
                 SnapshotValue<DateTimeOffset>.Available(

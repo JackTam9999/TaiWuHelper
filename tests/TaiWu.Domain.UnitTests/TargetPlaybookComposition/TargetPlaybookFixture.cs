@@ -104,7 +104,6 @@ internal static class TargetPlaybookFixture
         TargetChannelResistanceSnapshot resistance,
         IEnumerable<EquipmentSnapshot> equipment) => new(
             new CombatSnapshotMetadata(
-                @"C:\local\save.sav",
                 new string('A', 64),
                 DateTimeOffset.Parse("2026-08-10T12:00:00Z"),
                 SnapshotValue<DateTimeOffset>.Available(
