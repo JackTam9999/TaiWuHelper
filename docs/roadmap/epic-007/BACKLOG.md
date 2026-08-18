@@ -417,7 +417,7 @@ workforce result without leaking implementation or source details.
 
 ### E7-009 — Deliver the bilingual accessible village-workforce UI
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -430,28 +430,27 @@ coherent result and progressive disclosure.
 
 #### Acceptance criteria
 
-- [ ] Navigation and route names clearly describe village work, not companion
+- [x] Navigation and route names clearly describe village work, not companion
       recruitment or automatic optimization.
-- [ ] The objective and assignment target are selected before evaluation.
-- [ ] The current assignment, result summary, and top alternatives are visible
+- [x] The objective and assignment target are selected before evaluation.
+- [x] The current assignment, result summary, and top alternatives are visible
       without expanding repeated evidence.
-- [ ] Shared scope, formula, and information-only limitations render once.
-- [ ] Per-worker details contain only worker-specific gates, components,
+- [x] Shared scope, formula, and information-only limitations render once.
+- [x] Per-worker details contain only worker-specific gates, components,
       provenance, and limitations.
-- [ ] Wide semantic tables and narrow cards expose identical facts in one DOM.
-- [ ] Native controls, focus movement, live announcements, and comparison limits
+- [x] Wide semantic tables and narrow cards expose identical facts in one DOM.
+- [x] Native controls, focus movement, live announcements, and comparison limits
       are keyboard and assistive-technology accessible.
-- [ ] Every state and status has English and Traditional Chinese text and a
+- [x] Every state and status has English and Traditional Chinese text and a
       non-color cue.
-- [ ] Filters and comparison never reread the save.
-- [ ] The page exposes no assign, build, collect, recruit, upload, process,
+- [x] Filters and comparison never reread the save.
+- [x] The page exposes no assign, build, collect, recruit, upload, process,
       automation, or input-control action.
-- [ ] Rendering and architecture tests cover all states and raw-ID hiding.
+- [x] Rendering and architecture tests cover all states and raw-ID hiding.
 
 #### Evidence
 
-- Presentation mapper, rendering, localization, architecture, and browser
-  review evidence.
+- [E7-009 UI verification](../../reviews/E7-009-village-workforce-ui.md).
 
 ## Slice 8: Verification and completion
 

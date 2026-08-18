@@ -1,0 +1,430 @@
+@using TaiWu.Application.Localization
+@using TaiWu.Domain.VillageWorkforce
+@using TaiWuAPI.Contracts.VillageWorkforce
+@using TaiWuAPI.Presentation
+
+<section class="workforce-result-shell"
+         aria-labelledby="workforce-result-heading"
+         aria-disabled="@IsPrevious.ToString().ToLowerInvariant()"
+         inert="@IsPrevious">
+    @if (IsPrevious)
+    {
+        <div class="workforce-previous-notice" role="status">
+            <strong>@Text(VillageWorkforceUiTextKey.PreviousResult)</strong>
+            <span>@Text(VillageWorkforceUiTextKey.PreviousResultMessage)</span>
+        </div>
+    }
+
+    <header class="section-heading workforce-result-heading">
+        <div>
+            <p class="eyebrow">@Text(VillageWorkforceUiTextKey.Result)</p>
+            <h2 id="workforce-result-heading" tabindex="-1">
+                @Model.TargetLabel
+            </h2>
+            <p>@Text(VillageWorkforceUiTextKey.SharedScope)</p>
+        </div>
+        <span class="workforce-freshness">
+            @Text(Model.IsPartial
+                ? VillageWorkforceUiTextKey.SnapshotPartial
+                : VillageWorkforceUiTextKey.SnapshotCurrent)
+        </span>
+    </header>
+
+    <dl class="workforce-result-meta">
+        <div>
+            <dt>@Text(VillageWorkforceUiTextKey.SnapshotCaptured)</dt>
+            <dd>@Model.CapturedAtUtc.ToString("u")</dd>
+        </div>
+        <div>
+            <dt>@Text(VillageWorkforceUiTextKey.VerifiedRule)</dt>
+            <dd>@Model.RuleVersion</dd>
+        </div>
+        <div>
+            <dt>@Text(VillageWorkforceUiTextKey.SavedBaseQualification)</dt>
+            <dd>@Text(VillageWorkforceUiTextKey.QualificationPoints)</dd>
+        </div>
+    </dl>
+
+    <div class="workforce-shared-scope" role="note">
+        <p>@Text(VillageWorkforceUiTextKey.QualificationMeaning)</p>
+        <p>@Text(VillageWorkforceUiTextKey.NamesUnavailable)</p>
+        @if (Model.IsPartial)
+        {
+            <p><strong>@Text(VillageWorkforceUiTextKey.PartialMessage)</strong></p>
+        }
+        @foreach (var limitation in Model.Limitations)
+        {
+            <p>@limitation</p>
+        }
+    </div>
+
+    <section class="workforce-current"
+             aria-labelledby="workforce-current-heading">
+        <div>
+            <p class="eyebrow">@Text(VillageWorkforceUiTextKey.CurrentAssignment)</p>
+            <h3 id="workforce-current-heading">@Model.Current.Label</h3>
+            <span class="workforce-state @Model.Current.StateCssClass">
+                @Model.Current.StateLabel
+            </span>
+        </div>
+        <div class="workforce-current-value">
+            <span>@Text(VillageWorkforceUiTextKey.SavedBaseQualification)</span>
+            @if (Model.Current.Total.HasValue)
+            {
+                <strong>@Model.Current.Total.Value</strong>
+                <small>@Model.Current.UnitLabel</small>
+            }
+            else
+            {
+                <strong>@Text(VillageWorkforceUiTextKey.Unavailable)</strong>
+                <small>@Model.Current.DecisiveEvidence</small>
+            }
+        </div>
+    </section>
+
+    <section class="workforce-candidates"
+             aria-labelledby="workforce-candidates-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">@Text(VillageWorkforceUiTextKey.ResultSummary)</p>
+                <h3 id="workforce-candidates-heading">
+                    @Text(VillageWorkforceUiTextKey.AlternativeWorker)
+                </h3>
+            </div>
+            <div class="workforce-counts" aria-label="@Text(VillageWorkforceUiTextKey.ResultSummary)">
+                <span><strong>@Model.Counts.Total</strong> @Text(VillageWorkforceUiTextKey.Total)</span>
+                <span><strong>@Model.Counts.Comparable</strong> @Text(VillageWorkforceUiTextKey.Comparable)</span>
+                <span><strong>@NeedsReviewCount</strong> @Text(VillageWorkforceUiTextKey.NeedsReview)</span>
+                <span><strong>@Model.Counts.Ineligible</strong> @Text(VillageWorkforceUiTextKey.Ineligible)</span>
+            </div>
+        </div>
+
+        <div class="workforce-filter-grid">
+            <fieldset class="workforce-status-filter">
+                <legend>@Text(VillageWorkforceUiTextKey.ShowWorkers)</legend>
+                @foreach (var option in FilterOptions)
+                {
+                    <label>
+                        <input type="radio"
+                               name="workforce-status-filter"
+                               checked="@(State.Filter == option.Filter)"
+                               @onchange="() => SetFilter(option.Filter)"
+                               disabled="@IsPrevious" />
+                        <span>@Text(option.Label)</span>
+                    </label>
+                }
+            </fieldset>
+            <label class="workforce-name-filter">
+                <span>@Text(VillageWorkforceUiTextKey.FilterNames)</span>
+                <input type="search"
+                       value="@State.NameQuery"
+                       @oninput="SetNameQuery"
+                       disabled="@IsPrevious" />
+            </label>
+            <p class="workforce-visible-count" aria-live="polite">
+                @VisibleCountMessage
+            </p>
+        </div>
+
+        @if (VisibleCandidates.Count == 0)
+        {
+            <p class="workforce-empty-state">
+                @Text(VillageWorkforceUiTextKey.NoVisibleWorkers)
+            </p>
+        }
+        else
+        {
+            <table class="workforce-candidate-table">
+                <thead>
+                    <tr>
+                        <th scope="col">@Text(VillageWorkforceUiTextKey.Rank)</th>
+                        <th scope="col">@Text(VillageWorkforceUiTextKey.Worker)</th>
+                        <th scope="col">@Text(VillageWorkforceUiTextKey.SavedBaseQualification)</th>
+                        <th scope="col">@Text(VillageWorkforceUiTextKey.State)</th>
+                        <th scope="col">@Text(VillageWorkforceUiTextKey.Compare)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var candidate in VisibleCandidates)
+                    {
+                        <tr class="workforce-candidate-main-row">
+                            <td data-label="@Text(VillageWorkforceUiTextKey.Rank)">
+                                @if (candidate.CompetitionRank.HasValue)
+                                {
+                                    <strong aria-label="@RankLabel(candidate)">
+                                        @candidate.CompetitionRank
+                                    </strong>
+                                    @if (candidate.State == VillageWorkforceApiEvaluationState.Tied)
+                                    {
+                                        <small>@Text(VillageWorkforceUiTextKey.Tied)</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                            <th scope="row" data-label="@Text(VillageWorkforceUiTextKey.Worker)">
+                                @candidate.Label
+                                @if (candidate.IsCurrent)
+                                {
+                                    <small>@Text(VillageWorkforceUiTextKey.CurrentWorker)</small>
+                                }
+                            </th>
+                            <td data-label="@Text(VillageWorkforceUiTextKey.SavedBaseQualification)">
+                                @if (candidate.Total.HasValue)
+                                {
+                                    <strong>@candidate.Total.Value</strong>
+                                    <small>@candidate.UnitLabel</small>
+                                }
+                                else
+                                {
+                                    <strong>@Text(VillageWorkforceUiTextKey.Unavailable)</strong>
+                                    <small>@candidate.DecisiveEvidence</small>
+                                }
+                            </td>
+                            <td data-label="@Text(VillageWorkforceUiTextKey.State)">
+                                <span class="workforce-state @candidate.StateCssClass">
+                                    @candidate.StateLabel
+                                </span>
+                            </td>
+                            <td data-label="@Text(VillageWorkforceUiTextKey.Compare)">
+                                <label class="workforce-compare-control">
+                                    <input id="workforce-compare-@candidate.DisplayOrdinal"
+                                           type="checkbox"
+                                           checked="@State.IsSelected(candidate.CharacterId)"
+                                           disabled="@(IsPrevious || State.IsSelectionDisabled(candidate.CharacterId))"
+                                           @onchange="() => ToggleComparisonAsync(candidate.CharacterId)" />
+                                    <span>@Text(State.IsSelected(candidate.CharacterId)
+                                        ? VillageWorkforceUiTextKey.SelectedForComparison
+                                        : VillageWorkforceUiTextKey.SelectForComparison)</span>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="workforce-candidate-detail-row">
+                            <td colspan="5">
+                                <details class="workforce-candidate-evidence">
+                                    <summary>
+                                        @Text(VillageWorkforceUiTextKey.EvidenceDetails)
+                                        <span>
+                                            @candidate.PassedRequirements/@candidate.Requirements.Count
+                                            @Text(VillageWorkforceUiTextKey.RequirementsPassed)
+                                            · @candidate.Components.Count
+                                            @Text(VillageWorkforceUiTextKey.VerifiedComponents)
+                                        </span>
+                                    </summary>
+                                    <div class="workforce-candidate-details">
+                                        <section>
+                                            <h4>@Text(VillageWorkforceUiTextKey.Requirements)</h4>
+                                            <ol>
+                                                @foreach (var requirement in candidate.Requirements.OrderBy(item => item.Order))
+                                                {
+                                                    <li>
+                                                        <strong>@requirement.Outcome</strong>
+                                                        <span>@requirement.Explanation</span>
+                                                        @if (requirement.ConflictCount > 0)
+                                                        {
+                                                            <small>@Text(VillageWorkforceUiTextKey.Conflicting): @requirement.ConflictCount</small>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ol>
+                                        </section>
+                                        <section>
+                                            <h4>@Text(VillageWorkforceUiTextKey.Components)</h4>
+                                            @if (candidate.Components.Count == 0)
+                                            {
+                                                <p>@Text(VillageWorkforceUiTextKey.Unavailable)</p>
+                                            }
+                                            @foreach (var component in candidate.Components)
+                                            {
+                                                <p>
+                                                    <strong>@component.Contribution @component.UnitLabel</strong>
+                                                    <span>@component.Explanation</span>
+                                                </p>
+                                            }
+                                        </section>
+                                        <section>
+                                            <h4>@Text(VillageWorkforceUiTextKey.Provenance)</h4>
+                                            <ul>
+                                                @foreach (var provenance in Provenance(candidate))
+                                                {
+                                                    <li>@provenance.Source · @provenance.Version</li>
+                                                }
+                                            </ul>
+                                        </section>
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (State.ComparisonReady)
+        {
+            <p class="workforce-comparison-status" role="status">
+                @Text(VillageWorkforceUiTextKey.ComparisonReady)
+            </p>
+        }
+        else if (State.SelectedCharacterIds.Count == 1)
+        {
+            <p class="workforce-comparison-status" role="status">
+                1/2 · @Text(VillageWorkforceUiTextKey.Compare)
+            </p>
+        }
+        @if (State.ComparisonReady)
+        {
+            <p class="workforce-comparison-limit">
+                @Text(VillageWorkforceUiTextKey.ComparisonLimit)
+            </p>
+        }
+    </section>
+
+    @if (Comparison is not null)
+    {
+        <section class="workforce-comparison"
+                 aria-labelledby="workforce-comparison-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">@Text(VillageWorkforceUiTextKey.ComparisonReady)</p>
+                    <h3 id="workforce-comparison-heading">
+                        @Text(VillageWorkforceUiTextKey.CandidateComparison)
+                    </h3>
+                </div>
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="ClearComparisonAsync">
+                    @Text(VillageWorkforceUiTextKey.ClearComparison)
+                </button>
+            </div>
+            <table class="workforce-comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col">@Text(VillageWorkforceUiTextKey.ResultSummary)</th>
+                        <th scope="col">@Comparison.First.Label</th>
+                        <th scope="col">@Comparison.Second.Label</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">@Text(VillageWorkforceUiTextKey.State)</th>
+                        <td>@Comparison.First.StateLabel</td>
+                        <td>@Comparison.Second.StateLabel</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">@Text(VillageWorkforceUiTextKey.SavedBaseQualification)</th>
+                        <td>@Value(Comparison.FirstValue, Comparison.UnitLabel)</td>
+                        <td>@Value(Comparison.SecondValue, Comparison.UnitLabel)</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">@Text(VillageWorkforceUiTextKey.RelativeResult)</th>
+                        <td colspan="2">@Comparison.Outcome</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            @if (Comparison.ManualChecklist.Count > 0)
+            {
+                <section class="workforce-manual-checklist">
+                    <h4>@Text(VillageWorkforceUiTextKey.ManualChecklist)</h4>
+                    <ul>
+                        @foreach (var item in Comparison.ManualChecklist)
+                        {
+                            <li>@item</li>
+                        }
+                    </ul>
+                    <strong>@Text(VillageWorkforceUiTextKey.NoActionSent)</strong>
+                </section>
+            }
+        </section>
+    }
+
+    <details class="workforce-evidence-scope">
+        <summary>@Text(VillageWorkforceUiTextKey.EvidenceAndScope)</summary>
+        <p>@Text(VillageWorkforceUiTextKey.EvidenceAndScopeMessage)</p>
+        <p>@Text(VillageWorkforceUiTextKey.NoActionSent)</p>
+    </details>
+</section>
+
+@code {
+    private static readonly (WorkforceShortlistFilter Filter,
+        VillageWorkforceUiTextKey Label)[] FilterOptions =
+    [
+        (WorkforceShortlistFilter.All, VillageWorkforceUiTextKey.All),
+        (WorkforceShortlistFilter.Comparable,
+            VillageWorkforceUiTextKey.Comparable),
+        (WorkforceShortlistFilter.NeedsReview,
+            VillageWorkforceUiTextKey.NeedsReview),
+        (WorkforceShortlistFilter.Ineligible,
+            VillageWorkforceUiTextKey.Ineligible)
+    ];
+
+    [Parameter, EditorRequired]
+    public VillageWorkforceViewModel Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public VillageWorkforceInteractionState State { get; set; } = null!;
+
+    [Parameter]
+    public VillageWorkforceComparisonViewModel? Comparison { get; set; }
+
+    [Parameter]
+    public bool IsPrevious { get; set; }
+
+    [Parameter]
+    public EventCallback ComparisonChanged { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<VillageWorkforceCandidateViewModel>
+        VisibleCandidates => State.VisibleCandidates(Model);
+
+    private int NeedsReviewCount => Model.Counts.Incomplete
+        + Model.Counts.Unsupported
+        + Model.Counts.Conflicting;
+
+    private string VisibleCountMessage => VillageWorkforceUiText.VisibleCount(
+        Language,
+        VisibleCandidates.Count,
+        Model.Counts.Total);
+
+    private void SetFilter(WorkforceShortlistFilter filter) =>
+        State.SetFilter(filter);
+
+    private void SetNameQuery(ChangeEventArgs args) =>
+        State.SetNameQuery(args.Value?.ToString());
+
+    private async Task ToggleComparisonAsync(int characterId)
+    {
+        State.ToggleComparison(characterId);
+        await ComparisonChanged.InvokeAsync();
+    }
+
+    private async Task ClearComparisonAsync()
+    {
+        State.ClearComparison();
+        await ComparisonChanged.InvokeAsync();
+    }
+
+    private string RankLabel(VillageWorkforceCandidateViewModel candidate) =>
+        candidate.State == VillageWorkforceApiEvaluationState.Tied
+            ? $"{Text(VillageWorkforceUiTextKey.Tied)} {candidate.CompetitionRank}"
+            : $"{Text(VillageWorkforceUiTextKey.Rank)} {candidate.CompetitionRank}";
+
+    private static IReadOnlyList<VillageWorkforceProvenanceViewModel>
+        Provenance(VillageWorkforceCandidateViewModel candidate) =>
+        candidate.Requirements.SelectMany(item => item.Provenance)
+            .Concat(candidate.Components.SelectMany(item => item.Provenance))
+            .Distinct()
+            .ToArray();
+
+    private string Value(decimal? value, string unit) => value.HasValue
+        ? $"{value.Value} {unit}"
+        : Text(VillageWorkforceUiTextKey.Unavailable);
+
+    private string Text(VillageWorkforceUiTextKey key) =>
+        VillageWorkforceUiText.Get(Language, key);
+}

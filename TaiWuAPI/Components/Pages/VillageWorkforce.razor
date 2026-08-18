@@ -1,0 +1,391 @@
+@page "/village-workforce"
+@implements IAsyncDisposable
+@using Microsoft.JSInterop
+@using TaiWu.Application.VillageWorkforce
+@using TaiWu.Domain.VillageWorkforce
+@using TaiWuAPI.Presentation
+@inject IFindVillageWorkforce FindWorkforce
+@inject IVillageWorkforceSnapshotReader SnapshotReader
+@inject IJSRuntime JS
+@inject ILogger<VillageWorkforce> Logger
+
+<PageTitle>TaiWu Helper · @Text(VillageWorkforceUiTextKey.PageTitle)</PageTitle>
+
+<section class="workforce-hero">
+    <div>
+        <p class="eyebrow">@Text(VillageWorkforceUiTextKey.Eyebrow)</p>
+        <h1>@Text(VillageWorkforceUiTextKey.PageTitle)</h1>
+        <p class="hero-copy">@Text(VillageWorkforceUiTextKey.HeroCopy)</p>
+    </div>
+    <div class="boundary-card" role="note">
+        <strong>@Text(VillageWorkforceUiTextKey.InformationOnly)</strong>
+        <span>@Text(VillageWorkforceUiTextKey.InformationNotice)</span>
+    </div>
+</section>
+
+<p class="workforce-boundary" role="note">
+    @Text(VillageWorkforceUiTextKey.CandidateBoundary)
+</p>
+
+<section class="workforce-controls"
+         aria-labelledby="workforce-controls-heading"
+         aria-busy="@(_isLoading || _targetsLoading).ToString().ToLowerInvariant()">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">@Text(VillageWorkforceUiTextKey.Objective)</p>
+            <h2 id="workforce-controls-heading">
+                @Text(VillageWorkforceUiTextKey.ObjectiveLabel)
+            </h2>
+            <p>@Text(VillageWorkforceUiTextKey.ObjectiveDescription)</p>
+        </div>
+        @if (_targetsLoading)
+        {
+            <span class="working-status" role="status">
+                @Text(VillageWorkforceUiTextKey.LoadingTargets)
+            </span>
+        }
+    </div>
+
+    @if (_targetNotice is not null)
+    {
+        <section class="message-card page-state problem-state" role="alert">
+            <div>
+                <strong>@_targetNotice.Title</strong>
+                <p>@_targetNotice.Message</p>
+            </div>
+            @if (_targetNotice.CanRetry)
+            {
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="LoadTargetsAsync"
+                        disabled="@_targetsLoading">
+                    @Text(VillageWorkforceUiTextKey.RetryTargets)
+                </button>
+            }
+        </section>
+    }
+    else if (!_targetsLoading && _targets.Count == 0)
+    {
+        <section class="message-card page-state" role="status">
+            <div>
+                <strong>@Text(VillageWorkforceUiTextKey.NoTargetsTitle)</strong>
+                <p>@Text(VillageWorkforceUiTextKey.NoTargetsMessage)</p>
+            </div>
+            <button type="button"
+                    class="secondary-button"
+                    @onclick="LoadTargetsAsync">
+                @Text(VillageWorkforceUiTextKey.RetryTargets)
+            </button>
+        </section>
+    }
+
+    <div class="workforce-objective-grid">
+        <div class="workforce-fixed-objective">
+            <span>@Text(VillageWorkforceUiTextKey.Objective)</span>
+            <strong>@Text(VillageWorkforceUiTextKey.ObjectiveLabel)</strong>
+            <small>@Text(VillageWorkforceUiTextKey.QualificationMeaning)</small>
+        </div>
+        <label class="workforce-target-control">
+            <span>@Text(VillageWorkforceUiTextKey.AssignmentTarget)</span>
+            <select value="@DraftTargetValue"
+                    @onchange="SetTarget"
+                    disabled="@(_isLoading || _targetsLoading || _targets.Count == 0)">
+                @if (_targets.Count != 1)
+                {
+                    <option value="">@Text(VillageWorkforceUiTextKey.ChooseTarget)</option>
+                }
+                @foreach (var option in TargetOptions)
+                {
+                    <option value="@option.OptionIndex">@option.Label</option>
+                }
+            </select>
+        </label>
+        <div class="workforce-inspect-action">
+            <button type="button"
+                    class="primary-button"
+                    @onclick="InspectAsync"
+                    disabled="@(!CanInspect)">
+                @Text(_isLoading
+                    ? VillageWorkforceUiTextKey.InspectingPosition
+                    : VillageWorkforceUiTextKey.InspectPosition)
+            </button>
+            <small>@Text(VillageWorkforceUiTextKey.TargetHelp)</small>
+        </div>
+    </div>
+</section>
+
+<section class="workforce-result-region"
+         aria-live="polite"
+         aria-busy="@_isLoading.ToString().ToLowerInvariant()">
+    @if (_isLoading)
+    {
+        <section class="message-card page-state" role="status">
+            <div>
+                <strong>@Text(VillageWorkforceUiTextKey.ReadingTitle)</strong>
+                <p>@Text(VillageWorkforceUiTextKey.ReadingMessage)</p>
+            </div>
+        </section>
+    }
+    else if (_notice is not null)
+    {
+        <section id="workforce-error-summary"
+                 class="message-card page-state problem-state"
+                 role="alert"
+                 tabindex="-1">
+            <div>
+                <strong>@_notice.Title</strong>
+                <p>@_notice.Message</p>
+            </div>
+            @if (_notice.CanRetry && DraftValid)
+            {
+                <button type="button"
+                        class="secondary-button"
+                        @onclick="InspectAsync">
+                    @Text(VillageWorkforceUiTextKey.RetryRead)
+                </button>
+            }
+        </section>
+    }
+    else if (_model is not null)
+    {
+        <VillageWorkforceResults Model="_model"
+                                 State="_interaction"
+                                 Comparison="_comparison"
+                                 IsPrevious="IsPreviousResult"
+                                 ComparisonChanged="RebuildComparison" />
+    }
+</section>
+
+@code {
+    private static readonly WorkforceObjectiveIdentity Objective = new(
+        WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
+        VerifiedVillageWorkforceRules.ObjectiveVersion);
+    private readonly VillageWorkforceInteractionState _interaction = new();
+    private IReadOnlyList<ShopManagerTarget> _targets = [];
+    private int? _draftTargetIndex;
+    private int? _submittedTargetIndex;
+    private VillageWorkforceFinderResult? _result;
+    private VillageWorkforceViewModel? _model;
+    private VillageWorkforceComparisonViewModel? _comparison;
+    private VillageWorkforceNoticeViewModel? _notice;
+    private VillageWorkforceNoticeViewModel? _targetNotice;
+    private CancellationTokenSource? _requestCancellation;
+    private bool _targetsLoading;
+    private bool _isLoading;
+    private string? _pendingFocusId;
+    private TaiwuLanguage _mappedLanguage;
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<VillageWorkforceTargetOptionViewModel>
+        TargetOptions => _targets.Select((_, index) =>
+            new VillageWorkforceTargetOptionViewModel(
+                index,
+                VillageWorkforceUiText.TargetLabel(Language, index + 1)))
+            .ToArray();
+
+    private string DraftTargetValue => _draftTargetIndex?.ToString() ?? "";
+
+    private bool DraftValid => _draftTargetIndex.HasValue
+        && _draftTargetIndex.Value >= 0
+        && _draftTargetIndex.Value < _targets.Count;
+
+    private bool CanInspect => DraftValid
+        && !_isLoading
+        && !_targetsLoading;
+
+    private bool IsPreviousResult => _model is not null
+        && _draftTargetIndex != _submittedTargetIndex;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTargetsAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_result is not null
+            && _result.HasAuthoritativeResult
+            && _mappedLanguage != Language)
+        {
+            MapCurrentResult();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocusId is null)
+        {
+            return;
+        }
+
+        var focusId = _pendingFocusId;
+        _pendingFocusId = null;
+        try
+        {
+            await JS.InvokeVoidAsync("taiwuHelper.focusElement", focusId);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private async Task LoadTargetsAsync()
+    {
+        _targetsLoading = true;
+        _targetNotice = null;
+        try
+        {
+            var read = await SnapshotReader.ReadAsync(
+                VillageWorkforceSnapshotReadRequest.Current);
+            if (read.Snapshot is null)
+            {
+                _targets = [];
+                _draftTargetIndex = null;
+                _targetNotice = VillageWorkforceViewModelMapper
+                    .MapDiscoveryFailure(read.Status, Language);
+                return;
+            }
+
+            _targets = read.Snapshot.Targets;
+            _draftTargetIndex = _targets.Count == 1 ? 0 : null;
+        }
+        catch (OperationCanceledException)
+        {
+            _targets = [];
+            _draftTargetIndex = null;
+            _targetNotice = new VillageWorkforceNoticeViewModel(
+                Text(VillageWorkforceUiTextKey.CancelledTitle),
+                Text(VillageWorkforceUiTextKey.CancelledMessage),
+                CanRetry: true);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Village workforce targets could not be read safely.");
+            _targets = [];
+            _draftTargetIndex = null;
+            _targetNotice = VillageWorkforceViewModelMapper
+                .MapDiscoveryFailure(
+                    VillageWorkforceSnapshotReadStatus.ReadFailed,
+                    Language);
+        }
+        finally
+        {
+            _targetsLoading = false;
+        }
+    }
+
+    private void SetTarget(ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        _draftTargetIndex = int.TryParse(value, out var index)
+            && index >= 0
+            && index < _targets.Count
+                ? index
+                : null;
+    }
+
+    private async Task InspectAsync()
+    {
+        if (!CanInspect)
+        {
+            return;
+        }
+
+        var targetIndex = _draftTargetIndex!.Value;
+        var target = _targets[targetIndex].Identity;
+        _requestCancellation?.Cancel();
+        _requestCancellation?.Dispose();
+        _requestCancellation = new CancellationTokenSource();
+        _isLoading = true;
+        _notice = null;
+        _result = null;
+        _model = null;
+        _comparison = null;
+        _interaction.Reset();
+        try
+        {
+            var result = await FindWorkforce.ExecuteAsync(
+                new VillageWorkforceFinderRequest(target, Objective),
+                _requestCancellation.Token);
+            if (result.HasAuthoritativeResult)
+            {
+                _result = result;
+                _submittedTargetIndex = targetIndex;
+                MapCurrentResult();
+                _pendingFocusId = "workforce-result-heading";
+            }
+            else
+            {
+                _notice = VillageWorkforceViewModelMapper.MapFailure(
+                    result.Status,
+                    Language);
+                _pendingFocusId = "workforce-error-summary";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _notice = new VillageWorkforceNoticeViewModel(
+                Text(VillageWorkforceUiTextKey.CancelledTitle),
+                Text(VillageWorkforceUiTextKey.CancelledMessage),
+                CanRetry: true);
+            _pendingFocusId = "workforce-error-summary";
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Village workforce inspection failed safely.");
+            _notice = VillageWorkforceViewModelMapper.MapFailure(
+                VillageWorkforceFinderStatus.ReadFailed,
+                Language);
+            _pendingFocusId = "workforce-error-summary";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void MapCurrentResult()
+    {
+        if (_result is null || !_submittedTargetIndex.HasValue)
+        {
+            return;
+        }
+
+        _model = VillageWorkforceViewModelMapper.Map(
+            _result,
+            Language,
+            _submittedTargetIndex.Value + 1);
+        _mappedLanguage = Language;
+        RebuildComparison();
+    }
+
+    private void RebuildComparison()
+    {
+        if (_result is null || _model is null || !_interaction.ComparisonReady)
+        {
+            _comparison = null;
+            return;
+        }
+
+        _comparison = VillageWorkforceViewModelMapper.MapComparison(
+            _result,
+            _model,
+            _interaction.SelectedCharacterIds[0],
+            _interaction.SelectedCharacterIds[1],
+            Language);
+    }
+
+    private string Text(VillageWorkforceUiTextKey key) =>
+        VillageWorkforceUiText.Get(Language, key);
+
+    public ValueTask DisposeAsync()
+    {
+        _requestCancellation?.Cancel();
+        _requestCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

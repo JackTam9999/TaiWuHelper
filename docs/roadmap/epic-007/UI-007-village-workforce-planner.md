@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted — shop manager-slot semantics defined |
+| Status | Delivered — final visual confirmation scheduled in E7-011 |
 | Epic | [EPIC-007](./EPIC.md) |
 | Backlog item | [E7-001](./BACKLOG.md#e7-001--define-workforce-evaluation-comparison-and-ui-semantics) |
 | Route | `/village-workforce` |
@@ -431,3 +431,14 @@ for the player to review and act on manually in the game.
   mutation, process, upload, input, or game-control paths.
 - Browser review covers wide English and narrow Traditional Chinese synthetic
   states without proprietary save content.
+
+## Delivered implementation
+
+E7-009 delivers the `/village-workforce` route, bilingual navigation, typed
+page text, ordinal target and worker labels, a current-assignment summary,
+single-DOM responsive candidate and comparison tables, local filters, a
+two-worker comparison, progressive worker evidence, and a static manual
+checklist. Source identities remain component state and are never rendered.
+
+The implementation and current verification evidence are recorded in
+[E7-009 village-workforce UI verification](../../reviews/E7-009-village-workforce-ui.md).

@@ -1202,6 +1202,7 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SetFilter(StoryFilter.Completed)",
             "() => SetFilter(StoryFilter.InProgress)",
             "() => SetFilter(StoryFilter.NotCompleted)",
+            "() => SetFilter(option.Filter)",
             "() => SetFilter(filter)",
             "() => SetRole(role.Domain)",
             "() => SetDifferencesOnly(false)",
@@ -1225,8 +1226,10 @@ public sealed partial class ArchitectureBoundaryTests
             "CopyAsync",
             "FindAsync",
             "GetRecommendationAsync",
+            "InspectAsync",
             "LoadAsync",
             "LoadDisciplineLabelsAsync",
+            "LoadTargetsAsync",
             "NextPageAsync",
             "PreviousPageAsync",
             "PrintAsync",
@@ -1237,6 +1240,7 @@ public sealed partial class ArchitectureBoundaryTests
             "SearchAsync",
             "SearchTargetsAsync",
             "SetDiscipline",
+            "SetTarget",
             "ToggleEnabled"
         }.Order(StringComparer.Ordinal);
 

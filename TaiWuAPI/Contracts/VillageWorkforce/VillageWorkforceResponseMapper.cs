@@ -273,7 +273,7 @@ internal static class VillageWorkforceResponseMapper
             conflict.Provenance.SourceVersion);
     }
 
-    private static VillageWorkforceComparisonResponse MapComparison(
+    internal static VillageWorkforceComparisonResponse MapComparison(
         WorkforceComparison comparison,
         VillageWorkforceApiLanguage language)
     {
@@ -292,7 +292,7 @@ internal static class VillageWorkforceResponseMapper
                 : null);
     }
 
-    private static VillageWorkforceManualPlanResponse MapManualPlan(
+    internal static VillageWorkforceManualPlanResponse MapManualPlan(
         VillageWorkforceManualPlan plan,
         VillageWorkforceApiLanguage language) =>
         new(
