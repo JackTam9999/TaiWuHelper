@@ -94,6 +94,70 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
     }
 
     [Fact]
+    public async Task Preserved_metadata_with_changed_content_misses()
+    {
+        using var fixture = Fixture.Create();
+        var snapshot = Snapshot();
+        await fixture.Cache.StoreAsync(
+            fixture.SavePath,
+            "0.0.85.0",
+            1,
+            snapshot,
+            TestContext.Current.CancellationToken);
+        fixture.Fingerprints.Current = snapshot.SourceFingerprint with
+        {
+            Sha256 = new string('B', 64)
+        };
+
+        var cached = await fixture.Cache.TryReadAsync(
+            fixture.SavePath,
+            ReadOnlyFileRevision.From(snapshot.SourceFingerprint),
+            null,
+            "0.0.85.0",
+            1,
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(cached);
+    }
+
+    [Fact]
+    public async Task Deleted_database_is_recreated_while_cache_remains_alive()
+    {
+        using var fixture = Fixture.Create();
+        var snapshot = Snapshot();
+        await fixture.Cache.StoreAsync(
+            fixture.SavePath,
+            "0.0.85.0",
+            1,
+            snapshot,
+            TestContext.Current.CancellationToken);
+        File.Delete(fixture.Provider.DatabasePath);
+        Assert.False(File.Exists(fixture.Provider.DatabasePath));
+
+        Assert.Null(await fixture.Cache.TryReadAsync(
+            fixture.SavePath,
+            ReadOnlyFileRevision.From(snapshot.SourceFingerprint),
+            null,
+            "0.0.85.0",
+            1,
+            TestContext.Current.CancellationToken));
+        await fixture.Cache.StoreAsync(
+            fixture.SavePath,
+            "0.0.85.0",
+            1,
+            snapshot,
+            TestContext.Current.CancellationToken);
+
+        Assert.NotNull(await fixture.Cache.TryReadAsync(
+            fixture.SavePath,
+            ReadOnlyFileRevision.From(snapshot.SourceFingerprint),
+            null,
+            "0.0.85.0",
+            1,
+            TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task New_save_snapshot_atomically_replaces_old_characters()
     {
         using var fixture = Fixture.Create();
@@ -140,6 +204,7 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
             "0.0.85.0",
             1,
             TestContext.Current.CancellationToken));
+        fixture.Fingerprints.Current = second.SourceFingerprint;
         var cached = await fixture.Cache.TryReadAsync(
             fixture.SavePath,
             ReadOnlyFileRevision.From(second.SourceFingerprint),
@@ -317,7 +382,11 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
             Root = root;
             SavePath = savePath;
             Provider = provider;
-            Cache = new SqliteCharacterCombatSkillProgressCache(provider);
+            Fingerprints = new StubFingerprintProvider(
+                Snapshot().SourceFingerprint);
+            Cache = new SqliteCharacterCombatSkillProgressCache(
+                provider,
+                Fingerprints);
         }
 
         public string Root { get; }
@@ -325,6 +394,8 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
         public string SavePath { get; }
 
         public SaveProgressCacheStoragePathProvider Provider { get; }
+
+        public StubFingerprintProvider Fingerprints { get; }
 
         public SqliteCharacterCombatSkillProgressCache Cache { get; }
 
@@ -352,6 +423,21 @@ public sealed class SqliteCharacterCombatSkillProgressCacheTests
             {
                 Directory.Delete(Root, recursive: true);
             }
+        }
+    }
+
+    private sealed class StubFingerprintProvider(
+        ReadOnlyFileFingerprint current)
+        : IReadOnlyFileFingerprintProvider
+    {
+        public ReadOnlyFileFingerprint Current { get; set; } = current;
+
+        public Task<ReadOnlyFileFingerprint> CaptureAsync(
+            string path,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(Current);
         }
     }
 }

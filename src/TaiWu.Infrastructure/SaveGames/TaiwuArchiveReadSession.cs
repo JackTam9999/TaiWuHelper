@@ -42,37 +42,52 @@ internal sealed class TaiwuArchiveReadSession(
             var revisionStarted = _timeProvider.GetTimestamp();
             var revisionBefore = revisionProvider.Capture(fullSaveFilePath);
             var revisionElapsed = _timeProvider.GetElapsedTime(revisionStarted);
+            ReadOnlyFileFingerprint? fingerprintBefore = null;
+            var fingerprintBeforeElapsed = TimeSpan.Zero;
             if (CanReuseCurrentArchive(fullSaveFilePath, revisionBefore))
             {
-                var reusedProjectStarted = _timeProvider.GetTimestamp();
-                var reusedResult = ProjectCurrentArchive(
-                    fullSaveFilePath,
-                    revisionBefore,
-                    project,
-                    cancellationToken);
-                LogTiming(
-                    reused: true,
-                    revisionElapsed,
-                    fingerprintBeforeElapsed: TimeSpan.Zero,
-                    loadElapsed: TimeSpan.Zero,
-                    projectElapsed: _timeProvider.GetElapsedTime(
-                        reusedProjectStarted),
-                    fingerprintAfterElapsed: TimeSpan.Zero,
-                    totalElapsed: _timeProvider.GetElapsedTime(totalStarted));
-                return reusedResult;
+                var fingerprintStarted = _timeProvider.GetTimestamp();
+                fingerprintBefore = await fingerprintProvider.CaptureAsync(
+                        fullSaveFilePath,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                fingerprintBeforeElapsed = _timeProvider.GetElapsedTime(
+                    fingerprintStarted);
+                if (CurrentArchive is { } current
+                    && current.SourceFingerprint == fingerprintBefore)
+                {
+                    var reused = await ProjectCurrentArchiveAsync(
+                            fullSaveFilePath,
+                            revisionBefore,
+                            fingerprintBefore,
+                            project,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                    LogTiming(
+                        reused: true,
+                        revisionElapsed,
+                        fingerprintBeforeElapsed,
+                        loadElapsed: TimeSpan.Zero,
+                        reused.ProjectElapsed,
+                        reused.FingerprintAfterElapsed,
+                        totalElapsed: _timeProvider.GetElapsedTime(totalStarted));
+                    return reused.Result;
+                }
             }
 
             // Loading a different or changed archive replaces GameData's
             // process-wide state. Do not expose an earlier cache entry if the
             // new load or its verification fails.
             CurrentArchive = null;
-            var fingerprintBeforeStarted = _timeProvider.GetTimestamp();
-            var fingerprintBefore =
-                await fingerprintProvider.CaptureAsync(
+            if (fingerprintBefore is null)
+            {
+                var fingerprintBeforeStarted = _timeProvider.GetTimestamp();
+                fingerprintBefore = await fingerprintProvider.CaptureAsync(
                     fullSaveFilePath,
-                    cancellationToken);
-            var fingerprintBeforeElapsed = _timeProvider.GetElapsedTime(
-                fingerprintBeforeStarted);
+                    cancellationToken).ConfigureAwait(false);
+                fingerprintBeforeElapsed = _timeProvider.GetElapsedTime(
+                    fingerprintBeforeStarted);
+            }
 
             var loadStarted = _timeProvider.GetTimestamp();
             var loadWarning = archiveLoader.Load(fullSaveFilePath);
@@ -130,21 +145,24 @@ internal sealed class TaiwuArchiveReadSession(
         && PathsEqual(current.SaveFilePath, saveFilePath)
         && current.Revision == revision;
 
-    private TResult ProjectCurrentArchive<TResult>(
+    private async Task<ReusedProjection<TResult>> ProjectCurrentArchiveAsync<TResult>(
         string saveFilePath,
         ReadOnlyFileRevision revisionBefore,
+        ReadOnlyFileFingerprint fingerprintBefore,
         Func<TaiwuArchiveReadContext, CancellationToken, TResult> project,
         CancellationToken cancellationToken)
     {
         var current = CurrentArchive
             ?? throw new InvalidOperationException(
                 "The reusable Taiwu archive is unavailable.");
+        var projectStarted = _timeProvider.GetTimestamp();
         var result = project(
             new TaiwuArchiveReadContext(
                 saveFilePath,
                 current.SourceFingerprint,
                 current.LoadWarning),
             cancellationToken);
+        var projectElapsed = _timeProvider.GetElapsedTime(projectStarted);
         cancellationToken.ThrowIfCancellationRequested();
 
         var revisionAfter = revisionProvider.Capture(saveFilePath);
@@ -154,7 +172,23 @@ internal sealed class TaiwuArchiveReadSession(
             throw new TaiwuArchiveChangedException();
         }
 
-        return result;
+        var fingerprintAfterStarted = _timeProvider.GetTimestamp();
+        var fingerprintAfter = await fingerprintProvider.CaptureAsync(
+                saveFilePath,
+                cancellationToken)
+            .ConfigureAwait(false);
+        var fingerprintAfterElapsed = _timeProvider.GetElapsedTime(
+            fingerprintAfterStarted);
+        if (fingerprintBefore != fingerprintAfter)
+        {
+            CurrentArchive = null;
+            throw new TaiwuArchiveChangedException();
+        }
+
+        return new ReusedProjection<TResult>(
+            result,
+            projectElapsed,
+            fingerprintAfterElapsed);
     }
 
     private static bool PathsEqual(string left, string right) =>
@@ -193,6 +227,11 @@ internal sealed class TaiwuArchiveReadSession(
         ReadOnlyFileRevision Revision,
         ReadOnlyFileFingerprint SourceFingerprint,
         TaiwuArchiveLoadWarning? LoadWarning);
+
+    private sealed record ReusedProjection<TResult>(
+        TResult Result,
+        TimeSpan ProjectElapsed,
+        TimeSpan FingerprintAfterElapsed);
 }
 
 internal sealed record TaiwuArchiveReadContext(

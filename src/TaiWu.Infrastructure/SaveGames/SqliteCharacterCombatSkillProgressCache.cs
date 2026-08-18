@@ -15,15 +15,14 @@ internal sealed record RawCharacterCombatSkillSnapshot(
     ImmutableArray<RawCharacterCombatSkillProgress> Progress);
 
 internal sealed class SqliteCharacterCombatSkillProgressCache(
-    SaveProgressCacheStoragePathProvider pathProvider)
+    SaveProgressCacheStoragePathProvider pathProvider,
+    IReadOnlyFileFingerprintProvider fingerprintProvider)
     : ICharacterCombatSkillProgressCacheMaintenance
 {
     internal const int SchemaVersion = 4;
     internal const int MaximumCachedSavePaths = 8;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private bool _schemaReady;
-
     internal async Task<RawCharacterCombatSkillSnapshot?> TryReadAsync(
         string saveFilePath,
         ReadOnlyFileRevision revision,
@@ -116,6 +115,17 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
             }
 
             Validate(snapshot);
+            var currentFingerprint = await fingerprintProvider.CaptureAsync(
+                    saveFilePath,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            if (currentFingerprint != new ReadOnlyFileFingerprint(
+                    snapshot.FileLength,
+                    snapshot.SaveSha256,
+                    Utc(snapshot.LastWriteUtcTicks)))
+            {
+                return null;
+            }
 
             await using var progressCommand = connection.CreateCommand();
             progressCommand.CommandText = """
@@ -327,11 +337,6 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
 
     private async Task EnsureSchemaAsync(CancellationToken cancellationToken)
     {
-        if (_schemaReady)
-        {
-            return;
-        }
-
         Directory.CreateDirectory(pathProvider.CacheDirectory);
         await using var connection = await OpenConnectionAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -423,7 +428,6 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                 cancellationToken)
             .ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        _schemaReady = true;
     }
 
     private async Task<SqliteConnection> OpenConnectionAsync(
@@ -435,7 +439,9 @@ internal sealed class SqliteCharacterCombatSkillProgressCache(
                 DataSource = pathProvider.DatabasePath,
                 Mode = SqliteOpenMode.ReadWriteCreate,
                 Cache = SqliteCacheMode.Shared,
-                Pooling = true
+                // Do not retain a handle to an unlinked database if the cache
+                // file is deleted or replaced while the helper is running.
+                Pooling = false
             }.ToString());
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();

@@ -128,6 +128,8 @@ public sealed class TaiwuArchiveReadSessionTests
             revision);
         var fingerprints = new StubFingerprintProvider(
             fingerprint,
+            fingerprint,
+            fingerprint,
             fingerprint);
         var warning = new TaiwuArchiveLoadWarning(
             TaiwuArchiveLoadWarning.StandaloneEventRuntimeUnavailable,
@@ -158,7 +160,7 @@ public sealed class TaiwuArchiveReadSessionTests
             Assert.Equal(1, first);
             Assert.Equal(2, second);
             Assert.Equal(3, revisions.CaptureCount);
-            Assert.Equal(2, fingerprints.CaptureCount);
+            Assert.Equal(4, fingerprints.CaptureCount);
             Assert.Equal(1, loader.LoadCount);
         }
         finally
@@ -212,6 +214,47 @@ public sealed class TaiwuArchiveReadSessionTests
     }
 
     [Fact]
+    public async Task ReadAsync_WhenContentChangesWithPreservedMetadata_ReloadsArchive()
+    {
+        var firstFingerprint = Fingerprint("A");
+        var secondFingerprint = Fingerprint("B");
+        var revision = Revision(firstFingerprint);
+        var revisions = new StubRevisionProvider(revision, revision);
+        var fingerprints = new StubFingerprintProvider(
+            firstFingerprint,
+            firstFingerprint,
+            secondFingerprint,
+            secondFingerprint);
+        var loader = new StubArchiveLoader();
+        var session = new TaiwuArchiveReadSession(
+            revisions,
+            fingerprints,
+            loader);
+        var path = await CreateSaveAsync();
+
+        try
+        {
+            await session.ReadAsync(
+                path,
+                static (_, _) => "A",
+                TestContext.Current.CancellationToken);
+            var secondHash = await session.ReadAsync(
+                path,
+                static (context, _) => context.SourceFingerprint.Sha256,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal("B", secondHash);
+            Assert.Equal(2, revisions.CaptureCount);
+            Assert.Equal(4, fingerprints.CaptureCount);
+            Assert.Equal(2, loader.LoadCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public async Task ReadAsync_WhenCachedSourceChanges_DiscardsProjection()
     {
         var fingerprint = Fingerprint("A");
@@ -223,6 +266,7 @@ public sealed class TaiwuArchiveReadSessionTests
             Revision(fingerprint),
             changed);
         var fingerprints = new StubFingerprintProvider(
+            fingerprint,
             fingerprint,
             fingerprint);
         var loader = new StubArchiveLoader();
@@ -246,7 +290,7 @@ public sealed class TaiwuArchiveReadSessionTests
                     TestContext.Current.CancellationToken));
 
             Assert.Contains("changed while it was being read", exception.Message);
-            Assert.Equal(2, fingerprints.CaptureCount);
+            Assert.Equal(3, fingerprints.CaptureCount);
             Assert.Equal(1, loader.LoadCount);
         }
         finally
