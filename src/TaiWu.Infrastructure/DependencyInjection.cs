@@ -99,6 +99,7 @@ public static class DependencyInjection
             new TaiwuVillageWorkforceSnapshotReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
+                provider.GetRequiredService<TaiwuGameTextResolver>(),
                 provider.GetRequiredService<TimeProvider>(),
                 provider.GetService<Microsoft.Extensions.Logging.ILogger<
                     TaiwuVillageWorkforceSnapshotReader>>()

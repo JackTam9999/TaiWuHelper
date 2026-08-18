@@ -54,9 +54,10 @@ The endpoint performs one guarded snapshot read and returns:
   label and exact-unit description; and
 - every supported occupied target with stable reference, area, block,
   building-block index, original manager-list position, required life-skill
-  type, `NoExplicitVacancy` state and localized structural label.
+  type, `NoExplicitVacancy` state, and localized building/location/discipline
+  label when available.
 
-The endpoint does not return worker names, a save hash, save path, raw archive
+The endpoint does not return workers, a save hash, save path, raw archive
 record or GameData configuration object. Language changes text only and cannot
 change objective or target identity.
 
@@ -101,8 +102,8 @@ comparison, limitations or the authoritative fingerprint.
 
 Each candidate contains:
 
-- stable API reference, character ID, structural localized label and current
-  marker;
+- stable API reference, character ID, localized display name/location when
+  available, and current marker;
 - API-owned worker/evaluation states, localized state text, optional
   competition rank and nullable exact total;
 - all five ordered requirements with typed outcome, stable reason, localized

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using TaiWu.Domain.VillageWorkforce;
 
 namespace TaiWu.Application.VillageWorkforce;
@@ -18,6 +19,8 @@ public sealed class VillageWorkforceSnapshotReadResult
     private VillageWorkforceSnapshotReadResult(
         VillageWorkforceSnapshotReadStatus status,
         VillageWorkforceSnapshot? snapshot,
+        IEnumerable<VillageWorkerDisplay>? workerDisplays,
+        IEnumerable<VillageWorkforceTargetDisplay>? targetDisplays,
         string? failureIdentity,
         string? failureMessage)
     {
@@ -41,6 +44,8 @@ public sealed class VillageWorkforceSnapshotReadResult
 
         Status = status;
         Snapshot = snapshot;
+        WorkerDisplays = CopyWorkerDisplays(snapshot, workerDisplays ?? []);
+        TargetDisplays = CopyTargetDisplays(snapshot, targetDisplays ?? []);
         FailureIdentity = failureIdentity;
         FailureMessage = failureMessage;
     }
@@ -49,21 +54,33 @@ public sealed class VillageWorkforceSnapshotReadResult
 
     public VillageWorkforceSnapshot? Snapshot { get; }
 
+    public ImmutableArray<VillageWorkerDisplay> WorkerDisplays { get; }
+
+    public ImmutableArray<VillageWorkforceTargetDisplay> TargetDisplays { get; }
+
     public string? FailureIdentity { get; }
 
     public string? FailureMessage { get; }
 
     public static VillageWorkforceSnapshotReadResult Complete(
-        VillageWorkforceSnapshot snapshot) =>
+        VillageWorkforceSnapshot snapshot,
+        IEnumerable<VillageWorkerDisplay>? workerDisplays = null,
+        IEnumerable<VillageWorkforceTargetDisplay>? targetDisplays = null) =>
         new(VillageWorkforceSnapshotReadStatus.Complete,
             snapshot ?? throw new ArgumentNullException(nameof(snapshot)),
+            workerDisplays,
+            targetDisplays,
             null,
             null);
 
     public static VillageWorkforceSnapshotReadResult Partial(
-        VillageWorkforceSnapshot snapshot) =>
+        VillageWorkforceSnapshot snapshot,
+        IEnumerable<VillageWorkerDisplay>? workerDisplays = null,
+        IEnumerable<VillageWorkforceTargetDisplay>? targetDisplays = null) =>
         new(VillageWorkforceSnapshotReadStatus.Partial,
             snapshot ?? throw new ArgumentNullException(nameof(snapshot)),
+            workerDisplays,
+            targetDisplays,
             null,
             null);
 
@@ -82,6 +99,8 @@ public sealed class VillageWorkforceSnapshotReadResult
 
         return new VillageWorkforceSnapshotReadResult(
             status,
+            null,
+            null,
             null,
             Stable(failureIdentity, nameof(failureIdentity)),
             Required(failureMessage, nameof(failureMessage)));
@@ -103,4 +122,45 @@ public sealed class VillageWorkforceSnapshotReadResult
                 "A read failure requires safe nonblank text.",
                 parameterName)
             : value.Trim();
+
+    private static ImmutableArray<VillageWorkerDisplay> CopyWorkerDisplays(
+        VillageWorkforceSnapshot? snapshot,
+        IEnumerable<VillageWorkerDisplay> values)
+    {
+        var copied = values.ToImmutableArray();
+        if (copied.Any(item => item is null)
+            || copied.GroupBy(item => item.Identity).Any(group => group.Count() > 1)
+            || snapshot is null && !copied.IsEmpty
+            || snapshot is not null && copied.Any(item => snapshot.Workers.All(
+                worker => worker.Identity != item.Identity)))
+        {
+            throw new ArgumentException(
+                "Worker displays must be unique and belong to the snapshot.",
+                nameof(values));
+        }
+
+        return [.. copied.OrderBy(item => item.Identity.CharacterId)];
+    }
+
+    private static ImmutableArray<VillageWorkforceTargetDisplay> CopyTargetDisplays(
+        VillageWorkforceSnapshot? snapshot,
+        IEnumerable<VillageWorkforceTargetDisplay> values)
+    {
+        var copied = values.ToImmutableArray();
+        if (copied.Any(item => item is null)
+            || copied.GroupBy(item => item.Identity).Any(group => group.Count() > 1)
+            || snapshot is null && !copied.IsEmpty
+            || snapshot is not null && copied.Any(item => snapshot.Targets.All(
+                target => target.Identity != item.Identity)))
+        {
+            throw new ArgumentException(
+                "Target displays must be unique and belong to the snapshot.",
+                nameof(values));
+        }
+
+        return [.. copied.OrderBy(item => item.Identity.Building.AreaId)
+            .ThenBy(item => item.Identity.Building.BlockId)
+            .ThenBy(item => item.Identity.Building.BuildingBlockIndex)
+            .ThenBy(item => item.Identity.ManagerSlotIndex)];
+    }
 }

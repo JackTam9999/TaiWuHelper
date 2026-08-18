@@ -73,6 +73,20 @@ public sealed class VillageWorkforceSnapshotIntegrationTests(
             second.Targets.Select(item => item.Fingerprint));
         Assert.Equal(first.CurrentAssignments, second.CurrentAssignments);
         Assert.Equal(first.Diagnostics, second.Diagnostics);
+        Assert.Equal(first.Workers.Length, firstRead.WorkerDisplays.Length);
+        Assert.Equal(first.Targets.Length, firstRead.TargetDisplays.Length);
+        Assert.All(firstRead.TargetDisplays, display =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(
+                display.TraditionalChineseBuildingName));
+            Assert.False(string.IsNullOrWhiteSpace(display.EnglishBuildingName));
+            Assert.False(string.IsNullOrWhiteSpace(
+                display.TraditionalChineseDisciplineName));
+            Assert.False(string.IsNullOrWhiteSpace(display.EnglishDisciplineName));
+        });
+        Assert.Contains(firstRead.WorkerDisplays, display =>
+            display.TraditionalChineseName is not null
+            && display.EnglishName is not null);
         Assert.NotEqual(first.CapturedAt, second.CapturedAt);
         Assert.Equal(first.Fingerprint, second.Fingerprint);
         Assert.NotEmpty(first.Workers);

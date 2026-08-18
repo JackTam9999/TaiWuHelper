@@ -25,7 +25,12 @@ public static class VillageWorkforceViewModelMapper
             result,
             ApiLanguage(language));
         var candidates = response.Candidates.Select((candidate, index) =>
-            MapCandidate(candidate, index + 1, language)).ToArray();
+            MapCandidate(
+                candidate,
+                result.WorkerDisplays.SingleOrDefault(display =>
+                    display.Identity.CharacterId == candidate.CharacterId),
+                index + 1,
+                language)).ToArray();
         return new VillageWorkforceViewModel(
             response.Status,
             response.Source!.CapturedAtUtc,
@@ -37,7 +42,13 @@ public static class VillageWorkforceViewModelMapper
                 language,
                 VillageWorkforceUiTextKey.ObjectiveDescription),
             response.Objective!.RuleVersion,
-            VillageWorkforceUiText.TargetLabel(language, targetOrdinal),
+            TargetLabel(
+                result.Snapshot!.Targets.Single(target =>
+                    target.Identity == result.EvaluationSet!.ResultIdentity.Target),
+                result.TargetDisplays.SingleOrDefault(display =>
+                    display.Identity == result.EvaluationSet!.ResultIdentity.Target),
+                language,
+                targetOrdinal),
             response.Counts!,
             candidates.Single(candidate => candidate.IsCurrent),
             candidates,
@@ -165,6 +176,7 @@ public static class VillageWorkforceViewModelMapper
 
     private static VillageWorkforceCandidateViewModel MapCandidate(
         VillageWorkforceCandidateResponse candidate,
+        VillageWorkerDisplay? display,
         int ordinal,
         TaiwuLanguage language)
     {
@@ -195,10 +207,12 @@ public static class VillageWorkforceViewModelMapper
         return new VillageWorkforceCandidateViewModel(
             candidate.CharacterId,
             ordinal,
-            VillageWorkforceUiText.WorkerLabel(
-                language,
-                ordinal,
-                candidate.IsCurrent),
+            WorkerName(display, language)
+                ?? VillageWorkforceUiText.WorkerLabel(
+                    language,
+                    ordinal,
+                    candidate.IsCurrent),
+            WorkerLocation(display, language),
             candidate.IsCurrent,
             candidate.EvaluationState,
             stateLabel,
@@ -213,6 +227,48 @@ public static class VillageWorkforceViewModelMapper
             requirements,
             components);
     }
+
+    public static string TargetLabel(
+        ShopManagerTarget target,
+        VillageWorkforceTargetDisplay? display,
+        TaiwuLanguage language,
+        int fallbackOrdinal)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        var building = language == TaiwuLanguage.Chinese
+            ? display?.TraditionalChineseBuildingName
+            : display?.EnglishBuildingName;
+        if (building is null)
+        {
+            return VillageWorkforceUiText.TargetLabel(language, fallbackOrdinal);
+        }
+
+        var location = language == TaiwuLanguage.Chinese
+            ? display?.TraditionalChineseLocation
+            : display?.EnglishLocation;
+        var discipline = language == TaiwuLanguage.Chinese
+            ? display?.TraditionalChineseDisciplineName
+            : display?.EnglishDisciplineName;
+        var position = language == TaiwuLanguage.Chinese
+            ? $"管理位置 {target.Identity.ManagerSlotIndex + 1}"
+            : $"Manager position {target.Identity.ManagerSlotIndex + 1}";
+        return string.Join(
+            " · ",
+            new[] { building, location, position, discipline }
+                .Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    private static string? WorkerName(
+        VillageWorkerDisplay? display,
+        TaiwuLanguage language) => language == TaiwuLanguage.Chinese
+        ? display?.TraditionalChineseName
+        : display?.EnglishName;
+
+    private static string? WorkerLocation(
+        VillageWorkerDisplay? display,
+        TaiwuLanguage language) => language == TaiwuLanguage.Chinese
+        ? display?.TraditionalChineseLocation
+        : display?.EnglishLocation;
 
     private static VillageWorkforceProvenanceViewModel MapProvenance(
         VillageWorkforceEvidenceResponse evidence,

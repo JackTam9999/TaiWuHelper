@@ -19,6 +19,7 @@ public sealed record VillageWorkforceCandidateViewModel(
     int CharacterId,
     int DisplayOrdinal,
     string Label,
+    string? LocationLabel,
     bool IsCurrent,
     VillageWorkforceApiEvaluationState State,
     string StateLabel,

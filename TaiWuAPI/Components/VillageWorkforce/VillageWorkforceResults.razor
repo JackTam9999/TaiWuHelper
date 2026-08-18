@@ -63,6 +63,10 @@
         <div>
             <p class="eyebrow">@Text(VillageWorkforceUiTextKey.CurrentAssignment)</p>
             <h3 id="workforce-current-heading">@Model.Current.Label</h3>
+            @if (Model.Current.LocationLabel is not null)
+            {
+                <p class="workforce-worker-location">@Model.Current.LocationLabel</p>
+            }
             <span class="workforce-state @Model.Current.StateCssClass">
                 @Model.Current.StateLabel
             </span>
@@ -166,6 +170,12 @@
                             </td>
                             <th scope="row" data-label="@Text(VillageWorkforceUiTextKey.Worker)">
                                 @candidate.Label
+                                @if (candidate.LocationLabel is not null)
+                                {
+                                    <small class="workforce-worker-location">
+                                        @candidate.LocationLabel
+                                    </small>
+                                }
                                 @if (candidate.IsCurrent)
                                 {
                                     <small>@Text(VillageWorkforceUiTextKey.CurrentWorker)</small>

@@ -180,10 +180,15 @@
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
 
     private IReadOnlyList<VillageWorkforceTargetOptionViewModel>
-        TargetOptions => _targets.Select((_, index) =>
+        TargetOptions => _targets.Select((target, index) =>
             new VillageWorkforceTargetOptionViewModel(
                 index,
-                VillageWorkforceUiText.TargetLabel(Language, index + 1)))
+                VillageWorkforceViewModelMapper.TargetLabel(
+                    target,
+                    _snapshotRead?.TargetDisplays.SingleOrDefault(display =>
+                        display.Identity == target.Identity),
+                    Language,
+                    index + 1)))
             .ToArray();
 
     private string DraftTargetValue => _draftTargetIndex?.ToString() ?? "";

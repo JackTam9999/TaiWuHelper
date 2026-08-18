@@ -139,6 +139,53 @@ public sealed partial class VillageWorkforceRenderingTests
     }
 
     [Fact]
+    public void Display_enrichment_drives_labels_locations_and_real_name_search()
+    {
+        var snapshot = VillageWorkforcePresentationTestData.Snapshot();
+        var displays = snapshot.Workers.Select((worker, index) =>
+            new VillageWorkerDisplay(
+                worker.Identity,
+                $"範例人員{index + 1}",
+                $"Synthetic Person {index + 1}",
+                "太吾村",
+                "Taiwu Village")).ToArray();
+        var read = VillageWorkforceSnapshotReadResult.Complete(
+            snapshot,
+            displays,
+            [new VillageWorkforceTargetDisplay(
+                snapshot.Targets[0].Identity,
+                "茶館",
+                "Tea house",
+                "太吾村",
+                "Taiwu Village",
+                "品鑑",
+                "Appraisal")]);
+        var result = new BuildVillageWorkforce().Execute(
+            read,
+            new VillageWorkforceFinderRequest(
+                snapshot.Targets[0].Identity,
+                new WorkforceObjectiveIdentity(
+                    WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
+                    VerifiedVillageWorkforceRules.ObjectiveVersion)),
+            TestContext.Current.CancellationToken);
+        var model = VillageWorkforceViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            targetOrdinal: 1);
+        var state = new VillageWorkforceInteractionState();
+
+        Assert.Contains("Tea house", model.TargetLabel);
+        Assert.All(model.Candidates, candidate =>
+        {
+            Assert.StartsWith("Synthetic Person", candidate.Label);
+            Assert.Equal("Taiwu Village", candidate.LocationLabel);
+        });
+        state.SetNameQuery("Person 2");
+        Assert.Equal("Synthetic Person 2", Assert.Single(
+            state.VisibleCandidates(model)).Label);
+    }
+
+    [Fact]
     public async Task Initial_page_discovers_targets_without_evaluating_workers()
     {
         var snapshot = VillageWorkforcePresentationTestData.Snapshot();
@@ -146,7 +193,17 @@ public sealed partial class VillageWorkforceRenderingTests
         reader.ReadAsync(
                 VillageWorkforceSnapshotReadRequest.Current,
                 Arg.Any<CancellationToken>())
-            .Returns(VillageWorkforceSnapshotReadResult.Complete(snapshot));
+            .Returns(VillageWorkforceSnapshotReadResult.Complete(
+                snapshot,
+                workerDisplays: null,
+                targetDisplays: [new VillageWorkforceTargetDisplay(
+                    snapshot.Targets[0].Identity,
+                    "茶館",
+                    "Tea house",
+                    "太吾村",
+                    "Taiwu Village",
+                    "品鑑",
+                    "Appraisal")]));
         var finder = Substitute.For<IFindVillageWorkforce>();
 
         var html = await RenderPageAsync(
@@ -157,7 +214,7 @@ public sealed partial class VillageWorkforceRenderingTests
 
         Assert.Contains("Village workforce planner", text);
         Assert.Contains("Shop manager base aptitude", text);
-        Assert.Contains("Shop manager position 1", text);
+        Assert.Contains("Tea house", text);
         Assert.Contains("Inspect position", text);
         Assert.Contains("<select", html);
         Assert.DoesNotContain("41001", html, StringComparison.Ordinal);
@@ -356,6 +413,7 @@ public sealed partial class VillageWorkforceRenderingTests
             42000 + ordinal,
             ordinal,
             $"Synthetic worker {ordinal}",
+            "Synthetic location",
             current,
             state,
             stateLabel,

@@ -539,16 +539,16 @@ deferred work, and request the product-owner completion decision.
 
 ### E7-R2 — Add safe bilingual display enrichment
 
-**Status:** In progress
+**Status:** Complete
 
-- [ ] Resolve worker names and locations independently from scoring facts.
-- [ ] Resolve building and discipline display names independently from target
+- [x] Resolve worker names and locations independently from scoring facts.
+- [x] Resolve building and discipline display names independently from target
       identity and rule matching.
-- [ ] Preserve explicit unavailable fallbacks without exposing raw identifiers.
+- [x] Preserve explicit unavailable fallbacks without exposing raw identifiers.
 
 ### E7-R3 — Deliver concise grouped workforce interaction
 
-**Status:** Pending
+**Status:** In progress
 
 - [ ] Group positions by identifiable shop and current assignment.
 - [ ] Show current worker and top confirmed alternatives before the full list.

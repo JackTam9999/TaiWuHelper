@@ -4,6 +4,7 @@ using GameData.Domains.Character;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Diagnostics;
+using TaiWu.Application.Localization;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.VillageWorkforce;
 using TaiWu.Domain.VillageWorkforce;
@@ -13,6 +14,7 @@ namespace TaiWu.Infrastructure.SaveGames;
 internal sealed class TaiwuVillageWorkforceSnapshotReader(
     TaiwuArchiveReadSession readSession,
     ITaiwuSaveFilePathProvider saveFilePathProvider,
+    TaiwuGameTextResolver gameTextResolver,
     TimeProvider timeProvider,
     ILogger<TaiwuVillageWorkforceSnapshotReader>? logger = null)
     : IVillageWorkforceSnapshotReader
@@ -61,6 +63,7 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                         context,
                         gameDataVersion,
                         timeProvider.GetUtcNow(),
+                        gameTextResolver,
                         token),
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -74,9 +77,13 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
 
             return projection.IsPartial
                 ? VillageWorkforceSnapshotReadResult.Partial(
-                    projection.Snapshot!)
+                    projection.Snapshot!,
+                    projection.WorkerDisplays,
+                    projection.TargetDisplays)
                 : VillageWorkforceSnapshotReadResult.Complete(
-                    projection.Snapshot!);
+                    projection.Snapshot!,
+                    projection.WorkerDisplays,
+                    projection.TargetDisplays);
         }
         catch (OperationCanceledException) when (
             cancellationToken.IsCancellationRequested)
@@ -113,9 +120,16 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
         TaiwuArchiveReadContext context,
         string gameDataVersion,
         DateTimeOffset capturedAt,
+        TaiwuGameTextResolver textResolver,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var traditionalChinese = textResolver.CreateContext(
+            context.SaveFilePath,
+            TaiwuLanguage.Chinese);
+        var english = textResolver.CreateContext(
+            context.SaveFilePath,
+            TaiwuLanguage.English);
         var candidateEntries = DomainManager.Taiwu
             .GetVillagersForWork(
                 includeUnlockedWorkingVillagers: true,
@@ -150,6 +164,7 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
             typeof(DomainManager).Assembly.ManifestModule.ModuleVersionId
                 .ToString("N"));
         var targets = new List<ShopManagerTarget>();
+        var targetDisplays = new List<VillageWorkforceTargetDisplay>();
         var assignments = new List<CurrentShopManagerAssignment>();
         var seenTargets = new HashSet<ShopManagerTargetIdentity>();
         var buildingDomain = DomainManager.Building;
@@ -228,6 +243,20 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                                 "SHOP_MANAGER_POSITION",
                                 saveProvenance)
                         ]));
+                    targetDisplays.Add(new VillageWorkforceTargetDisplay(
+                        targetIdentity,
+                        traditionalChinese.ResolveOptional(
+                            "BuildingBlock",
+                            config.Name),
+                        english.ResolveOptional("BuildingBlock", config.Name),
+                        traditionalChinese.ResolveLocationName(area),
+                        english.ResolveLocationName(area),
+                        traditionalChinese.ResolveOptional(
+                            "LifeSkillType",
+                            $"Name_{config.RequireLifeSkillType}"),
+                        english.ResolveOptional(
+                            "LifeSkillType",
+                            $"Name_{config.RequireLifeSkillType}")));
                     assignments.Add(new CurrentShopManagerAssignment(
                         targetIdentity,
                         new VillageWorkerIdentity(characterId),
@@ -258,6 +287,10 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                 gameDataProvenance,
                 cancellationToken))
             .ToArray();
+        var workerDisplays = workers.Select(worker => ProjectWorkerDisplay(
+            worker.Identity,
+            traditionalChinese,
+            english)).ToArray();
         var diagnostics = new List<WorkforceDiagnostic>();
         if (candidateEntries.Any(characterId => characterId <= 0))
         {
@@ -289,7 +322,11 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                 or WorkforceWorkerState.Unsupported
                 or WorkforceWorkerState.Conflicting)
             || candidateEntries.Any(characterId => characterId <= 0);
-        return VillageWorkforceProjection.Success(snapshot, isPartial);
+        return VillageWorkforceProjection.Success(
+            snapshot,
+            workerDisplays,
+            targetDisplays,
+            isPartial);
     }
 
     private static VillageWorkerProfile ProjectWorker(
@@ -403,6 +440,41 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
                 : []);
     }
 
+    private static VillageWorkerDisplay ProjectWorkerDisplay(
+        VillageWorkerIdentity identity,
+        TaiwuGameTextContext traditionalChinese,
+        TaiwuGameTextContext english)
+    {
+        try
+        {
+            if (!DomainManager.Character.TryGetElement_Objects(
+                    identity.CharacterId,
+                    out Character character))
+            {
+                return new VillageWorkerDisplay(identity, null, null, null, null);
+            }
+
+            var location = character.GetLocation();
+            return new VillageWorkerDisplay(
+                identity,
+                SafeName(traditionalChinese.ResolveCharacterName(character)),
+                SafeName(english.ResolveCharacterName(character)),
+                traditionalChinese.ResolveLocationName(location),
+                english.ResolveLocationName(location));
+        }
+        catch (Exception exception) when (IsSafeReadFailure(exception))
+        {
+            return new VillageWorkerDisplay(identity, null, null, null, null);
+        }
+    }
+
+    private static string? SafeName(string? value) =>
+        string.IsNullOrWhiteSpace(value)
+        || value.Contains("Name_", StringComparison.Ordinal)
+        || value.Contains("SurName_", StringComparison.Ordinal)
+            ? null
+            : value.Trim();
+
     private static VillageWorkforceSnapshotReadResult Failure(
         VillageWorkforceSnapshotReadStatus status,
         string identity,
@@ -430,6 +502,8 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
 
     private sealed record VillageWorkforceProjection(
         VillageWorkforceSnapshot? Snapshot,
+        IReadOnlyList<VillageWorkerDisplay> WorkerDisplays,
+        IReadOnlyList<VillageWorkforceTargetDisplay> TargetDisplays,
         bool IsPartial,
         VillageWorkforceSnapshotReadStatus? FailureStatus,
         string? FailureIdentity,
@@ -437,14 +511,25 @@ internal sealed class TaiwuVillageWorkforceSnapshotReader(
     {
         public static VillageWorkforceProjection Success(
             VillageWorkforceSnapshot snapshot,
+            IReadOnlyList<VillageWorkerDisplay> workerDisplays,
+            IReadOnlyList<VillageWorkforceTargetDisplay> targetDisplays,
             bool isPartial) =>
-            new(snapshot, isPartial, null, null, null);
+            new(
+                snapshot,
+                workerDisplays,
+                targetDisplays,
+                isPartial,
+                null,
+                null,
+                null);
 
         public static VillageWorkforceProjection Conflicting(
             string identity,
             string message) =>
             new(
                 null,
+                [],
+                [],
                 false,
                 VillageWorkforceSnapshotReadStatus.ConflictingSources,
                 identity,

@@ -41,8 +41,19 @@ public sealed class VillageWorkforceControllerTests
     public async Task Discovery_localizes_stable_objective_and_targets()
     {
         var snapshot = Snapshot([Worker(101, 60), Worker(202, 80)]);
+        var target = snapshot.Targets[0].Identity;
         var reader = Reader(
-            VillageWorkforceSnapshotReadResult.Complete(snapshot));
+            VillageWorkforceSnapshotReadResult.Complete(
+                snapshot,
+                workerDisplays: null,
+                targetDisplays: [new VillageWorkforceTargetDisplay(
+                    target,
+                    "茶館",
+                    "Tea house",
+                    "太吾村",
+                    "Taiwu Village",
+                    "品鑑",
+                    "Appraisal")]));
         var controller = Controller(reader);
 
         var englishAction = await controller.Options(
@@ -67,6 +78,8 @@ public sealed class VillageWorkforceControllerTests
             english.Objectives[0].Label,
             chinese.Objectives[0].Label);
         Assert.NotEqual(english.Targets[0].Label, chinese.Targets[0].Label);
+        Assert.Contains("Tea house", english.Targets[0].Label);
+        Assert.Contains("茶館", chinese.Targets[0].Label);
         await reader.Received(2).ReadAsync(
             VillageWorkforceSnapshotReadRequest.Current,
             Arg.Any<CancellationToken>());
@@ -83,7 +96,22 @@ public sealed class VillageWorkforceControllerTests
             WorkforceDiagnosticSeverity.Information,
             [])]);
         var reader = Reader(
-            VillageWorkforceSnapshotReadResult.Complete(snapshot));
+            VillageWorkforceSnapshotReadResult.Complete(
+                snapshot,
+                [
+                    new VillageWorkerDisplay(
+                        new VillageWorkerIdentity(101),
+                        "人員甲",
+                        "Worker A",
+                        "太吾村",
+                        "Taiwu Village"),
+                    new VillageWorkerDisplay(
+                        new VillageWorkerIdentity(202),
+                        "人員乙",
+                        "Worker B",
+                        "太吾村",
+                        "Taiwu Village")
+                ]));
         var controller = Controller(reader);
         var query = Query(snapshot) with
         {
@@ -111,6 +139,8 @@ public sealed class VillageWorkforceControllerTests
             [202, 101],
             response.Candidates.Select(item => item.CharacterId));
         var first = response.Candidates[0];
+        Assert.Equal("Worker B", first.Label);
+        Assert.Equal("Taiwu Village", first.LocationLabel);
         Assert.Equal(1, first.CompetitionRank);
         Assert.Equal(80m, first.Total);
         Assert.Equal(

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
 using TaiWu.Domain.VillageWorkforce;
@@ -72,6 +73,8 @@ public sealed class VillageWorkforceFinderResult
         VillageWorkforceShortlistView? view,
         WorkforceComparison? comparison,
         VillageWorkforceManualPlan? manualPlan,
+        IEnumerable<VillageWorkerDisplay>? workerDisplays,
+        IEnumerable<VillageWorkforceTargetDisplay>? targetDisplays,
         string? failureIdentity)
     {
         if (!Enum.IsDefined(status))
@@ -174,6 +177,8 @@ public sealed class VillageWorkforceFinderResult
         View = view;
         Comparison = comparison;
         ManualPlan = manualPlan;
+        WorkerDisplays = CopyWorkerDisplays(snapshot, workerDisplays ?? []);
+        TargetDisplays = CopyTargetDisplays(snapshot, targetDisplays ?? []);
         FailureIdentity = failureIdentity;
         if (authoritative)
         {
@@ -201,6 +206,10 @@ public sealed class VillageWorkforceFinderResult
 
     public VillageWorkforceManualPlan? ManualPlan { get; }
 
+    public ImmutableArray<VillageWorkerDisplay> WorkerDisplays { get; }
+
+    public ImmutableArray<VillageWorkforceTargetDisplay> TargetDisplays { get; }
+
     public string? FailureIdentity { get; }
 
     public string? Fingerprint { get; }
@@ -216,7 +225,9 @@ public sealed class VillageWorkforceFinderResult
         VillageWorkforceShortlist shortlist,
         VillageWorkforceShortlistView view,
         WorkforceComparison? comparison,
-        VillageWorkforceManualPlan? manualPlan) =>
+        VillageWorkforceManualPlan? manualPlan,
+        IEnumerable<VillageWorkerDisplay> workerDisplays,
+        IEnumerable<VillageWorkforceTargetDisplay> targetDisplays) =>
         new(
             status,
             snapshotReadStatus,
@@ -228,6 +239,8 @@ public sealed class VillageWorkforceFinderResult
             view,
             comparison,
             manualPlan,
+            workerDisplays,
+            targetDisplays,
             failureIdentity: null);
 
     internal static VillageWorkforceFinderResult InvalidSelection(
@@ -238,6 +251,8 @@ public sealed class VillageWorkforceFinderResult
         VillageWorkforceEvaluationSet evaluationSet,
         VillageWorkforceShortlist shortlist,
         VillageWorkforceShortlistView view,
+        IEnumerable<VillageWorkerDisplay> workerDisplays,
+        IEnumerable<VillageWorkforceTargetDisplay> targetDisplays,
         string failureIdentity) =>
         new(
             status,
@@ -250,6 +265,8 @@ public sealed class VillageWorkforceFinderResult
             view,
             comparison: null,
             manualPlan: null,
+            workerDisplays,
+            targetDisplays,
             StableFailure(failureIdentity));
 
     internal static VillageWorkforceFinderResult Failed(
@@ -268,6 +285,8 @@ public sealed class VillageWorkforceFinderResult
             view: null,
             comparison: null,
             manualPlan: null,
+            workerDisplays: null,
+            targetDisplays: null,
             StableFailure(failureIdentity));
 
     private static string StableFailure(string value)
@@ -281,6 +300,47 @@ public sealed class VillageWorkforceFinderResult
         }
 
         return value.Trim();
+    }
+
+    private static ImmutableArray<VillageWorkerDisplay> CopyWorkerDisplays(
+        VillageWorkforceSnapshot? snapshot,
+        IEnumerable<VillageWorkerDisplay> displays)
+    {
+        var copied = displays.ToImmutableArray();
+        if (copied.Any(item => item is null)
+            || copied.GroupBy(item => item.Identity).Any(group => group.Count() > 1)
+            || snapshot is null && !copied.IsEmpty
+            || snapshot is not null && copied.Any(item => snapshot.Workers.All(
+                worker => worker.Identity != item.Identity)))
+        {
+            throw new ArgumentException(
+                "Worker displays must be unique and belong to the result snapshot.",
+                nameof(displays));
+        }
+
+        return [.. copied.OrderBy(item => item.Identity.CharacterId)];
+    }
+
+    private static ImmutableArray<VillageWorkforceTargetDisplay> CopyTargetDisplays(
+        VillageWorkforceSnapshot? snapshot,
+        IEnumerable<VillageWorkforceTargetDisplay> displays)
+    {
+        var copied = displays.ToImmutableArray();
+        if (copied.Any(item => item is null)
+            || copied.GroupBy(item => item.Identity).Any(group => group.Count() > 1)
+            || snapshot is null && !copied.IsEmpty
+            || snapshot is not null && copied.Any(item => snapshot.Targets.All(
+                target => target.Identity != item.Identity)))
+        {
+            throw new ArgumentException(
+                "Target displays must be unique and belong to the result snapshot.",
+                nameof(displays));
+        }
+
+        return [.. copied.OrderBy(item => item.Identity.Building.AreaId)
+            .ThenBy(item => item.Identity.Building.BlockId)
+            .ThenBy(item => item.Identity.Building.BuildingBlockIndex)
+            .ThenBy(item => item.Identity.ManagerSlotIndex)];
     }
 
     private string CreateFingerprint()

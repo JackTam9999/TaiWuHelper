@@ -18,18 +18,20 @@ explicit `Inspect position` action, and replaces the active result atomically.
 The result places its selected target, stable-snapshot state, rule version,
 qualification meaning, source boundary, and shared limitations once above the
 worker list. The current assignment is summarized before alternatives. Each
-worker row retains only rank, localized ordinal label, exact value or typed
+worker row retains only rank, localized display name, exact value or typed
 unavailable state, evaluation state, decisive evidence, and comparison control.
 Requirements, the single verified component, and redacted provenance live in
 one closed native disclosure per worker.
 
 ## Identity and repetition controls
 
-The verified source boundary does not currently provide localized worker or
-building names. The page therefore uses localized ordinal labels and never
-renders worker, settlement, area, block, building, manager-slot, discipline,
-stable-reference, fingerprint, or local-path identities. The name filter
-operates on those displayed labels only.
+The post-review display projection provides optional Traditional Chinese and
+English worker names/locations plus building/location/discipline labels. These
+values are display-only and cannot enter rule selection, scoring, ordering, or
+fingerprints. When a localized value is unavailable, the page falls back to a
+localized ordinal label and never renders raw stable references, fingerprints,
+local paths, or structural IDs. The name filter operates on the real displayed
+worker name.
 
 Shared formula, evidence, and information-only wording is not copied into each
 row. The current worker appears in the current-assignment summary and once in

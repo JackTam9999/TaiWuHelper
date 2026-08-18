@@ -60,6 +60,44 @@ public sealed class VillageWorkforceSnapshotContractsTests
                 "Unsafe identity."));
     }
 
+    [Fact]
+    public void Display_enrichment_is_optional_typed_and_snapshot_bounded()
+    {
+        var snapshot = Snapshot();
+        var worker = snapshot.Workers[0].Identity;
+        var target = snapshot.Targets[0].Identity;
+        var complete = VillageWorkforceSnapshotReadResult.Complete(
+            snapshot,
+            [new VillageWorkerDisplay(
+                worker,
+                "範例人員",
+                "Synthetic worker",
+                "太吾村",
+                "Taiwu Village")],
+            [new VillageWorkforceTargetDisplay(
+                target,
+                "茶館",
+                "Tea house",
+                "太吾村",
+                "Taiwu Village",
+                "品鑑",
+                "Appraisal")]);
+
+        Assert.Equal("Synthetic worker", Assert.Single(
+            complete.WorkerDisplays).EnglishName);
+        Assert.Equal("茶館", Assert.Single(
+            complete.TargetDisplays).TraditionalChineseBuildingName);
+        Assert.Throws<ArgumentException>(() =>
+            VillageWorkforceSnapshotReadResult.Complete(
+                snapshot,
+                [new VillageWorkerDisplay(
+                    new VillageWorkerIdentity(999),
+                    "其他",
+                    "Other",
+                    null,
+                    null)]));
+    }
+
     private static VillageWorkforceSnapshot Snapshot()
     {
         var sha = new string('A', 64);

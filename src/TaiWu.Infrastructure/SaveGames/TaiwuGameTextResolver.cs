@@ -149,6 +149,15 @@ internal sealed class TaiwuGameTextContext(
     public string Resolve(string pack, string? key) =>
         resolver.Resolve(languageDirectory, pack, key);
 
+    public string? ResolveOptional(string pack, string? key)
+    {
+        var value = Resolve(pack, key);
+        return string.IsNullOrWhiteSpace(value)
+               || string.Equals(value, key, StringComparison.Ordinal)
+            ? null
+            : value.Trim();
+    }
+
     public string ResolveCharacterName(Character character)
     {
         ArgumentNullException.ThrowIfNull(character);
@@ -223,11 +232,7 @@ internal sealed class TaiwuGameTextContext(
 
     private string? ResolveAvailable(string pack, string? key)
     {
-        var value = Resolve(pack, key);
-        return string.IsNullOrWhiteSpace(value)
-               || string.Equals(value, key, StringComparison.Ordinal)
-            ? null
-            : value;
+        return ResolveOptional(pack, key);
     }
 
     internal string ResolveNameParts(string source, string separator)

@@ -75,7 +75,13 @@ candidate result is `Eligible`; a current worker outside it is `CurrentOnly`.
 The reader adds confirmed typed facts for candidate-universe membership and
 current-assignment membership. It does not infer complete village membership
 or use the broader availability diagnostic, Taiwu group, target lookup,
-location or localized name.
+location, or localized name as a mechanic.
+
+Worker names/locations and target building/location/discipline labels are
+projected into separate Application display contracts in Traditional Chinese
+and English. These optional display values are snapshot-bounded but excluded
+from Domain facts, rules, ordering, and fingerprints. Missing display text uses
+an explicit presentation fallback without changing source completeness.
 
 ### Targets and current assignments
 

@@ -243,6 +243,7 @@ public sealed record VillageWorkforceCandidateResponse(
     string Reference,
     int CharacterId,
     string Label,
+    string? LocationLabel,
     bool IsCurrent,
     VillageWorkforceApiWorkerState WorkerState,
     VillageWorkforceApiEvaluationState EvaluationState,

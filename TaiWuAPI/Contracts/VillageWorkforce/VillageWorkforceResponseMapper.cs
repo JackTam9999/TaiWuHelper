@@ -30,6 +30,8 @@ internal static class VillageWorkforceResponseMapper
             [Objective(language)],
             read.Snapshot.Targets.Select(target => MapTarget(
                 target,
+                read.TargetDisplays.SingleOrDefault(display =>
+                    display.Identity == target.Identity),
                 language)).ToArray());
     }
 
@@ -80,6 +82,8 @@ internal static class VillageWorkforceResponseMapper
                 evaluation.Worker == evaluationSet.CurrentWorker,
                 ranks.GetValueOrDefault(evaluation.Worker),
                 rule,
+                result.WorkerDisplays.SingleOrDefault(display =>
+                    display.Identity == evaluation.Worker),
                 language))
             .ToArray();
         var visible = result.View!.VisibleEvaluations
@@ -113,12 +117,20 @@ internal static class VillageWorkforceResponseMapper
                 snapshot.SourceVersions.CandidateUniverseVersion,
                 snapshot.SourceVersions.FingerprintSchemaVersion),
             Objective(language, rule),
-            MapTarget(target, language),
+            MapTarget(
+                target,
+                result.TargetDisplays.SingleOrDefault(display =>
+                    display.Identity == target.Identity),
+                language),
             new VillageWorkforceCurrentAssignmentResponse(
                 TargetReference(target.Identity),
                 WorkerReference(currentAssignment.Worker),
                 currentAssignment.Worker.CharacterId,
-                VillageWorkforceApiText.CurrentAssignment(language)),
+                WorkerLabel(
+                    language,
+                    currentAssignment.Worker,
+                    result.WorkerDisplays.SingleOrDefault(display =>
+                        display.Identity == currentAssignment.Worker))),
             new VillageWorkforceCountsResponse(
                 shortlist.Counts.Total,
                 shortlist.Counts.Comparable,
@@ -187,6 +199,7 @@ internal static class VillageWorkforceResponseMapper
         bool isCurrent,
         int competitionRank,
         WorkforceRuleDefinition rule,
+        VillageWorkerDisplay? display,
         VillageWorkforceApiLanguage language)
     {
         var state = MapEvaluationState(evaluation.State);
@@ -195,9 +208,8 @@ internal static class VillageWorkforceResponseMapper
         return new VillageWorkforceCandidateResponse(
             WorkerReference(evaluation.Worker),
             evaluation.Worker.CharacterId,
-            VillageWorkforceApiText.Worker(
-                language,
-                evaluation.Worker.CharacterId),
+            WorkerLabel(language, evaluation.Worker, display),
+            WorkerLocation(language, display),
             isCurrent,
             MapWorkerState(evaluation.WorkerState),
             state,
@@ -333,6 +345,7 @@ internal static class VillageWorkforceResponseMapper
 
     private static VillageWorkforceTargetResponse MapTarget(
         ShopManagerTarget target,
+        VillageWorkforceTargetDisplay? display,
         VillageWorkforceApiLanguage language) =>
         new(
             TargetReference(target.Identity),
@@ -342,13 +355,57 @@ internal static class VillageWorkforceResponseMapper
             target.Identity.ManagerSlotIndex,
             target.RequiredDiscipline.Type,
             VillageWorkforceApiVacancyState.NoExplicitVacancy,
-            VillageWorkforceApiText.Target(
+            TargetLabel(target, display, language));
+
+    private static string TargetLabel(
+        ShopManagerTarget target,
+        VillageWorkforceTargetDisplay? display,
+        VillageWorkforceApiLanguage language)
+    {
+        var building = language == VillageWorkforceApiLanguage.TraditionalChinese
+            ? display?.TraditionalChineseBuildingName
+            : display?.EnglishBuildingName;
+        var location = language == VillageWorkforceApiLanguage.TraditionalChinese
+            ? display?.TraditionalChineseLocation
+            : display?.EnglishLocation;
+        var discipline = language == VillageWorkforceApiLanguage.TraditionalChinese
+            ? display?.TraditionalChineseDisciplineName
+            : display?.EnglishDisciplineName;
+        if (building is null)
+        {
+            return VillageWorkforceApiText.Target(
                 language,
                 target.Identity.Building.AreaId,
                 target.Identity.Building.BlockId,
                 target.Identity.Building.BuildingBlockIndex,
                 target.Identity.ManagerSlotIndex,
-                target.RequiredDiscipline.Type));
+                target.RequiredDiscipline.Type);
+        }
+
+        var position = language == VillageWorkforceApiLanguage.TraditionalChinese
+            ? $"管理位置 {target.Identity.ManagerSlotIndex + 1}"
+            : $"Manager position {target.Identity.ManagerSlotIndex + 1}";
+        return string.Join(
+            " · ",
+            new[] { building, location, position, discipline }
+                .Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    private static string WorkerLabel(
+        VillageWorkforceApiLanguage language,
+        VillageWorkerIdentity worker,
+        VillageWorkerDisplay? display) =>
+        (language == VillageWorkforceApiLanguage.TraditionalChinese
+            ? display?.TraditionalChineseName
+            : display?.EnglishName)
+        ?? VillageWorkforceApiText.Worker(language, worker.CharacterId);
+
+    private static string? WorkerLocation(
+        VillageWorkforceApiLanguage language,
+        VillageWorkerDisplay? display) =>
+        language == VillageWorkforceApiLanguage.TraditionalChinese
+            ? display?.TraditionalChineseLocation
+            : display?.EnglishLocation;
 
     private static VillageWorkforceFailureResponse Failure(
         string identity,

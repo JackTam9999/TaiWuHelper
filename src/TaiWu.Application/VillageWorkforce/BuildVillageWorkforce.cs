@@ -82,6 +82,8 @@ public sealed class BuildVillageWorkforce
                     evaluationSet,
                     shortlist,
                     view,
+                    read.WorkerDisplays,
+                    read.TargetDisplays,
                     "VILLAGE_WORKFORCE_COMPARISON_WORKER_NOT_FOUND");
             }
 
@@ -107,6 +109,8 @@ public sealed class BuildVillageWorkforce
                     evaluationSet,
                     shortlist,
                     view,
+                    read.WorkerDisplays,
+                    read.TargetDisplays,
                     "VILLAGE_WORKFORCE_PROPOSAL_INVALID");
             }
 
@@ -129,7 +133,9 @@ public sealed class BuildVillageWorkforce
             shortlist,
             view,
             comparison,
-            manualPlan);
+            manualPlan,
+            read.WorkerDisplays,
+            read.TargetDisplays);
     }
 
     internal static bool ValidRequest(VillageWorkforceFinderRequest request)
