@@ -235,7 +235,7 @@ public sealed class EnrichCompanionCandidateProfilesTests
     }
 
     [Fact]
-    public async Task Duplicate_or_failed_catalogue_query_is_typed_failure()
+    public async Task Duplicate_query_is_typed_but_unexpected_repository_fault_propagates()
     {
         var definition = Definition(2);
         var identity = CatalogueIdentity();
@@ -254,20 +254,15 @@ public sealed class EnrichCompanionCandidateProfilesTests
             .ExecuteAsync(
                 Snapshot([Profile(42, learned: [2])]),
                 TestContext.Current.CancellationToken);
-        var failed = await new EnrichCompanionCandidateProfiles(
-                source,
-                failedRepository)
-            .ExecuteAsync(
-                Snapshot([Profile(42, learned: [2])]),
-                TestContext.Current.CancellationToken);
-
         Assert.Equal(CompanionCandidateEnrichmentStatus.CatalogueFailed, duplicate.Status);
-        Assert.Equal(CompanionCandidateEnrichmentStatus.CatalogueFailed, failed.Status);
-        Assert.All(
-            [duplicate, failed],
-            item => Assert.Equal(
-                CompanionCandidateEnrichmentState.CatalogueFailed,
-                Assert.Single(item.Candidates).State));
+        Assert.Equal(
+            CompanionCandidateEnrichmentState.CatalogueFailed,
+            Assert.Single(duplicate.Candidates).State);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new EnrichCompanionCandidateProfiles(source, failedRepository)
+                .ExecuteAsync(
+                    Snapshot([Profile(42, learned: [2])]),
+                    TestContext.Current.CancellationToken));
     }
 
     [Fact]

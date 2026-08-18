@@ -11,8 +11,6 @@ namespace TaiWuAPI.Controllers;
 public sealed class CompanionCandidatesController(
     IFindCompanionCandidates findCompanionCandidates) : ControllerBase
 {
-    public const int ClientClosedRequestStatusCode = 499;
-
     [HttpGet("roles")]
     [ProducesResponseType<CompanionRoleDiscoveryResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -37,7 +35,6 @@ public sealed class CompanionCandidatesController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType<ProblemDetails>(ClientClosedRequestStatusCode)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CompanionFinderResponse>> Find(
         [FromBody] CompanionFinderApiRequest? request,
@@ -54,57 +51,47 @@ public sealed class CompanionCandidatesController(
                     : "The companion-finder request is invalid.");
         }
 
-        try
+        var result = await findCompanionCandidates.ExecuteAsync(
+                request!.ToApplication(),
+                cancellationToken)
+            .ConfigureAwait(false);
+        var response = CompanionFinderResponseMapper.Map(result, request.Language);
+        return result.Status switch
         {
-            var result = await findCompanionCandidates.ExecuteAsync(
-                    request!.ToApplication(),
-                    cancellationToken)
-                .ConfigureAwait(false);
-            var response = CompanionFinderResponseMapper.Map(result, request.Language);
-            return result.Status switch
-            {
-                CompanionFinderStatus.Complete or CompanionFinderStatus.Empty => Ok(response),
-                CompanionFinderStatus.Partial => StatusCode(
-                    StatusCodes.Status206PartialContent,
-                    response),
-                CompanionFinderStatus.InvalidComparison => StatusCode(
-                    StatusCodes.Status400BadRequest,
-                    response),
-                CompanionFinderStatus.InvalidRequest
-                    or CompanionFinderStatus.UnknownRole
-                    or CompanionFinderStatus.UnsupportedRoleVersion => ProblemResult(
-                        result,
-                        request.Language,
-                        StatusCodes.Status400BadRequest),
-                CompanionFinderStatus.SaveUnavailable => ProblemResult(
+            CompanionFinderStatus.Complete or CompanionFinderStatus.Empty => Ok(response),
+            CompanionFinderStatus.Partial => StatusCode(
+                StatusCodes.Status206PartialContent,
+                response),
+            CompanionFinderStatus.InvalidComparison => StatusCode(
+                StatusCodes.Status400BadRequest,
+                response),
+            CompanionFinderStatus.InvalidRequest
+                or CompanionFinderStatus.UnknownRole
+                or CompanionFinderStatus.UnsupportedRoleVersion => ProblemResult(
                     result,
                     request.Language,
-                    StatusCodes.Status404NotFound),
-                CompanionFinderStatus.ChangedRevision => ProblemResult(
-                    result,
-                    request.Language,
-                    StatusCodes.Status409Conflict),
-                CompanionFinderStatus.UnsupportedSourceVersion => ProblemResult(
-                    result,
-                    request.Language,
-                    StatusCodes.Status422UnprocessableEntity),
-                CompanionFinderStatus.ReadFailed or CompanionFinderStatus.Failed => ProblemResult(
-                    result,
-                    request.Language,
-                    StatusCodes.Status500InternalServerError),
-                _ => ProblemResult(
-                    result,
-                    request.Language,
-                    StatusCodes.Status500InternalServerError)
-            };
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return ProblemResult(
-                "COMPANION_FINDER_CANCELLED",
-                request!.Language,
-                ClientClosedRequestStatusCode);
-        }
+                    StatusCodes.Status400BadRequest),
+            CompanionFinderStatus.SaveUnavailable => ProblemResult(
+                result,
+                request.Language,
+                StatusCodes.Status404NotFound),
+            CompanionFinderStatus.ChangedRevision => ProblemResult(
+                result,
+                request.Language,
+                StatusCodes.Status409Conflict),
+            CompanionFinderStatus.UnsupportedSourceVersion => ProblemResult(
+                result,
+                request.Language,
+                StatusCodes.Status422UnprocessableEntity),
+            CompanionFinderStatus.ReadFailed or CompanionFinderStatus.Failed => ProblemResult(
+                result,
+                request.Language,
+                StatusCodes.Status500InternalServerError),
+            _ => ProblemResult(
+                result,
+                request.Language,
+                StatusCodes.Status500InternalServerError)
+        };
     }
 
     private static bool Valid(CompanionFinderApiRequest? request)

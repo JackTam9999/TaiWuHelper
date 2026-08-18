@@ -53,22 +53,10 @@ public sealed class EnrichCompanionCandidateProfiles(
                     "Combat-skill catalogue and candidate snapshot versions do not match.")]);
         }
 
-        IReadOnlyList<CombatSkillDefinition>? definitions;
-        try
-        {
-            definitions = await catalogueRepository.QueryAsync(
-                    new CombatSkillCatalogueFilter(),
-                    cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            definitions = null;
-        }
+        var definitions = await catalogueRepository.QueryAsync(
+                new CombatSkillCatalogueFilter(),
+                cancellationToken)
+            .ConfigureAwait(false);
 
         cancellationToken.ThrowIfCancellationRequested();
         if (definitions is null

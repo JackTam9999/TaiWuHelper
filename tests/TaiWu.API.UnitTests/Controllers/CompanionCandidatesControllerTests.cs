@@ -392,7 +392,7 @@ public sealed class CompanionCandidatesControllerTests
     }
 
     [Fact]
-    public async Task Cancellation_returns_distinct_499_problem()
+    public async Task Cancellation_propagates_to_the_host_pipeline()
     {
         using var cancellation = new CancellationTokenSource();
         var reader = Substitute.For<ICompanionCandidateSnapshotReader>();
@@ -405,15 +405,10 @@ public sealed class CompanionCandidatesControllerTests
                 return Task.FromCanceled<CompanionCandidateSnapshotReadResult>(
                     call.ArgAt<CancellationToken>(1));
             });
-        var action = await Controller(Workflow(reader)).Find(
-            ApiRequest(),
-            cancellation.Token);
-
-        var problem = Assert.IsType<ObjectResult>(action.Result);
-        Assert.Equal(CompanionCandidatesController.ClientClosedRequestStatusCode, problem.StatusCode);
-        Assert.Equal(
-            "COMPANION_FINDER_CANCELLED",
-            Assert.IsType<ProblemDetails>(problem.Value).Extensions["code"]);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            Controller(Workflow(reader)).Find(
+                ApiRequest(),
+                cancellation.Token));
     }
 
     [Fact]

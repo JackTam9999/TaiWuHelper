@@ -25,24 +25,10 @@ public sealed class FindCompanionCandidates(
 
         var definition = validated.Definition!;
         var discipline = validated.Discipline!;
-        CompanionCandidateSnapshotReadResult read;
-        try
-        {
-            read = await snapshotReader.ReadAsync(
-                    CompanionCandidateSnapshotReadRequest.Current,
-                    cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            return CompanionFinderResult.Failed(
-                CompanionFinderStatus.ReadFailed,
-                "CANDIDATE_SNAPSHOT_READ_FAILED");
-        }
+        var read = await snapshotReader.ReadAsync(
+                CompanionCandidateSnapshotReadRequest.Current,
+                cancellationToken)
+            .ConfigureAwait(false);
 
         cancellationToken.ThrowIfCancellationRequested();
         if (read.Snapshot is null)
@@ -51,51 +37,23 @@ public sealed class FindCompanionCandidates(
         }
 
         var snapshot = read.Snapshot;
-        CompanionCandidateEnrichmentResult enrichment;
-        try
-        {
-            enrichment = await new EnrichCompanionCandidateProfiles(
-                    definitionSource,
-                    catalogueRepository)
-                .ExecuteAsync(snapshot, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            return CompanionFinderResult.Failed(
-                CompanionFinderStatus.Failed,
-                "CANDIDATE_ENRICHMENT_FAILED");
-        }
+        var enrichment = await new EnrichCompanionCandidateProfiles(
+                definitionSource,
+                catalogueRepository)
+            .ExecuteAsync(snapshot, cancellationToken)
+            .ConfigureAwait(false);
 
         cancellationToken.ThrowIfCancellationRequested();
-        CompanionRoleRanking ranking;
-        CompanionRoleShortlist shortlist;
-        CompanionRoleShortlistView view;
-        try
-        {
-            ranking = CompanionRoleShortlistBuilder.EvaluateAndRank(
-                definition,
-                discipline,
-                enrichment.Candidates.Select(item => item.Profile),
-                cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
-            shortlist = CompanionRoleShortlistFactory.Create(ranking);
-            view = CompanionRoleShortlistFilterer.CreateView(shortlist, request.Filter);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            return CompanionFinderResult.Failed(
-                CompanionFinderStatus.Failed,
-                "CANDIDATE_EVALUATION_FAILED");
-        }
+        var ranking = CompanionRoleShortlistBuilder.EvaluateAndRank(
+            definition,
+            discipline,
+            enrichment.Candidates.Select(item => item.Profile),
+            cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        var shortlist = CompanionRoleShortlistFactory.Create(ranking);
+        var view = CompanionRoleShortlistFilterer.CreateView(
+            shortlist,
+            request.Filter);
 
         CompanionRoleComparison? comparison = null;
         if (request.FirstComparisonCharacterId.HasValue)

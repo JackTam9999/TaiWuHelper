@@ -301,6 +301,25 @@ public sealed class FindCompanionCandidatesTests
     }
 
     [Fact]
+    public async Task Unexpected_snapshot_fault_is_not_converted_to_a_normal_result()
+    {
+        var reader = Substitute.For<ICompanionCandidateSnapshotReader>();
+        reader.ReadAsync(
+                CompanionCandidateSnapshotReadRequest.Current,
+                Arg.Any<CancellationToken>())
+            .Returns<CompanionCandidateSnapshotReadResult>(_ =>
+                throw new InvalidOperationException("synthetic programmer fault"));
+        var source = Substitute.For<ICombatSkillDefinitionSource>();
+        var repository = Substitute.For<ICombatSkillCatalogueRepository>();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new FindCompanionCandidates(reader, source, repository)
+                .ExecuteAsync(
+                    Request(),
+                    TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task Filters_and_comparison_selection_do_not_change_authoritative_fingerprint()
     {
         var snapshot = Snapshot([

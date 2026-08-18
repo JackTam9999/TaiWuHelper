@@ -228,6 +228,8 @@ public sealed class CompanionCandidateSnapshotSafetyTests
         Assert.Equal(1, CountOccurrences(source, "CompanionRoleShortlistFactory.Create("));
         Assert.Equal(1, CountOccurrences(source, "CompanionRoleComparisonBuilder.Compare("));
         Assert.Contains("cancellationToken", source);
+        Assert.DoesNotContain("catch (Exception", source);
+        Assert.DoesNotContain("catch (OperationCanceledException", source);
         Assert.DoesNotContain("CompanionRoleEvaluator.Evaluate(", source);
         Assert.DoesNotContain("File.", source);
         Assert.DoesNotContain("Process.", source);
