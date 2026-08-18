@@ -352,7 +352,7 @@ manual reassignment.
 
 ### E7-007 — Orchestrate one coherent village-workforce result
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -365,15 +365,15 @@ and manual guidance behind one Application request/result boundary.
 
 #### Acceptance criteria
 
-- [ ] The request names stable target and objective identities rather than
+- [x] The request names stable target and objective identities rather than
       localized labels.
-- [ ] One snapshot read supplies the complete result.
-- [ ] Source, rule, and evaluation failures map to typed result states.
-- [ ] Cancellation propagates; unexpected programmer faults reach host logging.
-- [ ] No partial result mixes an old snapshot with new controls or rules.
-- [ ] Result identity includes snapshot, target, objective, rule, and canonical
+- [x] One snapshot read supplies the complete result.
+- [x] Source, rule, and evaluation failures map to typed result states.
+- [x] Cancellation propagates; unexpected programmer faults reach host logging.
+- [x] No partial result mixes an old snapshot with new controls or rules.
+- [x] Result identity includes snapshot, target, objective, rule, and canonical
       evaluation fingerprints.
-- [ ] Application tests cover every orchestration state and exact call counts.
+- [x] Application tests cover every orchestration state and exact call counts.
 
 #### Evidence
 
