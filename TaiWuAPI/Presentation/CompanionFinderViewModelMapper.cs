@@ -20,6 +20,7 @@ public static partial class CompanionFinderViewModelMapper
                 role.RequiresDisciplineSelection,
                 CompanionFinderUiText.RoleLabel(
                     language,
+                    role.Identity,
                     role.DisciplineDomain),
                 role.Purpose,
                 role.ScoreLimitation))];
@@ -77,6 +78,7 @@ public static partial class CompanionFinderViewModelMapper
 
         var roleLabel = CompanionFinderUiText.RoleLabel(
             language,
+            role.Identity,
             role.DisciplineDomain);
         var counts = response.Counts!;
         var candidates = response.Candidates.Select(candidate => MapCandidate(
@@ -90,11 +92,20 @@ public static partial class CompanionFinderViewModelMapper
                 : roleLabel,
             roleLabel,
             role.RequiresDisciplineSelection,
+            string.Equals(
+                role.Identity,
+                "COMPREHENSIVE_BASE_CAPABILITY",
+                StringComparison.Ordinal),
             Text(
                 language,
                 role.RequiresDisciplineSelection
                     ? CompanionFinderUiTextKey.SavedBaseQualification
-                    : CompanionFinderUiTextKey.BreadthIndex),
+                    : string.Equals(
+                        role.Identity,
+                        "SUCCESSION_CANDIDATE_READINESS",
+                        StringComparison.Ordinal)
+                        ? CompanionFinderUiTextKey.SuccessionIndex
+                        : CompanionFinderUiTextKey.BreadthIndex),
             role.Purpose,
             role.RequiresDisciplineSelection
                 ? Text(language, CompanionFinderUiTextKey.ScoreLimitation)
@@ -127,9 +138,7 @@ public static partial class CompanionFinderViewModelMapper
         TaiwuLanguage language,
         IReadOnlyList<CompanionDisciplineOptionViewModel> disciplineOptions)
     {
-        var scoreFact = candidate.ScoreFacts.SingleOrDefault();
-        var evidence = scoreFact?.EvidenceState
-            ?? CompanionFactEvidenceState.Missing;
+        var evidence = AggregateEvidence(candidate.ScoreFacts);
         var strengths = candidate.Explanations
             .Where(value => value.Kind
                 == CompanionRoleExplanationKind.StrongestContribution)
@@ -154,6 +163,8 @@ public static partial class CompanionFinderViewModelMapper
             candidate.LocationName ?? Text(
                 language,
                 CompanionFinderUiTextKey.LocationUnavailable),
+            CandidateSource(candidate.CandidateContextFacts, language),
+            CurrentAge(candidate.CandidateContextFacts, language),
             Section(candidate.RankingState),
             candidate.RankingState,
             candidate.RankingStateLabel,
@@ -193,6 +204,74 @@ public static partial class CompanionFinderViewModelMapper
                     gate.ReasonIdentity,
                     gate.Explanation,
                     gate.Outcome == CompanionRoleGateOutcome.Passed))]);
+    }
+
+    private static CompanionFactEvidenceState AggregateEvidence(
+        IReadOnlyList<CompanionRoleFactResponse> facts)
+    {
+        if (facts.Count == 0)
+        {
+            return CompanionFactEvidenceState.Missing;
+        }
+
+        return facts.Any(fact => fact.EvidenceState
+                == CompanionFactEvidenceState.Conflicting)
+            ? CompanionFactEvidenceState.Conflicting
+            : facts.Any(fact => fact.EvidenceState
+                == CompanionFactEvidenceState.Unsupported)
+                ? CompanionFactEvidenceState.Unsupported
+                : facts.Any(fact => fact.EvidenceState
+                    == CompanionFactEvidenceState.Stale)
+                    ? CompanionFactEvidenceState.Stale
+                    : facts.Any(fact => fact.EvidenceState
+                        == CompanionFactEvidenceState.Incomplete)
+                        ? CompanionFactEvidenceState.Incomplete
+                        : facts.Any(fact => fact.EvidenceState
+                            == CompanionFactEvidenceState.Missing)
+                            ? CompanionFactEvidenceState.Missing
+                            : CompanionFactEvidenceState.Confirmed;
+    }
+
+    private static string CandidateSource(
+        IReadOnlyList<CompanionRoleFactResponse> facts,
+        TaiwuLanguage language)
+    {
+        var group = ContextBoolean(
+            facts,
+            CandidateProfileField.RosterMembership);
+        var village = ContextBoolean(
+            facts,
+            CandidateProfileField.VillageWorkCandidateMembership);
+        var key = (group, village) switch
+        {
+            (true, true) => CompanionFinderUiTextKey.GroupAndVillageCandidate,
+            (true, false) => CompanionFinderUiTextKey.CurrentGroupCandidate,
+            (false, true) => CompanionFinderUiTextKey.VillageWorkCandidate,
+            _ => CompanionFinderUiTextKey.Unavailable
+        };
+        return Text(language, key);
+    }
+
+    private static string CurrentAge(
+        IReadOnlyList<CompanionRoleFactResponse> facts,
+        TaiwuLanguage language)
+    {
+        var fact = facts.SingleOrDefault(value => value.Field
+            == CandidateProfileField.CurrentAge);
+        return fact?.EvidenceState == CompanionFactEvidenceState.Confirmed
+            && fact.Value?.Int16 is { } age
+                ? age.ToString(CultureInfo.InvariantCulture)
+                : Text(language, CompanionFinderUiTextKey.Unavailable);
+    }
+
+    private static bool? ContextBoolean(
+        IReadOnlyList<CompanionRoleFactResponse> facts,
+        CandidateProfileField field)
+    {
+        var fact = facts.SingleOrDefault(value => value.Field == field);
+        return fact?.EvidenceState == CompanionFactEvidenceState.Confirmed
+            ? fact.Value?.Boolean
+            : null;
     }
 
     private static CompanionCapabilitySummaryViewModel MapCapabilitySummary(

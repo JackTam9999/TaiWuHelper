@@ -188,6 +188,24 @@ comprehensive objective.
 | Settlement worker | Deferred to PI-010 | Work availability, buildings, assignments, resources, and villager roles require a separate settlement domain |
 | Balanced long-term companion | Rejected | A descriptive saved-base breadth index does not establish long-term potential, objective weights, future growth, or universal suitability |
 
+### 2026-08-19 bounded succession extension
+
+The later product-owner request adds a deliberately narrower current-base
+succession comparison without reversing the original inheritance decision:
+
+- the candidate universe is the union of `GetGroupCharIds()` and the already
+  verified village-work source `GetVillagersForWork(true, false)`, excluding
+  Taiwu and requiring the same object, living, and group-consistency checks;
+- the new `SUCCESSION_CANDIDATE_READINESS` objective scores complete capability
+  breadth minus exact saved current age, with both components shown; and
+- profile mapping and fingerprint schema advance to version `3`, with 108
+  typed facts including separate roster and village-work-source membership.
+
+This source does not prove complete village membership. Current age does not
+prove remaining lifespan, and the score does not establish inheritance
+eligibility, transferable progress, future development, or a recommended
+successor. Those mechanics remain deferred to PI-009.
+
 ## Evidence-state and precedence decisions
 
 | Question | Decision |

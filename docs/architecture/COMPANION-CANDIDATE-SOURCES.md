@@ -35,6 +35,13 @@ No first-delivery field proves recruitability, teaching ability, future
 development, battle synergy, settlement suitability, or universal companion
 quality.
 
+On 2026-08-19, a bounded extension added
+`GetVillagersForWork(true, false)` as a second authoritative inclusion source
+and introduced a current-base succession pre-screen. The source union does not
+prove complete village membership. The formula `capability breadth - current
+age` does not prove remaining lifespan, inheritance eligibility, transferable
+progress, future growth, or a recommended action.
+
 ## Source precedence
 
 | Priority | Source | Permitted ownership |
@@ -52,22 +59,23 @@ version, catalogue version, or mapping version requires a new candidate result.
 
 ### Authoritative membership
 
-`TaiwuDomain.GetGroupCharIds()` is the authoritative roster source.
-For every returned ID:
+`TaiwuDomain.GetGroupCharIds()` is the authoritative roster source and
+`TaiwuDomain.GetVillagersForWork(true, false)` is the bounded verified
+village-work-candidate source. For every ID in their union:
 
 1. the ID must not identify the Taiwu player character;
 2. `CharacterDomain.Characters` must contain the current character object;
-3. `TaiwuDomain.IsInGroup(id)` must be true;
-4. `Character.IsInTaiwuGroup()` must be true; and
+3. `TaiwuDomain.IsInGroup(id)` must agree with roster inclusion;
+4. `Character.IsInTaiwuGroup()` must agree with roster inclusion; and
 5. `CharacterDomain.IsCharacterAlive(id)` must be true.
 
 The local roster confirms that `GetGroupCharIds()` includes the Taiwu player,
 so the first exclusion is required rather than inferred from collection shape.
 
 The last three checks validate consistency and eligibility. They do not expand
-the universe. A character outside `GetGroupCharIds()` cannot enter the first
-shortlist because another API describes it as following, friendly, nearby,
-visible, named, or potentially interactive.
+the universe. A character outside both approved sources cannot enter the
+shortlist merely because another API describes it as following, friendly,
+nearby, visible, named, or potentially interactive.
 
 ### Candidate evidence states
 
@@ -75,9 +83,9 @@ The `TaiWu.Domain.CompanionCandidates` contracts preserve these distinctions:
 
 | State | Required source condition | May be ranked? |
 |---|---|---:|
-| `Eligible` | Roster entry, current character, two agreeing membership checks, and living state are confirmed | Yes, if the selected role is also evaluable |
+| `Eligible` | Approved source entry, current character, roster-consistent group checks, and living state are confirmed | Yes, if the selected role is also evaluable |
 | `Ineligible` | A verified hard condition such as living state is false | No |
-| `Incomplete` | Roster entry exists but the character object or required saved fact is absent | No |
+| `Incomplete` | An approved source entry exists but the character object or required saved fact is absent | No |
 | `Unsupported` | The installed version or standalone reader cannot evaluate a required source | No |
 | `Conflicting` | Roster and membership checks disagree, or applicable sources retain incompatible facts | No |
 
@@ -137,10 +145,11 @@ filesystem, process, reflection, or installed GameData types.
 |---|---|---|---|---|
 | Character identity | `CharacterDomain.Characters` dictionary key | `Int32` | Available only with a current object; source identity is the save fingerprint | Stable candidate identity; never display text |
 | Current roster membership | `TaiwuDomain.GetGroupCharIds()` | `CharacterSet` | Complete for the saved current group under the inspected version | Authoritative candidate-universe inclusion |
+| Village-work-candidate membership | `TaiwuDomain.GetVillagersForWork(true, false)` | Character collection | Complete for the bounded verified source call under the inspected version | Authoritative inclusion in this comparison universe only |
 | Domain membership check | `TaiwuDomain.IsInGroup(int)` | `Boolean` | Must agree with the roster | Consistency evidence; disagreement conflicts |
 | Character membership check | `Character.IsInTaiwuGroup()` | `Boolean` | Must agree with roster and Domain check | Consistency evidence; disagreement conflicts |
 | Living state | `CharacterDomain.IsCharacterAlive(int)` | `Boolean` | Required for current-role eligibility | Hard eligibility fact |
-| Current age | `Character.GetCurrAge()` | `Int16` | Saved current fact when available | Descriptive only; no initial scoring |
+| Current age | `Character.GetCurrAge()` | `Int16` | Saved current fact when available | Descriptive context; exact lower-is-better component only for the bounded succession objective |
 | Current location | `Character.GetLocation()` | `Location` with area/block IDs | Valid non-negative IDs may be displayed after localization | Descriptive only; no initial scoring or recruitability claim |
 | Feature identities | `Character.GetFeatureIds()` | `List<Int16>` | Saved identities; individual mechanics not normalized by E6-000 | Evidence/display only |
 
@@ -205,25 +214,30 @@ typed facts; it does not authorize weights, thresholds, or a combined score.
 | Learned skill means current combat contribution | Learned does not mean equipped, active, feasible, or synergistic | Typed battle-role and composition rules |
 | Feature name implies a bonus | Localized labels are display text and individual feature mechanics are unverified | Stable feature rule with typed effect and version |
 | `CanTeach*` proves teaching value | Teaching calls incorporate target and interaction rules not verified by E6-000 | Exact relationship, book, cost, eligibility, and standalone behavior evidence |
-| Age predicts inheritance or development value | Future lifespan, growth, training, and transfer rules are outside the current snapshot | PI-009 evidence and staged-plan contract |
+| Current age predicts remaining lifespan, inheritance eligibility, or development value | The bounded succession objective may subtract exact current age transparently, but future lifespan, growth, training, and transfer rules remain outside the snapshot | PI-009 evidence and staged-plan contract |
 | Location proves recruitability or availability | A saved location is descriptive only | Exact interaction and travel availability rules |
 | Life-skill values prove settlement productivity | Building, assignment, resource, and worker formulas are absent | PI-010 settlement evidence |
 
 ## One-pass read boundary
 
-The E6-004 Infrastructure adapter loads one configured save revision and
-projects the complete current-group candidate snapshot inside one
-`TaiwuArchiveReadSession.ReadAsync` callback. It does not loop over the
+On a revision-cache miss, the E6-004 Infrastructure adapter loads one configured
+save revision and projects the approved group-roster and village-work-candidate
+union inside one `TaiwuArchiveReadSession.ReadAsync` callback. It does not loop over the
 existing archive-opening single-character progress reader. The full design and
 production evidence are recorded in the
 [companion-candidate snapshot architecture](./COMPANION-CANDIDATE-SNAPSHOT.md).
+
+One immutable helper-memory result may be reused after before/after file
+revision checks. It is invalidated by path, length, last-write time, GameData,
+profile-mapping, or fingerprint-schema changes and is never persisted.
 
 The snapshot records:
 
 - save fingerprint and captured time;
 - exact GameData, mapping, and discipline-catalogue versions;
 - archive load warning;
-- authoritative roster IDs and consistency results;
+- authoritative roster and verified village-work-source IDs plus consistency
+  results;
 - typed available or unavailable profile facts; and
 - sanitized candidate-level and result-level diagnostics.
 

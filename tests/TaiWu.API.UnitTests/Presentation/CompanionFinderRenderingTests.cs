@@ -50,16 +50,14 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Synthetic Place A", text);
         Assert.Contains("Rank 1", text);
         Assert.Contains("Tied at rank 2", text);
-        Assert.Contains("Saved base value confirmed", text);
         Assert.Contains("Evidence no longer current", text);
         Assert.Contains("Evidence unsupported", text);
         Assert.Contains("Evidence conflicts", text);
-        Assert.Contains("Decisive strengths", text);
-        Assert.Contains("Material limitations", text);
         Assert.Contains("Requirement evidence", text);
-        Assert.Contains("All 5 requirements passed", text);
+        Assert.DoesNotContain("All 5 requirements passed", text);
         Assert.Equal(
-            model.Candidates.Count,
+            model.Candidates.Count(candidate =>
+                candidate.Section != CompanionCandidateSection.Ranked),
             Regex.Matches(
                 html,
                 "<details class=\"companion-candidate-evidence\"").Count);
@@ -72,15 +70,11 @@ public sealed partial class CompanionFinderRenderingTests
             "Scores compare saved base qualification within this selected discipline only",
             RegexOptions.IgnoreCase));
         Assert.Contains("Candidate-universe eligibility · Passed", text);
-        Assert.Contains(
-            "Required saved base martial qualification evidence · Passed",
-            text);
         Assert.Contains("data-requirement-order=\"1\"", html);
         Assert.Contains(
             "data-requirement-identity=\"CANDIDATE_UNIVERSE_ELIGIBLE\"",
             html);
         Assert.Contains("data-requirement-kind=\"CandidateUniverseEligible\"", html);
-        Assert.Contains("data-requirement-field=\"BaseMartialQualification\"", html);
         Assert.Contains("data-gate-outcome=\"Passed\"", html);
         Assert.Contains(
             "data-reason-identity=\"CANDIDATE_UNIVERSE_ELIGIBLE\"",
@@ -121,9 +115,8 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("範例地點甲", text);
         Assert.Contains("第 1 名", text);
         Assert.Contains("並列第 2 名", text);
-        Assert.Contains("已確認存檔基礎值", text);
         Assert.Contains("證據已非最新", text);
-        Assert.Contains("已通過全部 5 項條件", text);
+        Assert.DoesNotContain("已通過全部 5 項條件", text);
         Assert.Contains("姓名與位置只供顯示，不會改變資格", text);
         Assert.DoesNotContain("31001", html, StringComparison.Ordinal);
     }
@@ -160,6 +153,68 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.DoesNotContain(
             "Comprehensive base capability · Comprehensive base capability",
             text);
+    }
+
+    [Fact]
+    public async Task Succession_selection_progresses_from_single_detail_to_compact_comparison()
+    {
+        var result = await CompanionFinderTestData.ResultAsync(
+            successionObjective: true);
+        var model = CompanionFinderViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            disciplineName: null,
+            CompanionFinderViewModelMapper.MapDisciplines(
+                CompanionFinderTestData.Disciplines(),
+                TaiwuLanguage.English));
+        var state = new CompanionFinderInteractionState();
+        state.ToggleComparison(model, 31001);
+
+        var singleHtml = await RenderResultsAsync(
+            model,
+            state,
+            comparison: null,
+            TaiwuLanguage.English);
+        var singleText = VisibleText(singleHtml);
+
+        Assert.Contains("class=\"companion-single-candidate-detail\"", singleHtml);
+        Assert.Contains("Selected candidate capability", singleText);
+        Assert.Contains("Select another candidate to compare", singleText);
+        Assert.Contains("Breadth index", singleText);
+        Assert.Contains("Six base attributes", singleText);
+        Assert.Contains("Intelligence", singleText);
+        Assert.DoesNotContain("Comparison summary", singleText);
+
+        state.ToggleComparison(model, 31002);
+        var comparison = CompanionFinderViewModelMapper.MapComparison(
+            result,
+            model,
+            31001,
+            31002,
+            TaiwuLanguage.English);
+
+        var html = await RenderResultsAsync(
+            model,
+            state,
+            comparison,
+            TaiwuLanguage.English);
+        var text = VisibleText(html);
+
+        Assert.False(model.ShowCandidateCapabilitySummary);
+        Assert.DoesNotContain("class=\"companion-capability-row-summary\"", html);
+        Assert.DoesNotContain("class=\"companion-single-candidate-detail\"", html);
+        Assert.Contains("Comparison summary", text);
+        Assert.Contains("Role-local score", text);
+        Assert.Contains("Candidate source", text);
+        Assert.Contains("Current age", text);
+        Assert.DoesNotContain("Hard gates", text);
+        Assert.DoesNotContain("Evaluation state", text);
+        Assert.DoesNotContain("Confirmed coverage", text);
+        Assert.Single(Regex.Matches(text, "Capability overview"));
+        Assert.Single(Regex.Matches(text, "Six base attributes"));
+        Assert.Single(Regex.Matches(
+            text,
+            Regex.Escape(model.ScoreLimitation)));
     }
 
     [Fact]
@@ -284,15 +339,14 @@ public sealed partial class CompanionFinderRenderingTests
         Assert.Contains("Synthetic Person C 49.26", text);
         Assert.Contains("Intelligence 57", text);
         Assert.Contains("Martial discipline 1 75", text);
-        Assert.Contains("descriptive only", text);
         Assert.Contains("Saved base qualification", text);
         Assert.Contains("Synthetic Person B 75", text);
         Assert.Contains("Synthetic Person C 75", text);
-        Assert.Contains("Hard gates", text);
-        Assert.Contains("Evaluation state", text);
-        Assert.Equal(
-            2,
-            Regex.Matches(html, @">\s*Rankable\s*<").Count);
+        Assert.Contains("Comparison summary", text);
+        Assert.DoesNotContain("Hard gates", text);
+        Assert.DoesNotContain("Evaluation state", text);
+        Assert.DoesNotContain("Confirmed coverage", text);
+        Assert.Empty(Regex.Matches(html, @">\s*Rankable\s*<"));
         Assert.Contains("Clear comparison", text);
         Assert.Contains("disabled", html);
         Assert.DoesNotContain("31002", html, StringComparison.Ordinal);
@@ -339,14 +393,15 @@ public sealed partial class CompanionFinderRenderingTests
 
         Assert.Contains("Companion finder", text);
         Assert.Contains(
-            "current saved Taiwu group roster excluding the Taiwu player",
+            "saved group plus the verified village work-candidate source",
             text);
         Assert.Contains(
-            "Membership and living-state evidence determine eligibility",
+            "does not prove succession eligibility",
             text);
         Assert.Contains("Martial discipline aptitude", text);
         Assert.Contains("Life-skill discipline aptitude", text);
         Assert.Contains("Comprehensive base capability", text);
+        Assert.Contains("Succession candidate shortlist", text);
         Assert.True(
             text.IndexOf("Comprehensive base capability", StringComparison.Ordinal)
             < text.IndexOf("Martial discipline aptitude", StringComparison.Ordinal));

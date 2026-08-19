@@ -6605,9 +6605,49 @@ select {
     width: 18%;
 }
 
+.companion-candidate-table--compact thead th:nth-child(1) {
+    width: 12%;
+}
+
+.companion-candidate-table--compact thead th:nth-child(2) {
+    width: 36%;
+}
+
+.companion-candidate-table--compact thead th:nth-child(3) {
+    width: 22%;
+}
+
+.companion-candidate-table--compact thead th:nth-child(4) {
+    width: 30%;
+}
+
 .companion-candidate-main-row > th,
 .companion-candidate-main-row > td {
     background: rgba(21, 38, 38, 0.42);
+}
+
+.companion-single-candidate-detail > td {
+    background: rgba(20, 46, 43, 0.46);
+}
+
+.companion-single-candidate-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.companion-single-candidate-heading h4 {
+    margin: 0;
+}
+
+.companion-single-candidate-heading span {
+    color: var(--muted);
+}
+
+.companion-single-capability-table {
+    margin: 0;
 }
 
 .companion-candidate-name,

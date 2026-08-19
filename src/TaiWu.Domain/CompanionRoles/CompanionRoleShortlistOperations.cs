@@ -151,7 +151,9 @@ public static class CompanionRoleComparisonBuilder
         CompanionRoleShortlistEntry first,
         CompanionRoleShortlistEntry second)
     {
-        var field = new CandidateProfileFieldIdentity(dimension.Field, discipline);
+        var field = CandidateProfileFieldIdentity.ForRole(
+            dimension.Field,
+            discipline);
         var firstValue = dimension.Field
             == CandidateProfileField.CapabilityBreadthIndex
             ? ReadCapabilityValue(first.Evaluation.Profile, dimension)

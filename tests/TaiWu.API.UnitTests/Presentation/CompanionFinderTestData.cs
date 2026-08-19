@@ -14,7 +14,8 @@ internal static class CompanionFinderTestData
 
     internal static async Task<CompanionFinderResult> ResultAsync(
         bool partialSnapshot = false,
-        bool comprehensiveObjective = false)
+        bool comprehensiveObjective = false,
+        bool successionObjective = false)
     {
         var snapshot = Snapshot();
         var reader = Substitute.For<ICompanionCandidateSnapshotReader>();
@@ -42,11 +43,13 @@ internal static class CompanionFinderTestData
         return await new FindCompanionCandidates(reader, source, repository)
             .ExecuteAsync(
                 new CompanionFinderRequest(
-                    comprehensiveObjective
-                        ? "COMPREHENSIVE_BASE_CAPABILITY"
-                        : "MARTIAL_DISCIPLINE_APTITUDE",
+                    successionObjective
+                        ? "SUCCESSION_CANDIDATE_READINESS"
+                        : comprehensiveObjective
+                            ? "COMPREHENSIVE_BASE_CAPABILITY"
+                            : "MARTIAL_DISCIPLINE_APTITUDE",
                     "1",
-                    comprehensiveObjective
+                    comprehensiveObjective || successionObjective
                         ? CandidateDisciplineDomain.Capability
                         : CandidateDisciplineDomain.Martial,
                     0),
@@ -141,7 +144,7 @@ internal static class CompanionFinderTestData
         universeState,
         Versions(),
         scoreFacts
-            .Concat(MembershipFacts())
+            .Concat(MembershipFacts(characterId))
             .Concat(CapabilityFacts(characterId)),
         diagnostics: []);
 
@@ -181,8 +184,19 @@ internal static class CompanionFinderTestData
             evidence: []);
     }
 
-    private static IEnumerable<CandidateProfileFact> MembershipFacts() =>
+    private static IEnumerable<CandidateProfileFact> MembershipFacts(
+        int characterId) =>
     [
+        BooleanFact(
+            CandidateProfileField.RosterMembership,
+            characterId == 31001),
+        BooleanFact(
+            CandidateProfileField.VillageWorkCandidateMembership,
+            characterId != 31001),
+        ScalarFact(
+            new CandidateProfileFieldIdentity(
+                CandidateProfileField.CurrentAge),
+            checked((short)(20 + characterId % 10))),
         SetFact(CandidateProfileField.LearnedMartialSkillIdentities),
         SetFact(CandidateProfileField.EquippedMartialSkillIdentities),
         SetFact(CandidateProfileField.LearnedLifeSkillIdentities)
@@ -236,6 +250,14 @@ internal static class CompanionFinderTestData
         CandidateProfileField field) => CandidateProfileFact.Confirmed(
         new CandidateProfileFieldIdentity(field),
         CandidateFactValue.Int32Set([]),
+        Provenance(Sha),
+        evidence: []);
+
+    private static CandidateProfileFact BooleanFact(
+        CandidateProfileField field,
+        bool value) => CandidateProfileFact.Confirmed(
+        new CandidateProfileFieldIdentity(field),
+        CandidateFactValue.Boolean(value),
         Provenance(Sha),
         evidence: []);
 

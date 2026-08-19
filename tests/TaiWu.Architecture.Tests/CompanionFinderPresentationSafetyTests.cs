@@ -70,7 +70,8 @@ public sealed class CompanionFinderPresentationSafetyTests
         Assert.Contains(
             "<section class=\"companion-capability-comparison\"",
             result);
-        Assert.Contains("@Comparison.Capability.Limitation", result);
+        Assert.Contains("@Model.ScoreLimitation", result);
+        Assert.DoesNotContain("@Comparison.Capability.Limitation", result);
         Assert.DoesNotContain(
             "<details class=\"companion-candidate-evidence\" open",
             result);

@@ -129,7 +129,18 @@ public enum CompanionFinderUiTextKey
     ConfirmedCoverage = 120,
     TopValues = 121,
     SelectObjectiveOnly = 122,
-    ComprehensiveCapabilityRole = 123
+    ComprehensiveCapabilityRole = 123,
+    SuccessionReadinessRole = 124,
+    SuccessionIndex = 125,
+    CandidateSource = 126,
+    CurrentAge = 127,
+    CurrentGroupCandidate = 128,
+    VillageWorkCandidate = 129,
+    GroupAndVillageCandidate = 130,
+    ComparisonItem = 131,
+    ComparisonSummary = 132,
+    SelectedCandidateCapability = 133,
+    SelectAnotherCandidate = 134
 }
 
 public static class CompanionFinderUiText
@@ -178,7 +189,7 @@ public static class CompanionFinderUiText
             CompanionFinderUiTextKey.PageTitle =>
                 ("Companion finder", "同道人選比較"),
             CompanionFinderUiTextKey.Eyebrow =>
-                ("Current group · selected objective", "目前隊伍 · 比較目標"),
+                ("Current group and village candidates · selected objective", "目前隊伍與村民候選 · 比較目標"),
             CompanionFinderUiTextKey.HeroCopy =>
                 ("Choose one verified comparison objective, then review an evidence-aware shortlist from one stable configured-save snapshot.",
                  "選擇一項已驗證的比較目標，再查看由單一穩定存檔快照產生、保留證據狀態的人選清單。"),
@@ -188,8 +199,8 @@ public static class CompanionFinderUiText
                 ("TaiWu Helper reads the configured save. It cannot recruit, train, move, equip, assign, or otherwise change anyone or the game.",
                  "太吾助手只會讀取已設定的存檔；不能招募、訓練、移動、裝備、指派或以其他方式改變人物或遊戲。"),
             CompanionFinderUiTextKey.CandidateBoundary =>
-                ("Candidate boundary: the current saved Taiwu group roster excluding the Taiwu player. Membership and living-state evidence determine eligibility.",
-                 "人選範圍：目前存檔中的太吾隊伍名冊（不含太吾本人）；隊伍成員與在世狀態的證據決定是否符合資格。"),
+                ("Candidate boundary: living non-Taiwu members of the saved group plus the verified village work-candidate source. Village inclusion does not prove succession eligibility.",
+                 "人選範圍：目前存檔中仍在世的非太吾隊伍成員，加上已驗證的村莊工作候選來源；列入村民不代表已證實可以傳承。"),
             CompanionFinderUiTextKey.SelectObjective =>
                 ("Select the comparison objective", "選擇比較目標"),
             CompanionFinderUiTextKey.RoleFamily =>
@@ -450,10 +461,32 @@ public static class CompanionFinderUiText
             CompanionFinderUiTextKey.TopValues =>
                 ("Top values", "最高項目"),
             CompanionFinderUiTextKey.SelectObjectiveOnly =>
-                ("This objective compares all three saved-base categories; no discipline selection is needed.",
-                 "此目標會比較三個存檔基礎類別，不需要選擇類別。"),
+                ("This objective uses its declared saved facts; no discipline selection is needed.",
+                 "此目標會使用其已列明的存檔資料，不需要選擇類別。"),
             CompanionFinderUiTextKey.ComprehensiveCapabilityRole =>
                 ("Comprehensive base capability", "綜合基礎能力"),
+            CompanionFinderUiTextKey.SuccessionReadinessRole =>
+                ("Succession candidate shortlist", "接班候選初選"),
+            CompanionFinderUiTextKey.SuccessionIndex =>
+                ("Current-base succession index", "目前基礎接班指數"),
+            CompanionFinderUiTextKey.CandidateSource =>
+                ("Candidate source", "候選來源"),
+            CompanionFinderUiTextKey.CurrentAge =>
+                ("Current age", "目前年齡"),
+            CompanionFinderUiTextKey.CurrentGroupCandidate =>
+                ("Current group", "目前隊伍"),
+            CompanionFinderUiTextKey.VillageWorkCandidate =>
+                ("Village work candidate", "村莊工作候選"),
+            CompanionFinderUiTextKey.GroupAndVillageCandidate =>
+                ("Current group and village candidate", "目前隊伍兼村莊候選"),
+            CompanionFinderUiTextKey.ComparisonItem =>
+                ("Capability", "能力項目"),
+            CompanionFinderUiTextKey.ComparisonSummary =>
+                ("Comparison summary", "比較摘要"),
+            CompanionFinderUiTextKey.SelectedCandidateCapability =>
+                ("Selected candidate capability", "已選人選能力"),
+            CompanionFinderUiTextKey.SelectAnotherCandidate =>
+                ("Select another candidate to compare.", "再選一位人選即可比較。"),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(key),
                 key,
@@ -488,6 +521,16 @@ public static class CompanionFinderUiText
                 domain,
                 "Unknown discipline domain.")
         });
+
+    public static string RoleLabel(
+        TaiwuLanguage language,
+        string roleIdentity,
+        CandidateDisciplineDomain domain) => string.Equals(
+            roleIdentity,
+            "SUCCESSION_CANDIDATE_READINESS",
+            StringComparison.Ordinal)
+        ? Get(language, CompanionFinderUiTextKey.SuccessionReadinessRole)
+        : RoleLabel(language, domain);
 
     public static string MainAttributeLabel(
         TaiwuLanguage language,

@@ -30,7 +30,7 @@ public sealed class CompanionCandidatesControllerTests
         var english = CompanionFinderResponseMapper.MapRoles(TaiwuLanguage.English);
         var chinese = CompanionFinderResponseMapper.MapRoles(TaiwuLanguage.Chinese);
 
-        Assert.Equal(3, english.Roles.Count);
+        Assert.Equal(4, english.Roles.Count);
         Assert.Equal(
             english.Roles.Select(item => item.Identity),
             chinese.Roles.Select(item => item.Identity));
@@ -45,7 +45,7 @@ public sealed class CompanionCandidatesControllerTests
             Assert.Contains("action recommendation", item.ScoreLimitation);
         });
         Assert.Equal(
-            [false, true, true],
+            [false, false, true, true],
             english.Roles.Select(item => item.RequiresDisciplineSelection));
         Assert.All(
             english.Roles.Zip(chinese.Roles),

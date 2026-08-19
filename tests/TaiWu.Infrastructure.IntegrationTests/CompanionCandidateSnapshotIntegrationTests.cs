@@ -91,7 +91,9 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
         Assert.All(firstSnapshot.Profiles, profile =>
         {
             Assert.Equal(firstSnapshot.SourceVersions, profile.SourceVersions);
-            Assert.Equal(107, profile.Facts.Length);
+            Assert.Equal(108, profile.Facts.Length);
+            Assert.NotNull(profile.FindFact(new CandidateProfileFieldIdentity(
+                CandidateProfileField.VillageWorkCandidateMembership)));
             Assert.All(Enum.GetValues<CandidateMainAttribute>(), attribute =>
             {
                 var fact = Assert.IsType<CandidateProfileFact>(profile.FindFact(
@@ -293,6 +295,11 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 "1",
                 CandidateDisciplineDomain.Capability,
                 0);
+            var successionRequest = new CompanionFinderRequest(
+                "SUCCESSION_CANDIDATE_READINESS",
+                "1",
+                CandidateDisciplineDomain.Capability,
+                0);
 
             var coldWatch = Stopwatch.StartNew();
             var firstMartial = await workflow.ExecuteAsync(
@@ -324,6 +331,11 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 capabilityRequest,
                 TestContext.Current.CancellationToken);
             secondCapabilityWatch.Stop();
+            var successionWatch = Stopwatch.StartNew();
+            var succession = await workflow.ExecuteAsync(
+                successionRequest,
+                TestContext.Current.CancellationToken);
+            successionWatch.Stop();
 
             AssertAuthoritative(firstMartial, CandidateDisciplineDomain.Martial);
             AssertAuthoritative(secondMartial, CandidateDisciplineDomain.Martial);
@@ -335,6 +347,15 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
             AssertAuthoritative(
                 secondCapability,
                 CandidateDisciplineDomain.Capability);
+            AssertAuthoritative(
+                succession,
+                CandidateDisciplineDomain.Capability);
+            Assert.All(
+                succession.Shortlist!.Entries.Where(entry =>
+                    entry.Candidate.IsRanked),
+                entry => Assert.Equal(
+                    2,
+                    entry.Evaluation.Components.Length));
             Assert.Equal(firstMartial.Fingerprint, secondMartial.Fingerprint);
             Assert.Equal(firstLife.Fingerprint, secondLife.Fingerprint);
             Assert.Equal(
@@ -371,7 +392,8 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                     firstLifeWatch.Elapsed,
                     secondLifeWatch.Elapsed,
                     firstCapabilityWatch.Elapsed,
-                    secondCapabilityWatch.Elapsed
+                    secondCapabilityWatch.Elapsed,
+                    successionWatch.Elapsed
                 },
                 elapsed => Assert.True(
                     elapsed <= TimeSpan.FromSeconds(2),
@@ -379,13 +401,14 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
 
             output.WriteLine(
                 "E6-014 companion finder: martial={0}; life={1}; "
-                + "capability={2}; candidates={3}; "
-                + "disciplines={4}; coldMs={5:F0}; warmMartialMs={6:F0}; "
-                + "warmLifeMs={7:F0}/{8:F0}; warmCapabilityMs={9:F0}/{10:F0}; "
-                + "guardedFiles={11}.",
+                + "capability={2}; succession={3}; candidates={4}; "
+                + "disciplines={5}; coldMs={6:F0}; warmMartialMs={7:F0}; "
+                + "warmLifeMs={8:F0}/{9:F0}; warmCapabilityMs={10:F0}/{11:F0}; "
+                + "warmSuccessionMs={12:F0}; guardedFiles={13}.",
                 firstMartial.Status,
                 firstLife.Status,
                 firstCapability.Status,
+                succession.Status,
                 firstMartial.Shortlist.Counts.Total,
                 display.Disciplines.Length,
                 coldWatch.Elapsed.TotalMilliseconds,
@@ -394,6 +417,7 @@ public sealed class CompanionCandidateSnapshotIntegrationTests(
                 secondLifeWatch.Elapsed.TotalMilliseconds,
                 firstCapabilityWatch.Elapsed.TotalMilliseconds,
                 secondCapabilityWatch.Elapsed.TotalMilliseconds,
+                successionWatch.Elapsed.TotalMilliseconds,
                 guardedPaths.Length);
         }
         finally

@@ -8,6 +8,8 @@ internal sealed class RawCompanionCandidate
 {
     public RawCompanionCandidate(
         int characterId,
+        bool rosterMembership,
+        bool villageWorkCandidateMembership,
         bool characterPresent,
         bool? domainGroupMembership,
         bool? characterGroupMembership,
@@ -25,6 +27,8 @@ internal sealed class RawCompanionCandidate
         string? failureIdentity = null)
     {
         CharacterId = characterId;
+        RosterMembership = rosterMembership;
+        VillageWorkCandidateMembership = villageWorkCandidateMembership;
         CharacterPresent = characterPresent;
         DomainGroupMembership = domainGroupMembership;
         CharacterGroupMembership = characterGroupMembership;
@@ -45,6 +49,10 @@ internal sealed class RawCompanionCandidate
     }
 
     public int CharacterId { get; }
+
+    public bool RosterMembership { get; }
+
+    public bool VillageWorkCandidateMembership { get; }
 
     public bool CharacterPresent { get; }
 
@@ -87,9 +95,9 @@ internal sealed record CompanionCandidateProfileMappingResult(
 
 internal static class CompanionCandidateSnapshotMapping
 {
-    internal const string ProfileMappingVersion = "2";
+    internal const string ProfileMappingVersion = "3";
     internal const string DisciplineCatalogVersion = "1";
-    internal const string FingerprintSchemaVersion = "2";
+    internal const string FingerprintSchemaVersion = "3";
     internal const int MainAttributeCount = 6;
     internal const int MartialDisciplineCount = 14;
     internal const int LifeSkillDisciplineCount = 16;
@@ -119,7 +127,12 @@ internal static class CompanionCandidateSnapshotMapping
         AddConfirmed(
             facts,
             Field(CandidateProfileField.RosterMembership),
-            CandidateFactValue.Boolean(true),
+            CandidateFactValue.Boolean(raw.RosterMembership),
+            saveProvenance);
+        AddConfirmed(
+            facts,
+            Field(CandidateProfileField.VillageWorkCandidateMembership),
+            CandidateFactValue.Boolean(raw.VillageWorkCandidateMembership),
             saveProvenance);
         AddNullableBoolean(
             facts,
@@ -255,10 +268,16 @@ internal static class CompanionCandidateSnapshotMapping
             return CandidateUniverseState.Incomplete;
         }
 
-        if (!raw.DomainGroupMembership.Value
-            || !raw.CharacterGroupMembership.Value)
+        if (raw.DomainGroupMembership.Value != raw.RosterMembership
+            || raw.CharacterGroupMembership.Value != raw.RosterMembership)
         {
             return CandidateUniverseState.Conflicting;
+        }
+
+        if (!raw.RosterMembership
+            && !raw.VillageWorkCandidateMembership)
+        {
+            return CandidateUniverseState.Ineligible;
         }
 
         return raw.LivingState.Value

@@ -12,8 +12,13 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
     TaiwuArchiveReadSession readSession,
     ITaiwuSaveFilePathProvider saveFilePathProvider,
     TaiwuGameTextResolver gameTextResolver,
+    IReadOnlyFileRevisionProvider revisionProvider,
     TimeProvider timeProvider) : ICompanionCandidateSnapshotReader
 {
+    private readonly object _cacheGate = new();
+    private readonly SemaphoreSlim _readGate = new(1, 1);
+    private CachedSnapshot? _cachedSnapshot;
+
     public async Task<CompanionCandidateSnapshotReadResult> ReadAsync(
         CompanionCandidateSnapshotReadRequest request,
         CancellationToken cancellationToken = default)
@@ -42,10 +47,23 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                 "The installed GameData version is not supported by the verified companion mapping.");
         }
 
+        await _readGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            var saveFilePath = located.SaveFilePath!;
+            var revisionBefore = revisionProvider.Capture(saveFilePath);
+            var cached = TryReadCache(
+                saveFilePath,
+                revisionBefore,
+                gameDataVersion);
+            if (cached is not null
+                && revisionBefore == revisionProvider.Capture(saveFilePath))
+            {
+                return cached;
+            }
+
             var projection = await readSession.ReadAsync(
-                    located.SaveFilePath!,
+                    saveFilePath,
                     (context, token) => Project(
                         context,
                         gameDataVersion,
@@ -54,9 +72,16 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                         token),
                     cancellationToken)
                 .ConfigureAwait(false);
-            return projection.IsPartial
+            var result = projection.IsPartial
                 ? CompanionCandidateSnapshotReadResult.Partial(projection.Snapshot)
                 : CompanionCandidateSnapshotReadResult.Complete(projection.Snapshot);
+            var revisionAfter = revisionProvider.Capture(saveFilePath);
+            if (revisionBefore == revisionAfter)
+            {
+                StoreCache(saveFilePath, revisionAfter, gameDataVersion, result);
+            }
+
+            return result;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -83,7 +108,59 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                 "CONFIGURED_SAVE_READ_FAILED",
                 "The configured Taiwu save could not be read safely.");
         }
+        finally
+        {
+            _readGate.Release();
+        }
     }
+
+    private CompanionCandidateSnapshotReadResult? TryReadCache(
+        string saveFilePath,
+        ReadOnlyFileRevision revision,
+        string gameDataVersion)
+    {
+        lock (_cacheGate)
+        {
+            return _cachedSnapshot is { } cached
+                && PathEquals(cached.SaveFilePath, saveFilePath)
+                && cached.Revision == revision
+                && string.Equals(
+                    cached.GameDataVersion,
+                    gameDataVersion,
+                    StringComparison.Ordinal)
+                && cached.ProfileMappingVersion
+                    == CompanionCandidateSnapshotMapping.ProfileMappingVersion
+                && cached.FingerprintSchemaVersion
+                    == CompanionCandidateSnapshotMapping.FingerprintSchemaVersion
+                    ? cached.Result
+                    : null;
+        }
+    }
+
+    private void StoreCache(
+        string saveFilePath,
+        ReadOnlyFileRevision revision,
+        string gameDataVersion,
+        CompanionCandidateSnapshotReadResult result)
+    {
+        lock (_cacheGate)
+        {
+            _cachedSnapshot = new CachedSnapshot(
+                saveFilePath,
+                revision,
+                gameDataVersion,
+                CompanionCandidateSnapshotMapping.ProfileMappingVersion,
+                CompanionCandidateSnapshotMapping.FingerprintSchemaVersion,
+                result);
+        }
+    }
+
+    private static bool PathEquals(string first, string second) => string.Equals(
+        first,
+        second,
+        OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal);
 
     private static CompanionCandidateProjection Project(
         TaiwuArchiveReadContext context,
@@ -118,10 +195,15 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
         }
 
         var taiwuId = DomainManager.Taiwu.GetTaiwuCharId();
-        var roster = DomainManager.Taiwu.GetGroupCharIds().GetCollection()
+        var rosterEntries = DomainManager.Taiwu.GetGroupCharIds().GetCollection()
             .OrderBy(value => value)
             .ToArray();
-        if (roster.Length != roster.Distinct().Count())
+        var villageEntries = DomainManager.Taiwu.GetVillagersForWork(
+                includeUnlockedWorkingVillagers: true,
+                farmerFirst: false)
+            .OrderBy(value => value)
+            .ToArray();
+        if (rosterEntries.Length != rosterEntries.Distinct().Count())
         {
             partial = true;
             diagnostics.Add(new CompanionCandidateSnapshotDiagnostic(
@@ -130,27 +212,45 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                 "The saved group roster contained a duplicate character identity."));
         }
 
-        foreach (var characterId in roster.Distinct().Order())
+        if (villageEntries.Length != villageEntries.Distinct().Count())
+        {
+            partial = true;
+            diagnostics.Add(new CompanionCandidateSnapshotDiagnostic(
+                "DUPLICATE_VILLAGE_WORK_CANDIDATE_IDENTITY",
+                CompanionCandidateSnapshotDiagnosticSeverity.Error,
+                "The saved village work-candidate source contained a duplicate character identity."));
+        }
+
+        if (rosterEntries.Concat(villageEntries).Any(value => value <= 0))
+        {
+            partial = true;
+            omissions.Add(new CompanionCandidateOmission(
+                characterId: null,
+                "INVALID_CANDIDATE_IDENTITY",
+                "A saved group or village work-candidate entry was omitted because its character identity is invalid."));
+        }
+
+        var roster = rosterEntries
+            .Where(value => value > 0 && value != taiwuId)
+            .ToHashSet();
+        var villageCandidates = villageEntries
+            .Where(value => value > 0 && value != taiwuId)
+            .ToHashSet();
+        var candidateIds = roster
+            .Union(villageCandidates)
+            .Order()
+            .ToArray();
+
+        foreach (var characterId in candidateIds)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (characterId == taiwuId)
-            {
-                continue;
-            }
-
-            if (characterId <= 0)
-            {
-                partial = true;
-                omissions.Add(new CompanionCandidateOmission(
-                    characterId: null,
-                    "INVALID_ROSTER_IDENTITY",
-                    "A saved group entry was omitted because its character identity is invalid."));
-                continue;
-            }
-
             try
             {
-                var raw = ReadCandidate(characterId, cancellationToken);
+                var raw = ReadCandidate(
+                    characterId,
+                    roster.Contains(characterId),
+                    villageCandidates.Contains(characterId),
+                    cancellationToken);
                 var mapped = CompanionCandidateSnapshotMapping.Map(raw, versions);
                 profiles.Add(mapped.Profile);
                 displays.Add(ReadDisplay(
@@ -187,6 +287,8 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
 
     private static RawCompanionCandidate ReadCandidate(
         int characterId,
+        bool rosterMembership,
+        bool villageWorkCandidateMembership,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -198,7 +300,11 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
                     characterId,
                     out Character character))
             {
-                return MissingCharacter(characterId, domainMembership);
+                return MissingCharacter(
+                    characterId,
+                    rosterMembership,
+                    villageWorkCandidateMembership,
+                    domainMembership);
             }
 
             var location = character.GetLocation();
@@ -231,6 +337,8 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
 
             return new RawCompanionCandidate(
                 characterId,
+                rosterMembership,
+                villageWorkCandidateMembership,
                 characterPresent: true,
                 domainMembership,
                 character.IsInTaiwuGroup(),
@@ -258,6 +366,8 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
         {
             return new RawCompanionCandidate(
                 characterId,
+                rosterMembership,
+                villageWorkCandidateMembership,
                 characterPresent: true,
                 domainMembership,
                 characterGroupMembership: null,
@@ -278,8 +388,12 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
 
     private static RawCompanionCandidate MissingCharacter(
         int characterId,
+        bool rosterMembership,
+        bool villageWorkCandidateMembership,
         bool? domainMembership) => new(
             characterId,
+            rosterMembership,
+            villageWorkCandidateMembership,
             characterPresent: false,
             domainMembership,
             characterGroupMembership: null,
@@ -389,4 +503,12 @@ internal sealed class TaiwuCompanionCandidateSnapshotReader(
     private sealed record CompanionCandidateProjection(
         CompanionCandidateSnapshot Snapshot,
         bool IsPartial);
+
+    private sealed record CachedSnapshot(
+        string SaveFilePath,
+        ReadOnlyFileRevision Revision,
+        string GameDataVersion,
+        string ProfileMappingVersion,
+        string FingerprintSchemaVersion,
+        CompanionCandidateSnapshotReadResult Result);
 }

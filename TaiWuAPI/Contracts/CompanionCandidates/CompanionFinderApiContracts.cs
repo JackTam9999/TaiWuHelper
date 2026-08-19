@@ -163,6 +163,7 @@ public sealed record CompanionCandidateResponse(
     IReadOnlyList<CompanionScoreComponentResponse> Components,
     IReadOnlyList<CompanionExplanationResponse> Explanations,
     IReadOnlyList<CompanionRoleFactResponse> ScoreFacts,
+    IReadOnlyList<CompanionRoleFactResponse> CandidateContextFacts,
     CompanionCapabilitySummaryResponse CapabilitySummary,
     IReadOnlyList<CompanionRoleFactResponse> LocationEvidence,
     IReadOnlyList<CompanionRoleFactResponse> AvailableLocationFacts,
@@ -209,8 +210,8 @@ public sealed record CompanionGateResponse(
 public sealed record CompanionScoreComponentResponse(
     string DimensionIdentity,
     CandidateProfileField Field,
-    CandidateDisciplineDomain DisciplineDomain,
-    short DisciplineType,
+    CandidateDisciplineDomain? DisciplineDomain,
+    short? DisciplineType,
     string Unit,
     CompanionRoleScoreDirection Direction,
     CompanionRoleNormalizationKind Normalization,

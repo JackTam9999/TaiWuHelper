@@ -33,21 +33,54 @@ public static partial class CompanionFinderViewModelMapper
             value.CharacterId == firstCharacterId);
         var second = model.Candidates.Single(value =>
             value.CharacterId == secondCharacterId);
-        var facts = new List<CompanionComparisonFactViewModel>
+        var facts = new List<CompanionComparisonFactViewModel>();
+        if (!model.RequiresDisciplineSelection)
         {
-            new(
+            facts.Add(new CompanionComparisonFactViewModel(
+                Text(language, CompanionFinderUiTextKey.RoleLocalScore),
+                first.ScoreLabel,
+                second.ScoreLabel));
+        }
+
+        facts.AddRange(
+        [
+            new CompanionComparisonFactViewModel(
+                Text(language, CompanionFinderUiTextKey.CompetitionRank),
+                first.RankLabel,
+                second.RankLabel),
+            new CompanionComparisonFactViewModel(
+                Text(language, CompanionFinderUiTextKey.CandidateSource),
+                first.CandidateSourceLabel,
+                second.CandidateSourceLabel),
+            new CompanionComparisonFactViewModel(
+                Text(language, CompanionFinderUiTextKey.CurrentAge),
+                first.CurrentAgeLabel,
+                second.CurrentAgeLabel)
+        ]);
+
+        if (first.EvaluationState != CompanionRoleEvaluationState.Rankable
+            || second.EvaluationState != CompanionRoleEvaluationState.Rankable)
+        {
+            facts.Add(new CompanionComparisonFactViewModel(
                 Text(language, CompanionFinderUiTextKey.EvaluationState),
                 first.EvaluationStateLabel,
-                second.EvaluationStateLabel),
-            new(
+                second.EvaluationStateLabel));
+        }
+
+        if (first.Gates.Any(gate => !gate.Passed)
+            || second.Gates.Any(gate => !gate.Passed))
+        {
+            facts.Add(new CompanionComparisonFactViewModel(
                 Text(language, CompanionFinderUiTextKey.HardGates),
-                GateSummary(first, language),
-                GateSummary(second, language))
-        };
+                GateIssueSummary(first, language),
+                GateIssueSummary(second, language)));
+        }
+
         foreach (var row in comparison.Rows)
         {
             if (row.Dimension.Field
-                == CandidateProfileField.CapabilityBreadthIndex)
+                    == CandidateProfileField.CapabilityBreadthIndex
+                || row.Dimension.Field == CandidateProfileField.CurrentAge)
             {
                 continue;
             }
@@ -62,20 +95,20 @@ public static partial class CompanionFinderViewModelMapper
 
         if (model.RequiresDisciplineSelection)
         {
-            facts.Add(new CompanionComparisonFactViewModel(
-                Text(language, CompanionFinderUiTextKey.Evidence),
-                first.EvidenceLabel,
-                second.EvidenceLabel));
-            facts.Add(new CompanionComparisonFactViewModel(
-                Text(language, CompanionFinderUiTextKey.RoleLocalScore),
-                first.ScoreLabel,
-                second.ScoreLabel));
+            var evidenceDiffers = !string.Equals(
+                    first.EvidenceLabel,
+                    second.EvidenceLabel,
+                    StringComparison.Ordinal)
+                || first.EvaluationState != CompanionRoleEvaluationState.Rankable
+                || second.EvaluationState != CompanionRoleEvaluationState.Rankable;
+            if (evidenceDiffers)
+            {
+                facts.Add(new CompanionComparisonFactViewModel(
+                    Text(language, CompanionFinderUiTextKey.Evidence),
+                    first.EvidenceLabel,
+                    second.EvidenceLabel));
+            }
         }
-
-        facts.Add(new CompanionComparisonFactViewModel(
-            Text(language, CompanionFinderUiTextKey.CompetitionRank),
-            first.RankLabel,
-            second.RankLabel));
         var capability = new CompanionCapabilityComparisonViewModel(
             Text(language, CompanionFinderUiTextKey.CapabilityOverview),
             model.RequiresDisciplineSelection
@@ -125,31 +158,41 @@ public static partial class CompanionFinderViewModelMapper
         CompanionCapabilityCategoryViewModel category,
         TaiwuLanguage language)
     {
-        var coverage = $"{Text(language, CompanionFinderUiTextKey.ConfirmedCoverage)}: "
-            + category.CoverageLabel;
-        if (category.TopValues.Count == 0)
+        var details = new List<string>();
+        if (category.State != CompanionCapabilitySummaryState.Complete)
         {
-            return coverage;
+            details.Add(
+                $"{Text(language, CompanionFinderUiTextKey.ConfirmedCoverage)}: "
+                + category.CoverageLabel);
         }
 
-        return coverage + "; "
-            + Text(language, CompanionFinderUiTextKey.TopValues)
-            + ": "
-            + string.Join(
+        if (category.TopValues.Count > 0)
+        {
+            details.Add(
+                Text(language, CompanionFinderUiTextKey.TopValues)
+                + ": "
+                + string.Join(
                 ", ",
                 category.TopValues.Select(value =>
-                    $"{value.Label} {value.Value.ToString(CultureInfo.InvariantCulture)}"));
+                    $"{value.Label} {value.Value.ToString(CultureInfo.InvariantCulture)}")));
+        }
+
+        return string.Join("; ", details);
     }
 
-    private static string GateSummary(
+    private static string GateIssueSummary(
         CompanionCandidateViewModel candidate,
-        TaiwuLanguage language) => candidate.Gates.Count == 0
+        TaiwuLanguage language)
+    {
+        var issues = candidate.Gates.Where(value => !value.Passed).ToArray();
+        return issues.Length == 0
         ? Text(language, CompanionFinderUiTextKey.Unavailable)
         : string.Join(
             "; ",
-            candidate.Gates.Select(value =>
+            issues.Select(value =>
                 $"{value.RequirementLabel} — {value.OutcomeLabel}: "
                 + value.Explanation));
+    }
 
     private static string ComparisonValue(
         CompanionRoleComparisonValue value,

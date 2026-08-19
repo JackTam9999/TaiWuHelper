@@ -94,6 +94,7 @@ public static class DependencyInjection
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),
                 provider.GetRequiredService<ITaiwuSaveFilePathProvider>(),
                 provider.GetRequiredService<TaiwuGameTextResolver>(),
+                provider.GetRequiredService<IReadOnlyFileRevisionProvider>(),
                 provider.GetRequiredService<TimeProvider>()));
         services.AddSingleton<IVillageWorkforceSnapshotReader>(provider =>
             new TaiwuVillageWorkforceSnapshotReader(

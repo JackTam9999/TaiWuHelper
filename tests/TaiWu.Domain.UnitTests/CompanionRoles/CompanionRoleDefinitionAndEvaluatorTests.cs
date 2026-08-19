@@ -7,14 +7,15 @@ namespace TaiWu.Domain.UnitTests.CompanionRoles;
 public sealed class CompanionRoleDefinitionAndEvaluatorTests
 {
     [Fact]
-    public void Verified_catalogue_exposes_three_stable_nonlocalized_role_definitions()
+    public void Verified_catalogue_exposes_four_stable_nonlocalized_role_definitions()
     {
         var roles = VerifiedCompanionRoleDefinitions.All;
 
-        Assert.Equal(3, roles.Length);
+        Assert.Equal(4, roles.Length);
         Assert.Equal(
             [
                 "COMPREHENSIVE_BASE_CAPABILITY",
+                "SUCCESSION_CANDIDATE_READINESS",
                 "MARTIAL_DISCIPLINE_APTITUDE",
                 "LIFE_SKILL_DISCIPLINE_APTITUDE"
             ],
@@ -66,6 +67,52 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
         Assert.Equal(
             CompanionRoleRequirementKind.ObjectiveSupported,
             capability.HardRequirements[2].Kind);
+
+        var succession = VerifiedCompanionRoleDefinitions
+            .SuccessionCandidateReadiness;
+        Assert.False(succession.RequiresDisciplineSelection);
+        Assert.Equal(
+            [
+                CandidateProfileField.CapabilityBreadthIndex,
+                CandidateProfileField.CurrentAge
+            ],
+            succession.ScoreDimensions.Select(item => item.Field));
+        Assert.All(
+            succession.HardRequirements.Where(item => item.Order == 3),
+            requirement => Assert.Equal(
+                CompanionRoleRequirementKind.ObjectiveSupported,
+                requirement.Kind));
+    }
+
+    [Fact]
+    public void Succession_objective_combines_saved_breadth_and_current_age_transparently()
+    {
+        var definition = VerifiedCompanionRoleDefinitions
+            .SuccessionCandidateReadiness;
+        var younger = CompanionRoleEvaluator.Evaluate(
+            definition,
+            Profile(
+                characterId: 42,
+                facts: CapabilityFacts(mainValue: 60, martialValue: 60, lifeValue: 60)
+                    .Append(AgeFact(20))),
+            CapabilityObjective());
+        var older = CompanionRoleEvaluator.Evaluate(
+            definition,
+            Profile(
+                characterId: 43,
+                facts: CapabilityFacts(mainValue: 60, martialValue: 60, lifeValue: 60)
+                    .Append(AgeFact(40))),
+            CapabilityObjective());
+
+        Assert.Equal(CompanionRoleEvaluationState.Rankable, younger.State);
+        Assert.Equal(40m, younger.TotalScore);
+        Assert.Equal(20m, older.TotalScore);
+        Assert.Equal(
+            [60m, -20m],
+            younger.Components.Select(item => item.Contribution));
+        Assert.Equal(
+            CompanionRoleMeritComparison.FirstPreferred,
+            CompanionRoleMeritComparer.Compare(younger, older));
     }
 
     [Fact]
@@ -609,6 +656,14 @@ public sealed class CompanionRoleDefinitionAndEvaluatorTests
             new CandidateProfileFieldIdentity(
                 CandidateProfileField.BaseLifeSkillQualification,
                 new CandidateDisciplineIdentity(CandidateDisciplineDomain.LifeSkill, type)),
+            CandidateFactValue.Int16(value),
+            SaveProvenance(),
+            [Evidence()]);
+
+    private static CandidateProfileFact AgeFact(short value) =>
+        CandidateProfileFact.Confirmed(
+            new CandidateProfileFieldIdentity(
+                CandidateProfileField.CurrentAge),
             CandidateFactValue.Int16(value),
             SaveProvenance(),
             [Evidence()]);

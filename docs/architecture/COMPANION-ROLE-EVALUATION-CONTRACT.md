@@ -15,10 +15,12 @@ score component, rank, tie, shortlist, filter, comparison, evidence indicator,
 and result lifecycle before Domain or public API contracts are implemented.
 
 The contract deliberately starts small. Two objectives compare one exact saved
-base-qualification value for one player-selected discipline. A third explicit
-objective compares the complete equal-category saved-base breadth index. None
-estimates current modified attainment, future development, battle contribution,
-teaching, recruitment, settlement productivity, or universal character value.
+base-qualification value for one player-selected discipline. A third compares
+the complete equal-category saved-base breadth index. A fourth bounded
+succession objective subtracts exact current age from that breadth index. None
+estimates current modified attainment, remaining lifespan, future development,
+battle contribution, teaching, recruitment, settlement productivity, or
+universal character value.
 
 ## Result boundary
 
@@ -36,18 +38,19 @@ Language, viewport, name query, status filter, comparison selection, expanded
 details, and focus state are Presentation concerns. They never change result
 identity, score facts, rank, ties, or canonical ordering.
 
-## Initial role catalogue
+## Verified role catalogue
 
-Both first definitions use role version `1`, candidate-profile mapping version
-`1`, and evaluation-rule version `1` for the exact supported GameData version.
+All definitions use role version `1`, candidate-profile mapping version `3`,
+and evaluation-rule version `1` for the exact supported GameData version.
 A different installed version produces an unsupported role result until a new
 evidence gate approves an explicit mapping.
 
 | Stable role identity | Purpose | Discipline identity | Authoritative score fact |
 |---|---|---|---|
-| `MARTIAL_DISCIPLINE_APTITUDE` | Compare current companions by saved base aptitude in one martial discipline | One installed combat-discipline type in the verified range `0..13` | `BASE_MARTIAL_QUALIFICATION` |
-| `LIFE_SKILL_DISCIPLINE_APTITUDE` | Compare current companions by saved base aptitude in one life-skill discipline | One installed life-skill type in the verified range `0..15` | `BASE_LIFE_SKILL_QUALIFICATION` |
-| `COMPREHENSIVE_BASE_CAPABILITY` | Compare current companions by complete saved-base breadth | Fixed aggregate objective `Capability/0`; no discipline selector | `CAPABILITY_BREADTH_INDEX` derived from complete 6/14/16 facts |
+| `MARTIAL_DISCIPLINE_APTITUDE` | Compare approved candidates by saved base aptitude in one martial discipline | One installed combat-discipline type in the verified range `0..13` | `BASE_MARTIAL_QUALIFICATION` |
+| `LIFE_SKILL_DISCIPLINE_APTITUDE` | Compare approved candidates by saved base aptitude in one life-skill discipline | One installed life-skill type in the verified range `0..15` | `BASE_LIFE_SKILL_QUALIFICATION` |
+| `COMPREHENSIVE_BASE_CAPABILITY` | Compare approved candidates by complete saved-base breadth | Fixed aggregate objective `Capability/0`; no discipline selector | `CAPABILITY_BREADTH_INDEX` derived from complete 6/14/16 facts |
+| `SUCCESSION_CANDIDATE_READINESS` | Pre-screen approved candidates by current-base breadth minus age | Fixed aggregate objective `Capability/0`; no discipline selector | `CAPABILITY_BREADTH_INDEX` and exact `CurrentAge` |
 
 Stable discipline identity is its domain plus exact installed type value. The
 Domain identity is not a localized name. The UI resolves the current installed
@@ -63,16 +66,18 @@ Candidate-universe evaluation occurs before role evaluation:
 
 | State | Exact meaning | Role score permitted? |
 |---|---|---:|
-| `Eligible` | Non-Taiwu roster member has a current character object, agreeing Domain and character group membership, and confirmed living state | Yes, if role requirements pass |
+| `Eligible` | Non-Taiwu group-roster or verified village-work candidate has a current character object, group checks agree with roster inclusion, and living state is confirmed | Yes, if role requirements pass |
 | `Ineligible` | Sufficient verified evidence proves a hard universe rule fails, such as confirmed non-living state | No |
-| `Incomplete` | A roster ID exists but a required saved fact or current object is missing | No |
+| `Incomplete` | An approved source ID exists but a required saved fact or current object is missing | No |
 | `Unsupported` | Installed source or mapping version cannot evaluate a required universe fact | No |
 | `Conflicting` | Roster, Domain membership, character membership, object, or living-state evidence disagrees without a safe precedence decision | No |
 
-Characters outside the saved group roster are outside the first candidate
-universe. They are not emitted as thousands of `Ineligible` target-lookup
-entries. The Taiwu player is an explicit universe exclusion, not a candidate
-with a poor score.
+Characters outside the union of the saved group roster and
+`GetVillagersForWork(true, false)` are outside the candidate universe. The
+village-work source is not proof of complete village membership or inheritance
+eligibility. Unrelated target-lookup entries are not emitted as thousands of
+`Ineligible` candidates. Taiwu is an explicit exclusion, not a candidate with
+a poor score.
 
 ## Role hard requirements
 
@@ -85,8 +90,9 @@ non-passing state while retaining all already-known evidence and diagnostics:
    the role definition;
 4. the selected discipline or aggregate objective belongs to the role's
    verified domain and range;
-5. the candidate profile contains the required confirmed source fact, or all
-   36 confirmed facts required by the comprehensive summary; and
+5. the candidate profile contains every required confirmed source fact,
+   deriving the capability summary from all 36 capability facts when needed;
+   and
 6. every contributing fact provenance matches the same save and supported
    source version as the profile.
 
@@ -97,9 +103,9 @@ becomes a failed requirement.
 
 ## Score semantics
 
-### One transparent component
+### Selected-discipline components
 
-Each first role has exactly one component:
+Each selected-discipline role has exactly one component:
 
 | Property | Rule |
 |---|---|
@@ -130,6 +136,15 @@ weight is `1`, and the total equals the breadth index. The breadth index is the
 equal-weight mean of the complete six-attribute, 14-martial, and 16-life-skill
 category averages. If any expected fact is unavailable or incompatible, there
 is no component or total and the exact typed unranked state remains visible.
+
+### Bounded succession components
+
+`SUCCESSION_CANDIDATE_READINESS` adds the complete breadth contribution to the
+negative of exact saved current age. Its role-local total is therefore
+`breadth index - current age`, and both components remain visible in results
+and comparisons. This is a transparent pre-screen only: age is not remaining
+lifespan, and the result does not prove inheritance eligibility, transferable
+progress, future growth, or an action recommendation.
 
 ### Prohibited score claims
 
@@ -176,27 +191,28 @@ rank, or appears as a merit explanation. Localized name, location, source
 enumeration order, request order, and UI language never affect canonical
 ranking.
 
-The first release returns every rankable current-group candidate rather than
+The current release returns every rankable approved-universe candidate rather than
 silently truncating to a top-N list. A later bounded display may collapse lower
 rows visually only if every row remains reachable and total counts stay
 visible.
 
 ## Relative strengths, weaknesses, and tradeoffs
 
-The first roles do not assign subjective `Strong` or `Weak` bands. A two-
+The roles do not assign subjective `Strong` or `Weak` bands. A two-
 candidate comparison may state only exact relative outcomes for the selected
 role:
 
-- `Advantage`: candidate has a higher confirmed base qualification;
-- `Disadvantage`: candidate has a lower confirmed base qualification;
+- `Advantage`: candidate has a better direction-aware approved component;
+- `Disadvantage`: candidate has a worse direction-aware approved component;
 - `Equal`: confirmed values are equal;
 - `Unavailable`: at least one required value is incomplete or unsupported; or
 - `Conflicting`: at least one required value conflicts.
 
-The exact values and evidence states remain visible. Supporting learned or
-equipped skill counts, features, age, and location may appear as neutral facts
-but cannot be labelled strengths, weaknesses, or score explanations in the
-first role definitions.
+The succession comparison may additionally return `Tradeoff` when one candidate
+has higher breadth and the other has lower current age. Exact values and
+evidence states remain visible. Supporting learned or equipped skill counts,
+features, and location remain neutral facts unless a verified role definition
+explicitly includes them.
 
 A material tradeoff exists only when comparing separate finder results for
 different roles or disciplines. The first UI does not combine those results or

@@ -80,7 +80,7 @@ public sealed class CompanionRoleDefinition
 
         if (dimensions.Any(item => !FieldMatchesDomain(item.Field, disciplineDomain)))
         {
-            throw new ArgumentException("Every score field must be a typed base-qualification field in the role discipline domain.", nameof(scoreDimensions));
+            throw new ArgumentException("Every score field must be supported by the role discipline domain.", nameof(scoreDimensions));
         }
 
         DisciplineDomain = disciplineDomain;
@@ -89,7 +89,9 @@ public sealed class CompanionRoleDefinition
         TiePolicy = tiePolicy;
         SupportedGameDataVersions = [.. versions.Order(StringComparer.Ordinal)];
         ScoreDimensions = [.. dimensions.OrderBy(item => item.Identity, StringComparer.Ordinal)];
-        HardRequirements = CreateRequirements(ScoreDimensions);
+        HardRequirements = CreateRequirements(
+            ScoreDimensions,
+            disciplineDomain == CandidateDisciplineDomain.Capability);
         Fingerprint = CreateFingerprint();
     }
 
@@ -130,11 +132,13 @@ public sealed class CompanionRoleDefinition
             (CandidateProfileField.BaseMartialQualification, CandidateDisciplineDomain.Martial) => true,
             (CandidateProfileField.BaseLifeSkillQualification, CandidateDisciplineDomain.LifeSkill) => true,
             (CandidateProfileField.CapabilityBreadthIndex, CandidateDisciplineDomain.Capability) => true,
+            (CandidateProfileField.CurrentAge, CandidateDisciplineDomain.Capability) => true,
             _ => false
         };
 
     private static ImmutableArray<CompanionRoleHardRequirement> CreateRequirements(
-        ImmutableArray<CompanionRoleScoreDimension> dimensions)
+        ImmutableArray<CompanionRoleScoreDimension> dimensions,
+        bool isObjective)
     {
         var requirements = new List<CompanionRoleHardRequirement>
         {
@@ -142,12 +146,10 @@ public sealed class CompanionRoleDefinition
             new(2, CompanionRoleRequirementKind.SourceVersionsSupported, "SOURCE_VERSIONS_SUPPORTED", null),
             new(
                 3,
-                dimensions.All(dimension =>
-                    dimension.Field == CandidateProfileField.CapabilityBreadthIndex)
+                isObjective
                     ? CompanionRoleRequirementKind.ObjectiveSupported
                     : CompanionRoleRequirementKind.DisciplineSupported,
-                dimensions.All(dimension =>
-                    dimension.Field == CandidateProfileField.CapabilityBreadthIndex)
+                isObjective
                     ? "OBJECTIVE_SUPPORTED"
                     : "DISCIPLINE_SUPPORTED",
                 null)

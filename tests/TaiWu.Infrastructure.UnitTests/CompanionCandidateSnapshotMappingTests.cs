@@ -17,8 +17,11 @@ public sealed class CompanionCandidateSnapshotMappingTests
         Assert.False(mapped.IsPartial);
         Assert.Equal(CandidateUniverseState.Eligible, profile.UniverseState);
         Assert.Empty(mapped.Diagnostics);
-        Assert.Equal(107, profile.Facts.Length);
+        Assert.Equal(108, profile.Facts.Length);
         Assert.True(profile.FindFact(Field(CandidateProfileField.RosterMembership))!
+            .Value!.BooleanValue);
+        Assert.False(profile.FindFact(Field(
+            CandidateProfileField.VillageWorkCandidateMembership))!
             .Value!.BooleanValue);
         Assert.Equal(
             (short)13,
@@ -47,6 +50,8 @@ public sealed class CompanionCandidateSnapshotMappingTests
     {
         var mapped = CompanionCandidateSnapshotMapping.Map(new RawCompanionCandidate(
             42,
+            rosterMembership: true,
+            villageWorkCandidateMembership: false,
             characterPresent: false,
             domainGroupMembership: true,
             characterGroupMembership: null,
@@ -96,6 +101,25 @@ public sealed class CompanionCandidateSnapshotMappingTests
         Assert.Equal(CandidateUniverseState.Conflicting, mapped.Profile.UniverseState);
         Assert.False(mapped.Profile.FindFact(
             Field(CandidateProfileField.DomainGroupMembership))!.Value!.BooleanValue);
+    }
+
+    [Fact]
+    public void Verified_village_work_candidate_is_eligible_without_group_membership()
+    {
+        var mapped = CompanionCandidateSnapshotMapping.Map(
+            Complete(
+                domainMembership: false,
+                rosterMembership: false,
+                villageWorkCandidateMembership: true,
+                characterGroupMembership: false),
+            Versions());
+
+        Assert.Equal(CandidateUniverseState.Eligible, mapped.Profile.UniverseState);
+        Assert.False(mapped.Profile.FindFact(Field(
+            CandidateProfileField.RosterMembership))!.Value!.BooleanValue);
+        Assert.True(mapped.Profile.FindFact(Field(
+            CandidateProfileField.VillageWorkCandidateMembership))!
+            .Value!.BooleanValue);
     }
 
     [Fact]
@@ -176,6 +200,7 @@ public sealed class CompanionCandidateSnapshotMappingTests
             readSession: null!,
             new MissingSavePathProvider(),
             new TaiwuGameTextResolver(),
+            revisionProvider: null!,
             TimeProvider.System);
 
         var result = await reader.ReadAsync(
@@ -193,15 +218,20 @@ public sealed class CompanionCandidateSnapshotMappingTests
     private static RawCompanionCandidate Complete(
         bool domainMembership = true,
         bool livingState = true,
+        bool rosterMembership = true,
+        bool villageWorkCandidateMembership = false,
+        bool characterGroupMembership = true,
         IEnumerable<int>? features = null,
         IEnumerable<short>? attributes = null,
         IEnumerable<short>? martial = null,
         IEnumerable<short>? life = null) => new(
             42,
+            rosterMembership,
+            villageWorkCandidateMembership,
             characterPresent: true,
-            domainMembership,
-            characterGroupMembership: true,
-            livingState,
+            domainGroupMembership: domainMembership,
+            characterGroupMembership: characterGroupMembership,
+            livingState: livingState,
             currentAge: 24,
             locationArea: 3,
             locationBlock: 7,
@@ -219,9 +249,9 @@ public sealed class CompanionCandidateSnapshotMappingTests
     private static CandidateProfileSourceVersions Versions() => new(
         Sha,
         "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
-        "2",
+        "3",
         "1",
-        "2");
+        "3");
 
     private static CandidateProfileFieldIdentity Field(
         CandidateProfileField field) => new(field);

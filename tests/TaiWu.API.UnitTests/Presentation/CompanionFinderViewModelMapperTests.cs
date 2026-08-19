@@ -29,16 +29,18 @@ public sealed class CompanionFinderViewModelMapperTests
                 CompanionFinderTestData.Disciplines(),
                 TaiwuLanguage.Chinese);
 
-        Assert.Equal(3, englishRoles.Count);
+        Assert.Equal(4, englishRoles.Count);
         Assert.Equal(
             englishRoles.Select(value => (value.Identity, value.Version, value.Domain)),
             chineseRoles.Select(value => (value.Identity, value.Version, value.Domain)));
         Assert.Equal("Comprehensive base capability", englishRoles[0].Label);
         Assert.Equal("綜合基礎能力", chineseRoles[0].Label);
         Assert.False(englishRoles[0].RequiresDisciplineSelection);
-        Assert.Equal("Martial discipline aptitude", englishRoles[1].Label);
-        Assert.Equal("武學資質", chineseRoles[1].Label);
-        Assert.Contains("not a universal ranking", englishRoles[1].ScoreLimitation);
+        Assert.Equal("Succession candidate shortlist", englishRoles[1].Label);
+        Assert.Equal("接班候選初選", chineseRoles[1].Label);
+        Assert.Equal("Martial discipline aptitude", englishRoles[2].Label);
+        Assert.Equal("武學資質", chineseRoles[2].Label);
+        Assert.Contains("not a universal ranking", englishRoles[2].ScoreLimitation);
         Assert.Equal(30, englishDisciplines.Count);
         Assert.Equal(14, englishDisciplines.Count(value =>
             value.Domain == CandidateDisciplineDomain.Martial));
@@ -173,6 +175,7 @@ public sealed class CompanionFinderViewModelMapperTests
             disciplines);
 
         Assert.False(model.RequiresDisciplineSelection);
+        Assert.True(model.ShowCandidateCapabilitySummary);
         Assert.Equal("Comprehensive base capability", model.RoleLabel);
         Assert.Equal("Breadth index", model.ScoreColumnLabel);
         Assert.Contains("three complete saved-base category averages", model.ScoreLimitation);
@@ -191,6 +194,31 @@ public sealed class CompanionFinderViewModelMapperTests
             "does not change the selected objective",
             comparison.Capability.Limitation,
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Succession_objective_maps_age_source_and_bounded_score_meaning()
+    {
+        var result = await CompanionFinderTestData.ResultAsync(
+            successionObjective: true);
+        var model = CompanionFinderViewModelMapper.Map(
+            result,
+            TaiwuLanguage.English,
+            disciplineName: null,
+            CompanionFinderViewModelMapper.MapDisciplines(
+                CompanionFinderTestData.Disciplines(),
+                TaiwuLanguage.English));
+
+        Assert.Equal("Succession candidate shortlist", model.RoleLabel);
+        Assert.False(model.ShowCandidateCapabilitySummary);
+        Assert.Equal("Current-base succession index", model.ScoreColumnLabel);
+        Assert.Contains("not verified remaining lifespan", model.ScoreLimitation);
+        Assert.Equal("Current group", model.Candidates.Single(candidate =>
+            candidate.CharacterId == 31001).CandidateSourceLabel);
+        Assert.Equal("Village work candidate", model.Candidates.Single(candidate =>
+            candidate.CharacterId == 31002).CandidateSourceLabel);
+        Assert.Equal("21", model.Candidates.Single(candidate =>
+            candidate.CharacterId == 31001).CurrentAgeLabel);
     }
 
     [Fact]
@@ -411,13 +439,8 @@ public sealed class CompanionFinderViewModelMapperTests
         Assert.Contains(comparison.Capability.Facts, value =>
             value.Label == "14 martial aptitudes"
             && value.FirstDetail.Contains("Martial discipline 1 75", StringComparison.Ordinal));
-        Assert.Contains(comparison.Facts, value =>
-            value.Label == "Evaluation state"
-            && value.FirstValue == "Rankable"
-            && value.SecondValue == "Rankable");
         Assert.DoesNotContain(comparison.Facts, value =>
-            value.Label == "Evaluation state"
-            && (value.FirstValue == "Tied" || value.SecondValue == "Tied"));
+            value.Label == "Evaluation state");
         Assert.Contains(comparison.Facts, value =>
             value.Label == "Saved base qualification"
             && value.FirstValue == "75"
@@ -426,14 +449,16 @@ public sealed class CompanionFinderViewModelMapperTests
             value.Label == "Competition rank"
             && value.FirstValue == "Tied at rank 2"
             && value.SecondValue == "Tied at rank 2");
+        Assert.DoesNotContain(comparison.Facts, value =>
+            value.Label == "Hard gates");
         Assert.Contains(comparison.Facts, value =>
-            value.Label == "Hard gates"
-            && value.FirstValue.Contains(
-                "Candidate-universe eligibility — Passed",
-                StringComparison.Ordinal)
-            && value.FirstValue.Contains(
-                "Required saved base martial qualification evidence — Passed",
-                StringComparison.Ordinal));
+            value.Label == "Candidate source"
+            && value.FirstValue == "Village work candidate"
+            && value.SecondValue == "Village work candidate");
+        Assert.Contains(comparison.Facts, value =>
+            value.Label == "Current age"
+            && value.FirstValue == "22"
+            && value.SecondValue == "23");
     }
 
     [Fact]

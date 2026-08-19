@@ -1204,7 +1204,7 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SetFilter(StoryFilter.NotCompleted)",
             "() => SetFilter(option.Filter)",
             "() => SetFilter(filter)",
-            "() => SetRole(role.Domain)",
+            "() => SetRole(role.Identity)",
             "() => SetDifferencesOnly(false)",
             "() => SetDifferencesOnly(true)",
             "() => SetLanguage(TaiwuLanguage.Chinese)",

@@ -5,7 +5,7 @@
 | Status | Ongoing discovery |
 | Scope | Ongoing product discovery after Epic 7 selection |
 | Related epics | EPIC-001 through EPIC-007 |
-| Last updated | 2026-08-18 |
+| Last updated | 2026-08-19 |
 
 ## Purpose
 
@@ -233,6 +233,14 @@ or party changes.
 
 ### PI-009 — Companion development planner
 
+**Current bounded precursor:** On 2026-08-19, the companion finder gained a
+read-only `SUCCESSION_CANDIDATE_READINESS` shortlist over the current group and
+the verified village-work candidate source. Its disclosed formula is complete
+saved-base capability breadth minus exact current age. This is only an initial
+candidate comparison: age is not remaining lifespan, and the source and score
+do not prove inheritance eligibility, transferable progress, or future growth.
+The development and inheritance mechanics below therefore remain future work.
+
 Create a staged, information-only development plan for an existing or selected
 同道. Start from a chosen future role, identify the gap between current and
 desired capabilities, and suggest evidence-backed priorities for skills,
@@ -274,6 +282,91 @@ idea may begin as a bounded slice of PI-010, but it should become its own epic
 if its inventory, study, acquisition, or progression rules require a distinct
 domain model.
 
+### PI-012 — Evidence-backed tactical combat planner
+
+Extend the completed Epic 5 target-archetype and counter-playbook foundation
+into an exact-target planner that can explain not only which verified counters
+fit, but also how their effects interact and when the player should use them.
+This requires a separate epic because Epic 5 deliberately retained the
+existing candidate universe, scoring semantics, bounded search, and manual
+plan.
+
+The planner should treat a target's combat mechanics as a verified causal
+chain rather than a flat collection of independently covered threat codes.
+Candidate chain states may include prerequisites, generated combat styles or
+marks, active attack/defense/agility state, threshold transitions, repeated
+casts, defeat prevention or reset, and a counter's own temporary lockout. A
+missing or unverified transition remains explicit and cannot be invented from
+a localized skill name or untyped raw effect description.
+
+Candidate discovery should consider the player's complete learned-skill
+snapshot, not only the current loadout and manually curated hard-counter list.
+A discovered skill may become a recommendation only through verified typed
+roles, effects, timing, and requirements, followed by the existing hard checks
+for mastery, practice direction, breakthrough availability, expected effect,
+effective cost, inner-power compatibility, and category capacity. Useful
+roles may include:
+
+- interrupting or suppressing a core cast;
+- reducing hit, power, mark duration, resonance, or resource generation;
+- preserving mind, movement, or defensive reliability;
+- recovering from a counter's self-lock or other execution cost;
+- selecting the damage channel that the exact target resists less effectively;
+  and
+- creating a verified finish window against recovery, defeat prevention, or
+  reset mechanics.
+
+The requirement context should carry every available fact needed to decide
+whether a paper loadout can actually be executed: equipped and unlocked weapon
+types, usable combat styles, current or opening distance, stance and breath,
+other verified resources, active defense and agility roles, category budgets,
+universal-slot allocation, and legendary-book cost changes. Unknown runtime
+facts should produce a manual confirmation or fallback, not a silent empty
+context or an optimistic score.
+
+The output should include a conditional, information-only battle plan with:
+
+1. pre-combat preparation and manual direction or breakthrough changes;
+2. the opening active defense, agility, resource, and positioning choices;
+3. target-state triggers for interrupts, mitigation, switching, and burst;
+4. recovery steps after self-lock, resource depletion, or a failed condition;
+5. a primary finish condition and evidence-backed fallback; and
+6. concise reasons and provenance for every transition.
+
+Safe, Balanced, and Aggressive policies should retain distinct meanings even
+when some score evidence is unavailable. Damage potential should be calculated
+only from version-matched typed evidence for the player's attack, hit and cast
+reliability, the target's relevant defense or resistance, and applicable live
+conditions. Threat scoring should account for chains, timing, interactions,
+and useful layered protection rather than rewarding duplicate coverage of a
+flat code. Slot scoring should represent marginal combat value or a justified
+reserve, not automatically reward unused capacity. Unknown components remain
+excluded with a visible diagnostic and must not become zero, safety, or
+victory-probability claims.
+
+The candidate search must remain deterministic, cancellable, bounded, and
+diagnostic. It should report how much of the eligible search space was covered
+and which pruning, option, time, or result limit affected the answer. Repeated
+snapshot and catalogue work should be reused within one immutable request, and
+target-aware pruning should remove demonstrably dominated or irrelevant
+options before combination search.
+
+An initial vertical should use one already verified high-value magic-sound
+target whose individual skills form an observable chain. Scenario acceptance
+should assert tactical invariants rather than one brittle exact loadout: the
+plan must suppress the target's core direct-practice casts, mitigate the mark
+and resonance path, recover from the chosen suppression counter's self-lock,
+respect the player's current inner-power backlash and unavailable directions,
+fit the exact displayed budgets, and retain a feasible finish path. Manually
+reported battle outcomes may be stored through PI-006 with provenance for
+regression review, but a single win must not be treated as proof that one
+counter caused the result or used to generate rules automatically.
+
+This remains a read-only planning feature. It must not attach to the game,
+inspect runtime memory, capture input, execute combat, equip skills, change
+practice direction, allocate slots, write a save, simulate unsupported hidden
+mechanics, or claim a probability of victory.
+
 ## Suggested promotion order
 
 ### Completed promotions
@@ -305,11 +398,13 @@ or attempt a whole-village optimizer.
 
 ### Current candidates after Epic 7 selection
 
-1. Companion development planner.
-2. Library and book planning, assessed after the Epic 7 source boundary rather
+1. Evidence-backed tactical combat planner, building on the verified Epic 5
+   foundation without reopening its completed delivery boundary.
+2. Companion development planner.
+3. Library and book planning, assessed after the Epic 7 source boundary rather
    than assumed to share its first assignment vertical.
-3. Version-aware observation, recommendation, and outcome persistence.
-4. Shareable recommendation card, which may remain a smaller enhancement
+4. Version-aware observation, recommendation, and outcome persistence.
+5. Shareable recommendation card, which may remain a smaller enhancement
    because copy and print foundations already exist.
 
 The companion and settlement ideas intentionally remain separate. They may
@@ -353,6 +448,18 @@ define a separate source decision and objective contract before implementation.
   the first archetype playbooks?
 - How should overlapping playbooks resolve conflicting counters, timing, and
   category or universal-slot pressure?
+- What is the smallest verified combat-state model that can represent target
+  skill chains, marks, active roles, thresholds, resource flow, and temporary
+  self-lock without pretending to be a complete combat simulator?
+- Which typed effect and role evidence is sufficient to admit a learned skill
+  that has no manually curated hard-counter rule into candidate discovery?
+- Which version-matched attack, defense, resistance, hit, timing, and resource
+  facts are sufficient for a useful damage or execution score?
+- When should unused category capacity count as a justified reserve, and when
+  should it count as missed marginal combat value?
+- How should manually reported wins, losses, trigger timings, and failure causes
+  improve regression scenarios without creating automatic causal claims or
+  unsupported win-probability models?
 - Which development opportunities can be represented as verified steps rather
   than speculative advice?
 - Which village assignments, buildings, resource constraints, and worker

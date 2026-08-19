@@ -10,8 +10,8 @@ public static class VerifiedCompanionRoleDefinitions
 
     public const string RoleVersion = "1";
     public const string EvaluationRuleVersion = "1";
-    public const string ProfileMappingVersion = "2";
-    public const string FingerprintSchemaVersion = "2";
+    public const string ProfileMappingVersion = "3";
+    public const string FingerprintSchemaVersion = "3";
 
     public static CompanionRoleDefinition MartialDisciplineAptitude { get; } =
         Create(
@@ -53,9 +53,47 @@ public static class VerifiedCompanionRoleDefinitions
                 "CAPABILITY_BREADTH_INDEX_CONTRIBUTION")],
             CompanionRoleTiePolicy.ExactTotalRemainsTie);
 
+    public static CompanionRoleDefinition SuccessionCandidateReadiness { get; } =
+        new(
+            new CompanionRoleIdentity("SUCCESSION_CANDIDATE_READINESS"),
+            RoleVersion,
+            EvaluationRuleVersion,
+            [SupportedGameDataVersion],
+            ProfileMappingVersion,
+            FingerprintSchemaVersion,
+            CandidateDisciplineDomain.Capability,
+            minimumDisciplineType: 0,
+            maximumDisciplineType: 0,
+            [
+                new CompanionRoleScoreDimension(
+                    "CAPABILITY_BREADTH_INDEX",
+                    CandidateProfileField.CapabilityBreadthIndex,
+                    "BREADTH_INDEX_X100",
+                    CompanionRoleScoreDirection.HigherIsBetter,
+                    CompanionRoleNormalizationKind.Hundredth,
+                    normalizationMinimum: 0m,
+                    normalizationMaximum: 10_000m,
+                    weight: 1m,
+                    CompanionRoleMissingEvidenceBehavior.EvaluationIncomplete,
+                    "CAPABILITY_BREADTH_INDEX_CONTRIBUTION"),
+                new CompanionRoleScoreDimension(
+                    "CURRENT_AGE_PENALTY",
+                    CandidateProfileField.CurrentAge,
+                    "CURRENT_AGE_YEAR",
+                    CompanionRoleScoreDirection.LowerIsBetter,
+                    CompanionRoleNormalizationKind.Identity,
+                    normalizationMinimum: 0m,
+                    normalizationMaximum: short.MaxValue,
+                    weight: 1m,
+                    CompanionRoleMissingEvidenceBehavior.EvaluationIncomplete,
+                    "CURRENT_AGE_PENALTY_EXACT_SAVED_VALUE")
+            ],
+            CompanionRoleTiePolicy.ExactTotalRemainsTie);
+
     public static ImmutableArray<CompanionRoleDefinition> All { get; } =
         [
             ComprehensiveBaseCapability,
+            SuccessionCandidateReadiness,
             MartialDisciplineAptitude,
             LifeSkillDisciplineAptitude
         ];

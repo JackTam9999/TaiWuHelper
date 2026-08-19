@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-009 and extended by E6-013/E6-014 |
+| Status | Implemented for E6-009 and extended by E6-013/E6-014 and the 2026-08-19 succession slice |
 | Base route | `/api/companion-candidates` |
 | Network boundary | Localhost only |
 | Application source | [Companion finder Application architecture](../architecture/COMPANION-FINDER-APPLICATION.md) |
@@ -35,10 +35,12 @@ Each role contains:
 
 The first discovery item compares the complete equal-category breadth index and
 reports `requiresDisciplineSelection: false`; it is also the finder UI default.
-The remaining two objectives compare exact saved base aptitude in one selected
-martial or life-skill discipline. Discovery never claims universal quality,
-success probability, future development, teaching, recruitment, settlement
-output, or combat synergy.
+The second is `SUCCESSION_CANDIDATE_READINESS`, a no-discipline current-base
+shortlist with visible breadth and current-age components. The remaining two
+objectives compare exact saved base aptitude in one selected martial or
+life-skill discipline. Discovery never claims universal quality, success
+probability, future development, teaching, recruitment, settlement output, or
+combat synergy.
 
 An invalid language returns HTTP `400` without reading a save.
 
@@ -101,6 +103,8 @@ Each candidate response retains:
 - stable candidate reference and character ID;
 - optional localized display name and location name sourced from the same
   guarded snapshot, with no raw-ID fallback;
+- confirmed candidate-context facts for current-group membership, verified
+  village-work-candidate membership, and current age;
 - typed ranking and evaluation states, competition rank, and nullable total;
 - ordered hard requirements, outcomes, stable reasons, localized explanation,
   and evidence references;
@@ -147,6 +151,12 @@ index is that objective's role-local total and ranking basis. It is not a
 success probability, future-potential model, universal suitability claim, or
 action recommendation. Missing, incomplete, unsupported, stale, and
 conflicting components remain explicit and never become zero.
+
+When `SUCCESSION_CANDIDATE_READINESS` is selected, the same complete breadth
+index contributes positively and confirmed exact current age contributes
+negatively. The total is `breadth index - current age`. It is a transparent
+initial shortlist, not remaining-lifespan evidence or proof of inheritance
+eligibility, transferable progress, future growth, or a recommended action.
 
 ### Comparison
 

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-003, E6-006, E6-007, and E6-014 |
+| Status | Implemented for E6-003, E6-006, E6-007, E6-014, and the 2026-08-19 succession slice |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
 | Backlog items | [E6-003](../roadmap/epic-006/BACKLOG.md#e6-003--define-versioned-role-definitions-and-evaluation-rules), [E6-006](../roadmap/epic-006/BACKLOG.md#e6-006--evaluate-role-suitability-and-rank-comparable-candidates), [E6-007](../roadmap/epic-006/BACKLOG.md#e6-007--build-evidence-aware-shortlist-and-candidate-comparison-explanations) |
 | Product contract | [Companion role evaluation and shortlist contract](./COMPANION-ROLE-EVALUATION-CONTRACT.md) |
@@ -63,8 +63,8 @@ weights.
 
 ## Verified version-1 catalogue
 
-All three definitions require profile mapping version `1`, fingerprint schema
-version `1`, evaluation rule version `1`, and GameData version
+All four definitions require profile mapping version `3`, fingerprint schema
+version `3`, evaluation rule version `1`, and GameData version
 `1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20`.
 
 | Role identity | Discipline range | Required typed fact | Component identity |
@@ -72,8 +72,9 @@ version `1`, evaluation rule version `1`, and GameData version
 | `MARTIAL_DISCIPLINE_APTITUDE` | Martial `0..13` | `BaseMartialQualification` for the selected martial discipline | `BASE_MARTIAL_QUALIFICATION` |
 | `LIFE_SKILL_DISCIPLINE_APTITUDE` | Life skill `0..15` | `BaseLifeSkillQualification` for the selected life-skill discipline | `BASE_LIFE_SKILL_QUALIFICATION` |
 | `COMPREHENSIVE_BASE_CAPABILITY` | Aggregate `Capability/0` | Complete summary over six base attributes, 14 martial aptitudes, and 16 life-skill aptitudes | `CAPABILITY_BREADTH_INDEX` |
+| `SUCCESSION_CANDIDATE_READINESS` | Aggregate `Capability/0` | Complete capability summary and confirmed exact current age | `CAPABILITY_BREADTH_INDEX`, `CURRENT_AGE_PENALTY` |
 
-Each dimension uses unit `BASE_QUALIFICATION_POINT`, higher-is-better
+Each selected-discipline dimension uses unit `BASE_QUALIFICATION_POINT`, higher-is-better
 direction, identity normalization over the complete saved `Int16` type range,
 weight `1`, and missing behavior `EvaluationIncomplete`. Their different typed
 fields and discipline domains are different hard requirements over the same
@@ -84,6 +85,13 @@ hundredth normalization, higher-is-better direction, and weight `1`, so its
 role-local total is the two-decimal breadth index. It requires all 36 source
 facts to be confirmed and provenance-compatible; no synthetic source fact is
 stored in the profile.
+
+The succession objective reuses that complete breadth component and adds the
+confirmed `CurrentAge` fact as a lower-is-better identity-normalized component.
+Its role-local total is therefore `breadth index - current age`. This formula
+is a transparent current-base shortlist only: current age is not verified
+remaining lifespan, and the objective does not prove transmission eligibility,
+transferable progress, development potential, or an action recommendation.
 
 The catalogue resolver returns one of `Supported`, `UnknownIdentity`, or
 `UnsupportedVersion` with a stable diagnostic identity. It never silently
@@ -99,8 +107,9 @@ the first outcome other than `Passed`:
 2. require exact GameData, profile-mapping, and fingerprint-schema versions;
 3. require the selected discipline or aggregate objective domain and type to
    be inside the role's verified range;
-4. resolve the exact typed fact, or derive the comprehensive summary from all
-   36 typed fields, and require complete confirmed evidence; and
+4. resolve each exact typed fact, deriving a capability summary from all 36
+   typed capability fields when a definition requires it, and require complete
+   confirmed evidence; and
 5. require every contributing configured-save provenance to match the profile
    save SHA-256 and profile-mapping version.
 
@@ -127,18 +136,21 @@ contribution = directional value * weight
 role-local total = sum(contribution)
 ```
 
-Decimal arithmetic is checked and deterministic. The first verified roles
-therefore retain the exact saved aptitude as normalized value, contribution,
-and total. A confirmed zero remains zero. Missing evidence has no component
-and no total.
+Decimal arithmetic is checked and deterministic. The selected-discipline roles
+retain the exact saved aptitude as normalized value, contribution, and total.
+A confirmed zero remains zero. Missing evidence has no component and no total.
 
 For `COMPREHENSIVE_BASE_CAPABILITY`, `raw = breadth index * 100`, hundredth
 normalization restores the breadth index, and weight `1` makes that value the
 role-local total. It is comparable only inside this explicit objective and
 cannot enter either selected-discipline evaluation.
 
-Every component retains its dimension identity, typed profile field,
-`BASE_QUALIFICATION_POINT` unit, direction, normalization rule and range,
+For `SUCCESSION_CANDIDATE_READINESS`, the same breadth contribution is added
+to `-CurrentAge`. Both components remain visible, so a broader older candidate
+and a younger narrower candidate can produce an explicit comparison tradeoff.
+
+Every component retains its dimension identity, typed profile field, declared
+unit, direction, normalization rule and range,
 weight, raw value, normalized value, contribution, explanation identity, and
 source evidence. A large score cannot hide a failed earlier gate because
 scoring never starts after a non-passing gate.

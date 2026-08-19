@@ -294,6 +294,17 @@ can be established from the configured save and supported installed sources.
 It does not promise coverage of every visible, historical, generated, story,
 hostile, deceased, unavailable, or otherwise enumerated character.
 
+### 2026-08-19 bounded post-delivery extension
+
+The companion finder now also unions the current group with the verified
+`GetVillagersForWork(true, false)` source and exposes
+`SUCCESSION_CANDIDATE_READINESS`. It ranks complete saved-base capability
+breadth minus exact current age and displays both components. This is a
+transparent candidate pre-screen, not proof of complete village membership,
+remaining lifespan, inheritance eligibility, transferable progress, future
+growth, or a recommended in-game action; the full development problem remains
+PI-009.
+
 ## Functional scope
 
 ### 1. Evidence and representative-scenario matrix

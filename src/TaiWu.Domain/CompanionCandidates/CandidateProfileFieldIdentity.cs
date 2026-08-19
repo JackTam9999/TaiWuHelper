@@ -100,6 +100,16 @@ public sealed record CandidateProfileFieldIdentity
 
     public CandidateMainAttribute? MainAttribute { get; }
 
+    public static CandidateProfileFieldIdentity ForRole(
+        CandidateProfileField field,
+        CandidateDisciplineIdentity discipline)
+    {
+        ArgumentNullException.ThrowIfNull(discipline);
+        return ExpectedDisciplineDomain(field) is null
+            ? new CandidateProfileFieldIdentity(field)
+            : new CandidateProfileFieldIdentity(field, discipline);
+    }
+
     internal string StableKey => Discipline is not null
         ? $"{CandidateProfileText.EnumKey(Field)}:{Discipline.StableKey}"
         : MainAttribute.HasValue
@@ -111,7 +121,9 @@ public sealed record CandidateProfileFieldIdentity
         CandidateProfileField.RosterMembership
             or CandidateProfileField.DomainGroupMembership
             or CandidateProfileField.CharacterGroupMembership
-            or CandidateProfileField.LivingState => CandidateFactValueKind.Boolean,
+            or CandidateProfileField.LivingState
+            or CandidateProfileField.VillageWorkCandidateMembership =>
+                CandidateFactValueKind.Boolean,
         CandidateProfileField.CurrentAge
             or CandidateProfileField.BaseMainAttribute
             or CandidateProfileField.CapabilityBreadthIndex

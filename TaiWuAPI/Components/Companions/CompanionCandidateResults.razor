@@ -1,6 +1,7 @@
 @using System.Globalization
 @using Microsoft.JSInterop
 @using TaiWu.Application.CompanionCandidates
+@using TaiWu.Domain.CompanionCandidates
 @using TaiWu.Domain.CompanionRoles
 @using TaiWuAPI.Presentation
 @inject IJSRuntime JS
@@ -145,17 +146,23 @@
                     .ToArray();
                 if (candidates.Length > 0)
                 {
+                    var compactRanked = section == CompanionCandidateSection.Ranked;
                     <section class="companion-candidate-section"
                              aria-labelledby="@SectionHeadingId(section)">
                         <h3 id="@SectionHeadingId(section)">@SectionTitle(section)</h3>
-                        <table class="companion-candidate-table">
+                        <table class="companion-candidate-table @(compactRanked
+                            ? "companion-candidate-table--compact"
+                            : null)">
                             <thead>
                                 <tr>
                                     <th scope="col">@Text(CompanionFinderUiTextKey.Rank)</th>
                                     <th scope="col">@Text(CompanionFinderUiTextKey.Candidate)</th>
                                     <th scope="col">@Model.ScoreColumnLabel</th>
-                                    <th scope="col">@Text(CompanionFinderUiTextKey.State)</th>
-                                    <th scope="col">@Text(CompanionFinderUiTextKey.Evidence)</th>
+                                    @if (!compactRanked)
+                                    {
+                                        <th scope="col">@Text(CompanionFinderUiTextKey.State)</th>
+                                        <th scope="col">@Text(CompanionFinderUiTextKey.Evidence)</th>
+                                    }
                                     <th scope="col">@Text(CompanionFinderUiTextKey.Compare)</th>
                                 </tr>
                             </thead>
@@ -177,13 +184,19 @@
                                             <span class="companion-location">
                                                 @Text(CompanionFinderUiTextKey.Location): @candidate.LocationName
                                             </span>
+                                            <span class="companion-location">
+                                                @Text(CompanionFinderUiTextKey.CandidateSource): @candidate.CandidateSourceLabel
+                                            </span>
+                                            <span class="companion-location">
+                                                @Text(CompanionFinderUiTextKey.CurrentAge): @candidate.CurrentAgeLabel
+                                            </span>
                                         </th>
                                         <td data-label="@Model.ScoreColumnLabel">
                                             <span class="companion-mobile-label" aria-hidden="true">
                                                 @Model.ScoreColumnLabel
                                             </span>
                                             <strong>@candidate.ScoreLabel</strong>
-                                            @if (!Model.RequiresDisciplineSelection)
+                                            @if (Model.ShowCandidateCapabilitySummary)
                                             {
                                                 <dl class="companion-capability-row-summary">
                                                     @CapabilityAverage(candidate.CapabilitySummary.MainAttributes)
@@ -192,20 +205,23 @@
                                                 </dl>
                                             }
                                         </td>
-                                        <td data-label="@Text(CompanionFinderUiTextKey.State)">
-                                            <span class="companion-mobile-label" aria-hidden="true">
-                                                @Text(CompanionFinderUiTextKey.State)
-                                            </span>
-                                            <span class="companion-state-label @StateClass(candidate)">
-                                                @candidate.RankingStateLabel
-                                            </span>
-                                        </td>
-                                        <td data-label="@Text(CompanionFinderUiTextKey.Evidence)">
-                                            <span class="companion-mobile-label" aria-hidden="true">
-                                                @Text(CompanionFinderUiTextKey.Evidence)
-                                            </span>
-                                            @candidate.EvidenceLabel
-                                        </td>
+                                        @if (!compactRanked)
+                                        {
+                                            <td data-label="@Text(CompanionFinderUiTextKey.State)">
+                                                <span class="companion-mobile-label" aria-hidden="true">
+                                                    @Text(CompanionFinderUiTextKey.State)
+                                                </span>
+                                                <span class="companion-state-label @StateClass(candidate)">
+                                                    @candidate.RankingStateLabel
+                                                </span>
+                                            </td>
+                                            <td data-label="@Text(CompanionFinderUiTextKey.Evidence)">
+                                                <span class="companion-mobile-label" aria-hidden="true">
+                                                    @Text(CompanionFinderUiTextKey.Evidence)
+                                                </span>
+                                                @candidate.EvidenceLabel
+                                            </td>
+                                        }
                                         <td data-label="@Text(CompanionFinderUiTextKey.Compare)">
                                             <span class="companion-mobile-label" aria-hidden="true">
                                                 @Text(CompanionFinderUiTextKey.Compare)
@@ -226,8 +242,48 @@
                                             </label>
                                         </td>
                                     </tr>
-                                    <tr class="companion-candidate-detail-row">
-                                        <td colspan="6">
+                                    @if (ShowSingleSelectionDetails(candidate))
+                                    {
+                                        <tr class="companion-single-candidate-detail">
+                                            <td colspan="@(compactRanked ? 4 : 6)">
+                                                <section aria-labelledby="@CandidateDetailHeadingId(candidate.CharacterId)">
+                                                    <div class="companion-single-candidate-heading">
+                                                        <h4 id="@CandidateDetailHeadingId(candidate.CharacterId)">
+                                                            @Text(CompanionFinderUiTextKey.SelectedCandidateCapability)
+                                                        </h4>
+                                                        <span>@Text(CompanionFinderUiTextKey.SelectAnotherCandidate)</span>
+                                                    </div>
+                                                    <table class="companion-comparison-table companion-single-capability-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">@Text(CompanionFinderUiTextKey.ComparisonItem)</th>
+                                                                <th scope="col">@candidate.DisplayName</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var fact in SingleCapabilityFacts(candidate))
+                                                            {
+                                                                <tr>
+                                                                    <th scope="row">@fact.Label</th>
+                                                                    <td>
+                                                                        <strong>@fact.Value</strong>
+                                                                        @if (!string.IsNullOrEmpty(fact.Detail))
+                                                                        {
+                                                                            <small>@fact.Detail</small>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </section>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (!compactRanked)
+                                    {
+                                        <tr class="companion-candidate-detail-row">
+                                            <td colspan="6">
                                             <details class="companion-candidate-evidence">
                                                 <summary aria-label="@EvidenceDetailsLabel(candidate)">
                                                     <strong>@Text(CompanionFinderUiTextKey.RequirementEvidence)</strong>
@@ -276,8 +332,9 @@
                                                     </div>
                                                 </div>
                                             </details>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
+                                    }
                                 }
                             </tbody>
                         </table>
@@ -314,16 +371,44 @@
                     <strong>@Text(CompanionFinderUiTextKey.RelativeResult):</strong>
                     @Comparison.Outcome
                 </p>
+                <table class="companion-comparison-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">@Text(CompanionFinderUiTextKey.ComparisonSummary)</th>
+                            <th scope="col">@Comparison.FirstCandidateName</th>
+                            <th scope="col">@Comparison.SecondCandidateName</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fact in Comparison.Facts)
+                        {
+                            <tr>
+                                <th scope="row">@fact.Label</th>
+                                <td>
+                                    <span class="companion-mobile-label" aria-hidden="true">
+                                        @Comparison.FirstCandidateName
+                                    </span>
+                                    @fact.FirstValue
+                                </td>
+                                <td>
+                                    <span class="companion-mobile-label" aria-hidden="true">
+                                        @Comparison.SecondCandidateName
+                                    </span>
+                                    @fact.SecondValue
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
                 <section class="companion-capability-comparison"
                          aria-labelledby="companion-capability-heading">
                     <h4 id="companion-capability-heading">
                         @Comparison.Capability.Title
                     </h4>
-                    <p>@Comparison.Capability.Limitation</p>
                     <table class="companion-comparison-table companion-capability-table">
                         <thead>
                             <tr>
-                                <th scope="col">@Text(CompanionFinderUiTextKey.CapabilityOverview)</th>
+                                <th scope="col">@Text(CompanionFinderUiTextKey.ComparisonItem)</th>
                                 <th scope="col">@Comparison.FirstCandidateName</th>
                                 <th scope="col">@Comparison.SecondCandidateName</th>
                             </tr>
@@ -358,35 +443,6 @@
                         </tbody>
                     </table>
                 </section>
-                <table class="companion-comparison-table">
-                    <thead>
-                        <tr>
-                            <th scope="col">@Text(CompanionFinderUiTextKey.Evidence)</th>
-                            <th scope="col">@Comparison.FirstCandidateName</th>
-                            <th scope="col">@Comparison.SecondCandidateName</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var fact in Comparison.Facts)
-                        {
-                            <tr>
-                                <th scope="row">@fact.Label</th>
-                                <td>
-                                    <span class="companion-mobile-label" aria-hidden="true">
-                                        @Comparison.FirstCandidateName
-                                    </span>
-                                    @fact.FirstValue
-                                </td>
-                                <td>
-                                    <span class="companion-mobile-label" aria-hidden="true">
-                                        @Comparison.SecondCandidateName
-                                    </span>
-                                    @fact.SecondValue
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
                 <p>@Text(CompanionFinderUiTextKey.ReviewManually)</p>
             </section>
         }
@@ -487,6 +543,57 @@
             "The candidate is not in this presentation model.");
     }
 
+    private string CandidateDetailHeadingId(int characterId) =>
+        $"{ComparisonControlId(characterId)}-capability-heading";
+
+    private bool ShowSingleSelectionDetails(
+        CompanionCandidateViewModel candidate) =>
+        State.SelectedCharacterIds.Count == 1
+        && State.IsSelected(candidate.CharacterId);
+
+    private IReadOnlyList<SingleCapabilityFact> SingleCapabilityFacts(
+        CompanionCandidateViewModel candidate) =>
+        [
+            new(
+                Text(CompanionFinderUiTextKey.BreadthIndex),
+                candidate.CapabilitySummary.BreadthIndexLabel,
+                string.Empty),
+            SingleCapabilityFactFor(candidate.CapabilitySummary.MainAttributes),
+            SingleCapabilityFactFor(candidate.CapabilitySummary.MartialDisciplines),
+            SingleCapabilityFactFor(candidate.CapabilitySummary.LifeSkillDisciplines)
+        ];
+
+    private SingleCapabilityFact SingleCapabilityFactFor(
+        CompanionCapabilityCategoryViewModel category) => new(
+        category.Label,
+        category.ScoreLabel,
+        SingleCapabilityDetail(category));
+
+    private string SingleCapabilityDetail(
+        CompanionCapabilityCategoryViewModel category)
+    {
+        var details = new List<string>();
+        if (category.State != CompanionCapabilitySummaryState.Complete)
+        {
+            details.Add(
+                $"{Text(CompanionFinderUiTextKey.ConfirmedCoverage)}: "
+                + category.CoverageLabel);
+        }
+
+        if (category.TopValues.Count > 0)
+        {
+            details.Add(
+                Text(CompanionFinderUiTextKey.TopValues)
+                + ": "
+                + string.Join(
+                    ", ",
+                    category.TopValues.Select(value =>
+                        $"{value.Label} {value.Value.ToString(CultureInfo.InvariantCulture)}")));
+        }
+
+        return string.Join("; ", details);
+    }
+
     private string SectionHeadingId(CompanionCandidateSection section) =>
         section switch
         {
@@ -553,4 +660,9 @@
 
     private string Text(CompanionFinderUiTextKey key) =>
         CompanionFinderUiText.Get(Language, key);
+
+    private sealed record SingleCapabilityFact(
+        string Label,
+        string Value,
+        string Detail);
 }

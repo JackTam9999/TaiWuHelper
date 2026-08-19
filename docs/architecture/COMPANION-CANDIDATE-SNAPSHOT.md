@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Implemented for E6-004 and extended by E6-013 |
+| Status | Implemented for E6-004 and extended by E6-013 and the 2026-08-19 succession slice |
 | Epic | [EPIC-006](../roadmap/epic-006/EPIC.md) |
 | Backlog items | [E6-004](../roadmap/epic-006/BACKLOG.md#e6-004--project-a-one-pass-read-only-candidate-snapshot), [E6-013](../roadmap/epic-006/BACKLOG.md#e6-013--add-a-transparent-companion-capability-overview) |
 | Source decision | [Companion-candidate source boundary](./COMPANION-CANDIDATE-SOURCES.md) |
@@ -11,8 +11,9 @@
 
 ## Purpose
 
-E6-004 projects the complete current-group candidate universe and every
-approved raw profile fact from one immutable configured-save revision. It adds
+E6-004 projects the approved candidate universe and every raw profile fact
+from one immutable configured-save revision. The current universe is the union
+of the Taiwu group roster and the verified village-work-candidate source. It adds
 one path-free Application read port and one configured-path-only
 Infrastructure adapter over the existing guarded archive session.
 
@@ -38,7 +39,7 @@ The immutable result status is one of:
 
 | Status | Meaning | Snapshot present? |
 |---|---|---:|
-| `Complete` | Every current-group candidate and approved source fact was projected under one revision | Yes |
+| `Complete` | Every approved group or village-work candidate and source fact was projected under one revision | Yes |
 | `Partial` | A candidate or optional raw fact has an explicit omission, incomplete state, or mapping diagnostic | Yes |
 | `SaveUnavailable` | Trusted configuration is absent or its configured file is missing | No |
 | `UnsupportedVersion` | Installed GameData does not match the verified mapping | No |
@@ -79,14 +80,15 @@ profile, shortlist, or finder fingerprint.
 `ITaiwuSaveFilePathProvider`. It cannot accept a caller path. It verifies the
 installed GameData version before opening the archive.
 
-One request contains exactly one call to
+A cache miss contains exactly one call to
 `TaiwuArchiveReadSession.ReadAsync`. Inside that one callback, the projection:
 
 1. records the guarded save SHA-256 and source versions;
-2. obtains Taiwu ID and the authoritative saved group roster;
-3. rejects duplicate or invalid roster identities explicitly;
+2. obtains Taiwu ID, the authoritative saved group roster, and
+   `GetVillagersForWork(true, false)`;
+3. rejects duplicate or invalid identities in either source explicitly;
 4. excludes the Taiwu player identity;
-5. enumerates remaining IDs in stable numeric order;
+5. unions and enumerates the remaining IDs in stable numeric order;
 6. reads each current object and all approved raw facts;
 7. resolves optional Chinese and English name and location text inside the same
    archive callback;
@@ -94,11 +96,20 @@ One request contains exactly one call to
 9. returns one atomic snapshot.
 
 The adapter never invokes the existing single-character atlas reader, never
-opens an archive inside the candidate loop, and never stores candidate data.
+opens an archive inside the candidate loop, and never persists candidate data.
 The session's process-wide lock and before/after source guard apply to the
 whole aggregate projection. `TaiwuArchiveChangedException` is a typed internal
 session failure so the adapter can return `ChangedRevision` without matching
 exception text.
+
+Because the group-plus-village projection is materially larger than the
+original one-companion roster, the singleton adapter retains one immutable
+snapshot result in helper process memory. A later request may reuse it only
+when configured path, file length, last-write time, GameData version, profile
+mapping, and fingerprint schema all still match, with the file revision checked
+again before returning. Misses and changed revisions use the guarded archive
+path above. The cache is neither persisted nor written to the save, and access
+is serialized so concurrent misses cannot publish mixed revisions.
 
 ## Display descriptor isolation
 
@@ -118,9 +129,11 @@ finder fingerprints.
 
 ## Candidate-universe mapping
 
-The production projection uses only the E6-000-approved sources:
+The production projection uses only these verified sources:
 
 - `TaiwuDomain.GetGroupCharIds()` for authoritative inclusion;
+- `TaiwuDomain.GetVillagersForWork(true, false)` for the bounded village-work
+  candidate set;
 - `CharacterDomain.TryGetElement_Objects()` for current object existence;
 - `TaiwuDomain.IsInGroup()` and `Character.IsInTaiwuGroup()` for consistency;
   and
@@ -130,19 +143,23 @@ The Domain universe result is:
 
 | Source result | Universe state |
 |---|---|
-| Object and all membership/living facts present, memberships true, living true | `Eligible` |
+| Object and all membership/living facts present, group checks agree with roster inclusion, at least one approved source includes the candidate, living true | `Eligible` |
 | Same, with living false | `Ineligible` |
 | Object or required check unavailable, or candidate-level source read failed | `Incomplete` |
 | Either membership check disagrees with roster inclusion | `Conflicting` |
 
-No name, age, location, target-lookup membership, following state, or learned
-skill decides candidate inclusion or eligibility.
+`GetVillagersForWork(true, false)` is evidence of inclusion in this comparison
+universe only. It does not establish complete village membership, succession
+eligibility, inheritance mechanics, remaining lifespan, or future growth. No
+name, age, location, target-lookup membership, following state, or learned
+skill independently decides candidate inclusion or eligibility.
 
 ## Raw profile projection
 
-A complete profile-mapping version-2 profile contains 107 typed facts:
+A complete profile-mapping version-3 profile contains 108 typed facts:
 
-- roster, Domain membership, character membership, and living state;
+- roster, village-work-candidate, Domain membership, character membership,
+  and living state;
 - current age, area ID, block ID, and feature identities;
 - learned and equipped martial identities and learned life-skill identities;
 - 6 saved base main attributes from one fixed buffer;
@@ -160,7 +177,7 @@ qualification and attainment remain `Unsupported` with the standalone-runtime
 reason from E6-000 and are never called by this projection.
 
 All confirmed saved facts use configured-save provenance with profile-mapping
-version `2`, fingerprint-schema version `2`, and the same guarded save SHA-256
+version `3`, fingerprint-schema version `3`, and the same guarded save SHA-256
 as the profile. Unsupported modified facts use exact installed-GameData
 provenance. Evidence references are stable, path-free field identities.
 
@@ -224,9 +241,9 @@ configured save as E6-000 and passed with:
 The repository stores no local path, save identity, candidate identity, or
 candidate value from that run.
 
-After E6-013 added the six saved base main attributes, the current focused
+After E6-013 added the six saved base main attributes, the focused
 Release integration class again passed all 3 guarded companion scenarios with
-zero skips. The snapshot scenario validates the current 107-fact profile
+zero skips. That snapshot scenario validated the 107-fact version-2 profile
 shape, all six confirmed typed main attributes, and repeated
 fingerprints; the before/after guard again covered the save and every installed
 source used by the companion workflow. The class completed in `32.759` seconds.
@@ -234,6 +251,6 @@ No local identity, value, path, or fingerprint is recorded.
 
 E6-005 consumes this snapshot in memory. It joins only the confirmed learned
 and equipped identity sets to a compatible helper catalogue and never reopens
-the archive per candidate or modifies the current 107-fact profiles. E6-013
+the archive per candidate or modifies the current profiles. E6-013
 retains the same one-pass read boundary: `GetBaseMainAttributes()` is called
 once per candidate and the six values are copied before mapping.

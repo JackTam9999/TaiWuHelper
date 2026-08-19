@@ -92,6 +92,8 @@ public sealed class CompanionCandidateSnapshotSafetyTests
             1,
             CountOccurrences(reader, "GetBaseMainAttributes()"));
         Assert.Contains("MainAttributeCount = 6", combined);
+        Assert.Contains("GetVillagersForWork(", reader);
+        Assert.Contains("GetGroupCharIds()", reader);
         Assert.DoesNotContain("GetCurrMainAttribute", reader);
         Assert.Contains("saveFilePathProvider.Resolve()", reader);
         Assert.DoesNotContain("request.Save", reader);
@@ -344,6 +346,8 @@ public sealed class CompanionCandidateSnapshotSafetyTests
                 evaluator,
                 "CompanionCapabilitySummaryBuilder.Build("));
         Assert.Contains("COMPREHENSIVE_BASE_CAPABILITY", definitions);
+        Assert.Contains("SUCCESSION_CANDIDATE_READINESS", definitions);
+        Assert.Contains("CandidateProfileField.CurrentAge", definitions);
         Assert.Contains("CandidateProfileField.CapabilityBreadthIndex", definitions);
     }
 

@@ -56,9 +56,11 @@ Every ranked entry has:
   stating that the role score is limited to that declared scope; and
 - `ExactTie` when the candidate shares an exact total and competition rank.
 
-The first verified roles have one component, so the strongest contribution is
-the exact saved base qualification. It is not converted into an adjective,
-percentage, probability, or universal candidate rating.
+The selected-discipline and comprehensive roles have one component. The
+succession objective has visible breadth and current-age components. The
+strongest contribution remains a reference to an approved existing component;
+it is not converted into an adjective, percentage, probability, or universal
+candidate rating.
 
 Every excluded entry instead has one `Exclusion` explanation. It references
 the exact non-passing gate from its immutable evaluation and retains the
@@ -122,9 +124,9 @@ evaluation is unranked or required row evidence is unavailable, the row and
 comparison are `Unavailable`; a conflict remains distinctly `Conflicting`.
 
 The aggregate outcome precedence is conflict, unavailable, genuine tradeoff,
-one-sided advantage, then equality. `Tradeoff` is reserved for a future
-verified multi-dimension role whose existing rows contain advantages for both
-candidates. The version-1 single-dimension roles cannot fabricate a tradeoff.
+one-sided advantage, then equality. The two-dimension succession objective can
+produce `Tradeoff` when one candidate has the breadth advantage and the other
+has the lower-age advantage. Single-dimension roles cannot fabricate one.
 
 ## Deterministic identity
 

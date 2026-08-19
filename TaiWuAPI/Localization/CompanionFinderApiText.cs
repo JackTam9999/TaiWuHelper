@@ -12,16 +12,20 @@ public static class CompanionFinderApiText
         {
             "MARTIAL_DISCIPLINE_APTITUDE" => Localized(
                 language,
-                "Compare current companions by the exact saved base aptitude in one selected martial discipline.",
-                "依所選武學類別的存檔基礎資質精確值，比較目前同道。"),
+                "Compare current group and verified village work candidates by the exact saved base aptitude in one selected martial discipline.",
+                "依所選武學類別的存檔基礎資質精確值，比較目前隊伍與已驗證村莊工作候選。"),
             "LIFE_SKILL_DISCIPLINE_APTITUDE" => Localized(
                 language,
-                "Compare current companions by the exact saved base aptitude in one selected life-skill discipline.",
-                "依所選技藝類別的存檔基礎資質精確值，比較目前同道。"),
+                "Compare current group and verified village work candidates by the exact saved base aptitude in one selected life-skill discipline.",
+                "依所選技藝類別的存檔基礎資質精確值，比較目前隊伍與已驗證村莊工作候選。"),
             "COMPREHENSIVE_BASE_CAPABILITY" => Localized(
                 language,
-                "Compare current companions by a transparent equal-weight breadth index across six base attributes, 14 martial aptitudes, and 16 life-skill aptitudes.",
-                "以透明的等權重廣度指數，比較目前同道的六項基礎主要屬性、十四項武學資質與十六項技藝資質。"),
+                "Compare current group and verified village work candidates by a transparent equal-weight breadth index across six base attributes, 14 martial aptitudes, and 16 life-skill aptitudes.",
+                "以透明的等權重廣度指數，比較目前隊伍與已驗證村莊工作候選的六項基礎主要屬性、十四項武學資質與十六項技藝資質。"),
+            "SUCCESSION_CANDIDATE_READINESS" => Localized(
+                language,
+                "Shortlist current group and verified village work candidates by saved-base capability breadth minus current age.",
+                "以存檔基礎能力廣度減目前年齡，初選目前隊伍與已驗證村莊工作候選。"),
             _ => Localized(
                 language,
                 "Compare candidates for this verified role.",
@@ -41,6 +45,11 @@ public static class CompanionFinderApiText
             language,
             "The breadth index equally averages three complete saved-base category averages. It ranks this descriptive objective only; it is not future potential, universal suitability, success probability, or an action recommendation.",
             "廣度指數等權平均三個完整的存檔基礎類別平均值，只依此描述目標排名；不代表未來潛力、通用適合度、成功機率或行動建議。")
+        : identity.Value == "SUCCESSION_CANDIDATE_READINESS"
+            ? Localized(
+                language,
+                "The current-base succession index is breadth index minus current age. It is a transparent shortlist, not an action recommendation; age is not verified remaining lifespan, and village membership does not prove succession eligibility, transferable progress, or future growth.",
+                "目前基礎接班指數為廣度指數減目前年齡，只用於透明初選而非行動建議；年齡不是已驗證的剩餘壽命，村民身份亦不證明傳承資格、可轉移進度或未來成長。")
         : ScoreLimitation(language);
 
     public static string RankingState(
@@ -170,6 +179,10 @@ public static class CompanionFinderApiText
                 language,
                 "Equal-weight mean of the complete six-attribute, martial-aptitude, and life-skill-aptitude category averages.",
                 "完整的六項基礎主要屬性、武學資質與技藝資質類別平均值之等權平均。"),
+            "CURRENT_AGE_PENALTY_EXACT_SAVED_VALUE" => Localized(
+                language,
+                "Subtracts the exact saved current age from the current-base succession index; it does not estimate remaining lifespan.",
+                "從目前基礎接班指數扣除存檔中的目前年齡精確值；不會估算剩餘壽命。"),
             "EXACT_ROLE_TOTAL_TIE" => Localized(
                 language,
                 "Another candidate has the same exact role-local total and shared rank.",
@@ -243,6 +256,10 @@ public static class CompanionFinderApiText
                 language,
                 "saved-base capability breadth index",
                 "存檔基礎能力廣度指數"),
+            CandidateProfileField.CurrentAge => Localized(
+                language,
+                "saved current age",
+                "存檔目前年齡"),
             null => throw new ArgumentException(
                 "This requirement kind needs a candidate-profile field.",
                 nameof(field)),

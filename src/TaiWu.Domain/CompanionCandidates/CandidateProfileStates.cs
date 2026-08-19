@@ -71,7 +71,8 @@ public enum CandidateProfileField
     CurrentLifeSkillAttainment = 15,
     LearnedLifeSkillIdentities = 16,
     BaseMainAttribute = 17,
-    CapabilityBreadthIndex = 18
+    CapabilityBreadthIndex = 18,
+    VillageWorkCandidateMembership = 19
 }
 
 public enum CandidateConflictDecisionKind

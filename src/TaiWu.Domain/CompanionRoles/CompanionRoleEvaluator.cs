@@ -87,7 +87,9 @@ public static class CompanionRoleEvaluator
 
         foreach (var dimension in definition.ScoreDimensions)
         {
-            var field = new CandidateProfileFieldIdentity(dimension.Field, discipline);
+            var field = CandidateProfileFieldIdentity.ForRole(
+                dimension.Field,
+                discipline);
             short rawValue;
             IReadOnlyList<CandidateEvidenceReference> componentEvidence;
             if (dimension.Field == CandidateProfileField.CapabilityBreadthIndex)

@@ -69,11 +69,14 @@
             @foreach (var role in RoleOptions)
             {
                 <label>
-                    <input id="@RoleControlId(role.Domain)"
+                    <input id="@RoleControlId(role.Identity)"
                            type="radio"
                            name="companion-role-family"
-                           checked="@(_draftDomain == role.Domain)"
-                           @onchange="() => SetRole(role.Domain)"
+                           checked="@(string.Equals(
+                               _draftRoleIdentity,
+                               role.Identity,
+                               StringComparison.Ordinal))"
+                           @onchange="() => SetRole(role.Identity)"
                            disabled="@(_isLoading
                                || (!LabelsAvailable
                                    && role.RequiresDisciplineSelection))" />
@@ -93,9 +96,9 @@
                 <select id="companion-discipline-select"
                         value="@SelectedDisciplineKey"
                         @onchange="SetDiscipline"
-                        disabled="@(_isLoading
-                            || !_draftDomain.HasValue
-                            || !LabelsAvailable)">
+                             disabled="@(_isLoading
+                                || CurrentRole is null
+                                || !LabelsAvailable)">
                     <option value="">@Text(CompanionFinderUiTextKey.ChooseDiscipline)</option>
                     @foreach (var option in CurrentDisciplineOptions)
                     {
@@ -180,10 +183,9 @@
 @code {
     private readonly CompanionFinderInteractionState _interaction = new();
     private CompanionDisciplineDisplayResult? _disciplineDisplay;
-    private CandidateDisciplineDomain? _draftDomain =
-        CandidateDisciplineDomain.Capability;
+    private string? _draftRoleIdentity = "COMPREHENSIVE_BASE_CAPABILITY";
     private short? _draftDisciplineType = 0;
-    private CandidateDisciplineDomain? _submittedDomain;
+    private string? _submittedRoleIdentity;
     private short? _submittedDisciplineType;
     private CompanionFinderResult? _result;
     private CompanionFinderViewModel? _model;
@@ -202,8 +204,11 @@
         CompanionFinderViewModelMapper.MapRoles(Language);
 
     private CompanionFinderRoleOptionViewModel? CurrentRole =>
-        _draftDomain.HasValue
-            ? RoleOptions.Single(value => value.Domain == _draftDomain.Value)
+        _draftRoleIdentity is not null
+            ? RoleOptions.Single(value => string.Equals(
+                value.Identity,
+                _draftRoleIdentity,
+                StringComparison.Ordinal))
             : null;
 
     private IReadOnlyList<CompanionDisciplineOptionViewModel>
@@ -212,7 +217,7 @@
             : [.. CompanionFinderViewModelMapper.MapDisciplines(
                     _disciplineDisplay,
                     Language)
-                .Where(value => value.Domain == _draftDomain)];
+                .Where(value => value.Domain == CurrentRole?.Domain)];
 
     private bool LabelsAvailable =>
         _disciplineDisplay?.Status is
@@ -234,7 +239,10 @@
     private bool CanFind => DraftValid && !_isLoading && !_labelsBusy;
 
     private bool IsPreviousResult => _model is not null
-        && (_draftDomain != _submittedDomain
+        && (!string.Equals(
+                _draftRoleIdentity,
+                _submittedRoleIdentity,
+                StringComparison.Ordinal)
             || _draftDisciplineType != _submittedDisciplineType);
 
     private string SelectedDisciplineKey =>
@@ -315,15 +323,21 @@
         }
     }
 
-    private void SetRole(CandidateDisciplineDomain domain)
+    private void SetRole(string identity)
     {
-        if (_draftDomain == domain)
+        if (string.Equals(
+                _draftRoleIdentity,
+                identity,
+                StringComparison.Ordinal))
         {
             return;
         }
 
-        _draftDomain = domain;
-        _draftDisciplineType = RoleOptions.Single(value => value.Domain == domain)
+        _draftRoleIdentity = identity;
+        _draftDisciplineType = RoleOptions.Single(value => string.Equals(
+                value.Identity,
+                identity,
+                StringComparison.Ordinal))
             .RequiresDisciplineSelection
             ? null
             : (short)0;
@@ -368,7 +382,7 @@
             if (result.HasAuthoritativeResult)
             {
                 _result = result;
-                _submittedDomain = role.Domain;
+                _submittedRoleIdentity = role.Identity;
                 _submittedDisciplineType = disciplineType;
                 MapCurrentResult();
                 _pendingFocusId = "companion-result-heading";
@@ -415,10 +429,13 @@
             _disciplineDisplay!,
             Language);
         var submittedRole = RoleOptions.Single(value =>
-            value.Domain == _submittedDomain);
+            string.Equals(
+                value.Identity,
+                _submittedRoleIdentity,
+                StringComparison.Ordinal));
         var disciplineName = submittedRole.RequiresDisciplineSelection
             ? disciplineOptions
-                .Single(value => value.Domain == _submittedDomain
+                .Single(value => value.Domain == submittedRole.Domain
                     && value.Type == _submittedDisciplineType)
                 .DisplayName
             : null;
@@ -447,16 +464,17 @@
             Language);
     }
 
-    private static string RoleControlId(CandidateDisciplineDomain domain) =>
-        domain switch
+    private static string RoleControlId(string identity) =>
+        identity switch
         {
-            CandidateDisciplineDomain.Martial => "companion-role-martial",
-            CandidateDisciplineDomain.LifeSkill => "companion-role-life-skill",
-            CandidateDisciplineDomain.Capability => "companion-role-capability",
+            "MARTIAL_DISCIPLINE_APTITUDE" => "companion-role-martial",
+            "LIFE_SKILL_DISCIPLINE_APTITUDE" => "companion-role-life-skill",
+            "COMPREHENSIVE_BASE_CAPABILITY" => "companion-role-capability",
+            "SUCCESSION_CANDIDATE_READINESS" => "companion-role-succession",
             _ => throw new ArgumentOutOfRangeException(
-                nameof(domain),
-                domain,
-                "Unknown discipline domain.")
+                nameof(identity),
+                identity,
+                "Unknown role identity.")
         };
 
     private static string OptionKey(

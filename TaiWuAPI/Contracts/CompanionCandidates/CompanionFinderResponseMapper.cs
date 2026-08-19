@@ -143,7 +143,7 @@ public static class CompanionFinderResponseMapper
             evaluation.Profile);
         var scoreFacts = definition.ScoreDimensions.Select(dimension =>
         {
-            var field = new CandidateProfileFieldIdentity(
+            var field = CandidateProfileFieldIdentity.ForRole(
                 dimension.Field,
                 evaluation.Discipline);
             return dimension.Field == CandidateProfileField.CapabilityBreadthIndex
@@ -170,6 +170,10 @@ public static class CompanionFinderResponseMapper
                     [.. explanation.Components.Select(item => item.Dimension.Identity)],
                     [.. explanation.Gates.Select(item => item.ReasonIdentity)]))],
             [.. scoreFacts],
+            [.. CandidateContextFields().Select(field => MapFact(
+                evaluation.Profile.FindFact(field),
+                field,
+                language))],
             MapCapabilitySummary(capabilitySummary),
             [.. entry.LocationEvidence.Select(fact => MapFact(
                 fact,
@@ -187,6 +191,17 @@ public static class CompanionFinderResponseMapper
                     MapSeverity(diagnostic.Severity),
                     CompanionFinderApiText.Diagnostic(language, diagnostic.Code),
                     CandidateReference(evaluation.Profile.Identity.CharacterId))) ]);
+    }
+
+    private static IEnumerable<CandidateProfileFieldIdentity>
+        CandidateContextFields()
+    {
+        yield return new CandidateProfileFieldIdentity(
+            CandidateProfileField.RosterMembership);
+        yield return new CandidateProfileFieldIdentity(
+            CandidateProfileField.VillageWorkCandidateMembership);
+        yield return new CandidateProfileFieldIdentity(
+            CandidateProfileField.CurrentAge);
     }
 
     private static CompanionCapabilitySummaryResponse MapCapabilitySummary(
@@ -303,8 +318,8 @@ public static class CompanionFinderResponseMapper
         TaiwuLanguage language) => new(
             component.Dimension.Identity,
             component.Field.Field,
-            component.Field.Discipline!.Domain,
-            component.Field.Discipline.Type,
+            component.Field.Discipline?.Domain,
+            component.Field.Discipline?.Type,
             component.Dimension.Unit,
             component.Dimension.Direction,
             component.Dimension.Normalization,
