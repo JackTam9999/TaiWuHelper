@@ -610,7 +610,7 @@ asking clients to infer mechanics or branch logic from display text.
 
 ### E8-011 — Deliver the bilingual accessible tactical-plan UI
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -624,41 +624,48 @@ than duplicating the loadout, target strategy, or comparison surfaces.
 
 #### Acceptance criteria
 
-- [ ] The selected target, policy, evidence freshness, plan availability, and
+- [x] The selected target, policy, evidence freshness, plan availability, and
       information-only scope are visible before plan steps.
-- [ ] Preparation, opening, trigger, recovery, finish, and fallback stages have
+- [x] Preparation, opening, trigger, recovery, finish, and fallback stages have
       semantic headings and deterministic order.
-- [ ] Each visible step shows a concise condition, manual action, expected
+- [x] Each visible step shows a concise condition, manual action, expected
       purpose, and state; detailed evidence remains in one disclosure.
-- [ ] Missing or conflicting conditions do not look satisfied, completed, or
+- [x] Missing or conflicting conditions do not look satisfied, completed, or
       safe.
-- [ ] Unsupported stages and fallback-only finish status are visible without
+- [x] Unsupported stages and fallback-only finish status are visible without
       empty placeholder instructions.
-- [ ] Candidate and search summaries show considered, admitted, pruned,
+- [x] Candidate and search summaries show considered, admitted, pruned,
       explored, retained, and limiting-bound facts without dumping every
       diagnostic into the primary timeline.
-- [ ] Policy components expose available and unavailable states and never show
+- [x] Policy components expose available and unavailable states and never show
       win probability.
-- [ ] The page does not duplicate full skill cards, threat lists, archetype
+- [x] The page does not duplicate full skill cards, threat lists, archetype
       details, manual loadout changes, or the Epic 4 comparison matrix.
-- [ ] Applying, replacing, or clearing an observation replaces the complete
+- [x] Applying, replacing, or clearing an observation replaces the complete
       active result; draft changes cannot relabel stale plan data.
-- [ ] Wide and narrow layouts expose identical facts from one DOM with no
+- [x] Wide and narrow layouts expose identical facts from one DOM with no
       horizontal overflow.
-- [ ] Native headings, lists, buttons, and disclosures support keyboard and
+- [x] Native headings, lists, buttons, and disclosures support keyboard and
       assistive-technology navigation; status never relies on color alone.
-- [ ] English and Traditional Chinese copy is complete and raw identifiers are
+- [x] English and Traditional Chinese copy is complete and raw identifiers are
       hidden where display text exists.
-- [ ] Loading, complete, partial, unsupported, no-candidate, truncated,
+- [x] Loading, complete, partial, unsupported, no-candidate, truncated,
       cancelled, fallback-only, stale-draft, and failure states are tested.
-- [ ] The UI exposes no execute, equip, apply, automate, capture, upload,
+- [x] The UI exposes no execute, equip, apply, automate, capture, upload,
       outcome-recording, or game-control action.
 
-#### Planned evidence
+#### Evidence
 
-- Epic 8 Presentation view models, mapper, localization, components, and styles.
-- Component-rendering, localization, accessibility, and responsive tests.
-- Browser verification assets under `docs/reviews/assets/epic-008/`.
+- `TacticalCombatViewModels`, `TacticalCombatViewModelMapper`, and the typed
+  bilingual `TacticalCombatUiText` catalog.
+- `TacticalCombatPlan.razor`, the existing recommendation-page integration,
+  and the responsive rules in `TaiWuAPI/wwwroot/app.css`.
+- `TacticalCombatRenderingTests` plus the existing recommendation rendering
+  suite: 62 focused tests passed.
+- Release build: 0 warnings and 0 errors; full non-opt-in suite: 1,590 total,
+  1,573 passed, and 17 expected local-evidence skips.
+- [Browser verification record](../../reviews/assets/epic-008/E8-011-browser-verification.md)
+  for English and Traditional Chinese at desktop and 390-by-844 layouts.
 
 ## Slice 9: Verification and completion
 

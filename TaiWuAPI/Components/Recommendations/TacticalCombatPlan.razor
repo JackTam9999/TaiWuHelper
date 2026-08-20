@@ -1,0 +1,510 @@
+@using System.Globalization
+@using TaiWu.Application.TacticalCombat
+@using TaiWu.Domain.TacticalCombat
+@using TaiWuAPI.Localization
+@using TaiWuAPI.Presentation
+
+<section class="tactical-plan @SurfaceClass"
+         aria-labelledby="tactical-plan-heading"
+         aria-busy="@(SurfaceState == TacticalPlanSurfaceState.Loading
+            ? "true"
+            : "false")">
+    <header class="tactical-plan-header">
+        <div>
+            <p class="eyebrow">@T(TacticalCombatUiTextKey.ExactTarget)</p>
+            <h3 id="tactical-plan-heading" tabindex="-1">
+                @T(TacticalCombatUiTextKey.TacticalPlan)
+            </h3>
+        </div>
+        @if (Model is not null)
+        {
+            <span class="tactical-status" role="status">
+                <span aria-hidden="true">@StatusCue(Model.Status)</span>
+                @TacticalCombatUiText.Status(Language, Model.Status)
+            </span>
+        }
+    </header>
+
+    @if (SurfaceState != TacticalPlanSurfaceState.Ready)
+    {
+        <p class="tactical-surface-notice" role="status" aria-live="polite">
+            <strong>@SurfaceCue</strong>
+            @SurfaceMessage
+        </p>
+    }
+
+    @if (Model is not null)
+    {
+        <div class="tactical-result-body"
+             aria-disabled="@(IsInactive ? "true" : "false")">
+            <dl class="tactical-result-meta">
+                <div>
+                    <dt>@T(TacticalCombatUiTextKey.ExactTarget)</dt>
+                    <dd>@Model.TargetName</dd>
+                </div>
+                <div>
+                    <dt>@UiText.Get(Language, "Preferred style")</dt>
+                    <dd>@TacticalCombatUiText.Policy(Language, Model.Policy)</dd>
+                </div>
+                <div>
+                    <dt>@T(TacticalCombatUiTextKey.EvidenceFreshness)</dt>
+                    <dd>
+                        @if (Model.CapturedAtUtc.HasValue)
+                        {
+                            <span>@T(TacticalCombatUiTextKey.SaveRead):
+                                @Model.CapturedAtUtc.Value.ToLocalTime().ToString("g")</span>
+                        }
+                        @if (Model.LatestObservationAtUtc.HasValue)
+                        {
+                            <span>@T(TacticalCombatUiTextKey.Observation):
+                                @Model.LatestObservationAtUtc.Value.ToLocalTime().ToString("g")</span>
+                        }
+                        else
+                        {
+                            <span>@T(TacticalCombatUiTextKey.NoObservation)</span>
+                        }
+                    </dd>
+                </div>
+                <div>
+                    <dt>@T(TacticalCombatUiTextKey.FinishStatus)</dt>
+                    <dd>@TacticalCombatUiText.Finish(
+                        Language,
+                        Model.FinishDisposition)</dd>
+                </div>
+                @if (Model.Search is not null)
+                {
+                    <div>
+                        <dt>@T(TacticalCombatUiTextKey.SearchAndSelection)</dt>
+                        <dd>
+                            @(Model.Search.IsComplete
+                                ? T(TacticalCombatUiTextKey.SearchComplete)
+                                : T(TacticalCombatUiTextKey.SearchBounded))
+                        </dd>
+                    </div>
+                }
+            </dl>
+
+            <p class="tactical-information-boundary" role="note">
+                <span aria-hidden="true">ⓘ</span>
+                @T(TacticalCombatUiTextKey.InformationOnlyNotice)
+            </p>
+
+            @if (Model.HasPlan)
+            {
+                <ol class="tactical-stage-list">
+                    @foreach (var stage in Model.Stages)
+                    {
+                        <li class="tactical-stage"
+                            data-stage="@stage.Stage.ToString()">
+                            <div class="tactical-stage-heading">
+                                <span class="tactical-stage-number" aria-hidden="true">
+                                    @((int)stage.Stage)
+                                </span>
+                                <h4>
+                                    @TacticalCombatUiText.Stage(Language, stage.Stage)
+                                </h4>
+                                <span class="tactical-condition-state">
+                                    <span aria-hidden="true">@StageCue(stage.State)</span>
+                                    @StageState(stage.State)
+                                </span>
+                            </div>
+
+                            @if (stage.Steps.Count == 0)
+                            {
+                                <p class="tactical-stage-limitation">
+                                    @stage.Limitation.For(Language)
+                                </p>
+                            }
+                            else
+                            {
+                                <ul class="tactical-step-list">
+                                    @foreach (var step in stage.Steps)
+                                    {
+                                        <li class="tactical-step">
+                                            <dl class="tactical-step-summary">
+                                                <div>
+                                                    <dt>@T(TacticalCombatUiTextKey.Condition)</dt>
+                                                    <dd>@step.Condition.For(Language)</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>@T(TacticalCombatUiTextKey.ConditionState)</dt>
+                                                    <dd class="tactical-condition-state">
+                                                        <span aria-hidden="true">@ConditionCue(step.ConditionState)</span>
+                                                        @TacticalCombatUiText.Condition(
+                                                            Language,
+                                                            step.ConditionState)
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>@T(TacticalCombatUiTextKey.ManualAction)</dt>
+                                                    <dd>@step.ManualAction.For(Language)</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>@T(TacticalCombatUiTextKey.ExpectedPurpose)</dt>
+                                                    <dd>@step.ExpectedPurpose.For(Language)</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>@T(TacticalCombatUiTextKey.Limitation)</dt>
+                                                    <dd>@step.Limitation.For(Language)</dd>
+                                                </div>
+                                            </dl>
+                                            <details class="tactical-step-evidence">
+                                                <summary>
+                                                    @T(TacticalCombatUiTextKey.StepEvidence):
+                                                    @TacticalCombatUiText.Stage(Language, stage.Stage)
+                                                    — @TacticalCombatUiText.Condition(
+                                                        Language,
+                                                        step.ConditionState)
+                                                </summary>
+                                                @if (step.Requirements.Count > 0)
+                                                {
+                                                    <h5>@T(TacticalCombatUiTextKey.Requirements)</h5>
+                                                    <ul>
+                                                        @foreach (var requirement in step.Requirements)
+                                                        {
+                                                            <li>
+                                                                <span aria-hidden="true">@RequirementCue(requirement.Outcome)</span>
+                                                                @requirement.Description.For(Language)
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                                @if (step.Evidence.Count > 0)
+                                                {
+                                                    <h5>@T(TacticalCombatUiTextKey.EvidenceSources)</h5>
+                                                    <ul>
+                                                        @foreach (var evidence in step.Evidence)
+                                                        {
+                                                            <li>
+                                                                @TacticalCombatUiText.Source(Language, evidence.Source)
+                                                                · @evidence.Scope.For(Language)
+                                                                · @evidence.RuleVersion
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </details>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </li>
+                    }
+                </ol>
+            }
+
+            <section class="tactical-gaps" aria-labelledby="tactical-gaps-heading">
+                <h4 id="tactical-gaps-heading">
+                    @T(TacticalCombatUiTextKey.CriticalConditions)
+                </h4>
+                @if (Model.CriticalGaps.Count == 0)
+                {
+                    <p>@T(TacticalCombatUiTextKey.NoCriticalConditions)</p>
+                }
+                else
+                {
+                    <ul>
+                        @foreach (var gap in Model.CriticalGaps)
+                        {
+                            <li>
+                                <strong>
+                                    <span aria-hidden="true">@ConditionCue(gap.State)</span>
+                                    @TacticalCombatUiText.Condition(Language, gap.State)
+                                </strong>
+                                <span>@gap.Description.For(Language)</span>
+                                <small>@gap.Effect.For(Language)</small>
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+
+            @if (Model.Search is not null)
+            {
+                <section class="tactical-search-summary"
+                         aria-labelledby="tactical-search-heading">
+                    <div class="tactical-section-heading">
+                        <h4 id="tactical-search-heading">
+                            @T(TacticalCombatUiTextKey.SearchAndSelection)
+                        </h4>
+                        <strong>
+                            @(Model.Search.IsComplete
+                                ? T(TacticalCombatUiTextKey.SearchComplete)
+                                : T(TacticalCombatUiTextKey.ResultWithinBounds))
+                        </strong>
+                    </div>
+                    <dl class="tactical-counts">
+                        @Count(TacticalCombatUiTextKey.Considered, Model.Search.Considered)
+                        @Count(TacticalCombatUiTextKey.Admitted, Model.Search.Admitted)
+                        @Count(TacticalCombatUiTextKey.Rejected, Model.Search.Rejected)
+                        @Count(TacticalCombatUiTextKey.Unsupported, Model.Search.Unsupported)
+                        @Count(TacticalCombatUiTextKey.Irrelevant, Model.Search.Irrelevant)
+                        @Count(TacticalCombatUiTextKey.Dominated, Model.Search.Dominated)
+                        @Count(TacticalCombatUiTextKey.Explored, Model.Search.Explored)
+                        @Count(TacticalCombatUiTextKey.Feasible, Model.Search.Feasible)
+                        @Count(TacticalCombatUiTextKey.Retained, Model.Search.Retained)
+                    </dl>
+                    @if (!Model.Search.IsComplete)
+                    {
+                        <p>
+                            @T(TacticalCombatUiTextKey.LimitingBound):
+                            @TacticalCombatUiText.SearchTerminator(
+                                Language,
+                                Model.Search.Terminator)
+                            @if (Model.Search.LimitingBound > 0)
+                            {
+                                <span>· @Model.Search.LimitingBound</span>
+                            }
+                        </p>
+                    }
+                </section>
+            }
+
+            @if (Model.ScoreComponents.Count > 0)
+            {
+                <details class="tactical-detail-section">
+                    <summary>@T(TacticalCombatUiTextKey.WhyThisPlan)</summary>
+                    <ul class="tactical-score-list">
+                        @foreach (var score in Model.ScoreComponents)
+                        {
+                            <li>
+                                <h5>@TacticalCombatUiText.Score(Language, score.Kind)</h5>
+                                <p>@score.Meaning.For(Language)</p>
+                                @if (score.State == TacticalScoreComponentState.Unavailable)
+                                {
+                                    <strong>@T(TacticalCombatUiTextKey.NotIncluded)</strong>
+                                }
+                                <dl>
+                                    <div>
+                                        <dt>@T(TacticalCombatUiTextKey.BaseWeight)</dt>
+                                        <dd>@score.BaseWeight</dd>
+                                    </div>
+                                    <div>
+                                        <dt>@T(TacticalCombatUiTextKey.AppliedWeight)</dt>
+                                        <dd>@Number(score.AppliedWeight)</dd>
+                                    </div>
+                                    <div>
+                                        <dt>@T(TacticalCombatUiTextKey.NormalizedValue)</dt>
+                                        <dd>@Number(score.NormalizedValue)</dd>
+                                    </div>
+                                    <div>
+                                        <dt>@T(TacticalCombatUiTextKey.Contribution)</dt>
+                                        <dd>@Number(score.Contribution)</dd>
+                                    </div>
+                                </dl>
+                                <small>@score.Limitation.For(Language)</small>
+                            </li>
+                        }
+                    </ul>
+                </details>
+            }
+
+            @if (Model.CandidateGroups.Count > 0)
+            {
+                <details class="tactical-detail-section">
+                    <summary>@T(TacticalCombatUiTextKey.CandidateConsideration)</summary>
+                    @foreach (var group in Model.CandidateGroups)
+                    {
+                        var visible = VisibleCandidates(group);
+                        <section class="tactical-candidate-group">
+                            <h5>@TacticalCombatUiText.CandidateGroup(Language, group.Group)</h5>
+                            <p class="tactical-candidate-count" aria-live="polite">
+                                @T(TacticalCombatUiTextKey.Showing) @visible.Count
+                                @T(TacticalCombatUiTextKey.Of) @group.Candidates.Count
+                            </p>
+                            <ul>
+                                @foreach (var candidate in visible)
+                                {
+                                    <li>
+                                        <strong>@candidate.Name</strong>
+                                        <span>@TacticalCombatUiText.Direction(
+                                            Language,
+                                            candidate.Direction)</span>
+                                        <small>@candidate.Reason.For(Language)</small>
+                                    </li>
+                                }
+                            </ul>
+                            @if (visible.Count < group.Candidates.Count)
+                            {
+                                <button type="button"
+                                        class="secondary-button"
+                                        @onclick="() => ShowMore(group.Group)">
+                                    @T(TacticalCombatUiTextKey.ShowMore)
+                                </button>
+                            }
+                        </section>
+                    }
+                </details>
+            }
+
+            <details class="tactical-detail-section tactical-shared-evidence">
+                <summary>@T(TacticalCombatUiTextKey.DetailedEvidence)</summary>
+                <dl>
+                    <div>
+                        <dt>GameData</dt>
+                        <dd>@(Model.GameDataVersion
+                            ?? T(TacticalCombatUiTextKey.Unavailable))</dd>
+                    </div>
+                    <div>
+                        <dt>@T(TacticalCombatUiTextKey.ResultIdentity)</dt>
+                        <dd>@Model.SemanticFingerprintPrefix</dd>
+                    </div>
+                </dl>
+                <ul>
+                    @foreach (var evidence in Model.Evidence)
+                    {
+                        <li>
+                            @TacticalCombatUiText.Source(Language, evidence.Source)
+                            · @evidence.Scope.For(Language)
+                            · @T(TacticalCombatUiTextKey.RuleVersion)
+                            @evidence.RuleVersion
+                        </li>
+                    }
+                </ul>
+            </details>
+        </div>
+    }
+
+    <footer class="tactical-no-action">
+        @T(TacticalCombatUiTextKey.NoActionSent)
+    </footer>
+</section>
+
+@code {
+    private const int CandidatePageSize = 25;
+    private readonly Dictionary<TacticalCandidatePresentationGroup, int>
+        _visibleCandidateCounts = [];
+
+    [Parameter, EditorRequired]
+    public TacticalPlanSurfaceState SurfaceState { get; set; }
+
+    [Parameter]
+    public TacticalCombatViewModel? Model { get; set; }
+
+    [Parameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private bool IsInactive => SurfaceState is
+        TacticalPlanSurfaceState.Loading
+        or TacticalPlanSurfaceState.PreviousResult
+        or TacticalPlanSurfaceState.Cancelled
+        or TacticalPlanSurfaceState.Failure;
+
+    private string SurfaceClass => IsInactive
+        ? "tactical-plan-inactive"
+        : string.Empty;
+
+    private string SurfaceCue => SurfaceState switch
+    {
+        TacticalPlanSurfaceState.Loading => "…",
+        TacticalPlanSurfaceState.PreviousResult => "↺",
+        TacticalPlanSurfaceState.Cancelled => "■",
+        TacticalPlanSurfaceState.ObservationReplaced => "↺",
+        TacticalPlanSurfaceState.Failure => "!",
+        _ => "ⓘ"
+    };
+
+    private string SurfaceMessage => T(SurfaceState switch
+    {
+        TacticalPlanSurfaceState.Loading => TacticalCombatUiTextKey.Loading,
+        TacticalPlanSurfaceState.PreviousResult =>
+            TacticalCombatUiTextKey.PreviousResult,
+        TacticalPlanSurfaceState.Cancelled => TacticalCombatUiTextKey.Cancelled,
+        TacticalPlanSurfaceState.ObservationReplaced =>
+            TacticalCombatUiTextKey.ObservationReplaced,
+        TacticalPlanSurfaceState.Failure => TacticalCombatUiTextKey.Failure,
+        _ => TacticalCombatUiTextKey.InformationOnlyNotice
+    });
+
+    private RenderFragment Count(
+        TacticalCombatUiTextKey key,
+        int value) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.OpenElement(1, "dt");
+        builder.AddContent(2, T(key));
+        builder.CloseElement();
+        builder.OpenElement(3, "dd");
+        builder.AddContent(4, value);
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private IReadOnlyList<TacticalCandidateViewModel> VisibleCandidates(
+        TacticalCandidateGroupViewModel group)
+    {
+        var count = _visibleCandidateCounts.GetValueOrDefault(
+            group.Group,
+            CandidatePageSize);
+        return group.Candidates.Take(count).ToArray();
+    }
+
+    private void ShowMore(TacticalCandidatePresentationGroup group)
+    {
+        _visibleCandidateCounts[group] = _visibleCandidateCounts
+            .GetValueOrDefault(group, CandidatePageSize) + CandidatePageSize;
+    }
+
+    private string Number(decimal? value) => value.HasValue
+        ? value.Value.ToString("0.###", CultureInfo.InvariantCulture)
+        : T(TacticalCombatUiTextKey.NotIncluded);
+
+    private string T(TacticalCombatUiTextKey key) =>
+        TacticalCombatUiText.Get(Language, key);
+
+    private string StageState(TacticalPlanStageState state) => state switch
+    {
+        TacticalPlanStageState.Supported =>
+            TacticalCombatUiText.Condition(
+                Language,
+                TacticalConditionPresentationState.Confirmed),
+        TacticalPlanStageState.Omitted => Language == TaiwuLanguage.Chinese
+            ? "不需獨立操作"
+            : "No separate action",
+        TacticalPlanStageState.Unsupported =>
+            T(TacticalCombatUiTextKey.Unsupported),
+        _ => T(TacticalCombatUiTextKey.Unavailable)
+    };
+
+    private static string StatusCue(TacticalCombatRecommendationStatus status)
+        => status switch
+        {
+            TacticalCombatRecommendationStatus.Success => "✓",
+            TacticalCombatRecommendationStatus.PartialEvidence => "?",
+            TacticalCombatRecommendationStatus.SearchTruncated => "↺",
+            TacticalCombatRecommendationStatus.UnsupportedChain => "!",
+            TacticalCombatRecommendationStatus.NoCandidate => "×",
+            _ => "!"
+        };
+
+    private static string StageCue(TacticalPlanStageState state) => state switch
+    {
+        TacticalPlanStageState.Supported => "✓",
+        TacticalPlanStageState.Omitted => "—",
+        TacticalPlanStageState.Unsupported => "!",
+        _ => "?"
+    };
+
+    private static string ConditionCue(
+        TacticalConditionPresentationState state) => state switch
+        {
+            TacticalConditionPresentationState.Confirmed => "✓",
+            TacticalConditionPresentationState.NeedsConfirmation => "?",
+            TacticalConditionPresentationState.Unsupported => "!",
+            TacticalConditionPresentationState.Conflicting => "⇄",
+            TacticalConditionPresentationState.Unsatisfied => "×",
+            TacticalConditionPresentationState.Fallback => "↪",
+            _ => "?"
+        };
+
+    private static string RequirementCue(TacticalRequirementOutcome outcome) =>
+        outcome switch
+        {
+            TacticalRequirementOutcome.Satisfied => "✓",
+            TacticalRequirementOutcome.Unsatisfied => "×",
+            TacticalRequirementOutcome.Unknown => "?",
+            TacticalRequirementOutcome.Unsupported => "!",
+            TacticalRequirementOutcome.Conflicting => "⇄",
+            _ => "?"
+        };
+}

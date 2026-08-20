@@ -489,7 +489,7 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.Contains("MapRazorComponents<App>()", program);
         Assert.Contains("@page \"/\"", page);
         Assert.Contains("FindTargets.ExecuteAsync(", page);
-        Assert.Contains("RecommendCombatLoadout.ExecuteAsync(", page);
+        Assert.Contains("RecommendTacticalCombat.ExecuteAsync(", page);
         Assert.Contains("CancellationTokenSource", page);
         Assert.Contains("Analysis input only", page);
         Assert.Contains("Information only", layout);
@@ -500,6 +500,51 @@ public sealed partial class ArchitectureBoundaryTests
         Assert.False(
             File.Exists(
                 Path.Combine(repositoryRoot, "TaiWuAPI", "package.json")));
+    }
+
+    [Fact]
+    public void Tactical_combat_shell_uses_one_coherent_read_only_orchestrator()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var page = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Components",
+                "Pages",
+                "CombatRecommendation.razor"));
+        var component = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "TaiWuAPI",
+                "Components",
+                "Recommendations",
+                "TacticalCombatPlan.razor"));
+
+        Assert.Contains("@inject IRecommendTacticalCombat", page);
+        Assert.DoesNotContain("@inject IRecommendCombatLoadout", page);
+        Assert.Contains("TacticalPlanningApiRequest().ToApplication", page);
+        Assert.Contains("DraftChanged=\"MarkTacticalDraftStale\"", page);
+        Assert.Contains("TacticalPlanSurfaceState.ObservationReplaced", page);
+        Assert.Contains("_pendingFocusId = \"tactical-plan-heading\"", page);
+        Assert.Contains("<ol class=\"tactical-stage-list\">", component);
+        Assert.Contains("<details class=\"tactical-step-evidence\">", component);
+        Assert.DoesNotContain("type=\"checkbox\"", component);
+        Assert.DoesNotContain("Execute", component);
+        Assert.DoesNotContain("Equip", component);
+    }
+
+    [Fact]
+    public void Tactical_combat_styles_reflow_one_dom_without_fixed_width()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var css = File.ReadAllText(
+            Path.Combine(repositoryRoot, "TaiWuAPI", "wwwroot", "app.css"));
+
+        Assert.Contains("@container (max-width: 959px)", css);
+        Assert.Contains("@media (max-width: 620px)", css);
+        Assert.Contains("overflow-wrap: anywhere", css);
+        Assert.DoesNotContain(".tactical-plan {\n    width:", css);
     }
 
     [Fact]
@@ -1279,8 +1324,9 @@ public sealed partial class ArchitectureBoundaryTests
             "() => SetDifferencesOnly(true)",
             "() => SetLanguage(TaiwuLanguage.Chinese)",
             "() => SetLanguage(TaiwuLanguage.English)",
+            "() => ShowMore(group.Group)",
             "() => ShowStyle(style.Style)",
-            "() => State.RemoveSkill(skill.SkillId)",
+            "() => RemoveSkillAsync(skill.SkillId)",
             "() => Toggle(item.Reference)",
             "() => ToggleObservationSkill(skill.SkillId)",
             "() => ToggleComparisonAsync(candidate.CharacterId)",
@@ -1311,6 +1357,7 @@ public sealed partial class ArchitectureBoundaryTests
             "Review",
             "SearchAsync",
             "SearchTargetsAsync",
+            "SetPrecedenceConfirmationAsync",
             "SetDiscipline",
             "SetTarget",
             "SetTargetGroup",
@@ -1327,7 +1374,7 @@ public sealed partial class ArchitectureBoundaryTests
                 "Pages",
                 "CombatRecommendation.razor"));
         Assert.Contains("FindTargets.ExecuteAsync(", page);
-        Assert.Contains("RecommendCombatLoadout.ExecuteAsync(", page);
+        Assert.Contains("RecommendTacticalCombat.ExecuteAsync(", page);
         Assert.Contains("TargetObservationWorkflow.ExecuteAsync(", page);
         Assert.Contains(
             "PageReadOperation.TargetSearch => SearchTargetsAsync()",

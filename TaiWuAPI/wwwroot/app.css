@@ -7020,6 +7020,331 @@ select {
     }
 }
 
+.tactical-plan {
+    container-type: inline-size;
+    display: grid;
+    gap: 22px;
+    margin-top: 24px;
+    border: 1px solid rgba(213, 176, 93, 0.42);
+    border-radius: 18px;
+    padding: 24px;
+    overflow-wrap: anywhere;
+    background: linear-gradient(145deg, rgba(18, 36, 35, 0.96), rgba(8, 20, 21, 0.94));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
+}
+
+.tactical-plan-inactive .tactical-result-body {
+    opacity: 0.58;
+    pointer-events: none;
+}
+
+.tactical-plan-header,
+.tactical-section-heading,
+.tactical-stage-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.tactical-plan-header h3,
+.tactical-stage-heading h4,
+.tactical-gaps h4,
+.tactical-search-summary h4,
+.tactical-candidate-group h5,
+.tactical-score-list h5 {
+    margin: 0;
+}
+
+.tactical-status,
+.tactical-condition-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #f0dba5;
+    font-weight: 800;
+}
+
+.tactical-surface-notice,
+.tactical-information-boundary,
+.tactical-no-action {
+    margin: 0;
+    border-left: 3px solid var(--gold);
+    padding: 12px 14px;
+    color: #f2e3bd;
+    background: rgba(213, 176, 93, 0.08);
+}
+
+.tactical-surface-notice strong,
+.tactical-information-boundary span {
+    margin-right: 8px;
+}
+
+.tactical-result-body {
+    display: grid;
+    gap: 24px;
+}
+
+.tactical-result-meta,
+.tactical-counts,
+.tactical-score-list dl,
+.tactical-shared-evidence dl {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--line);
+}
+
+.tactical-result-meta > div,
+.tactical-counts > div,
+.tactical-score-list dl > div,
+.tactical-shared-evidence dl > div {
+    min-width: 0;
+    padding: 12px;
+    background: rgba(8, 22, 22, 0.94);
+}
+
+.tactical-result-meta dt,
+.tactical-counts dt,
+.tactical-score-list dt,
+.tactical-shared-evidence dt {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tactical-result-meta dd,
+.tactical-counts dd,
+.tactical-score-list dd,
+.tactical-shared-evidence dd {
+    margin: 5px 0 0;
+    font-weight: 750;
+}
+
+.tactical-result-meta dd span {
+    display: block;
+}
+
+.tactical-stage-list {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tactical-stage {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    background: rgba(9, 25, 25, 0.7);
+}
+
+.tactical-stage-heading {
+    justify-content: flex-start;
+}
+
+.tactical-stage-heading .tactical-condition-state {
+    margin-left: auto;
+}
+
+.tactical-stage-number {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border: 1px solid rgba(213, 176, 93, 0.55);
+    border-radius: 50%;
+    color: var(--gold);
+    font-weight: 900;
+}
+
+.tactical-stage-limitation {
+    margin: 14px 0 0 48px;
+    color: var(--muted);
+}
+
+.tactical-step-list,
+.tactical-gaps ul,
+.tactical-score-list,
+.tactical-candidate-group ul,
+.tactical-shared-evidence ul {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tactical-step {
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+}
+
+.tactical-step-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.7fr) minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 14px;
+    margin: 0;
+}
+
+.tactical-step-summary > div {
+    min-width: 0;
+}
+
+.tactical-step-summary dt {
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+.tactical-step-summary dd {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.tactical-step-evidence,
+.tactical-detail-section {
+    margin-top: 14px;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+}
+
+.tactical-step-evidence summary,
+.tactical-detail-section > summary {
+    color: var(--gold);
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.tactical-step-evidence h5 {
+    margin: 14px 0 6px;
+}
+
+.tactical-step-evidence ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.tactical-gaps,
+.tactical-search-summary {
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+}
+
+.tactical-gaps li,
+.tactical-score-list > li,
+.tactical-candidate-group li {
+    display: grid;
+    gap: 5px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    background: rgba(4, 15, 16, 0.48);
+}
+
+.tactical-gaps small,
+.tactical-score-list small,
+.tactical-candidate-group small,
+.tactical-candidate-count,
+.tactical-search-summary > p {
+    color: var(--muted);
+}
+
+.tactical-counts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 14px;
+}
+
+.tactical-score-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tactical-score-list dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tactical-candidate-group {
+    margin-top: 18px;
+}
+
+.tactical-candidate-group li {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.tactical-candidate-group li small {
+    grid-column: 1 / -1;
+}
+
+.tactical-candidate-group .secondary-button {
+    margin-top: 12px;
+}
+
+.tactical-shared-evidence dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14px;
+}
+
+.tactical-no-action {
+    border: 0;
+    border-top: 1px solid var(--line);
+    padding: 16px 0 0;
+    color: var(--muted);
+    background: transparent;
+    text-align: center;
+}
+
+@container (max-width: 959px) {
+    .tactical-result-meta,
+    .tactical-counts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tactical-step-summary,
+    .tactical-score-list,
+    .tactical-score-list dl {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 620px) {
+    .tactical-plan {
+        gap: 18px;
+        padding: 18px;
+    }
+
+    .tactical-plan-header,
+    .tactical-section-heading,
+    .tactical-stage-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .tactical-stage-heading .tactical-condition-state {
+        margin-left: 0;
+    }
+
+    .tactical-result-meta,
+    .tactical-counts,
+    .tactical-shared-evidence dl {
+        grid-template-columns: 1fr;
+    }
+
+    .tactical-stage-limitation {
+        margin-left: 0;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

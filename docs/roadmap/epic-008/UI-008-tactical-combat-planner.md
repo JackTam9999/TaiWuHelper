@@ -5,6 +5,7 @@
 | Status | Accepted |
 | Epic | [EPIC-008](./EPIC.md) |
 | Backlog item | [E8-001](./BACKLOG.md#e8-001--define-tactical-plan-search-score-and-ui-semantics) |
+| Implementation | [E8-011](./BACKLOG.md#e8-011--deliver-the-bilingual-accessible-tactical-plan-ui) |
 | Route | Existing combat recommendation page (`/`) |
 | Last updated | 2026-08-20 |
 

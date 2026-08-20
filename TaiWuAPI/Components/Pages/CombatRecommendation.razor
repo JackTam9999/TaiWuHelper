@@ -1,18 +1,22 @@
 @page "/"
 @implements IAsyncDisposable
 @using Microsoft.Extensions.Options
+@using Microsoft.JSInterop
 @using TaiWu.Application.CombatRecommendations
+@using TaiWu.Application.TacticalCombat
 @using TaiWu.Application.TargetObservations
 @using TaiWu.Application.Targets
 @using TaiWu.Domain.CombatRecommendations
 @using TaiWu.Domain.CombatSnapshots
 @using TaiWuAPI.Configuration
+@using TaiWuAPI.Contracts.CombatRecommendations
 @using TaiWuAPI.Presentation
 @inject IFindTargets FindTargets
-@inject IRecommendCombatLoadout RecommendCombatLoadout
+@inject IRecommendTacticalCombat RecommendTacticalCombat
 @inject ITargetObservationRecommendationWorkflow TargetObservationWorkflow
 @inject IOptions<SaveGameOptions> SaveOptions
 @inject ILogger<CombatRecommendation> Logger
+@inject IJSRuntime JS
 
 <PageTitle>TaiWu Helper · @T("Combat recommendation")</PageTitle>
 
@@ -86,7 +90,9 @@
 
         <div class="control-group">
             <label for="style-select">@T("Preferred style")</label>
-            <select id="style-select" @bind="_form.Policy">
+            <select id="style-select"
+                    @bind="_form.Policy"
+                    @bind:after="MarkTacticalDraftStale">
                 @foreach (var policy in RecommendationPolicyDisplay.VisiblePolicies)
                 {
                     <option value="@policy">@PolicyLabel(policy)</option>
@@ -115,6 +121,7 @@
         <label class="check-control">
             <input type="checkbox"
                    @bind="_form.IncludeObservation"
+                   @bind:after="MarkTacticalDraftStale"
                    disabled="@(_observationSkills.Count == 0)" />
             @T("Use selected equipped-skill names")
         </label>
@@ -147,23 +154,33 @@
             <div class="generic-grid">
                 <label>
                     萬用 @T("total")
-                    <input type="number" min="0" @bind="_form.GenericTotal" />
+                    <input type="number" min="0"
+                           @bind="_form.GenericTotal"
+                           @bind:after="MarkTacticalDraftStale" />
                 </label>
                 <label>
                     摧破
-                    <input type="number" min="0" @bind="_form.GenericAttack" />
+                    <input type="number" min="0"
+                           @bind="_form.GenericAttack"
+                           @bind:after="MarkTacticalDraftStale" />
                 </label>
                 <label>
                     輕靈
-                    <input type="number" min="0" @bind="_form.GenericAgility" />
+                    <input type="number" min="0"
+                           @bind="_form.GenericAgility"
+                           @bind:after="MarkTacticalDraftStale" />
                 </label>
                 <label>
                     護體
-                    <input type="number" min="0" @bind="_form.GenericDefense" />
+                    <input type="number" min="0"
+                           @bind="_form.GenericDefense"
+                           @bind:after="MarkTacticalDraftStale" />
                 </label>
                 <label>
                     奇竅
-                    <input type="number" min="0" @bind="_form.GenericAssistance" />
+                    <input type="number" min="0"
+                           @bind="_form.GenericAssistance"
+                           @bind:after="MarkTacticalDraftStale" />
                 </label>
             </div>
         }
@@ -174,6 +191,7 @@
                            Recommendation="_model"
                            Language="Language"
                            Busy="IsBusy"
+                           DraftChanged="MarkTacticalDraftStale"
                            ApplyRequested="ApplyTargetObservationAsync"
                            ClearRequested="ClearTargetObservationAsync" />
 
@@ -213,6 +231,14 @@
 <PageStateNotice State="_pageState"
                  RetryRead="RetryLastReadAsync"
                  RetryDisabled="IsBusy" />
+
+@if (_model is null
+    && _tacticalSurfaceState != TacticalPlanSurfaceState.Unavailable)
+{
+    <TacticalCombatPlan Model="_tacticalModel"
+                        SurfaceState="EffectiveTacticalSurfaceState"
+                        Language="Language" />
+}
 
 @if (_model is not null)
 {
@@ -275,6 +301,14 @@
                 </button>
             }
         </div>
+
+        @if (_tacticalModel is not null
+            || _tacticalSurfaceState != TacticalPlanSurfaceState.Unavailable)
+        {
+            <TacticalCombatPlan Model="_tacticalModel"
+                                SurfaceState="EffectiveTacticalSurfaceState"
+                                Language="Language" />
+        }
 
         @if (_model.Comparison is not null)
         {
@@ -365,6 +399,10 @@
     private string _saveFilePath = string.Empty;
     private TargetLookupEntry? _selectedTarget;
     private CombatRecommendationViewModel? _model;
+    private TacticalCombatViewModel? _tacticalModel;
+    private TacticalPlanSurfaceState _tacticalSurfaceState =
+        TacticalPlanSurfaceState.Unavailable;
+    private int? _tacticalTargetCharacterId;
     private RecommendationPageState _pageState =
         RecommendationPageState.Initial();
     private PageReadOperation _lastReadOperation;
@@ -374,11 +412,21 @@
     private long _searchVersion;
     private long _recommendationVersion;
     private TaiwuLanguage? _lastLanguage;
+    private string? _pendingFocusId;
 
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
 
     private bool IsBusy => _isSearching || _isRecommending;
+
+    private TacticalPlanSurfaceState EffectiveTacticalSurfaceState =>
+        _tacticalModel is not null
+            && (_isRecommending
+                || _selectedTarget?.CharacterId
+                    != _tacticalTargetCharacterId
+                || _form.Policy != _tacticalModel.Policy)
+            ? TacticalPlanSurfaceState.PreviousResult
+            : _tacticalSurfaceState;
 
     protected override void OnInitialized()
     {
@@ -444,6 +492,24 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingFocusId is null)
+        {
+            return;
+        }
+
+        var focusId = _pendingFocusId;
+        _pendingFocusId = null;
+        try
+        {
+            await JS.InvokeVoidAsync("taiwuHelper.focusElement", focusId);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
     private Task SearchTargetsAsync() => SearchTargetsAsync(_targetQuery);
 
     private async Task SearchTargetsAsync(string query)
@@ -460,6 +526,7 @@
         _selectedTarget = null;
         _targetMatches.Clear();
         _model = null;
+        ResetTacticalResult();
         ResetObservation();
         _targetObservation.ResetForTarget();
         _selection.Clear();
@@ -518,6 +585,7 @@
         _selectedTarget = target;
         _targetQuery = target.DisplayName;
         _model = null;
+        ResetTacticalResult();
         ResetObservation();
         _targetObservation.ResetForTarget();
         _selection.Clear();
@@ -546,16 +614,21 @@
         {
             _targetObservation.ResetForTarget();
         }
-        _model = null;
-        _selection.Clear();
+        _tacticalSurfaceState = _tacticalModel is null
+            ? TacticalPlanSurfaceState.Loading
+            : TacticalPlanSurfaceState.PreviousResult;
+        if (_model is null)
+        {
+            _selection.Clear();
+        }
         _pageState = RecommendationPageState.Loading(
             "Building the combat recommendation");
 
         try
         {
             var observation = CreateObservation();
-            var recommendation = await RecommendCombatLoadout.ExecuteAsync(
-                new RecommendCombatLoadoutRequest(
+            var tactical = await RecommendTacticalCombat.ExecuteAsync(
+                new TacticalPlanningApiRequest().ToApplication(
                     _saveFilePath,
                     _selectedTarget.CharacterId,
                     _form.Policy,
@@ -567,9 +640,17 @@
                 return;
             }
 
+            var recommendation = tactical.LegacyRecommendation
+                ?? throw new InvalidDataException(
+                    "The coherent tactical result has no legacy recommendation.");
+            var tacticalModel = TacticalCombatViewModelMapper.Map(tactical);
             _model = CombatRecommendationViewModelMapper.Map(
                 recommendation,
                 Language);
+            _tacticalModel = tacticalModel;
+            _tacticalTargetCharacterId = _selectedTarget.CharacterId;
+            _tacticalSurfaceState = TacticalPlanSurfaceState.Ready;
+            _pendingFocusId = "tactical-plan-heading";
             PopulateObservationSkills(_model);
             _selection.Load(_model, _form.Policy);
             _pageState =
@@ -577,6 +658,10 @@
         }
         catch (OperationCanceledException)
         {
+            if (version == _recommendationVersion)
+            {
+                _tacticalSurfaceState = TacticalPlanSurfaceState.Cancelled;
+            }
         }
         catch (Exception exception)
             when (exception is ArgumentException
@@ -585,12 +670,14 @@
                   or FormatException
                   or OverflowException)
         {
+            _tacticalSurfaceState = TacticalPlanSurfaceState.Failure;
             _pageState = RecommendationPageState.Failure(
                 "The recommendation could not be built from the available "
                 + "save data.");
         }
         catch (Exception exception)
         {
+            _tacticalSurfaceState = TacticalPlanSurfaceState.Failure;
             Logger.LogError(
                 exception,
                 "Unexpected combat recommendation failure.");
@@ -621,8 +708,9 @@
             ref _recommendationCancellation);
         _lastReadOperation = PageReadOperation.Recommendation;
         _isRecommending = true;
-        _model = null;
-        _selection.Clear();
+        _tacticalSurfaceState = _tacticalModel is null
+            ? TacticalPlanSurfaceState.Loading
+            : TacticalPlanSurfaceState.PreviousResult;
         _pageState = RecommendationPageState.Loading(
             "Building the combat recommendation");
 
@@ -649,12 +737,20 @@
             _model = CombatRecommendationViewModelMapper.Map(
                 recommendation,
                 Language);
+            _tacticalModel = null;
+            _tacticalTargetCharacterId = null;
+            _tacticalSurfaceState =
+                TacticalPlanSurfaceState.ObservationReplaced;
             PopulateObservationSkills(_model);
             _selection.Load(_model, _form.Policy);
             _pageState = RecommendationPageState.ForRecommendation(_model);
         }
         catch (OperationCanceledException)
         {
+            if (version == _recommendationVersion)
+            {
+                _tacticalSurfaceState = TacticalPlanSurfaceState.Cancelled;
+            }
         }
         catch (Exception exception)
             when (exception is ArgumentException
@@ -662,6 +758,7 @@
                 or InvalidDataException
                 or TargetObservationResolutionException)
         {
+            _tacticalSurfaceState = TacticalPlanSurfaceState.Failure;
             _targetObservation.MarkError("OBSERVATION_APPLY_FAILED");
             _pageState = RecommendationPageState.Failure(
                 "The recommendation could not be built from the available "
@@ -669,6 +766,7 @@
         }
         catch (Exception exception)
         {
+            _tacticalSurfaceState = TacticalPlanSurfaceState.Failure;
             Logger.LogError(
                 exception,
                 "Unexpected target-observation recommendation failure.");
@@ -736,6 +834,8 @@
         {
             _form.EquippedSkillIds.Remove(skillId);
         }
+
+        MarkTacticalDraftStale();
     }
 
     private void PopulateObservationSkills(CombatRecommendationViewModel model)
@@ -765,6 +865,21 @@
         _observationSkills.Clear();
         _form.IncludeObservation = false;
         _form.EquippedSkillIds.Clear();
+    }
+
+    private void ResetTacticalResult()
+    {
+        _tacticalModel = null;
+        _tacticalTargetCharacterId = null;
+        _tacticalSurfaceState = TacticalPlanSurfaceState.Unavailable;
+    }
+
+    private void MarkTacticalDraftStale()
+    {
+        if (_tacticalModel is not null)
+        {
+            _tacticalSurfaceState = TacticalPlanSurfaceState.PreviousResult;
+        }
     }
 
     private string TargetResultClass(int characterId) =>

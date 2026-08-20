@@ -209,7 +209,7 @@
                                 </label>
                                 <button type="button"
                                         class="text-button"
-                                        @onclick="() => State.RemoveSkill(skill.SkillId)">
+                                        @onclick="() => RemoveSkillAsync(skill.SkillId)">
                                     @T("Remove")
                                 </button>
                             </li>
@@ -222,7 +222,8 @@
             {
                 <label class="check-control">
                     <input type="checkbox"
-                           @bind="State.ConfirmPrecedenceWhenSaveTimeUnavailable" />
+                           checked="@State.ConfirmPrecedenceWhenSaveTimeUnavailable"
+                           @onchange="SetPrecedenceConfirmationAsync" />
                     @T("I confirm this visible screen is newer than the configured save snapshot.")
                 </label>
             }
@@ -312,6 +313,9 @@
     [Parameter]
     public EventCallback ClearRequested { get; set; }
 
+    [Parameter]
+    public EventCallback DraftChanged { get; set; }
+
     private bool ShowReview => State.Status is
         TargetObservationEditorStatus.Review
         or TargetObservationEditorStatus.Applying
@@ -321,22 +325,28 @@
         or TargetObservationEditorStatus.Unsupported
         or TargetObservationEditorStatus.PrecedenceConfirmationRequired;
 
-    private void ToggleEnabled(ChangeEventArgs args)
+    private async Task ToggleEnabled(ChangeEventArgs args)
     {
         State.SetEnabled(args.Value is true, Recommendation is not null);
+        await DraftChanged.InvokeAsync();
     }
 
-    private void SelectContext(TargetObservationContext context) =>
+    private async Task SelectContext(TargetObservationContext context)
+    {
         State.SetContext(context);
+        await DraftChanged.InvokeAsync();
+    }
 
-    private void SetCoverage(TargetLoadoutCoverageKind coverage)
+    private async Task SetCoverage(TargetLoadoutCoverageKind coverage)
     {
         State.SetCoverage(coverage);
+        await DraftChanged.InvokeAsync();
     }
 
-    private void UpdateQuery(ChangeEventArgs args)
+    private async Task UpdateQuery(ChangeEventArgs args)
     {
         State.Query = args.Value?.ToString() ?? string.Empty;
+        await DraftChanged.InvokeAsync();
     }
 
     private async Task SearchAsync()
@@ -358,6 +368,7 @@
                     slotIndex: null),
                 cancellation.Token);
             State.SetSearchResult(result);
+            await DraftChanged.InvokeAsync();
         }
         catch (OperationCanceledException)
         {
@@ -366,6 +377,7 @@
             when (exception is ArgumentException or InvalidDataException)
         {
             State.MarkError("CATALOGUE_UNAVAILABLE");
+            await DraftChanged.InvokeAsync();
         }
     }
 
@@ -388,10 +400,12 @@
             if (result.ResolvedSelection is null)
             {
                 State.SetSearchResult(result);
+                await DraftChanged.InvokeAsync();
                 return;
             }
 
             State.AddResolved(result.ResolvedSelection);
+            await DraftChanged.InvokeAsync();
         }
         catch (OperationCanceledException)
         {
@@ -400,6 +414,7 @@
             when (exception is ArgumentException or InvalidDataException)
         {
             State.MarkError("SKILL_SELECTION_INVALID");
+            await DraftChanged.InvokeAsync();
         }
     }
 
@@ -425,7 +440,7 @@
     private int NextSlot(SkillCategory category) => State.SelectedSkills
         .Count(skill => skill.Category == category);
 
-    private void ChangeDirection(int skillId, ChangeEventArgs args)
+    private async Task ChangeDirection(int skillId, ChangeEventArgs args)
     {
         var direction = args.Value?.ToString() switch
         {
@@ -434,9 +449,10 @@
             _ => (PracticeDirection?)null
         };
         State.SetDirection(skillId, direction);
+        await DraftChanged.InvokeAsync();
     }
 
-    private void ChangeVisiblePower(int skillId, ChangeEventArgs args)
+    private async Task ChangeVisiblePower(int skillId, ChangeEventArgs args)
     {
         var raw = args.Value?.ToString();
         var power = string.IsNullOrWhiteSpace(raw)
@@ -446,11 +462,25 @@
                 : throw new ArgumentException(
                     "Visible power must be a non-negative integer.");
         State.SetVisiblePower(skillId, power);
+        await DraftChanged.InvokeAsync();
     }
 
-    private void Review()
+    private async Task RemoveSkillAsync(int skillId)
+    {
+        State.RemoveSkill(skillId);
+        await DraftChanged.InvokeAsync();
+    }
+
+    private async Task SetPrecedenceConfirmationAsync(ChangeEventArgs args)
+    {
+        State.ConfirmPrecedenceWhenSaveTimeUnavailable = args.Value is true;
+        await DraftChanged.InvokeAsync();
+    }
+
+    private async Task Review()
     {
         State.BeginReview(DateTimeOffset.UtcNow);
+        await DraftChanged.InvokeAsync();
     }
 
     private async Task ApplyAsync()
