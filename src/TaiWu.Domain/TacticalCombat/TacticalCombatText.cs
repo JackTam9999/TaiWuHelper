@@ -66,6 +66,22 @@ internal static class TacticalCombatText
         Convert.ToHexString(SHA256.HashData(
             Encoding.UTF8.GetBytes(canonical)));
 
+    internal static string ValidateFingerprint(
+        string value,
+        string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || value.Length != 64
+            || !value.All(Uri.IsHexDigit))
+        {
+            throw new ArgumentException(
+                "A semantic fingerprint must contain 64 hexadecimal characters.",
+                parameterName);
+        }
+
+        return value.ToUpperInvariant();
+    }
+
     internal static ImmutableArray<T> CopyUnique<T>(
         IEnumerable<T> source,
         Func<T, string> keySelector,

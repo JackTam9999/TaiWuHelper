@@ -66,6 +66,58 @@ public static class CombatSkillCostCalculator
         return CalculateCore(FindLearnedSkill(player, skillId), []);
     }
 
+    public static CombatSkillCostBreakdown CalculateProposed(
+        PlayerCombatSnapshot player,
+        int skillId,
+        IEnumerable<LegendaryBookCostAssignment> proposedAssignments)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(proposedAssignments);
+        var values = proposedAssignments.ToArray();
+        if (values.Any(item => item is null)
+            || values.Any(item =>
+                item.Origin != LegendaryBookAssignmentOrigin.Proposed)
+            || values.Select(item => item.SkillId).Distinct().Count()
+                != values.Length
+            || values.Select(item => item.Slot.SlotReference)
+                .Distinct(StringComparer.Ordinal).Count()
+                != values.Length)
+        {
+            throw new ArgumentException(
+                "Projected legendary assignments must be proposed and unique by skill and slot.",
+                nameof(proposedAssignments));
+        }
+
+        foreach (var assignment in values)
+        {
+            var knownSlot = player.LegendaryBookCostSlots.SingleOrDefault(
+                slot => string.Equals(
+                    slot.SlotReference,
+                    assignment.Slot.SlotReference,
+                    StringComparison.Ordinal));
+            if (knownSlot is null || knownSlot != assignment.Slot)
+            {
+                throw new ArgumentException(
+                    "Projected legendary assignments must use known slots.",
+                    nameof(proposedAssignments));
+            }
+
+            var assignedSkill = FindLearnedSkill(player, assignment.SkillId);
+            if (assignedSkill.Category != assignment.Category)
+            {
+                throw new ArgumentException(
+                    $"Projected assignment for skill {assignedSkill.SkillId} "
+                    + $"uses {assignment.Category}, not "
+                    + $"{assignedSkill.Category}.",
+                    nameof(proposedAssignments));
+            }
+        }
+
+        return CalculateCore(
+            FindLearnedSkill(player, skillId),
+            values.Where(item => item.SkillId == skillId).ToArray());
+    }
+
     private static CombatSkillSnapshot FindLearnedSkill(
         PlayerCombatSnapshot player,
         int skillId)

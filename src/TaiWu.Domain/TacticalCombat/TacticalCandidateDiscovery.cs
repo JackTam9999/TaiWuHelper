@@ -61,6 +61,7 @@ public static class TacticalCandidateDiscovery
         }
 
         return new TacticalCandidateDiscoveryResult(
+            context.SemanticFingerprint,
             player.LearnedSkills.Length,
             ruleResolution.Roles.Length,
             considerations,

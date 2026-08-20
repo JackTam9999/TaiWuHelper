@@ -380,7 +380,7 @@ admitting only version-matched, typed, feasible options to combination search.
 
 ### E8-006 — Add deterministic target-aware pruning and bounded search
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -393,30 +393,30 @@ then explore feasible combinations within explicit request bounds.
 
 #### Acceptance criteria
 
-- [ ] Pruning runs only after evidence and hard-feasibility admission.
-- [ ] Irrelevance requires no applicable verified target role or transition;
+- [x] Pruning runs only after evidence and hard-feasibility admission.
+- [x] Irrelevance requires no applicable verified target role or transition;
       absence of evidence alone cannot prove irrelevance.
-- [ ] Dominance requires an explicit same-context proof across role value,
+- [x] Dominance requires an explicit same-context proof across role value,
       timing, requirements, effective cost, conflicts, and execution risk.
-- [ ] Every removed option retains one typed pruning rule and evidence set.
-- [ ] Target-aware option ordering and combination traversal are deterministic.
-- [ ] Search remains cancellable and bounded by option, combination,
+- [x] Every removed option retains one typed pruning rule and evidence set.
+- [x] Target-aware option ordering and combination traversal are deterministic.
+- [x] Search remains cancellable and bounded by option, combination,
       elapsed-time, and result limits.
-- [ ] The result reports initial learned directions, role-supported options,
+- [x] The result reports initial learned directions, role-supported options,
       hard-gate rejections, each pruning count, explored combinations, feasible
       results, and the first limiting bound.
-- [ ] A time-limited search never uses wall-clock timing as a semantic
+- [x] A time-limited search never uses wall-clock timing as a semantic
       fingerprint input; diagnostics report the budget state honestly.
-- [ ] Hitting a bound cannot be labelled complete or optimal.
-- [ ] Existing feasibility validation remains the sole authority for complete
+- [x] Hitting a bound cannot be labelled complete or optimal.
+- [x] Existing feasibility validation remains the sole authority for complete
       loadout acceptance.
-- [ ] Per-request snapshot, catalogue, role-resolution, and capacity work is
+- [x] Per-request snapshot, catalogue, role-resolution, and capacity work is
       reused with bounded caches keyed by semantic identity.
-- [ ] Tests prove deterministic results and diagnostics under shuffled inputs,
+- [x] Tests prove deterministic results and diagnostics under shuffled inputs,
       every limit, cancellation, dominance ties, no-candidate, and cache-reuse
       scenarios.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/TACTICAL-LOADOUT-SEARCH.md`.
 - Domain and Application search, bound, cancellation, and cache tests.

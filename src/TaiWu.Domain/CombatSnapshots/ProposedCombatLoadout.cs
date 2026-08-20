@@ -9,7 +9,9 @@ public sealed record ProposedCombatLoadout
         GenericSlotAllocation genericSlotAllocation,
         IEnumerable<CombatSkillCandidate> skillCandidates,
         IEnumerable<CombatRequirement> requirements,
-        CombatRequirementContext requirementContext)
+        CombatRequirementContext requirementContext,
+        IEnumerable<LegendaryBookCostAssignment>?
+            legendaryCostAssignments = null)
     {
         Skills = skills ?? throw new ArgumentNullException(nameof(skills));
         GenericSlotAllocation = genericSlotAllocation
@@ -17,11 +19,13 @@ public sealed record ProposedCombatLoadout
                 nameof(genericSlotAllocation));
         RequirementContext = requirementContext
             ?? throw new ArgumentNullException(nameof(requirementContext));
+        HasLegendaryCostAssignments = legendaryCostAssignments is not null;
         ArgumentNullException.ThrowIfNull(skillCandidates);
         ArgumentNullException.ThrowIfNull(requirements);
 
         SkillCandidates = [.. skillCandidates];
         Requirements = [.. requirements];
+        var legendaryValues = (legendaryCostAssignments ?? []).ToArray();
         if (SkillCandidates.Any(candidate => candidate is null))
         {
             throw new ArgumentException(
@@ -35,6 +39,26 @@ public sealed record ProposedCombatLoadout
                 "Requirements cannot contain null entries.",
                 nameof(requirements));
         }
+        if (legendaryValues.Any(item => item is null)
+            || legendaryValues.Any(item =>
+                item.Origin != LegendaryBookAssignmentOrigin.Proposed)
+            || legendaryValues.Select(item => item.SkillId)
+                .Distinct().Count() != legendaryValues.Length
+            || legendaryValues.Select(item => item.Slot.SlotReference)
+                .Distinct(StringComparer.Ordinal).Count()
+                != legendaryValues.Length)
+        {
+            throw new ArgumentException(
+                "Proposed legendary assignments require unique proposed skills and slots.",
+                nameof(legendaryCostAssignments));
+        }
+
+        LegendaryCostAssignments =
+        [
+            .. legendaryValues.OrderBy(
+                item => item.Slot.SlotReference,
+                StringComparer.Ordinal)
+        ];
 
         var duplicateCandidate = SkillCandidates
             .GroupBy(candidate => candidate.SkillId)
@@ -57,4 +81,10 @@ public sealed record ProposedCombatLoadout
     public ImmutableArray<CombatRequirement> Requirements { get; }
 
     public CombatRequirementContext RequirementContext { get; }
+
+    public bool HasLegendaryCostAssignments { get; }
+
+    public ImmutableArray<LegendaryBookCostAssignment>
+        LegendaryCostAssignments
+    { get; }
 }

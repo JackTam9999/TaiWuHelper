@@ -205,6 +205,59 @@ public sealed class CombatSlotBudgetCalculatorTests
     }
 
     [Fact]
+    public void Proposed_budget_uses_explicit_legendary_assignment_state()
+    {
+        var selected = CreateSkill(
+            200,
+            SkillCategory.Attack,
+            gridCost: 3);
+        var currentlyAssigned = CreateSkill(
+            201,
+            SkillCategory.Attack,
+            gridCost: 3);
+        var slot = new LegendaryBookCostSlot(
+            "book:slot:shouzhi",
+            new LegendaryBookCostRule(
+                LegendaryBookCostEffect.Shouzhi,
+                SnapshotDataSource.CurrentScreenObservation,
+                "docs/scenarios/M1-007-effective-skill-cost-evidence.md"));
+        var current = new LegendaryBookCostAssignment(
+            slot,
+            currentlyAssigned.SkillId,
+            currentlyAssigned.Category,
+            LegendaryBookAssignmentOrigin.Save,
+            "save:book:shouzhi:skill-201");
+        var proposed = current.ProposeForSkill(
+            selected.SkillId,
+            selected.Category,
+            "proposal:book:shouzhi:skill-200");
+        var loadout = CreateLoadout(attack: [selected.SkillId]);
+        var player = CreatePlayer(
+            [selected, currentlyAssigned],
+            CreateLoadout(attack: [currentlyAssigned.SkillId]),
+            legendaryBookCostSlots: [slot],
+            legendaryBookCostAssignments: [current],
+            slotBudgets: CreateSlotBudgets(attackCapacity: 10));
+
+        var assigned = CombatSlotBudgetCalculator.CalculateProposed(
+            player,
+            loadout,
+            player.GenericSlotAllocation,
+            [proposed]);
+        var explicitlyUnassigned =
+            CombatSlotBudgetCalculator.CalculateProposed(
+                player,
+                loadout,
+                player.GenericSlotAllocation,
+                []);
+
+        AssertBudget(assigned, SkillCategory.Attack, 1, 10, 9);
+        AssertBudget(explicitlyUnassigned, SkillCategory.Attack, 3, 10, 7);
+        Assert.Equal(201, current.SkillId);
+        Assert.Equal(LegendaryBookAssignmentOrigin.Save, current.Origin);
+    }
+
+    [Fact]
     public void Unavailable_skill_cost_preserves_unavailable_usage()
     {
         var attack = CreateSkill(

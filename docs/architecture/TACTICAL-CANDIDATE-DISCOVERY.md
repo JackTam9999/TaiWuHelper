@@ -34,7 +34,9 @@ The result constructor rejects a missing direction, duplicate direction, or a
 count other than two per learned skill. The learned atlas may arrive in any
 order; entries are ordered by numeric skill ID and direction identity. The
 semantic fingerprint uses typed IDs, gates, roles, requirements, costs, and
-evidence only.
+evidence only. The result also retains the execution-context semantic
+fingerprint so downstream search can reject a discovery result projected from
+a different request context.
 
 Direction availability is evaluated separately from role support:
 

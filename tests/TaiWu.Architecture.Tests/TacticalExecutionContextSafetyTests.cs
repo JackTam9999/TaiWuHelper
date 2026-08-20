@@ -40,6 +40,9 @@ public sealed class TacticalExecutionContextSafetyTests
                 Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
                 "TacticalCandidate*.cs"))
             .Concat(Directory.EnumerateFiles(
+                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
+                "TacticalLoadout*.cs"))
+            .Concat(Directory.EnumerateFiles(
                 Path.Combine(
                     root,
                     "src",
@@ -117,6 +120,25 @@ public sealed class TacticalExecutionContextSafetyTests
                 == typeof(IDiscoverTacticalCandidates)
                 && service.ImplementationType
                     == typeof(DiscoverTacticalCandidates)
+                && service.Lifetime == ServiceLifetime.Singleton);
+
+        var searchParameters = Assert.Single(
+                typeof(SearchTacticalLoadouts).GetConstructors())
+            .GetParameters();
+        Assert.Contains(
+            searchParameters,
+            parameter => parameter.ParameterType
+                == typeof(ICombatSnapshotReader));
+        Assert.Contains(
+            searchParameters,
+            parameter => parameter.ParameterType == typeof(TimeProvider));
+        Assert.Equal(2, searchParameters.Length);
+        Assert.Contains(
+            services,
+            service => service.ServiceType
+                == typeof(ISearchTacticalLoadouts)
+                && service.ImplementationType
+                    == typeof(SearchTacticalLoadouts)
                 && service.Lifetime == ServiceLifetime.Singleton);
     }
 

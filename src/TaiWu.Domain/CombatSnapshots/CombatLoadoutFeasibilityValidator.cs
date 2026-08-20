@@ -47,7 +47,10 @@ public static class CombatLoadoutFeasibilityValidator
             slotBudgets = CombatSlotBudgetCalculator.CalculateProposed(
                 player,
                 proposal.Skills,
-                proposal.GenericSlotAllocation);
+                proposal.GenericSlotAllocation,
+                proposal.HasLegendaryCostAssignments
+                    ? proposal.LegendaryCostAssignments
+                    : null);
             foreach (var budget in slotBudgets.Values.Where(
                          budget => !budget.Used.IsAvailable))
             {

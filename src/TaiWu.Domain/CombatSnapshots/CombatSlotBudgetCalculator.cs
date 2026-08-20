@@ -66,7 +66,9 @@ public static class CombatSlotBudgetCalculator
     public static SlotBudgetSet CalculateProposed(
         PlayerCombatSnapshot player,
         CombatLoadoutSnapshot proposedLoadout,
-        GenericSlotAllocation proposedGenericSlotAllocation)
+        GenericSlotAllocation proposedGenericSlotAllocation,
+        IEnumerable<LegendaryBookCostAssignment>?
+            proposedLegendaryCostAssignments = null)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(proposedLoadout);
@@ -74,6 +76,7 @@ public static class CombatSlotBudgetCalculator
 
         var learnedById = player.LearnedSkills.ToDictionary(
             skill => skill.SkillId);
+        var legendaryAssignments = proposedLegendaryCostAssignments?.ToArray();
         ValidateEquippedSkills(player.EquippedSkills, learnedById);
         ValidateEquippedSkills(proposedLoadout, learnedById);
 
@@ -105,7 +108,8 @@ public static class CombatSlotBudgetCalculator
                     player,
                     proposedLoadout,
                     category,
-                    proposedCapacity);
+                    proposedCapacity,
+                    legendaryAssignments);
             }));
     }
 
@@ -122,9 +126,14 @@ public static class CombatSlotBudgetCalculator
         PlayerCombatSnapshot player,
         CombatLoadoutSnapshot loadout,
         SkillCategory category,
-        int capacity)
+        int capacity,
+        LegendaryBookCostAssignment[]? proposedAssignments = null)
     {
-        var used = GetUsed(player, loadout, category);
+        var used = GetUsed(
+            player,
+            loadout,
+            category,
+            proposedAssignments);
 
         return new SlotBudget(category, used, capacity);
     }
@@ -150,14 +159,18 @@ public static class CombatSlotBudgetCalculator
     private static SnapshotValue<int> GetUsed(
         PlayerCombatSnapshot player,
         CombatLoadoutSnapshot loadout,
-        SkillCategory category)
+        SkillCategory category,
+        LegendaryBookCostAssignment[]? proposedAssignments)
     {
         var used = 0;
         foreach (var skillId in loadout.Get(category))
         {
-            var cost = CombatSkillCostCalculator.Calculate(
-                player,
-                skillId);
+            var cost = proposedAssignments is null
+                ? CombatSkillCostCalculator.Calculate(player, skillId)
+                : CombatSkillCostCalculator.CalculateProposed(
+                    player,
+                    skillId,
+                    proposedAssignments);
             if (!cost.EffectiveCost.IsAvailable)
             {
                 return SnapshotValue<int>.Unavailable(

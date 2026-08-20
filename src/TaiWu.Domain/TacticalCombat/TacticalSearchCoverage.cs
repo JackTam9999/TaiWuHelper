@@ -11,23 +11,24 @@ public sealed record TacticalSearchBounds
         TimeSpan maximumElapsed,
         int maximumResults)
     {
-        if (maximumOptions <= 0)
+        if (maximumOptions is <= 0 or > 24)
         {
             throw new ArgumentOutOfRangeException(nameof(maximumOptions));
         }
 
-        if (maximumExploredCombinations <= 0)
+        if (maximumExploredCombinations is <= 0 or > 1_000_000)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(maximumExploredCombinations));
         }
 
-        if (maximumElapsed <= TimeSpan.Zero)
+        if (maximumElapsed <= TimeSpan.Zero
+            || maximumElapsed > TimeSpan.FromMinutes(10))
         {
             throw new ArgumentOutOfRangeException(nameof(maximumElapsed));
         }
 
-        if (maximumResults <= 0)
+        if (maximumResults is <= 0 or > 10_000)
         {
             throw new ArgumentOutOfRangeException(nameof(maximumResults));
         }

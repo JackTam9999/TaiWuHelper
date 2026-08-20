@@ -275,11 +275,16 @@ public sealed record TacticalCandidateRejectionSummary
 public sealed class TacticalCandidateDiscoveryResult
 {
     internal TacticalCandidateDiscoveryResult(
+        string contextSemanticFingerprint,
         int learnedSkillCount,
         int supportedRoleCount,
         IEnumerable<TacticalCandidateDiscoveryEntry> considerations,
         TacticalCandidateDiscoveryLimits limits)
     {
+        ContextSemanticFingerprint =
+            TacticalCombatText.ValidateFingerprint(
+                contextSemanticFingerprint,
+                nameof(contextSemanticFingerprint));
         if (learnedSkillCount < 0 || supportedRoleCount < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(learnedSkillCount));
@@ -333,6 +338,8 @@ public sealed class TacticalCandidateDiscoveryResult
 
     public int LearnedSkillCount { get; }
 
+    public string ContextSemanticFingerprint { get; }
+
     public int SupportedRoleCount { get; }
 
     public int ConsideredVerifiedRoleCount { get; }
@@ -383,6 +390,7 @@ public sealed class TacticalCandidateDiscoveryResult
     {
         var canonical = new StringBuilder()
             .Append("TACTICAL_CANDIDATE_DISCOVERY_V1\n")
+            .Append(ContextSemanticFingerprint).Append('\n')
             .Append(LearnedSkillCount).Append('|')
             .Append(SupportedRoleCount).Append('\n');
         foreach (var consideration in Entries)
