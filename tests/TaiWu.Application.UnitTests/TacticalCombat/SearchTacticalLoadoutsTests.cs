@@ -9,7 +9,7 @@ namespace TaiWu.Application.UnitTests.TacticalCombat;
 
 public sealed class SearchTacticalLoadoutsTests
 {
-    private static readonly TacticalCombatRuleSet Rules =
+    internal static readonly TacticalCombatRuleSet Rules =
         VerifiedTacticalCombatRuleSets.HistoricalMagicSound;
 
     [Fact]
@@ -90,7 +90,7 @@ public sealed class SearchTacticalLoadoutsTests
         Assert.False(result.Search.IsComplete);
     }
 
-    private static TacticalLoadoutSearchReadRequest Request(
+    internal static TacticalLoadoutSearchReadRequest Request(
         CombatSnapshotReadRequest snapshotRequest,
         CombatSnapshot snapshot,
         TacticalSearchBounds? bounds = null) => new(
@@ -106,7 +106,7 @@ public sealed class SearchTacticalLoadoutsTests
             TimeSpan.FromSeconds(30),
             100));
 
-    private static TacticalExecutionProposal Proposal(
+    internal static TacticalExecutionProposal Proposal(
         IEnumerable<int> equippedSkillIds) => new(
         new CombatRequirementContext(
             equippedWeaponTypeIds: [],
@@ -119,7 +119,7 @@ public sealed class SearchTacticalLoadoutsTests
         new GenericSlotAllocation(2, 1, 1, 0, 0),
         legendaryCostAssignments: []);
 
-    private static TacticalRuleEvidenceObservation[] ConfirmedEvidence() =>
+    internal static TacticalRuleEvidenceObservation[] ConfirmedEvidence() =>
         Rules.Transitions
             .SelectMany(item => item.EvidenceRequirements)
             .Concat(Rules.Roles.SelectMany(item => item.EvidenceRequirements))
@@ -139,7 +139,9 @@ public sealed class SearchTacticalLoadoutsTests
                         : "BROAD_RULE")))
             .ToArray();
 
-    private static CombatSnapshot Snapshot()
+    internal static CombatSnapshot Snapshot(
+        bool includeCandidate = true,
+        string? gameDataVersion = null)
     {
         var skill = new CombatSkillSnapshot(
             604,
@@ -161,11 +163,13 @@ public sealed class SearchTacticalLoadoutsTests
                 SnapshotValue<DateTimeOffset>.Available(
                     DateTimeOffset.Parse("2026-08-20T11:00:00Z")),
                 SnapshotValue<string>.Available(
-                    VerifiedTacticalCombatRuleSets.HistoricalGameDataVersion)),
+                    gameDataVersion
+                    ?? VerifiedTacticalCombatRuleSets
+                        .HistoricalGameDataVersion)),
             new PlayerCombatSnapshot(
                 1,
                 SnapshotValue<string>.Unavailable("Not required."),
-                [skill],
+                includeCandidate ? [skill] : [],
                 new CombatLoadoutSnapshot([], [], [], [], []),
                 equipment: [],
                 Budgets(),
@@ -192,7 +196,7 @@ public sealed class SearchTacticalLoadoutsTests
             warnings: []);
     }
 
-    private static SlotBudgetSet Budgets() => new(
+    internal static SlotBudgetSet Budgets() => new(
     [
         new SlotBudget(SkillCategory.Neigong, 0, 6),
         new SlotBudget(SkillCategory.Attack, 0, 10),
@@ -201,7 +205,7 @@ public sealed class SearchTacticalLoadoutsTests
         new SlotBudget(SkillCategory.Assistance, 0, 2)
     ]);
 
-    private sealed class ZeroElapsedTimeProvider : TimeProvider
+    internal sealed class ZeroElapsedTimeProvider : TimeProvider
     {
         public override long TimestampFrequency => TimeSpan.TicksPerSecond;
 

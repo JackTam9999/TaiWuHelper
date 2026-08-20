@@ -523,7 +523,7 @@ so it remains reviewable.
 
 ### E8-009 — Orchestrate one coherent tactical recommendation result
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -537,25 +537,25 @@ Application request/result boundary.
 
 #### Acceptance criteria
 
-- [ ] One request names stable player, target, observation, policy, and bound
+- [x] One request names stable player, target, observation, policy, and bound
       inputs rather than localized labels.
-- [ ] One coherent tactical snapshot supplies the entire result.
-- [ ] Exact call-count tests prove source, catalogue, atlas, role, and capacity
+- [x] One coherent tactical snapshot supplies the entire result.
+- [x] Exact call-count tests prove source, catalogue, atlas, role, and capacity
       work is not repeated for each candidate or plan step.
-- [ ] Source, evidence, context, rule, search, score, and planning failures map
+- [x] Source, evidence, context, rule, search, score, and planning failures map
       to typed result states.
-- [ ] Cancellation propagates through discovery and search without returning a
+- [x] Cancellation propagates through discovery and search without returning a
       mixed partial result.
-- [ ] Unexpected programmer faults reach host logging while client-facing
+- [x] Unexpected programmer faults reach host logging while client-facing
       results remain safe.
-- [ ] Result identity includes snapshot, observation, target-chain, rule,
+- [x] Result identity includes snapshot, observation, target-chain, rule,
       candidate, bound, policy, selected-loadout, and plan fingerprints.
-- [ ] Capture time and elapsed measurements remain diagnostics rather than
+- [x] Capture time and elapsed measurements remain diagnostics rather than
       semantic identity inputs.
-- [ ] Observation apply, repeat, replace, and clear are atomic and idempotent.
-- [ ] Existing recommendation, comparison, and manual-plan consumers remain
+- [x] Observation apply, repeat, replace, and clear are atomic and idempotent.
+- [x] Existing recommendation, comparison, and manual-plan consumers remain
       compatible when tactical planning is unsupported.
-- [ ] Application tests cover success, partial evidence, unsupported chain,
+- [x] Application tests cover success, partial evidence, unsupported chain,
       no candidate, truncation, cancellation, observation lifecycle, and exact
       call counts.
 

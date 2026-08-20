@@ -10,6 +10,7 @@ using TaiWu.Application.TacticalCombat;
 using TaiWu.Application.VillageWorkforce;
 using TaiWu.Infrastructure.Catalogue;
 using TaiWu.Infrastructure.SaveGames;
+using TaiWu.Infrastructure.TacticalCombat;
 
 namespace TaiWu.Infrastructure;
 
@@ -102,6 +103,16 @@ public static class DependencyInjection
         services.AddSingleton<
             ICompileTacticalCombatPlan,
             CompileTacticalCombatPlan>();
+        services.AddSingleton<ITacticalCombatRecommendationFaultReporter>(
+            provider =>
+                new LoggingTacticalCombatRecommendationFaultReporter(
+                    provider.GetService<Microsoft.Extensions.Logging.ILogger<
+                        RecommendTacticalCombat>>()
+                    ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                        RecommendTacticalCombat>.Instance));
+        services.AddSingleton<
+            IRecommendTacticalCombat,
+            RecommendTacticalCombat>();
         services.AddSingleton<ICompanionCandidateSnapshotReader>(provider =>
             new TaiwuCompanionCandidateSnapshotReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),

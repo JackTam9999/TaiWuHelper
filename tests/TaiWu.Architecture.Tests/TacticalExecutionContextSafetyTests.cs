@@ -158,6 +158,29 @@ public sealed class TacticalExecutionContextSafetyTests
                 && service.ImplementationType
                     == typeof(CompileTacticalCombatPlan)
                 && service.Lifetime == ServiceLifetime.Singleton);
+
+        var recommendationParameters = Assert.Single(
+                typeof(RecommendTacticalCombat).GetConstructors())
+            .GetParameters();
+        Assert.Equal(3, recommendationParameters.Length);
+        Assert.Single(
+            recommendationParameters,
+            parameter => parameter.ParameterType
+                == typeof(ICombatSnapshotReader));
+        Assert.Contains(
+            recommendationParameters,
+            parameter => parameter.ParameterType == typeof(TimeProvider));
+        Assert.Contains(
+            recommendationParameters,
+            parameter => parameter.ParameterType
+                == typeof(ITacticalCombatRecommendationFaultReporter));
+        Assert.Contains(
+            services,
+            service => service.ServiceType
+                == typeof(IRecommendTacticalCombat)
+                && service.ImplementationType
+                    == typeof(RecommendTacticalCombat)
+                && service.Lifetime == ServiceLifetime.Singleton);
     }
 
     [Fact]
