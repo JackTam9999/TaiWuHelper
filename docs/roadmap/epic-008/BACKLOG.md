@@ -423,7 +423,7 @@ then explore feasible combinations within explicit request bounds.
 
 ### E8-007 — Score causal value, execution reliability, and supported finish paths
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -437,33 +437,33 @@ unused capacity.
 
 #### Acceptance criteria
 
-- [ ] Threat value is derived from applicable causal-chain states and
+- [x] Threat value is derived from applicable causal-chain states and
       transitions, not merely the count of repeated threat codes.
-- [ ] Duplicate coverage of one transition receives no duplicate full reward.
-- [ ] Independently useful layered protection may receive marginal value only
+- [x] Duplicate coverage of one transition receives no duplicate full reward.
+- [x] Independently useful layered protection may receive marginal value only
       through a documented interaction or fallback rule.
-- [ ] Timing and execution reliability account for preparation, trigger
+- [x] Timing and execution reliability account for preparation, trigger
       observability, resource requirements, self-lock or recovery cost, and
       unresolved context.
-- [ ] Damage or finish-path value is available only from E8-000-approved typed
+- [x] Damage or finish-path value is available only from E8-000-approved typed
       attack, hit/cast reliability, target defense/resistance, and applicable
       condition evidence.
-- [ ] Missing damage or finish evidence remains unavailable and its weight is
+- [x] Missing damage or finish evidence remains unavailable and its weight is
       excluded rather than becoming zero or an inferred average.
-- [ ] Unused capacity is neutral unless a documented reserve or marginal-value
+- [x] Unused capacity is neutral unless a documented reserve or marginal-value
       rule makes it useful in the exact plan.
-- [ ] Safe, Balanced, and Aggressive publish stable weights and retain distinct
+- [x] Safe, Balanced, and Aggressive publish stable weights and retain distinct
       ranking behavior under the supported fixture matrix.
-- [ ] Safe does not mean guaranteed survival, and Aggressive does not claim
+- [x] Safe does not mean guaranteed survival, and Aggressive does not claim
       probability of victory or predicted damage without evidence.
-- [ ] Score components expose raw inputs, normalization, weight, contribution,
+- [x] Score components expose raw inputs, normalization, weight, contribution,
       evidence, limitations, and unavailable state.
-- [ ] Ranking remains deterministic and cannot override hard feasibility.
-- [ ] Tests cover duplicate coverage, useful layering, unknown timing,
+- [x] Ranking remains deterministic and cannot override hard feasibility.
+- [x] Tests cover duplicate coverage, useful layering, unknown timing,
       recovery cost, unavailable damage, supported channel choice, unused
       capacity, policy distinction, ties, and input shuffling.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/TACTICAL-RECOMMENDATION-SCORING.md`.
 - Updated scorer and policy regression tests.

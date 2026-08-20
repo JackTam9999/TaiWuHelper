@@ -43,6 +43,9 @@ public sealed class TacticalExecutionContextSafetyTests
                 Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
                 "TacticalLoadout*.cs"))
             .Concat(Directory.EnumerateFiles(
+                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
+                "TacticalScor*.cs"))
+            .Concat(Directory.EnumerateFiles(
                 Path.Combine(
                     root,
                     "src",
