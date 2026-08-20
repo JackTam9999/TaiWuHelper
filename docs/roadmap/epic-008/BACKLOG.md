@@ -192,7 +192,7 @@ interaction rules before implementing public Domain or API contracts.
 
 ### E8-002 — Add immutable tactical state, transition, and plan contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -205,35 +205,35 @@ conditional manual plan.
 
 #### Acceptance criteria
 
-- [ ] Stable typed identities represent combat facts, transition definitions,
+- [x] Stable typed identities represent combat facts, transition definitions,
       requirements, timing, roles, plan stages, branches, evidence, and
       diagnostics.
-- [ ] State facts preserve available, incomplete, unsupported, and conflicting
+- [x] State facts preserve available, incomplete, unsupported, and conflicting
       states with provenance.
-- [ ] A transition separates preconditions, resulting facts, timing, expected
+- [x] A transition separates preconditions, resulting facts, timing, expected
       purpose, limitation, and evidence.
-- [ ] Transitions cannot advance a simulated clock, select hidden AI behavior,
+- [x] Transitions cannot advance a simulated clock, select hidden AI behavior,
       or claim an outcome beyond their verified effect.
-- [ ] Requirement results distinguish satisfied, unsatisfied, unknown,
+- [x] Requirement results distinguish satisfied, unsatisfied, unknown,
       unsupported, and conflicting states.
-- [ ] Tactical steps distinguish manual action from expected verified purpose
+- [x] Tactical steps distinguish manual action from expected verified purpose
       and from an unresolved or fallback branch.
-- [ ] Candidate consideration retains admitted, rejected, unsupported,
+- [x] Candidate consideration retains admitted, rejected, unsupported,
       irrelevant, and dominated decisions with typed reasons.
-- [ ] Search coverage retains counts and bounds with explicit units and cannot
+- [x] Search coverage retains counts and bounds with explicit units and cannot
       claim completeness after truncation.
-- [ ] Collections are immutable, validated, deduplicated, and canonically
+- [x] Collections are immutable, validated, deduplicated, and canonically
       ordered.
-- [ ] Invalid cycles, dangling references, duplicate identities, incompatible
+- [x] Invalid cycles, dangling references, duplicate identities, incompatible
       evidence versions, and impossible stage order fail before planning.
-- [ ] Fingerprints exclude localized display text and capture time while
+- [x] Fingerprints exclude localized display text and capture time while
       including every semantic fact that can affect a result.
-- [ ] Domain projects reference no Application, Infrastructure, ASP.NET, UI,
+- [x] Domain projects reference no Application, Infrastructure, ASP.NET, UI,
       filesystem, process, reflection, or GameData type.
-- [ ] Unit tests cover validation, unavailable states, conflicts, ordering,
+- [x] Unit tests cover validation, unavailable states, conflicts, ordering,
       equality, branching, and fingerprints.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/TACTICAL-COMBAT-DOMAIN.md`.
 - Focused Domain unit tests.
