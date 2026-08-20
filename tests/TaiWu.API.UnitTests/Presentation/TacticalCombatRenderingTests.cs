@@ -233,6 +233,26 @@ public sealed partial class TacticalCombatRenderingTests
     }
 
     [Fact]
+    public void Every_typed_ui_value_has_complete_bilingual_copy()
+    {
+        AssertBilingual<TacticalPlanStage>(TacticalCombatUiText.Stage);
+        AssertBilingual<TacticalCombatRecommendationStatus>(
+            TacticalCombatUiText.Status);
+        AssertBilingual<RecommendationPolicy>(TacticalCombatUiText.Policy);
+        AssertBilingual<TacticalFinishDisposition>(
+            (language, value) => TacticalCombatUiText.Finish(language, value));
+        AssertBilingual<TacticalConditionPresentationState>(
+            TacticalCombatUiText.Condition);
+        AssertBilingual<TacticalCandidatePresentationGroup>(
+            TacticalCombatUiText.CandidateGroup);
+        AssertBilingual<TacticalScoreComponentKind>(TacticalCombatUiText.Score);
+        AssertBilingual<TacticalSearchTerminator>(
+            TacticalCombatUiText.SearchTerminator);
+        AssertBilingual<PracticeDirection>(TacticalCombatUiText.Direction);
+        AssertBilingual<TacticalEvidenceSourceKind>(TacticalCombatUiText.Source);
+    }
+
+    [Fact]
     public void Mapper_preserves_partial_conflict_without_exposing_stable_codes()
     {
         var response = EmptyResponse() with
@@ -622,6 +642,20 @@ public sealed partial class TacticalCombatRenderingTests
         var withoutTags = Tags().Replace(html, " ");
         return Whitespace().Replace(WebUtility.HtmlDecode(withoutTags), " ")
             .Trim();
+    }
+
+    private static void AssertBilingual<T>(
+        Func<TaiwuLanguage, T, string> getText)
+        where T : struct, Enum
+    {
+        foreach (var value in Enum.GetValues<T>())
+        {
+            var english = getText(TaiwuLanguage.English, value);
+            var chinese = getText(TaiwuLanguage.Chinese, value);
+            Assert.False(string.IsNullOrWhiteSpace(english));
+            Assert.False(string.IsNullOrWhiteSpace(chinese));
+            Assert.NotEqual(english, chinese);
+        }
     }
 
     [GeneratedRegex("<[^>]+>")]

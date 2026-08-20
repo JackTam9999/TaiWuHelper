@@ -158,3 +158,32 @@ The immutable helper catalogue predates the installed GameData build. The test
 therefore proves source stability and execution-context availability only. The
 synthetic tactical scenario remains pinned to the older verified-rule version,
 and production must return an unsupported result for the current build.
+
+### Epic 8 completion verification
+
+E8-012 retains two opt-in guarded checks:
+
+```powershell
+$env:TAIWU_INTEGRATION_SAVE_PATH = '<path-to-current-local.sav>'
+dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.IntegrationTests.csproj -c Release --no-restore -- --filter-class '*TacticalCombatEvidenceIntegrationTests*' --filter-class '*TacticalExecutionContextIntegrationTests*'
+```
+
+Without the environment variable, both tests record explicit E8-000/E8-004
+skip reasons and perform no source read. With an authorized local save, they
+verify guarded repeatable reads, cancellation, stable projection, seven-source
+non-interference, and the exact unsupported-version result for the current
+runtime. They never print or commit the save path, hashes, identities, or raw
+content.
+
+The retained E8-000 representative evidence records a passing 30-second cold
+budget and 3-second warm unchanged-revision budget, with 7 of 7 guarded files
+unchanged. These are the production archive-read budgets. The separate 20.4-
+second and 13.6-second isolated inspector timings include process startup and
+are not used as cache budgets.
+
+In-memory bounded-search verification records two candidate-projection cache
+misses with at least one reuse hit and at most four total accesses for the
+two-candidate fixture. The feasibility cache records four canonical misses and
+zero false hits. Application work counts remain exactly one snapshot read, rule
+resolution, context projection, discovery, search, score, and plan compilation
+per successful request.

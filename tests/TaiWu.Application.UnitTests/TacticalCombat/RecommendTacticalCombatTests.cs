@@ -2,6 +2,8 @@ using NSubstitute;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.TacticalCombat;
 using TaiWu.Domain.CombatRecommendations;
+using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.LoadoutComparisons;
 using TaiWu.Domain.TacticalCombat;
 using Xunit;
 
@@ -47,9 +49,129 @@ public sealed class RecommendTacticalCombatTests
         Assert.Equal(1, result.WorkCounts.Searches);
         Assert.Equal(1, result.WorkCounts.Scores);
         Assert.Equal(1, result.WorkCounts.PlanCompilations);
+        var tacticalSkills = Enum.GetValues<SkillCategory>()
+            .SelectMany(category => result.CompiledPlan.SelectedLoadout
+                .Candidate.Loadout.Proposal.Skills.Get(category))
+            .Order()
+            .ToArray();
+        var comparisonColumn = Assert.IsType<LoadoutComparisonColumn>(
+            result.LegacyComparison.GetPolicy(result.LegacyRecommendation
+                .RequestedPolicy));
+        if (comparisonColumn.Loadout is { } comparisonLoadout)
+        {
+            var comparisonSkills = comparisonLoadout.Categories
+                .SelectMany(category => category.Skills)
+                .Where(skill => skill.Membership.IsAvailable
+                    && skill.Membership.Value is
+                        LoadoutComparisonMembership.Retained
+                        or LoadoutComparisonMembership.Added)
+                .Select(skill => skill.Identity.SkillId)
+                .Order()
+                .ToArray();
+            Assert.Equal(tacticalSkills, comparisonSkills);
+            Assert.True(comparisonLoadout.GenericSlotAllocation.IsAvailable);
+            Assert.Equal(
+                result.CompiledPlan.SelectedLoadout.Candidate.Loadout.Proposal
+                    .GenericSlotAllocation,
+                comparisonLoadout.GenericSlotAllocation.Value);
+        }
+        else
+        {
+            Assert.NotEqual(
+                LoadoutComparisonColumnStatus.Available,
+                comparisonColumn.Status);
+            Assert.NotNull(comparisonColumn.Diagnostic);
+        }
         await fixture.Reader.Received(1).ReadAsync(
             fixture.SnapshotRequest,
             TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task Repeated_and_shuffled_requests_retain_every_semantic_identity()
+    {
+        var fixture = Fixture();
+        var context = fixture.Request.SearchRequest.ContextRequest;
+        var shuffledContext = new TacticalExecutionContextReadRequest(
+            context.SnapshotRequest,
+            context.TargetGoalCodes.Reverse(),
+            context.Evidence.Reverse(),
+            context.Proposal);
+        var shuffledRequest = new TacticalCombatRecommendationRequest(
+            fixture.Request.PlayerCharacterId,
+            fixture.Request.Policy,
+            new TacticalLoadoutSearchReadRequest(
+                shuffledContext,
+                fixture.Request.SearchRequest.Bounds,
+                fixture.Request.SearchRequest.DiscoveryLimits,
+                fixture.Request.SearchRequest.IrrelevanceProofs.Reverse(),
+                fixture.Request.SearchRequest.DominanceProofs.Reverse()),
+            fixture.Request.LayeringProofs.Reverse(),
+            fixture.Request.TriggerObservations.Reverse(),
+            fixture.Request.FinishProofs.Reverse());
+        var token = TestContext.Current.CancellationToken;
+
+        var first = await fixture.Subject.ExecuteAsync(fixture.Request, token);
+        var repeated = await fixture.Subject.ExecuteAsync(
+            fixture.Request,
+            token);
+        var shuffled = await fixture.Subject.ExecuteAsync(
+            shuffledRequest,
+            token);
+
+        foreach (var result in new[] { repeated, shuffled })
+        {
+            Assert.Equal(first.Status, result.Status);
+            Assert.Equal(
+                first.Identity!.SemanticFingerprint,
+                result.Identity!.SemanticFingerprint);
+            Assert.Equal(
+                first.Identity.TargetChainFingerprint,
+                result.Identity.TargetChainFingerprint);
+            Assert.Equal(
+                first.Context!.Context.SemanticFingerprint,
+                result.Context!.Context.SemanticFingerprint);
+            Assert.Equal(
+                first.RuleResolution!.RuleSetFingerprint,
+                result.RuleResolution!.RuleSetFingerprint);
+            Assert.Equal(
+                first.Discovery!.SemanticFingerprint,
+                result.Discovery!.SemanticFingerprint);
+            Assert.Equal(
+                first.Search!.SemanticFingerprint,
+                result.Search!.SemanticFingerprint);
+            Assert.Equal(
+                first.Search.Coverage.Fingerprint,
+                result.Search.Coverage.Fingerprint);
+            Assert.Equal(
+                first.Scoring!.SemanticFingerprint,
+                result.Scoring!.SemanticFingerprint);
+            Assert.Equal(
+                first.CompiledPlan!.SelectedLoadoutFingerprint,
+                result.CompiledPlan!.SelectedLoadoutFingerprint);
+            Assert.Equal(
+                first.CompiledPlan.SemanticFingerprint,
+                result.CompiledPlan.SemanticFingerprint);
+            Assert.Equal(
+                first.LegacyComparison!.ComparisonReference,
+                result.LegacyComparison!.ComparisonReference);
+            Assert.Equal(
+                first.LegacyRecommendation!.Styles
+                    .SelectMany(style => style.Scoring.RankedCandidates)
+                    .Select(item => item.Candidate.StableKey),
+                result.LegacyRecommendation!.Styles
+                    .SelectMany(style => style.Scoring.RankedCandidates)
+                    .Select(item => item.Candidate.StableKey));
+            Assert.Equal(
+                first.Search.FeasibleResults.Select(item => item.StableKey),
+                result.Search.FeasibleResults.Select(item => item.StableKey));
+            Assert.Equal(
+                first.CompiledPlan.Plan.Stages.Select(item => item.Stage),
+                result.CompiledPlan.Plan.Stages.Select(item => item.Stage));
+            Assert.Equal(first.Search.Coverage.Caches,
+                result.Search.Coverage.Caches);
+            Assert.Equal(first.WorkCounts, result.WorkCounts);
+        }
     }
 
     [Fact]

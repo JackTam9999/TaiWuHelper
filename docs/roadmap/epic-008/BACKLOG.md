@@ -671,7 +671,7 @@ than duplicating the loadout, target strategy, or comparison surfaces.
 
 ### E8-012 — Verify evidence fidelity, safety, bounds, determinism, and parity
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -684,41 +684,46 @@ search, scoring, plan, source, performance, and presentation contracts.
 
 #### Acceptance criteria
 
-- [ ] Domain tests cover state, transition, role, requirement, candidate,
+- [x] Domain tests cover state, transition, role, requirement, candidate,
       pruning, score, plan, branch, conflict, ordering, and fingerprint
       invariants.
-- [ ] Application tests prove one coherent snapshot, bounded reuse, exact call
+- [x] Application tests prove one coherent snapshot, bounded reuse, exact call
       counts, cancellation, observation replacement, and plan/comparison parity.
-- [ ] Infrastructure tests prove guarded reads, standalone safety, source
+- [x] Infrastructure tests prove guarded reads, standalone safety, source
       non-interference, stable projection, and unsupported runtime-dependent
       facts.
-- [ ] API and Presentation retain every unavailable, conflict, rejection,
+- [x] API and Presentation retain every unavailable, conflict, rejection,
       pruning, truncation, score, and plan state.
-- [ ] Localization coverage is exhaustive for typed Epic 8 keys and raw stable
+- [x] Localization coverage is exhaustive for typed Epic 8 keys and raw stable
       identities are not leaked as copy.
-- [ ] Semantic architecture tests forbid localized mechanical matching,
+- [x] Semantic architecture tests forbid localized mechanical matching,
       unbounded search, filesystem paths in contracts, process access,
       screenshots, uploads, persistence, network/game control, and mutation.
-- [ ] Repeated identical requests produce identical chain, candidate, pruning,
+- [x] Repeated identical requests produce identical chain, candidate, pruning,
       search, score, loadout, plan, comparison, ordering, and diagnostic
       fingerprints.
-- [ ] Shuffled equivalent inputs produce the same result and every configured
+- [x] Shuffled equivalent inputs produce the same result and every configured
       bound has deterministic fixture coverage.
-- [ ] Safe, Balanced, and Aggressive remain distinct under complete and
+- [x] Safe, Balanced, and Aggressive remain distinct under complete and
       unavailable-damage fixtures.
-- [ ] Cold and warm local performance budgets and cache-reuse counts are
+- [x] Cold and warm local performance budgets and cache-reuse counts are
       recorded from E8-000 evidence.
-- [ ] English and Traditional Chinese wide/narrow rendering expose the same
+- [x] English and Traditional Chinese wide/narrow rendering expose the same
       facts and keyboard path.
-- [ ] Release build has zero warnings and the full non-opt-in suite passes.
-- [ ] Guarded local tests record explicit skips when source evidence is
+- [x] Release build has zero warnings and the full non-opt-in suite passes.
+- [x] Guarded local tests record explicit skips when source evidence is
       unavailable.
-- [ ] Every Epic 8 acceptance criterion links to implementation or evidence.
+- [x] Every Epic 8 acceptance criterion links to implementation or evidence.
 
-#### Planned evidence
+#### Evidence
 
-- `docs/reviews/E8-012-automated-verification.md`.
-- Updated domain-rule coverage and local-integration documentation.
+- [E8-012 automated verification](../../reviews/E8-012-automated-verification.md).
+- Updated [Domain rule coverage](../../testing/DOMAIN-RULE-COVERAGE.md#epic-8-tactical-combat-rules)
+  and [local integration guidance](../../testing/LOCAL-GAMEDATA-INTEGRATION-TESTS.md#epic-8-completion-verification).
+- Focused tactical verification: 97 Domain, 25 Application, 34 API/Presentation,
+  and 6 architecture tests passed; 2 guarded local tests skipped explicitly.
+- Release build: 0 warnings and 0 errors; full suite: 1,595 total, 1,578
+  passed, 0 failed, and 17 expected guarded-local skips.
 
 ### E8-013 — Validate the golden tactical plan and close Epic 8
 

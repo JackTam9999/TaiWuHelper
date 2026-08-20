@@ -375,37 +375,37 @@ source hashes prove non-interference.
 
 ## Epic acceptance criteria
 
-- [ ] E8-000 records exact versioned evidence and selects or narrows one
+- [x] E8-000 records exact versioned evidence and selects or narrows one
       representative tactical vertical before production rules are added.
-- [ ] Target mechanics are represented as typed causal facts and transitions,
+- [x] Target mechanics are represented as typed causal facts and transitions,
       not a flat name-derived list or combat simulation.
-- [ ] Missing, unsupported, or conflicting transitions and execution facts
+- [x] Missing, unsupported, or conflicting transitions and execution facts
       never become satisfied requirements or optimistic defaults.
-- [ ] The complete learned-skill snapshot is considered, while only exact
+- [x] The complete learned-skill snapshot is considered, while only exact
       verified roles and effects enter candidate search.
-- [ ] Every candidate continues to pass the existing ownership, mastery,
+- [x] Every candidate continues to pass the existing ownership, mastery,
       direction, breakthrough, effect, backlash, role, inner-power, cost, and
       capacity hard gates.
-- [ ] Search is deterministic, cancellable, bounded, target-aware, and explicit
+- [x] Search is deterministic, cancellable, bounded, target-aware, and explicit
       about candidate, pruning, exploration, time, and result coverage.
-- [ ] Score components preserve unavailable states and do not double-count
+- [x] Score components preserve unavailable states and do not double-count
       duplicate flat threat coverage or automatically reward unused capacity.
-- [ ] Safe, Balanced, and Aggressive remain visibly and behaviorally distinct
+- [x] Safe, Balanced, and Aggressive remain visibly and behaviorally distinct
       under the supported evidence matrix.
-- [ ] The tactical plan covers supported preparation, opening, trigger,
+- [x] The tactical plan covers supported preparation, opening, trigger,
       recovery, finish, and fallback stages with typed conditions and evidence.
-- [ ] Every instruction is information-only and agrees with the selected
+- [x] Every instruction is information-only and agrees with the selected
       feasible loadout, comparison, and manual preparation steps.
-- [ ] One immutable request snapshot supplies the complete result; observation
+- [x] One immutable request snapshot supplies the complete result; observation
       apply/clear replaces every dependent result atomically.
-- [ ] API and UI preserve every evidence, unavailable, conflict, search, score,
+- [x] API and UI preserve every evidence, unavailable, conflict, search, score,
       and plan state without exposing machine paths or proprietary raw content.
-- [ ] The UI is bilingual, responsive, keyboard accessible, concise, and does
+- [x] The UI is bilingual, responsive, keyboard accessible, concise, and does
       not rely on color or a wide causal graph.
-- [ ] Automated and representative manual verification prove determinism,
+- [x] Automated and representative manual verification prove determinism,
       bounded behavior, source non-interference, and the selected scenario's
       tactical invariants.
-- [ ] No result claims a probability of victory or introduces game control.
+- [x] No result claims a probability of victory or introduces game control.
 - [ ] The product owner records the Epic 8 completion decision.
 
 ## Risks and mitigations

@@ -261,6 +261,10 @@ public sealed class TacticalCombatScorerTests
             fixture,
             RecommendationPolicy.Aggressive,
             finishProofs: [proof]);
+        var balanced = Score(
+            fixture,
+            RecommendationPolicy.Balanced,
+            finishProofs: [proof]);
 
         Assert.Equal("267:DIRECT", safe.RankedCandidates[0].Candidate.StableKey);
         Assert.Equal(
@@ -272,6 +276,42 @@ public sealed class TacticalCombatScorerTests
         Assert.Equal(
             "AGGRESSIVE_IS_NOT_VICTORY_OR_DAMAGE_PREDICTION",
             aggressive.PolicyLimitationIdentity);
+        Assert.Equal(
+            3,
+            new[] { safe, balanced, aggressive }
+                .Select(item => item.SemanticFingerprint)
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+    }
+
+    [Fact]
+    public void Policies_remain_distinct_when_finish_evidence_is_unavailable()
+    {
+        var fixture = FinishFixture(shuffleSkills: false);
+        var results = Enum.GetValues<RecommendationPolicy>()
+            .Select(policy => Score(fixture, policy))
+            .ToArray();
+
+        Assert.Equal(
+            Enum.GetValues<RecommendationPolicy>().Length,
+            results.Select(item => item.SemanticFingerprint)
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+        Assert.Equal(
+            Enum.GetValues<RecommendationPolicy>().Length,
+            results.Select(item => item.PolicyLimitationIdentity)
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+        Assert.All(
+            results.SelectMany(item => item.RankedCandidates),
+            candidate =>
+            {
+                var finish = candidate.Get(
+                    TacticalScoreComponentKind.FinishPath);
+                Assert.False(finish.IsAvailable);
+                Assert.Null(finish.AppliedWeight);
+                Assert.Null(finish.Contribution);
+            });
     }
 
     [Fact]

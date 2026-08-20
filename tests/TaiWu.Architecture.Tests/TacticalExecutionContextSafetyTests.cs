@@ -4,6 +4,7 @@ using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.TacticalCombat;
 using TaiWu.Domain.TacticalCombat;
 using TaiWu.Infrastructure;
+using TaiWuAPI.Contracts.CombatRecommendations;
 using Xunit;
 
 namespace TaiWu.Architecture.Tests;
@@ -13,16 +14,33 @@ public sealed class TacticalExecutionContextSafetyTests
     private static readonly string[] ForbiddenCapabilityTokens =
     [
         "File.Write",
+        "File.Read",
         "File.OpenWrite",
         "File.Delete",
+        "FileStream",
         "Directory.CreateDirectory",
         "Directory.Enumerate",
         "Directory.GetFiles",
         "SqliteConnection",
         "SQLiteConnection",
         "HttpClient",
+        "WebRequest",
+        "NetworkStream",
+        "TcpClient",
+        "UdpClient",
+        "Socket",
         "Process.Start",
         "Process.GetProcess",
+        "Screenshot",
+        "ScreenCapture",
+        "Upload",
+        "SaveChanges",
+        "ExecuteGame",
+        "EquipSkill",
+        "ApplyLoadout",
+        "ControlGame",
+        "SendCommand",
+        "RecordOutcome",
         "DllImport",
         "SendInput",
         "Harmony",
@@ -35,22 +53,7 @@ public sealed class TacticalExecutionContextSafetyTests
         var root = FindRepositoryRoot();
         var files = Directory.EnumerateFiles(
                 Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
-                "TacticalExecution*.cs")
-            .Concat(Directory.EnumerateFiles(
-                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
-                "TacticalCandidate*.cs"))
-            .Concat(Directory.EnumerateFiles(
-                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
-                "TacticalLoadout*.cs"))
-            .Concat(Directory.EnumerateFiles(
-                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
-                "TacticalScor*.cs"))
-            .Concat(Directory.EnumerateFiles(
-                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
-                "TacticalCombatPlan*.cs"))
-            .Concat(Directory.EnumerateFiles(
-                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
-                "TacticalPlan*.cs"))
+                "*.cs")
             .Concat(Directory.EnumerateFiles(
                 Path.Combine(
                     root,
@@ -68,6 +71,85 @@ public sealed class TacticalExecutionContextSafetyTests
                 ForbiddenCapabilityTokens,
                 token => source.Contains(token, StringComparison.Ordinal));
         }
+    }
+
+    [Fact]
+    public void Tactical_semantics_do_not_depend_on_localized_or_display_text()
+    {
+        var root = FindRepositoryRoot();
+        var files = Directory.EnumerateFiles(
+                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
+                "*.cs")
+            .Concat(Directory.EnumerateFiles(
+                Path.Combine(root, "src", "TaiWu.Application", "TacticalCombat"),
+                "*.cs"))
+            .ToArray();
+        var forbidden = new[]
+        {
+            "TaiwuLanguage",
+            "BilingualText",
+            "Localized",
+            "CurrentCulture",
+            "DisplayName",
+            "Description"
+        };
+
+        Assert.NotEmpty(files);
+        foreach (var file in files)
+        {
+            var source = File.ReadAllText(file);
+            Assert.DoesNotContain(
+                forbidden,
+                token => source.Contains(token, StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void Tactical_public_contracts_have_bounds_and_no_machine_payloads()
+    {
+        var boundedRequests = new[]
+        {
+            typeof(TacticalLoadoutSearchRequest),
+            typeof(TacticalLoadoutSearchReadRequest)
+        };
+        Assert.All(
+            boundedRequests,
+            requestType => Assert.All(
+                requestType.GetConstructors(),
+                constructor => Assert.Contains(
+                    constructor.GetParameters(),
+                    parameter => parameter.ParameterType
+                        == typeof(TacticalSearchBounds))));
+
+        var contractTypes = typeof(TacticalSearchBounds).Assembly.GetTypes()
+            .Where(type => type.Namespace == "TaiWu.Domain.TacticalCombat")
+            .Concat(typeof(TacticalCombatResponse).Assembly.GetTypes()
+                .Where(type => type.Namespace
+                        == "TaiWuAPI.Contracts.CombatRecommendations"
+                    && type.Name.StartsWith(
+                        "Tactical",
+                        StringComparison.Ordinal)))
+            .ToArray();
+        var forbiddenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Path",
+            "FilePath",
+            "FileName",
+            "Payload",
+            "RawPayload",
+            "RawText",
+            "Screenshot",
+            "Upload",
+            "Process"
+        };
+
+        Assert.DoesNotContain(
+            contractTypes.SelectMany(type => type.GetProperties(
+                BindingFlags.Instance | BindingFlags.Public)),
+            property => forbiddenNames.Contains(property.Name)
+                || property.PropertyType == typeof(FileInfo)
+                || property.PropertyType == typeof(DirectoryInfo)
+                || typeof(Stream).IsAssignableFrom(property.PropertyType));
     }
 
     [Fact]
