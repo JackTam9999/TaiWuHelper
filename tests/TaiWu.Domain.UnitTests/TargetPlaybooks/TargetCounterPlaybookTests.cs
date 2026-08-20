@@ -4,6 +4,7 @@ using TaiWu.Domain.CombatThreats;
 using TaiWu.Domain.TargetArchetypes;
 using TaiWu.Domain.TargetPlaybooks;
 using TaiWu.Domain.TargetProfiles;
+using TaiWu.Domain.TacticalCombat;
 using Xunit;
 
 namespace TaiWu.Domain.UnitTests.TargetPlaybooks;
@@ -385,6 +386,28 @@ public sealed class TargetCounterPlaybookTests
         Assert.DoesNotContain("TargetCharacterId", exposedNames);
         Assert.DoesNotContain("Loadout", exposedNames);
         Assert.DoesNotContain("TargetName", exposedNames);
+    }
+
+    [Fact]
+    public void Tactical_rules_use_only_delivered_magic_sound_playbook_goals()
+    {
+        var deliveredThreats = VerifiedTargetCounterPlaybooks
+            .Initial
+            .Playbooks
+            .Where(playbook => playbook.Identity.Archetype.Code is
+                "MIND_RESONANCE_BASELINE"
+                or "DEFEAT_MARK_RESET_OVERLAY")
+            .SelectMany(playbook => playbook.Goals)
+            .SelectMany(goal => goal.Threats)
+            .Select(threat => threat.Code)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal);
+
+        Assert.Equal(
+            deliveredThreats,
+            VerifiedTacticalCombatRuleSets
+                .HistoricalMagicSound
+                .SupportedTargetGoalCodes);
     }
 
     private static TargetCounterPlaybook Playbook(string archetypeCode) =>

@@ -83,3 +83,8 @@ On 2026-07-30:
 Only the 13 selected descriptions and their source keys are retained in Domain
 code. No complete local configuration file, GameData binary, save content,
 generated report, machine-specific path, or file fingerprint is committed.
+
+Epic 8 reuses these exact entries through versioned tactical role rules. Raw
+names and descriptions remain display evidence and are never parsed to create
+a transition or role. See
+[Versioned tactical transition and skill-role rules](./TACTICAL-COMBAT-RULES.md).

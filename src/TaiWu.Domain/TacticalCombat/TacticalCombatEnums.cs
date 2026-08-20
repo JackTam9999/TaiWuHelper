@@ -74,6 +74,7 @@ public enum TacticalRoleKind
     Interrupt,
     Mitigation,
     Recovery,
+    DamageChannel,
     Finish,
     Fallback
 }

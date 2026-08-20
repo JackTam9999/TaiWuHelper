@@ -1,5 +1,6 @@
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.TacticalCombat;
 using Xunit;
 
 namespace TaiWu.Domain.UnitTests.CombatEffects;
@@ -255,6 +256,26 @@ public sealed class CombatEffectCatalogTests
                 skillId: 1,
                 PracticeDirection.Direct,
                 rawEffectId: -1));
+    }
+
+    [Fact]
+    public void Tactical_roles_reuse_exact_verified_catalog_entries()
+    {
+        Assert.All(
+            VerifiedTacticalCombatRuleSets.HistoricalMagicSound.Roles,
+            role =>
+            {
+                var resolution = VerifiedCombatEffectCatalogs.GoldenAntiMagic
+                    .Resolve(
+                        VerifiedTacticalCombatRuleSets.HistoricalGameDataVersion,
+                        role.SkillId,
+                        role.Direction,
+                        role.RawEffectId);
+
+                Assert.True(resolution.IsRecognized);
+                Assert.Same(resolution.CatalogEntry, role.Effect);
+                Assert.Equal(role.Effect.Mechanics, role.RequiredMechanics);
+            });
     }
 
     private static CombatEffectCatalog CreateCatalog(

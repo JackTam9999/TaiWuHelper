@@ -242,7 +242,7 @@ conditional manual plan.
 
 ### E8-003 — Define versioned causal-transition and tactical-role rules
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -256,28 +256,28 @@ creating a name-derived parallel catalogue.
 
 #### Acceptance criteria
 
-- [ ] Every transition and role rule has a stable identity, semantic version,
+- [x] Every transition and role rule has a stable identity, semantic version,
       supported source versions, evidence requirements, timing, and limitation.
-- [ ] Rules can represent only E8-000-approved purposes such as cast
+- [x] Rules can represent only E8-000-approved purposes such as cast
       suppression, power or duration reduction, resource preservation,
       recovery, damage-channel choice, or finish-window support.
-- [ ] Exact skill ID, practice direction, raw effect ID, GameData version, and
+- [x] Exact skill ID, practice direction, raw effect ID, GameData version, and
       typed mechanics are required for every skill role.
-- [ ] A shared counter exposes only roles and target transitions relevant to
+- [x] A shared counter exposes only roles and target transitions relevant to
       the selected exact-target goals.
-- [ ] Several evidence prerequisites require the requested state on every
+- [x] Several evidence prerequisites require the requested state on every
       identity rather than accepting one partial match.
-- [ ] Contrary exact-target evidence overrides a broad playbook rule; absence
+- [x] Contrary exact-target evidence overrides a broad playbook rule; absence
       alone does not prove a transition false.
-- [ ] Unsupported versions return typed unsupported results rather than nearest
+- [x] Unsupported versions return typed unsupported results rather than nearest
       rules or stale fallback behavior.
-- [ ] Raw descriptions remain display evidence and cannot be parsed in Domain
+- [x] Raw descriptions remain display evidence and cannot be parsed in Domain
       matching, scoring, or planning.
-- [ ] Duplicate definitions, unknown references, invalid timing, and
+- [x] Duplicate definitions, unknown references, invalid timing, and
       inconsistent source versions are rejected.
-- [ ] Unit tests pin every delivered rule, interaction, and version boundary.
+- [x] Unit tests pin every delivered rule, interaction, and version boundary.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/TACTICAL-COMBAT-RULES.md`.
 - Updated effect, counter, playbook, and tactical-rule tests.

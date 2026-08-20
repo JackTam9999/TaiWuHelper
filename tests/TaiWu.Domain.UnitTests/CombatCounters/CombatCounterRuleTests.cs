@@ -1,6 +1,7 @@
 using TaiWu.Domain.CombatCounters;
 using TaiWu.Domain.CombatEffects;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.TacticalCombat;
 using Xunit;
 
 namespace TaiWu.Domain.UnitTests.CombatCounters;
@@ -275,6 +276,24 @@ public sealed class CombatCounterRuleTests
             () => new CombatCounterRuleSet(
                 "1.0.0+test",
                 [rule, rule]));
+    }
+
+    [Fact]
+    public void Tactical_shared_roles_reference_registered_counter_instances()
+    {
+        var registered = VerifiedCombatCounterRuleSets.GoldenMagicSound.Rules;
+        var tactical = VerifiedTacticalCombatRuleSets
+            .HistoricalMagicSound
+            .Roles
+            .Where(role => role.SharedCounter is not null)
+            .ToArray();
+
+        Assert.Equal(6, tactical.Length);
+        Assert.All(
+            tactical,
+            role => Assert.Contains(
+                registered,
+                counter => ReferenceEquals(counter, role.SharedCounter)));
     }
 
     private static CombatCounterAccessReport Evaluate(

@@ -87,3 +87,8 @@ Recommendation options keep this direction check strict by default. The
 presence of both raw Direct and Reverse effect IDs does not prove that the
 player can change practice direction. A manual direction change may be
 proposed only when separate current-player evidence explicitly permits it.
+
+Epic 8 wraps six of these exact rules with causal transitions, narrower
+exact-target goals, evidence prerequisites, execution costs, and recovery
+limitations. It does not modify or name-match the shared counter catalogue.
+See [Versioned tactical transition and skill-role rules](./TACTICAL-COMBAT-RULES.md).

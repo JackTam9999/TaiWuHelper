@@ -178,3 +178,9 @@ Focused Domain tests cover:
 - rejection of reconstructed or unregistered counter rules;
 - deterministic goal, option, evidence, archetype, and playbook ordering; and
 - absence of target identity and complete-loadout fields.
+
+Epic 8 consumes only the selected goal codes that survive exact-target
+evidence resolution. Contrary exact-target evidence overrides a broad
+playbook relationship; missing evidence leaves it incomplete rather than
+false. See
+[Versioned tactical transition and skill-role rules](./TACTICAL-COMBAT-RULES.md).
