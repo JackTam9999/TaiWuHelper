@@ -284,7 +284,7 @@ creating a name-derived parallel catalogue.
 
 ### E8-004 — Project one coherent tactical execution context
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -298,34 +298,34 @@ facts once per request.
 
 #### Acceptance criteria
 
-- [ ] One tactical request uses one stable save revision, one observation set,
+- [x] One tactical request uses one stable save revision, one observation set,
       one catalogue projection, and one compatible rule set.
-- [ ] Equipped and unlocked weapon types, usable combat styles, current or
+- [x] Equipped and unlocked weapon types, usable combat styles, current or
       opening distance, stance, breath, required resources, active defense and
       agility, inner power, category budgets, universal slots, and legendary
       costs are available only where E8-000 verified them.
-- [ ] Missing source fields create typed unknown or unsupported facts rather
+- [x] Missing source fields create typed unknown or unsupported facts rather
       than empty sets, zero values, or satisfied requirements.
-- [ ] Current facts and proposed-loadout facts have distinct types and origins.
-- [ ] The context identifies which facts are pre-combat configurable, manually
+- [x] Current facts and proposed-loadout facts have distinct types and origins.
+- [x] The context identifies which facts are pre-combat configurable, manually
       observable, fixed for the request, or unavailable at runtime-independent
       planning time.
-- [ ] Observation precedence retains conflicts and atomically replaces the
+- [x] Observation precedence retains conflicts and atomically replaces the
       complete tactical snapshot.
-- [ ] Repeated catalogue and source projection within one request is reused and
+- [x] Repeated catalogue and source projection within one request is reused and
       exact call counts are testable.
-- [ ] Cancellation is honored before and during bounded source and mapping
+- [x] Cancellation is honored before and during bounded source and mapping
       loops.
-- [ ] No raw GameData object, save path, proprietary payload, or process state
+- [x] No raw GameData object, save path, proprietary payload, or process state
       escapes Infrastructure.
-- [ ] Repeated stable reads produce identical semantic snapshots while capture
+- [x] Repeated stable reads produce identical semantic snapshots while capture
       time remains separate observation metadata.
-- [ ] Integration tests prove inspected source hashes and timestamps remain
+- [x] Integration tests prove inspected source hashes and timestamps remain
       unchanged.
-- [ ] Architecture tests forbid process, input, network/game-control, mutation,
+- [x] Architecture tests forbid process, input, network/game-control, mutation,
       and unbounded source-enumeration capabilities.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/TACTICAL-EXECUTION-CONTEXT.md`.
 - Infrastructure unit and guarded local integration tests.

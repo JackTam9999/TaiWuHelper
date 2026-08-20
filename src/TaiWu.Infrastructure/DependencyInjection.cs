@@ -6,6 +6,7 @@ using TaiWu.Application.CompanionCandidates;
 using TaiWu.Application.RegionStories;
 using TaiWu.Application.SaveGames;
 using TaiWu.Application.Targets;
+using TaiWu.Application.TacticalCombat;
 using TaiWu.Application.VillageWorkforce;
 using TaiWu.Infrastructure.Catalogue;
 using TaiWu.Infrastructure.SaveGames;
@@ -89,6 +90,9 @@ public static class DependencyInjection
                 provider.GetRequiredService<TaiwuGameTextResolver>(),
                 provider.GetRequiredService<TimeProvider>()));
         services.AddSingleton<ICombatSnapshotReader, TaiwuCombatSnapshotReader>();
+        services.AddSingleton<
+            IReadTacticalExecutionContext,
+            ReadTacticalExecutionContext>();
         services.AddSingleton<ICompanionCandidateSnapshotReader>(provider =>
             new TaiwuCompanionCandidateSnapshotReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),

@@ -47,10 +47,18 @@ public sealed record TacticalSkillRoleRuleMatch
 public sealed class TacticalCombatRuleResolution
 {
     internal TacticalCombatRuleResolution(
+        string gameDataVersion,
+        string ruleSetFingerprint,
         TacticalRuleSetResolutionStatus status,
         IEnumerable<TacticalTransitionRuleMatch> transitions,
         IEnumerable<TacticalSkillRoleRuleMatch> roles)
     {
+        GameDataVersion = TacticalCombatText.Stable(
+            gameDataVersion,
+            nameof(gameDataVersion));
+        RuleSetFingerprint = TacticalCombatText.Stable(
+            ruleSetFingerprint,
+            nameof(ruleSetFingerprint));
         Status = TacticalCombatText.Defined(status, nameof(status));
         Transitions = [.. transitions.OrderBy(
             item => item.Rule.Identity.Code,
@@ -65,6 +73,10 @@ public sealed class TacticalCombatRuleResolution
                 "An unsupported tactical rule version cannot expose stale matches.");
         }
     }
+
+    public string GameDataVersion { get; }
+
+    public string RuleSetFingerprint { get; }
 
     public TacticalRuleSetResolutionStatus Status { get; }
 
@@ -93,6 +105,8 @@ internal static class TacticalCombatRuleResolver
                 StringComparer.Ordinal))
         {
             return new TacticalCombatRuleResolution(
+                version,
+                rules.Fingerprint,
                 TacticalRuleSetResolutionStatus.UnsupportedGameDataVersion,
                 [],
                 []);
@@ -145,6 +159,8 @@ internal static class TacticalCombatRuleResolver
             .ToArray();
 
         return new TacticalCombatRuleResolution(
+            version,
+            rules.Fingerprint,
             TacticalRuleSetResolutionStatus.Resolved,
             transitionMatches,
             roleMatches);
