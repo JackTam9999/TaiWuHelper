@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Active — awaiting product-owner completion decision |
+| Status | Complete |
 | Milestone | 7 |
 | Target release | TBD |
 | Last updated | 2026-08-20 |
@@ -369,7 +369,7 @@ prove stable identity and ordering; source hashes prove non-interference.
 - [x] Automated and representative manual verification prove non-interference.
 - [x] Deferred recruitment, development, whole-village optimization, library,
       persistence, and game-control work remains explicitly outside the epic.
-- [ ] The product owner records the Epic 7 completion decision.
+- [x] The product owner records the Epic 7 completion decision.
 
 ## Risks and mitigations
 
@@ -389,8 +389,8 @@ prove stable identity and ordering; source hashes prove non-interference.
 ## Completion decision
 
 Technical, guarded representative, independent, and wide/narrow in-app browser
-verification are complete. Only explicit product-owner approval remains
-pending in [E7-011](../../reviews/E7-011-manual-verification.md).
+verification are complete. The product owner approved completion on 2026-08-20,
+as recorded in [E7-011](../../reviews/E7-011-manual-verification.md).
 
 ## Delivery reference
 

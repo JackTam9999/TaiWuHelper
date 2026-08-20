@@ -489,7 +489,7 @@ and presentation contracts.
 
 ### E7-011 — Validate the representative assignment and close Epic 7
 
-**Status:** Awaiting product-owner completion decision
+**Status:** Complete
 
 **Priority:** P1
 
@@ -515,7 +515,7 @@ deferred work, and request the product-owner completion decision.
       and game-control mechanics remain explicit future work.
 - [x] Independent Epic 7 closure review is complete and every actionable
       finding is corrected and reverified.
-- [ ] The product owner records the Epic 7 completion decision.
+- [x] The product owner records the Epic 7 completion decision.
 
 #### Evidence
 
@@ -556,7 +556,7 @@ deferred work, and request the product-owner completion decision.
 
 ### E7-R4 — Restore descriptive context and close review gaps
 
-**Status:** Complete — automated and visual; E7-011 retains final product-owner acceptance
+**Status:** Complete
 
 - [x] Show six attributes and martial/life aptitudes as display-only context.
 - [x] Add representative-scale rendering and single-read regression coverage.

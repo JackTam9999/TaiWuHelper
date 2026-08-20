@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Awaiting product-owner completion decision |
+| Status | Complete |
 | Evidence date | 2026-08-20 |
 | Epic | [EPIC-007](../roadmap/epic-007/EPIC.md) |
 | Backlog item | [E7-011](../roadmap/epic-007/BACKLOG.md#e7-011--validate-the-representative-assignment-and-close-epic-7) |
@@ -23,8 +23,8 @@ The prescribed in-app browser now completes successfully. English wide and
 Traditional Chinese narrow visual confirmation, native comparison selection,
 progressive evidence, responsive labels, horizontal-overflow checks, and focus
 restoration after clearing comparison all pass against the live configured-save
-route. The product owner must still explicitly accept or reject Epic 7 closure.
-No other implementation or verification blocker remains.
+route. The product owner approved Epic 7 closure on 2026-08-20. No implementation
+or verification blocker remains.
 
 ## Independent-review corrections
 
@@ -183,7 +183,7 @@ explicitly and passed when run with the trusted local configuration.
 | Manual checklist cannot trigger a change | Domain origin/checklist contracts, Razor text, capability scans | Verified |
 | Automated and representative non-interference | [E7-010](./E7-010-automated-verification.md) and guarded E7-011 workflow | Verified |
 | Deferred mechanics remain outside scope | Deferred-scope section below and capability scan | Verified |
-| Product-owner decision | This review | Pending explicit input |
+| Product-owner decision | Approved on 2026-08-20 | Verified |
 
 ## Deferred mechanics and review decision
 
@@ -207,7 +207,6 @@ production finding.
 
 ## Product-owner decision
 
-Pending explicit approval. Approval will close E7-011 and Epic 7 without adding
+Approved on 2026-08-20. This decision closes E7-011 and Epic 7 without adding
 any deferred mutation, persistence, optimization, recruitment, development,
-library,
-automation, or game-control capability.
+library, automation, or game-control capability.
