@@ -99,6 +99,9 @@ public static class DependencyInjection
         services.AddSingleton<
             ISearchTacticalLoadouts,
             SearchTacticalLoadouts>();
+        services.AddSingleton<
+            ICompileTacticalCombatPlan,
+            CompileTacticalCombatPlan>();
         services.AddSingleton<ICompanionCandidateSnapshotReader>(provider =>
             new TaiwuCompanionCandidateSnapshotReader(
                 provider.GetRequiredService<TaiwuArchiveReadSession>(),

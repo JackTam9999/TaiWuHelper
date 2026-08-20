@@ -793,7 +793,7 @@ public static class TacticalCandidateDiscovery
             TacticalEvidenceSourceKind.SaveSnapshot,
             "LEARNED_SKILL_ATLAS",
             resolution.GameDataVersion,
-            "TACTICAL_CANDIDATE_DISCOVERY@1.0.0",
+            VerifiedTacticalCombatRuleSets.RuleVersion,
             $"SKILL_{skillId}_{TacticalCombatText.EnumKey(direction)}");
         return
         [

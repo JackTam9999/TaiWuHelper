@@ -472,7 +472,7 @@ unused capacity.
 
 ### E8-008 — Compile a conditional preparation-to-fallback battle plan
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -486,35 +486,35 @@ so it remains reviewable.
 
 #### Acceptance criteria
 
-- [ ] The plan is built only from the selected accepted feasible loadout,
+- [x] The plan is built only from the selected accepted feasible loadout,
       tactical snapshot, applicable transitions, and score evidence.
-- [ ] Preparation covers supported manual direction, breakthrough, equipment,
+- [x] Preparation covers supported manual direction, breakthrough, equipment,
       capacity, universal-slot, weapon, and context checks.
-- [ ] Opening covers supported active defense, agility, resource, distance, and
+- [x] Opening covers supported active defense, agility, resource, distance, and
       first-use choices.
-- [ ] Trigger steps name observable or manually confirmable target states,
+- [x] Trigger steps name observable or manually confirmable target states,
       required player state, manual response, expected purpose, and evidence.
-- [ ] Recovery steps address the selected counter's verified self-lock,
+- [x] Recovery steps address the selected counter's verified self-lock,
       resource depletion, unmet trigger, or failed condition where supported.
-- [ ] Finish steps require an exact supported window and feasible damage route;
+- [x] Finish steps require an exact supported window and feasible damage route;
       otherwise the plan exposes fallback-only or unsupported finish status.
-- [ ] Fallback branches state which condition failed or remained unknown and
+- [x] Fallback branches state which condition failed or remained unknown and
       select only separately verified feasible actions.
-- [ ] Every step retains plan stage, order, condition, requirement state,
+- [x] Every step retains plan stage, order, condition, requirement state,
       manual action, expected purpose, reason, evidence, limitations, and stable
       identity.
-- [ ] Unsupported stages remain explicit without placeholder actions.
-- [ ] The plan cannot introduce a skill, direction, role, allocation, or context
+- [x] Unsupported stages remain explicit without placeholder actions.
+- [x] The plan cannot introduce a skill, direction, role, allocation, or context
       absent from the selected candidate and snapshot.
-- [ ] The existing manual preparation plan and Epic 4 comparison agree with
+- [x] The existing manual preparation plan and Epic 4 comparison agree with
       every proposed loadout change.
-- [ ] Applying or clearing an observation atomically replaces chain, candidate,
+- [x] Applying or clearing an observation atomically replaces chain, candidate,
       score, plan, comparison, and fingerprints.
-- [ ] Tests cover the golden path, unavailable trigger, recovery branch,
+- [x] Tests cover the golden path, unavailable trigger, recovery branch,
       fallback-only finish, unsupported stage, comparison parity, observation
       lifecycle, and deterministic ordering.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/CONDITIONAL-TACTICAL-PLAN.md`.
 - Domain and Application plan-compilation tests.
