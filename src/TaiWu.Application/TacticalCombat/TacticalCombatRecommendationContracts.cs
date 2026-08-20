@@ -29,14 +29,14 @@ public enum TacticalCombatRecommendationStatus
 public sealed record TacticalCombatRecommendationRequest
 {
     public TacticalCombatRecommendationRequest(
-        int playerCharacterId,
+        int? playerCharacterId,
         RecommendationPolicy policy,
         TacticalLoadoutSearchReadRequest searchRequest,
         IEnumerable<TacticalLayeringProof>? layeringProofs = null,
         IEnumerable<TacticalTriggerObservability>? triggerObservations = null,
         IEnumerable<TacticalFinishPathProof>? finishProofs = null)
     {
-        if (playerCharacterId <= 0)
+        if (playerCharacterId is <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(playerCharacterId));
         }
@@ -74,7 +74,7 @@ public sealed record TacticalCombatRecommendationRequest
             nameof(finishProofs));
     }
 
-    public int PlayerCharacterId { get; }
+    public int? PlayerCharacterId { get; }
 
     public int TargetCharacterId => SearchRequest.ContextRequest
         .SnapshotRequest.TargetCharacterId;
@@ -231,10 +231,11 @@ public sealed record TacticalCombatRecommendationIdentity
 
     internal static string TargetChain(
         TacticalCombatRecommendationRequest request,
-        TacticalCombatRuleResolution resolution)
+        TacticalCombatRuleResolution resolution,
+        int playerCharacterId)
     {
         var canonical = new StringBuilder("TACTICAL_TARGET_CHAIN_V1\n")
-            .Append(request.PlayerCharacterId).Append('|')
+            .Append(playerCharacterId).Append('|')
             .Append(request.TargetCharacterId).Append('\n')
             .AppendJoin('|', request.SearchRequest.ContextRequest.TargetGoalCodes)
             .Append('\n');

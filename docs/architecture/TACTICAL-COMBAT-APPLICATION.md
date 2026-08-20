@@ -15,6 +15,12 @@ existing recommendation policy enum, an exact replacement set of tactical
 observations and proofs, and explicit discovery and search bounds. It does not
 accept display labels or infer mechanics from localized text.
 
+Trusted host adapters may omit the expected player identity when the configured
+snapshot source is itself the authority. The workflow then derives the player
+identity from the one snapshot read and records it in the result identity;
+explicit callers still receive a source-failure result when their expected
+player does not match.
+
 The orchestrator reads one `CombatSnapshot` and passes that same in-memory
 object through every downstream stage:
 

@@ -29,6 +29,7 @@ public sealed class RecommendTacticalCombat(
         TacticalLoadoutSearchResult? search = null;
         TacticalCombatScoringResult? scoring = null;
         TacticalCompiledCombatPlan? plan = null;
+        int? resolvedPlayerCharacterId = null;
 
         try
         {
@@ -37,7 +38,10 @@ public sealed class RecommendTacticalCombat(
                 request.SearchRequest.ContextRequest.SnapshotRequest,
                 cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
-            if (snapshot.Player.CharacterId != request.PlayerCharacterId
+            resolvedPlayerCharacterId = snapshot.Player.CharacterId;
+            if ((request.PlayerCharacterId.HasValue
+                    && snapshot.Player.CharacterId
+                        != request.PlayerCharacterId.Value)
                 || snapshot.Target.CharacterId != request.TargetCharacterId)
             {
                 return Result(
@@ -73,7 +77,7 @@ public sealed class RecommendTacticalCombat(
             var context = TacticalExecutionContextProjector.Project(
                 snapshot,
                 resolution,
-                contextRequest.Proposal,
+                contextRequest.Proposal ?? DefaultProposal(snapshot),
                 cancellationToken);
             contextRead = new TacticalExecutionContextReadResult(
                 context,
@@ -252,7 +256,8 @@ public sealed class RecommendTacticalCombat(
                         ?? contextRead.Context.ObservationRevisionFingerprint,
                     TacticalCombatRecommendationIdentity.TargetChain(
                         request,
-                        resolution),
+                        resolution,
+                        resolvedPlayerCharacterId!.Value),
                     resolution.RuleSetFingerprint,
                     search?.SemanticFingerprint
                         ?? discovery?.SemanticFingerprint,
@@ -284,6 +289,36 @@ public sealed class RecommendTacticalCombat(
                 == SnapshotDataSource.CurrentScreenObservation)
             .Select(item => (DateTimeOffset?)item.CapturedAtUtc)
             .Max();
+
+    private static TacticalExecutionProposal DefaultProposal(
+        CombatSnapshot snapshot)
+    {
+        var equippedSkills = Enum.GetValues<SkillCategory>()
+            .SelectMany(category =>
+                snapshot.Player.EquippedSkills.Get(category))
+            .Order()
+            .ToArray();
+        var equippedWeaponTypes = snapshot.Player.Equipment
+            .Where(item => item.Kind.IsAvailable
+                && item.Kind.Value == EquipmentKind.Weapon
+                && item.ItemSubtype.IsAvailable)
+            .Select(item => item.ItemSubtype.Value)
+            .Distinct()
+            .Order()
+            .ToArray();
+        return new TacticalExecutionProposal(
+            new CombatRequirementContext(
+                equippedWeaponTypes,
+                trickCounts: [],
+                SnapshotValue<int>.Unavailable(
+                    "Current combat distance was not supplied."),
+                resources: [],
+                unlockedWeaponTypeIds: [],
+                equippedSkills),
+            snapshot.Player.SlotBudgets,
+            snapshot.Player.GenericSlotAllocation,
+            legendaryCostAssignments: null);
+    }
 
     private static bool HasPartialEvidence(
         TacticalCombatRuleResolution resolution) =>

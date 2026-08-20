@@ -18,7 +18,8 @@ public sealed record CombatRecommendationResponse(
     InnerPowerStateResponse? InnerPowerState = null,
     TargetObservationResponse? TargetObservation = null,
     LoadoutComparisonResponse? Comparison = null,
-    TargetStrategyResponse? TargetStrategy = null);
+    TargetStrategyResponse? TargetStrategy = null,
+    TacticalCombatResponse? TacticalPlanning = null);
 
 public sealed record TargetObservationResponse(
     int TargetCharacterId,

@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using TaiWu.Application.Localization;
+using TaiWu.Application.TacticalCombat;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.CompanionCandidates;
 using TaiWu.Domain.CompanionRoles;
+using TaiWu.Domain.TacticalCombat;
 using TaiWuAPI.Configuration;
 using TaiWuAPI.Contracts.CompanionCandidates;
 using TaiWuAPI.Contracts.CombatRecommendations;
@@ -26,6 +28,14 @@ public sealed class ApiJsonContractTests
             JsonSerializer.Deserialize<VillageWorkforceApiStatus>(
                 "1",
                 Options()));
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<TacticalRuleEvidenceDisposition>(
+                "1",
+                Options()));
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<TacticalCombatRecommendationStatus>(
+                "1",
+                Options()));
     }
 
     [Theory]
@@ -38,6 +48,11 @@ public sealed class ApiJsonContractTests
     [InlineData(CandidateDisciplineDomain.Capability, "Capability")]
     [InlineData(CompanionRoleShortlistFilter.NeedsReview, "NeedsReview")]
     [InlineData(VillageWorkforceApiStatus.Partial, "Partial")]
+    [InlineData(TacticalRuleEvidenceScope.ExactTarget, "ExactTarget")]
+    [InlineData(TacticalEvidenceSourceKind.ConfirmedObservation,
+        "ConfirmedObservation")]
+    [InlineData(TacticalRuleEvidenceDisposition.Conflicting, "Conflicting")]
+    [InlineData(TacticalFinishDisposition.FallbackOnly, "FallbackOnly")]
     [InlineData(VillageWorkforceApiEvaluationState.Tied, "Tied")]
     public void Request_enum_tokens_are_pinned(object value, string token)
     {
@@ -65,7 +80,31 @@ public sealed class ApiJsonContractTests
             {
                 TargetCharacterId = 42,
                 Objective = RecommendationPolicy.Balanced,
-                Language = TaiwuLanguage.English
+                Language = TaiwuLanguage.English,
+                TacticalPlanning = new TacticalPlanningApiRequest
+                {
+                    Observations =
+                    [
+                        new TacticalRuleObservationApiRequest
+                        {
+                            Identity = "TARGET_MIND_CHAIN_APPLICABLE",
+                            Scope = TacticalRuleEvidenceScope.ExactTarget,
+                            Source = TacticalEvidenceSourceKind
+                                .ConfirmedObservation,
+                            Disposition = TacticalRuleEvidenceDisposition
+                                .Confirmed,
+                            EvidenceIdentity = "PUBLIC_OBSERVATION",
+                            ScopeIdentity = "EXACT_TARGET"
+                        }
+                    ],
+                    Bounds = new TacticalSearchBoundsApiRequest
+                    {
+                        MaximumOptions = 8,
+                        MaximumExploredCombinations = 100,
+                        MaximumElapsedMilliseconds = 2_000,
+                        MaximumResults = 10
+                    }
+                }
             },
             Options());
         var workforce = JsonSerializer.SerializeToDocument(
@@ -97,6 +136,16 @@ public sealed class ApiJsonContractTests
         Assert.Equal(
             "English",
             recommendation.RootElement.GetProperty("language").GetString());
+        var tactical = recommendation.RootElement.GetProperty(
+            "tacticalPlanning");
+        Assert.Equal(
+            "ExactTarget",
+            tactical.GetProperty("observations")[0]
+                .GetProperty("scope").GetString());
+        Assert.Equal(
+            100,
+            tactical.GetProperty("bounds")
+                .GetProperty("maximumExploredCombinations").GetInt32());
         Assert.Equal(
             VillageWorkforceApiTokens.Objective,
             workforce.RootElement.GetProperty("objective").GetString());

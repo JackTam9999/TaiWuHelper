@@ -26,6 +26,8 @@ public sealed class CombatRecommendationApiRequest
     }
 
     public TargetObservationApiRequest? TargetObservation { get; init; }
+
+    public TacticalPlanningApiRequest? TacticalPlanning { get; init; }
 }
 
 public sealed class TargetObservationApiRequest

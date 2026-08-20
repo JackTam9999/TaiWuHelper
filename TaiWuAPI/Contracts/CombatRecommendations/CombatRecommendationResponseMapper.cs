@@ -2,6 +2,7 @@ using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.LoadoutComparisons;
 using TaiWu.Application.Localization;
+using TaiWu.Application.TacticalCombat;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
 
@@ -9,6 +10,21 @@ namespace TaiWuAPI.Contracts.CombatRecommendations;
 
 public static class CombatRecommendationResponseMapper
 {
+    public static CombatRecommendationResponse Map(
+        TacticalCombatRecommendationResult result,
+        TaiwuLanguage language = TaiwuLanguage.English)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        var recommendation = result.LegacyRecommendation
+            ?? throw new ArgumentException(
+                "A tactical API response requires its coherent legacy recommendation.",
+                nameof(result));
+        return Map(recommendation, language) with
+        {
+            TacticalPlanning = TacticalCombatResponseMapper.Map(result)
+        };
+    }
+
     public static CombatRecommendationResponse Map(
         CombatLoadoutRecommendation recommendation,
         TaiwuLanguage language = TaiwuLanguage.English)

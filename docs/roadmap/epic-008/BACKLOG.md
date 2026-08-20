@@ -559,14 +559,14 @@ Application request/result boundary.
       no candidate, truncation, cancellation, observation lifecycle, and exact
       call counts.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/TACTICAL-COMBAT-APPLICATION.md`.
 - Application orchestration and regression tests.
 
 ### E8-010 — Expose typed tactical-planning API contracts
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -579,29 +579,29 @@ asking clients to infer mechanics or branch logic from display text.
 
 #### Acceptance criteria
 
-- [ ] Requests expose only stable target, policy, observation, and bounded-search
+- [x] Requests expose only stable target, policy, observation, and bounded-search
       controls supported by the Application contract.
-- [ ] Responses preserve snapshot summary, chain state, transitions, execution
+- [x] Responses preserve snapshot summary, chain state, transitions, execution
       context, candidate consideration, pruning, search coverage, score,
       selected loadout, tactical stages, branches, evidence, and diagnostics.
-- [ ] Every available, incomplete, unsupported, conflicting, rejected,
+- [x] Every available, incomplete, unsupported, conflicting, rejected,
       truncated, cancelled, and fallback-only state survives mapping.
-- [ ] Numeric enum values, unknown stable identities, and invalid bounds are
+- [x] Numeric enum values, unknown stable identities, and invalid bounds are
       rejected with safe validation responses.
-- [ ] Response ordering matches Domain and Application canonical ordering.
-- [ ] Localized text is display-only and stable identities remain language
+- [x] Response ordering matches Domain and Application canonical ordering.
+- [x] Localized text is display-only and stable identities remain language
       neutral.
-- [ ] Local paths, raw saves, proprietary configuration objects, exceptions,
+- [x] Local paths, raw saves, proprietary configuration objects, exceptions,
       process identifiers, screenshots, uploads, persistence commands, and
       mutation-capable types never enter contracts.
-- [ ] No route equips, applies, executes, acknowledges completion, writes
+- [x] No route equips, applies, executes, acknowledges completion, writes
       outcomes, or controls the game.
-- [ ] Mapper and controller tests cover the complete tactical state matrix and
+- [x] Mapper and controller tests cover the complete tactical state matrix and
       public-token fixtures.
-- [ ] API documentation includes complete, partial, unsupported, truncated,
+- [x] API documentation includes complete, partial, unsupported, truncated,
       fallback-only, and observation-replaced examples.
 
-#### Planned evidence
+#### Evidence
 
 - Updated `docs/api/COMBAT-RECOMMENDATIONS.md`.
 - Tactical contract, mapper, controller, and architecture tests.

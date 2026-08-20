@@ -363,6 +363,76 @@ public sealed partial class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void Tactical_combat_contract_is_typed_and_information_only()
+    {
+        var contractAssembly = typeof(TacticalCombatResponse).Assembly;
+        var requestTypes = new[]
+        {
+            typeof(TacticalPlanningApiRequest),
+            typeof(TacticalRuleObservationApiRequest),
+            typeof(TacticalSearchBoundsApiRequest)
+        };
+        var responseTypes = contractAssembly.GetExportedTypes()
+            .Where(type => type.Namespace
+                    == "TaiWuAPI.Contracts.CombatRecommendations"
+                && type.Name.StartsWith("Tactical", StringComparison.Ordinal)
+                && type.Name.EndsWith("Response", StringComparison.Ordinal))
+            .ToArray();
+        var forbiddenNameParts = new[]
+        {
+            "SavePath",
+            "GamePath",
+            "Screenshot",
+            "Process",
+            "Command",
+            "Payload",
+            "RawSource",
+            "RawText",
+            "Exception"
+        };
+        var propertyNames = requestTypes.Concat(responseTypes)
+            .SelectMany(type => type.GetProperties())
+            .Select(property => property.Name)
+            .ToArray();
+        var signatureTypes = requestTypes.Concat(responseTypes)
+            .SelectMany(GetPublicSignatureTypes)
+            .Distinct()
+            .ToArray();
+        var forbiddenDomainTypes = new[]
+        {
+            typeof(CombatSnapshot),
+            typeof(PlayerCombatSnapshot),
+            typeof(TargetCombatSnapshot)
+        };
+
+        Assert.NotEmpty(responseTypes);
+        Assert.DoesNotContain(
+            propertyNames,
+            name => forbiddenNameParts.Any(part => name.Contains(
+                part,
+                StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain(signatureTypes, IsGameDataType);
+        Assert.DoesNotContain(
+            signatureTypes,
+            type => forbiddenDomainTypes.Contains(type)
+                || type == typeof(FileInfo)
+                || type == typeof(DirectoryInfo)
+                || type == typeof(Stream)
+                || type == typeof(System.Diagnostics.Process)
+                || type.Namespace?.StartsWith(
+                    "TaiWu.Infrastructure",
+                    StringComparison.Ordinal) == true);
+
+        var action = typeof(CombatRecommendationsController).GetMethod(
+            nameof(CombatRecommendationsController.Recommend));
+        Assert.NotNull(action);
+        Assert.Contains(
+            action!.GetParameters(),
+            parameter => parameter.ParameterType
+                == typeof(CancellationToken));
+    }
+
+    [Fact]
     public void Presentation_models_expose_no_GameData_or_game_commands()
     {
         var presentationTypes = typeof(CombatRecommendationViewModel)
