@@ -3,9 +3,9 @@
 | Field | Value |
 |---|---|
 | Status | Ongoing discovery |
-| Scope | Ongoing product discovery after Epic 7 selection |
-| Related epics | EPIC-001 through EPIC-007 |
-| Last updated | 2026-08-19 |
+| Scope | Ongoing product discovery after Epic 8 promotion |
+| Related epics | EPIC-001 through EPIC-008 |
+| Last updated | 2026-08-20 |
 
 ## Purpose
 
@@ -284,6 +284,9 @@ domain model.
 
 ### PI-012 — Evidence-backed tactical combat planner
 
+**Status:** Promoted to
+[EPIC-008](./epic-008/EPIC.md) on 2026-08-20.
+
 Extend the completed Epic 5 target-archetype and counter-playbook foundation
 into an exact-target planner that can explain not only which verified counters
 fit, but also how their effects interact and when the player should use them.
@@ -387,24 +390,26 @@ The product owner promoted and completed these discovery ideas:
    [EPIC-006](./epic-006/EPIC.md) on 2026-08-17 and completed after evidence,
    remediation, comprehensive-capability follow-up, and product-owner approval
    on 2026-08-18.
+6. Village workforce and building assignment planner — promoted to
+   [EPIC-007](./epic-007/EPIC.md) on 2026-08-18 and completed after evidence,
+   implementation, corrective review, representative verification, and
+   product-owner approval on 2026-08-20.
 
 ### Active promotion
 
-The bounded village workforce and building assignment planner was promoted to
-[EPIC-007](./epic-007/EPIC.md) on 2026-08-18. Epic 7 starts with source
-discovery and one representative assignment comparison. It does not assume
-that aptitude proves productivity, expand into recruitable-companion ranking,
-or attempt a whole-village optimizer.
+The evidence-backed exact-target tactical combat planner was promoted to
+[EPIC-008](./epic-008/EPIC.md) on 2026-08-20. Epic 8 starts with a blocking
+evidence gate and one representative magic-sound tactical vertical. It does
+not assume every desired causal transition, recovery route, finish path, or
+learned-skill role is verified, and it does not simulate or control combat.
 
-### Current candidates after Epic 7 selection
+### Current candidates after Epic 8 selection
 
-1. Evidence-backed tactical combat planner, building on the verified Epic 5
-   foundation without reopening its completed delivery boundary.
-2. Companion development planner.
-3. Library and book planning, assessed after the Epic 7 source boundary rather
+1. Companion development planner.
+2. Library and book planning, assessed after the Epic 7 source boundary rather
    than assumed to share its first assignment vertical.
-4. Version-aware observation, recommendation, and outcome persistence.
-5. Shareable recommendation card, which may remain a smaller enhancement
+3. Version-aware observation, recommendation, and outcome persistence.
+4. Shareable recommendation card, which may remain a smaller enhancement
    because copy and print foundations already exist.
 
 The companion and settlement ideas intentionally remain separate. They may

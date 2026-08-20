@@ -111,3 +111,4 @@ dotnet test
 - [EPIC-005: Target archetypes and counter playbooks](docs/roadmap/epic-005/EPIC.md)
 - [EPIC-006: Evidence-aware companion role and candidate finder](docs/roadmap/epic-006/EPIC.md)
 - [EPIC-007: Evidence-aware village workforce and building assignment planner](docs/roadmap/epic-007/EPIC.md)
+- [EPIC-008: Evidence-backed exact-target tactical combat planner](docs/roadmap/epic-008/EPIC.md)
