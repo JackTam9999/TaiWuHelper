@@ -58,7 +58,7 @@ public sealed record TacticalRoleIdentity
 public sealed record TacticalCandidateIdentity
 {
     public TacticalCandidateIdentity(
-        short skillId,
+        int skillId,
         PracticeDirection direction)
     {
         if (skillId < 0)
@@ -79,7 +79,7 @@ public sealed record TacticalCandidateIdentity
         Direction = direction;
     }
 
-    public short SkillId { get; }
+    public int SkillId { get; }
 
     public PracticeDirection Direction { get; }
 

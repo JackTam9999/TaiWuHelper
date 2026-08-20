@@ -334,7 +334,7 @@ facts once per request.
 
 ### E8-005 — Discover verified tactical candidates from all learned skills
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -347,31 +347,31 @@ admitting only version-matched, typed, feasible options to combination search.
 
 #### Acceptance criteria
 
-- [ ] Every learned combat skill and available practice direction receives one
+- [x] Every learned combat skill and available practice direction receives one
       canonical consideration result.
-- [ ] A skill is admitted only when its exact version, direction, raw effect,
+- [x] A skill is admitted only when its exact version, direction, raw effect,
       typed role, timing, and requirements are verified.
-- [ ] Unsupported catalogue entries remain visible as unsupported consideration
+- [x] Unsupported catalogue entries remain visible as unsupported consideration
       results and cannot become generic candidates.
-- [ ] Ownership, mastery, direction, immediate breakthrough availability, raw
+- [x] Ownership, mastery, direction, immediate breakthrough availability, raw
       effect identity, backlash-on-use, active-role, inner-power, effective
       cost, category capacity, and universal-slot gates run before search.
-- [ ] Unknown execution requirements prevent unconditional admission and retain
+- [x] Unknown execution requirements prevent unconditional admission and retain
       the exact missing context.
-- [ ] Current-loadout retention remains distinct from evidence that a skill has
+- [x] Current-loadout retention remains distinct from evidence that a skill has
       tactical value for the selected target.
-- [ ] Opposite directions of one skill may be considered separately, but a
+- [x] Opposite directions of one skill may be considered separately, but a
       resulting loadout selects at most one direction.
-- [ ] Localized name, faction, category, weapon label, and raw effect text do
+- [x] Localized name, faction, category, weapon label, and raw effect text do
       not select a tactical role.
-- [ ] Consideration is deterministic regardless of atlas enumeration order.
-- [ ] Candidate counts, supported-role coverage, rejection reasons, and
+- [x] Consideration is deterministic regardless of atlas enumeration order.
+- [x] Candidate counts, supported-role coverage, rejection reasons, and
       unsupported counts are bounded and aggregated without losing examples.
-- [ ] Tests cover admitted, retained-only, infeasible, unknown-context,
+- [x] Tests cover admitted, retained-only, infeasible, unknown-context,
       unsupported-effect, wrong-version, wrong-direction, breakthrough,
       backlash, and duplicate-direction cases.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/architecture/TACTICAL-CANDIDATE-DISCOVERY.md`.
 - Domain and Application candidate-discovery tests.

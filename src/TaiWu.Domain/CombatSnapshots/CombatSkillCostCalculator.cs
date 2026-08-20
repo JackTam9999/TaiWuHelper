@@ -58,6 +58,14 @@ public static class CombatSkillCostCalculator
         return CalculateCore(skill, [proposedAssignment]);
     }
 
+    public static CombatSkillCostBreakdown CalculateWithoutLegendaryAssignment(
+        PlayerCombatSnapshot player,
+        int skillId)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        return CalculateCore(FindLearnedSkill(player, skillId), []);
+    }
+
     private static CombatSkillSnapshot FindLearnedSkill(
         PlayerCombatSnapshot player,
         int skillId)

@@ -37,6 +37,9 @@ public sealed class TacticalExecutionContextSafetyTests
                 Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
                 "TacticalExecution*.cs")
             .Concat(Directory.EnumerateFiles(
+                Path.Combine(root, "src", "TaiWu.Domain", "TacticalCombat"),
+                "TacticalCandidate*.cs"))
+            .Concat(Directory.EnumerateFiles(
                 Path.Combine(
                     root,
                     "src",
@@ -101,6 +104,49 @@ public sealed class TacticalExecutionContextSafetyTests
                 && service.ImplementationType
                     == typeof(ReadTacticalExecutionContext)
                 && service.Lifetime == ServiceLifetime.Singleton);
+
+        var discoveryParameter = Assert.Single(
+                typeof(DiscoverTacticalCandidates).GetConstructors())
+            .GetParameters();
+        Assert.Equal(
+            typeof(ICombatSnapshotReader),
+            Assert.Single(discoveryParameter).ParameterType);
+        Assert.Contains(
+            services,
+            service => service.ServiceType
+                == typeof(IDiscoverTacticalCandidates)
+                && service.ImplementationType
+                    == typeof(DiscoverTacticalCandidates)
+                && service.Lifetime == ServiceLifetime.Singleton);
+    }
+
+    [Fact]
+    public void Candidate_result_does_not_expose_atlas_display_or_raw_text()
+    {
+        var properties = typeof(TacticalCandidateDiscoveryResult).Assembly
+            .GetTypes()
+            .Where(type => type.Namespace == "TaiWu.Domain.TacticalCombat"
+                && type.Name.StartsWith(
+                    "TacticalCandidateDiscovery",
+                    StringComparison.Ordinal))
+            .SelectMany(type => type.GetProperties(
+                BindingFlags.Instance | BindingFlags.Public))
+            .ToArray();
+
+        Assert.DoesNotContain(
+            properties,
+            property => property.Name.Contains(
+                    "Display",
+                    StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains(
+                    "Description",
+                    StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains(
+                    "Faction",
+                    StringComparison.OrdinalIgnoreCase)
+                || property.Name.Contains(
+                    "WeaponLabel",
+                    StringComparison.OrdinalIgnoreCase));
     }
 
     private static string FindRepositoryRoot()

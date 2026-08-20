@@ -18,6 +18,18 @@ public sealed class ReadTacticalExecutionContext(ICombatSnapshotReader reader)
             cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 
+        return ProjectSnapshot(snapshot, request, cancellationToken).Result;
+    }
+
+    internal static TacticalExecutionContextProjection ProjectSnapshot(
+        Domain.CombatSnapshots.CombatSnapshot snapshot,
+        TacticalExecutionContextReadRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+
         var gameDataVersion = snapshot.Metadata.GameDataVersion.IsAvailable
             ? snapshot.Metadata.GameDataVersion.Value
             : TacticalContextGameDataVersions.Unavailable;
@@ -38,9 +50,15 @@ public sealed class ReadTacticalExecutionContext(ICombatSnapshotReader reader)
                     .CurrentScreenObservation)
             .Select(item => (DateTimeOffset?)item.CapturedAtUtc)
             .Max();
-        return new TacticalExecutionContextReadResult(
-            context,
-            snapshot.Metadata.CapturedAtUtc,
-            latestObservationAtUtc);
+        return new TacticalExecutionContextProjection(
+            new TacticalExecutionContextReadResult(
+                context,
+                snapshot.Metadata.CapturedAtUtc,
+                latestObservationAtUtc),
+            resolution);
     }
 }
+
+internal sealed record TacticalExecutionContextProjection(
+    TacticalExecutionContextReadResult Result,
+    TacticalCombatRuleResolution RuleResolution);
