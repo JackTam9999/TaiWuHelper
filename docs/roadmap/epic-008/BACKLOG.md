@@ -80,7 +80,7 @@ Every completed item must:
 
 ### E8-000 — Verify tactical sources and select the golden exact-target vertical
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -98,44 +98,44 @@ first vertical only after exact semantics and standalone safety are recorded.
 
 #### Acceptance criteria
 
-- [ ] The inspected Taiwu, GameData, language, catalogue schema, observation,
+- [x] The inspected Taiwu, GameData, language, catalogue schema, observation,
       and verified-rule versions are recorded.
-- [ ] One stable representative target or synthetic equivalent is selected
+- [x] One stable representative target or synthetic equivalent is selected
       without committing proprietary identity or raw source content.
-- [ ] Every candidate target state and transition records its exact owning
+- [x] Every candidate target state and transition records its exact owning
       source, field or effect identity, timing, meaning, version, precedence,
       completeness, and limitation.
-- [ ] Core cast, mark, resonance, threshold, defeat-prevention or reset, and
+- [x] Core cast, mark, resonance, threshold, defeat-prevention or reset, and
       temporary-lockout relationships are individually accepted, rejected, or
       marked unsupported rather than assumed as one chain.
-- [ ] At least one exact suppression, interrupt, or mitigation route is traced
+- [x] At least one exact suppression, interrupt, or mitigation route is traced
       through its skill direction, raw effect, requirements, timing, and
       expected purpose.
-- [ ] The selected counter's resource use, self-lock, or other execution cost
+- [x] The selected counter's resource use, self-lock, or other execution cost
       is verified or explicitly excluded.
-- [ ] At least one recovery route or honest safe fallback is verified for the
+- [x] At least one recovery route or honest safe fallback is verified for the
       selected execution cost.
-- [ ] Any proposed finish window or damage-channel choice has typed
+- [x] Any proposed finish window or damage-channel choice has typed
       version-matched evidence; otherwise the first vertical is explicitly
       fallback-only.
-- [ ] Required weapon, combat style, distance, stance, breath, resource,
+- [x] Required weapon, combat style, distance, stance, breath, resource,
       active-defense, active-agility, inner-power, capacity, universal-slot,
       and legendary-cost facts are inventoried with unavailable states.
-- [ ] Existing current-save and observation precedence is tested against the
+- [x] Existing current-save and observation precedence is tested against the
       selected tactical facts without silently replacing conflicts.
-- [ ] Context-dependent getters are probed for standalone safety and rejected
+- [x] Context-dependent getters are probed for standalone safety and rejected
       where live process or special-effect context is required.
-- [ ] Localized names and raw descriptions are retained only as display
+- [x] Localized names and raw descriptions are retained only as display
       evidence and never serve as identities or rules.
-- [ ] A synthetic golden scenario defines invariants for suppression,
+- [x] A synthetic golden scenario defines invariants for suppression,
       mitigation, recovery, feasibility, finish or fallback, and known gaps
       without pinning one brittle exact loadout.
-- [ ] One stable local probe records cold/warm timing, cancellation, catalogue
+- [x] One stable local probe records cold/warm timing, cancellation, catalogue
       reuse, and before/after source hashes.
-- [ ] The resulting evidence either authorizes E8-002 through E8-008 or records
+- [x] The resulting evidence either authorizes E8-002 through E8-008 or records
       a narrower product boundary before those items begin.
 
-#### Planned evidence
+#### Evidence
 
 - `docs/scenarios/E8-000-tactical-combat-evidence.md`.
 - `docs/scenarios/evidence/E8-000-golden-tactical-metadata.json` containing

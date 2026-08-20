@@ -135,3 +135,26 @@ name/map source fingerprints before and after. They never print a path, hash,
 candidate identity, or exact candidate value. The non-proprietary outcome is
 recorded in
 [`E6-011-automated-verification.md`](../reviews/E6-011-automated-verification.md).
+
+## Epic 8 tactical evidence gate
+
+E8-000 captures the minimum current local metadata needed to establish the
+tactical-planner boundary without authorizing mechanics from a mismatched
+runtime version:
+
+```powershell
+$env:TAIWU_INTEGRATION_SAVE_PATH = '<path-to-current-local.sav>'
+dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.IntegrationTests.csproj -c Release --no-restore -- --filter-class '*TacticalCombatEvidenceIntegrationTests*'
+```
+
+The test requires the current installed GameData build recorded by the E8-000
+evidence, captures the save plus six installed runtime and language sources,
+and compares all seven files before and after. It performs repeated in-process
+projections, checks cancellation, enforces a 30-second cold and 3-second warm
+budget, and records only aggregate facts. Paths, save hashes, character
+identities, and proprietary content are never printed or committed.
+
+The immutable helper catalogue predates the installed GameData build. The test
+therefore proves source stability and execution-context availability only. The
+synthetic tactical scenario remains pinned to the older verified-rule version,
+and production must return an unsupported result for the current build.

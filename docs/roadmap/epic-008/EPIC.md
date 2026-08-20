@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Planned |
+| Status | In progress |
 | Milestone | 8 |
 | Target release | TBD |
 | Last updated | 2026-08-20 |
@@ -51,11 +51,13 @@ optional caller-supplied damage component. These are valid completed Epic 1
 boundaries, but they are insufficient for claims about interrupts, recovery,
 finish windows, or exact execution reliability.
 
-Epic 8 therefore begins with an evidence gate. E8-000 must identify the exact
-target transitions, runtime-independent player context, selected counter
-costs, recovery path, and feasible finish evidence supported by the installed
-version. Unavailable mechanics remain unavailable. No tactical rule, score, or
-instruction may be implemented merely to fill a desired six-stage plan.
+Epic 8 therefore began with an evidence gate. E8-000 identified the exact
+historical-version target transitions, runtime-independent player context,
+selected counter costs, recovery boundary, and honest fallback supported by
+the available evidence. The installed runtime is newer than the verified
+mechanical rules, so current-version production behavior remains unsupported
+until it is reverified. No tactical rule, score, or instruction may be
+implemented merely to fill a desired six-stage plan.
 
 ## Primary user story
 
@@ -267,7 +269,7 @@ affected completeness.
 
 ## Initial delivery boundary
 
-E8-000 will confirm or narrow the first delivery after verifying:
+E8-000 narrowed the first delivery after verifying:
 
 1. one stable representative magic-sound target identity or synthetic equivalent;
 2. the target's core Direct-practice cast, mark, resonance, and defeat-prevention
@@ -281,13 +283,14 @@ E8-000 will confirm or narrow the first delivery after verifying:
 8. a representative immutable scenario that can be committed without
    proprietary identities or raw game content.
 
-The intended acceptance invariant is stronger than one exact loadout. The plan
-must suppress the verified core cast path, mitigate the verified mark and
-resonance path, recover from the selected counter's verified cost, respect the
-player's inner-power and unavailable-direction constraints, fit the exact
-displayed budgets, and retain a supported finish or explicit fallback. E8-000
-may narrow these claims when the installed evidence cannot support them; it may
-not replace evidence with assumptions.
+The acceptance invariant is stronger than one exact loadout. For the pinned
+historical version, the plan must suppress the verified core cast path,
+mitigate the verified mark and resonance path, recover from the selected
+counter's verified cost, respect the player's inner-power and
+unavailable-direction constraints, fit the exact displayed budgets, and retain
+an explicit fallback. No supported finish rule was found, so the initial
+vertical is fallback-only. These historical rules do not authorize behavior
+for the newer installed runtime.
 
 ## Functional scope
 

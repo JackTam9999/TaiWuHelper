@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E8-000",
+  "observationDate": "2026-08-20",
+  "historicalRules": {
+    "gameDataProductVersion": "1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a",
+    "behaviorEvidenceAvailable": true,
+    "syntheticVerticalAuthorized": true
+  },
+  "installedSources": {
+    "gameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+    "gameDataAssemblyLength": 8898560,
+    "gameDataSharedAssemblyLength": 22965760,
+    "historicalProductionRulesCompatible": false,
+    "configuredCandidateDefinitionMatches": 7,
+    "configuredCandidateDefinitionExpected": 7,
+    "directMagicSoundDefinitionMatches": 16,
+    "directMagicSoundDefinitionExpected": 16,
+    "reverseResetDefinitionMatches": true,
+    "binaryHashesCommitted": false
+  },
+  "catalogue": {
+    "schemaVersion": 4,
+    "builtAtUtc": "2026-08-05T18:10:42.1539545+00:00",
+    "definitionCount": 946,
+    "warningCount": 4,
+    "errorCount": 0,
+    "openedReadOnlyImmutable": true,
+    "sourceFingerprintMatchesInstalledGameDataShared": false,
+    "modified": false
+  },
+  "languages": {
+    "traditionalChineseCombatSkill": {
+      "length": 204654,
+      "sha256": "9932B589389DF643981A3CB6E6E8DFFD9B7B1FC814BBA30ACD34C6C18CF1CFF4",
+      "unchangedDuringCapture": true
+    },
+    "englishCombatSkill": {
+      "length": 267598,
+      "sha256": "F89C3B8AD7DEFE0E6E587EA4F1E109E983817B3F609C34946379FC82314D5229",
+      "unchangedDuringCapture": true
+    },
+    "traditionalChineseSpecialEffect": {
+      "length": 902161,
+      "sha256": "B9DFC6A9CA7FF809F020C5F9697E2AA37677486D9CAF678EDC025B95D5A296F7",
+      "unchangedDuringCapture": true
+    },
+    "englishSpecialEffect": {
+      "length": 1067615,
+      "sha256": "18913BF3C9AD0125930A47CDC7AA963F92383A14BD0584D1CE459E6C8D587CE7",
+      "unchangedDuringCapture": true
+    }
+  },
+  "save": {
+    "fileName": "local.sav",
+    "pathCommitted": false,
+    "hashCommitted": false,
+    "contentCommitted": false,
+    "unchangedWithinEveryCapture": true,
+    "advancedBetweenIndependentCaptures": true,
+    "currentFactsUsedAsGoldenFixture": false
+  },
+  "guardedProbe": {
+    "learnedSkillCountAtCapture": 715,
+    "equippedSkillCountAtCapture": 26,
+    "genericAllocationValueCount": 4,
+    "preCancelledReadObserved": true,
+    "coldBudgetSeconds": 30,
+    "coldBudgetPassed": true,
+    "warmBudgetSeconds": 3,
+    "warmBudgetPassed": true,
+    "guardedFileCount": 7,
+    "guardedFilesUnchanged": true,
+    "focusedPassed": 1,
+    "focusedFailed": 0,
+    "focusedSkipped": 0
+  },
+  "initialVertical": {
+    "kind": "historical-version-synthetic-magic-sound",
+    "targetIdentityCommitted": false,
+    "suppressionSkillId": 604,
+    "suppressionDirection": "Reverse",
+    "suppressionEffectId": 1064,
+    "suppressionSelfLockLayers": 3,
+    "recoveryTransition": "one layer removed by each feasible Reverse-practice cast",
+    "exactRecoverySequenceAvailable": false,
+    "resetSkillId": 287,
+    "resetDirection": "Reverse",
+    "resetEffectId": 911,
+    "finishState": "FallbackOnly",
+    "victoryProbabilityAvailable": false
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsSaveHash": false,
+    "containsCharacterIdentifier": false,
+    "containsTargetIdentifier": false,
+    "containsGameBinaryContent": false,
+    "containsGameBinaryHash": false,
+    "containsCompleteLanguageResource": false,
+    "containsScreenshot": false
+  }
+}
