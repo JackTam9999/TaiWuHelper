@@ -114,6 +114,36 @@ public sealed class VillageWorkforceEvaluationTests
             new WorkforceComparison(lower, tied).Outcome);
     }
 
+    [Fact]
+    public void Comparison_uses_verified_current_only_result()
+    {
+        var snapshot = VillageWorkforceFixtures.Snapshot();
+        var rankedCurrent = VillageWorkforceFixtures.RankedEvaluation(
+            snapshot,
+            snapshot.Workers[0].Identity,
+            60);
+        var currentOnly = new WorkforceEvaluation(
+            rankedCurrent.ResultIdentity,
+            rankedCurrent.Worker,
+            WorkforceWorkerState.CurrentOnly,
+            WorkforceEvaluationState.CurrentOnly,
+            rankedCurrent.Requirements,
+            rankedCurrent.Components,
+            rankedCurrent.Result,
+            rankedCurrent.OutcomeIdentity);
+        var alternative = VillageWorkforceFixtures.RankedEvaluation(
+            snapshot,
+            snapshot.Workers[1].Identity,
+            80);
+
+        Assert.Equal(
+            WorkforceComparisonOutcome.Lower,
+            new WorkforceComparison(currentOnly, alternative).Outcome);
+        Assert.Equal(
+            WorkforceComparisonOutcome.Higher,
+            new WorkforceComparison(alternative, currentOnly).Outcome);
+    }
+
     [Theory]
     [InlineData(
         WorkforceEvaluationState.Incomplete,

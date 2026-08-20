@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Status | Blocked — final visual and product-owner decisions required |
-| Evidence date | 2026-08-18 |
+| Status | Awaiting product-owner completion decision |
+| Evidence date | 2026-08-20 |
 | Epic | [EPIC-007](../roadmap/epic-007/EPIC.md) |
 | Backlog item | [E7-011](../roadmap/epic-007/BACKLOG.md#e7-011--validate-the-representative-assignment-and-close-epic-7) |
 | Automated evidence | [E7-010 verification](./E7-010-automated-verification.md) |
@@ -19,12 +19,25 @@ runs retained identical normalized source, objective, target, rule, state,
 rank, value-unit, comparison-outcome, and checklist facts. The configured save
 and both inspected GameData assemblies remained byte for byte unchanged.
 
-Two external decisions remain. The in-app browser cannot initialize because
-its bundled RPC dependency is rejected by the trusted-code-path check, so the
-English wide and Traditional Chinese narrow visual confirmation could not be
-performed by the automated reviewer. The product owner must also explicitly
-accept or reject Epic 7 closure. No other implementation or verification
-blocker remains.
+The prescribed in-app browser now completes successfully. English wide and
+Traditional Chinese narrow visual confirmation, native comparison selection,
+progressive evidence, responsive labels, horizontal-overflow checks, and focus
+restoration after clearing comparison all pass against the live configured-save
+route. The product owner must still explicitly accept or reject Epic 7 closure.
+No other implementation or verification blocker remains.
+
+## Independent-review corrections
+
+| Finding | Correction and proof |
+|---|---|
+| Current/comparison evidence was incomplete | One reusable disclosure now renders hard gates, exact components, and redacted provenance for the current worker, every visible alternative, and both comparison workers; rendering and live DOM checks pass. |
+| Comparison state and clear focus were misleading | Result identity keys recreate native controls from authoritative state; the selected checkbox remains checked and enabled, other unchecked choices disable, and clear restores focus to the original control. |
+| Discovery outlived the page | Initial snapshot discovery now receives a component-lifetime cancellation token; disposal regression coverage proves it is cancelled. |
+| Failure language could become stale | Typed discovery and inspection failure states are retained and remapped when the cascading language changes; a live-component regression covers the transition. |
+| Omitted coordinates became valid zeroes | All four target coordinates are nullable required inputs and the workflow rejects an omitted coordinate with HTTP 400 before finder execution. |
+| Warm projection exceeded three seconds | Reuse performs one full pre-projection SHA-256 plus a post-projection revision check; the configured guard passes and live warm reads measured 1.449–1.565 seconds. |
+| Narrow comparison values lost worker identity | Every reflowed comparison value now repeats its worker label; the 390-pixel DOM and visual check show no horizontal overflow. |
+| A verified current-only worker was reported as not comparable | Current-only evaluations with an exact result now compare numerically with ranked or tied alternatives; both directions are covered by a Domain regression test. |
 
 ## Privacy and non-interference boundary
 
@@ -121,25 +134,30 @@ Architecture tests require one candidate DOM, native controls and disclosures,
 scoped tables, live status, raw-ID hiding, container reflow at 959 pixels, and
 single-column controls at 620 pixels.
 
-The final visual check is still pending. The required review is:
+The final visual check is complete through the prescribed in-app browser:
 
-1. English at a wide desktop viewport: target discovery, result summary,
-   current assignment, candidate rows, comparison, and closed evidence;
-2. Traditional Chinese at a narrow viewport: the same facts and ordering,
-   labelled card reflow, no document-level horizontal overflow, and readable
-   long text; and
-3. keyboard traversal through target selection, inspection, filters,
-   comparison controls, and native evidence disclosure.
+1. English at 1280 by 900 CSS pixels exposed target discovery, current
+   assignment evidence, candidate rows, comparison evidence, and the static
+   checklist without document-level horizontal overflow.
+2. Traditional Chinese at 390 by 844 CSS pixels retained the same facts and
+   ordering. Candidate and comparison tables reflowed into labelled cards;
+   every comparison value repeated its worker label after the wide header was
+   hidden, and no document-level horizontal overflow appeared.
+3. Native comparison selection retained a checked, enabled control for the
+   chosen alternative, disabled only the remaining unchecked controls, and
+   clearing comparison returned focus to the original checkbox.
 
-No alternative browser automation was substituted after the required in-app
-browser connection failed.
+The current assignment, each visible candidate, and both comparison workers
+expose closed hard-gate/component/provenance disclosures. The review used the
+same read-only live route as the configured integration and sent no game
+action.
 
 ## Final Release gate
 
 | Gate | Result |
 |---|---|
 | Release solution build | Passed, 0 warnings, 0 errors |
-| Full default matrix | 1,413 total; 1,398 passed; 15 explicit local-source skips; 0 failed |
+| Full default matrix | 1,420 total; 1,405 passed; 15 explicit local-source skips; 0 failed |
 | Configured representative workflow | Passed, 0 skipped |
 | Representative source guard | 3 of 3 files unchanged |
 | Live `/village-workforce` route | HTTP 200; opened for product-owner review |
@@ -161,7 +179,7 @@ explicitly and passed when run with the trusted local configuration.
 | Identical inputs are deterministic | E7-010 complete fingerprint repetition | Verified |
 | One bounded save session | Reader architecture test and guarded integrations | Verified |
 | Typed path-free API | Contract, JSON, controller, and loopback architecture tests | Verified |
-| Bilingual responsive accessible UI | Executable rendering and architecture checks; final visual pass pending | Pending visual decision |
+| Bilingual responsive accessible UI | Executable rendering, architecture checks, and wide English/narrow Chinese in-app browser review | Verified |
 | Manual checklist cannot trigger a change | Domain origin/checklist contracts, Razor text, capability scans | Verified |
 | Automated and representative non-interference | [E7-010](./E7-010-automated-verification.md) and guarded E7-011 workflow | Verified |
 | Deferred mechanics remain outside scope | Deferred-scope section below and capability scan | Verified |
@@ -180,15 +198,16 @@ The only efficiency call remains in the opt-in E7-000 evidence probe, where it
 records the standalone-runtime limitation; the production snapshot, evaluator,
 finder, API, and UI do not call it or present an efficiency result.
 
-A separate independent Epic 7 closure review is consciously deferred to the
-post-epic review/refactoring phase. The product owner may accept that deferral
-or request an independent review before closure. Existing semantic,
-architecture, contract, full Release, and guarded-source reviews report no
-unresolved production finding.
+An independent full Epic 7 review was completed. Its performance, evidence,
+comparison-state, current-only comparison, focus, lifecycle-cancellation,
+language-remapping, and API validation findings are corrected and covered by
+the verification recorded above. Existing semantic, architecture, contract,
+full Release, guarded-source, and live browser reviews report no unresolved
+production finding.
 
 ## Product-owner decision
 
-Pending explicit approval after the visual and independent-review deferral
-decisions. Approval will close E7-011 and Epic 7 without adding any deferred
-mutation, persistence, optimization, recruitment, development, library,
+Pending explicit approval. Approval will close E7-011 and Epic 7 without adding
+any deferred mutation, persistence, optimization, recruitment, development,
+library,
 automation, or game-control capability.

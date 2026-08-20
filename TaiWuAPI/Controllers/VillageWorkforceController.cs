@@ -75,10 +75,10 @@ public sealed class VillageWorkforceController(
         var request = new VillageWorkforceFinderRequest(
             new ShopManagerTargetIdentity(
                 new ShopBuildingIdentity(
-                    query!.AreaId,
-                    query.BlockId,
-                    query.BuildingBlockIndex),
-                query.ManagerSlotIndex),
+                    query!.AreaId!.Value,
+                    query.BlockId!.Value,
+                    query.BuildingBlockIndex!.Value),
+                query.ManagerSlotIndex!.Value),
             new WorkforceObjectiveIdentity(
                 WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
                 query.ObjectiveVersion),
@@ -202,10 +202,14 @@ public sealed class VillageWorkforceController(
                 StringComparison.Ordinal)
             || string.IsNullOrWhiteSpace(query.ObjectiveVersion)
             || query.ObjectiveVersion.Length > 20
-            || query.AreaId < 0
-            || query.BlockId < 0
-            || query.BuildingBlockIndex < 0
-            || query.ManagerSlotIndex is < 0 or > sbyte.MaxValue
+            || !query.AreaId.HasValue
+            || !query.BlockId.HasValue
+            || !query.BuildingBlockIndex.HasValue
+            || !query.ManagerSlotIndex.HasValue
+            || query.AreaId.Value < 0
+            || query.BlockId.Value < 0
+            || query.BuildingBlockIndex.Value < 0
+            || query.ManagerSlotIndex.Value is < 0 or > sbyte.MaxValue
             || query.FirstComparisonCharacterId <= 0
             || query.SecondComparisonCharacterId <= 0
             || query.ProposedCharacterId <= 0)

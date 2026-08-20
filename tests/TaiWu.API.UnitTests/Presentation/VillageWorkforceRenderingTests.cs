@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -51,7 +52,7 @@ public sealed partial class VillageWorkforceRenderingTests
         Assert.Contains("aria-live=\"polite\"", html);
         Assert.Equal(
             new VillageWorkforceInteractionState()
-                .VisibleCandidates(model).Count,
+                .VisibleCandidates(model).Count + 1,
             Regex.Matches(
                 html,
                 "<details class=\"workforce-candidate-evidence\"").Count);
@@ -140,6 +141,24 @@ public sealed partial class VillageWorkforceRenderingTests
         Assert.Contains("Worker comparison", text);
         Assert.Contains("Manual checklist", text);
         Assert.Contains("No action was sent to the game", text);
+        Assert.Contains("Requirements", text);
+        Assert.Contains("Components", text);
+        Assert.Contains("Provenance", text);
+        var comparisonTable = Regex.Match(
+            html,
+            "<table class=\"workforce-comparison-table\".*?</table>",
+            RegexOptions.Singleline).Value;
+        Assert.Equal(
+            10,
+            Regex.Matches(comparisonTable, "<td data-label=").Count);
+        Assert.Equal(
+            state.VisibleCandidates(model).Count + 3,
+            Regex.Matches(
+                html,
+                "<details class=\"workforce-candidate-evidence\"").Count);
+        Assert.Matches(
+            $"<input[^>]+id=\"workforce-compare-{model.Candidates[0].DisplayOrdinal}\"[^>]+checked",
+            html);
         Assert.Contains("disabled", html);
     }
 
@@ -173,7 +192,7 @@ public sealed partial class VillageWorkforceRenderingTests
             comparison: null,
             TaiwuLanguage.English);
         Assert.Equal(
-            VillageWorkforceInteractionState.DefaultAlternativeLimit,
+            VillageWorkforceInteractionState.DefaultAlternativeLimit + 1,
             Regex.Matches(
                 compactHtml,
                 "<details class=\"workforce-candidate-evidence\"").Count);
@@ -276,25 +295,30 @@ public sealed partial class VillageWorkforceRenderingTests
     {
         var snapshot = VillageWorkforcePresentationTestData.Snapshot();
         var reader = Substitute.For<IVillageWorkforceSnapshotReader>();
+        var discoveryToken = CancellationToken.None;
         reader.ReadAsync(
                 VillageWorkforceSnapshotReadRequest.Current,
                 Arg.Any<CancellationToken>())
-            .Returns(VillageWorkforceSnapshotReadResult.Complete(
-                snapshot,
-                workerDisplays: [new VillageWorkerDisplay(
-                    snapshot.CurrentAssignments[0].Worker,
-                    "目前掌櫃",
-                    "Current steward",
-                    "太吾村",
-                    "Taiwu Village")],
-                targetDisplays: [new VillageWorkforceTargetDisplay(
-                    snapshot.Targets[0].Identity,
-                    "茶館",
-                    "Tea house",
-                    "太吾村",
-                    "Taiwu Village",
-                    "品鑑",
-                    "Appraisal")]));
+            .Returns(call =>
+            {
+                discoveryToken = call.ArgAt<CancellationToken>(1);
+                return VillageWorkforceSnapshotReadResult.Complete(
+                    snapshot,
+                    workerDisplays: [new VillageWorkerDisplay(
+                        snapshot.CurrentAssignments[0].Worker,
+                        "目前掌櫃",
+                        "Current steward",
+                        "太吾村",
+                        "Taiwu Village")],
+                    targetDisplays: [new VillageWorkforceTargetDisplay(
+                        snapshot.Targets[0].Identity,
+                        "茶館",
+                        "Tea house",
+                        "太吾村",
+                        "Taiwu Village",
+                        "品鑑",
+                        "Appraisal")]);
+            });
         var finder = Substitute.For<IFindVillageWorkforce>();
 
         var html = await RenderPageAsync(
@@ -315,6 +339,54 @@ public sealed partial class VillageWorkforceRenderingTests
         await reader.Received(1).ReadAsync(
             VillageWorkforceSnapshotReadRequest.Current,
             Arg.Any<CancellationToken>());
+        Assert.True(discoveryToken.CanBeCanceled);
+        Assert.True(discoveryToken.IsCancellationRequested);
+    }
+
+    [Fact]
+    public async Task Discovery_failure_remaps_when_language_changes()
+    {
+        var reader = Substitute.For<IVillageWorkforceSnapshotReader>();
+        reader.ReadAsync(
+                VillageWorkforceSnapshotReadRequest.Current,
+                Arg.Any<CancellationToken>())
+            .Returns(VillageWorkforceSnapshotReadResult.Failed(
+                VillageWorkforceSnapshotReadStatus.SaveUnavailable,
+                "CONFIGURED_SAVE_UNAVAILABLE",
+                "Synthetic internal message"));
+        var finder = Substitute.For<IFindVillageWorkforce>();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(finder);
+        services.AddSingleton(reader);
+        services.AddSingleton<BuildVillageWorkforce>();
+        services.AddSingleton(Substitute.For<IJSRuntime>());
+        var languageState = new LanguageHostState();
+        services.AddSingleton(languageState);
+        using var provider = services.BuildServiceProvider();
+        await using var renderer = new HtmlRenderer(
+            provider,
+            provider.GetRequiredService<ILoggerFactory>());
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            var root = await renderer.RenderComponentAsync<LanguageHost>();
+            var english = VisibleText(root.ToHtmlString());
+
+            await languageState.SetLanguageAsync(TaiwuLanguage.Chinese);
+            var chinese = VisibleText(root.ToHtmlString());
+            var expectedEnglish = VillageWorkforceViewModelMapper
+                .MapDiscoveryFailure(
+                    VillageWorkforceSnapshotReadStatus.SaveUnavailable,
+                    TaiwuLanguage.English);
+            var expectedChinese = VillageWorkforceViewModelMapper
+                .MapDiscoveryFailure(
+                    VillageWorkforceSnapshotReadStatus.SaveUnavailable,
+                    TaiwuLanguage.Chinese);
+
+            Assert.Contains(expectedEnglish.Title, english);
+            Assert.DoesNotContain(expectedEnglish.Title, chinese);
+            Assert.Contains(expectedChinese.Title, chinese);
+        });
     }
 
     [Fact]
@@ -547,4 +619,44 @@ public sealed partial class VillageWorkforceRenderingTests
             candidates.Single(item => item.IsCurrent),
             candidates,
             []);
+
+    public sealed class LanguageHostState
+    {
+        public TaiwuLanguage Language { get; private set; } =
+            TaiwuLanguage.English;
+
+        public Func<Task>? Changed { get; set; }
+
+        public async Task SetLanguageAsync(TaiwuLanguage language)
+        {
+            Language = language;
+            if (Changed is not null)
+            {
+                await Changed();
+            }
+        }
+    }
+
+    public sealed class LanguageHost : ComponentBase, IDisposable
+    {
+        [Inject]
+        public LanguageHostState State { get; set; } = null!;
+
+        protected override void OnInitialized() =>
+            State.Changed = () => InvokeAsync(StateHasChanged);
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder)
+        {
+            builder.OpenComponent<CascadingValue<TaiwuLanguage>>(0);
+            builder.AddAttribute(1, "Value", State.Language);
+            builder.AddAttribute(2, "ChildContent", (RenderFragment)(content =>
+            {
+                content.OpenComponent<VillageWorkforce>(0);
+                content.CloseComponent();
+            }));
+            builder.CloseComponent();
+        }
+
+        public void Dispose() => State.Changed = null;
+    }
 }

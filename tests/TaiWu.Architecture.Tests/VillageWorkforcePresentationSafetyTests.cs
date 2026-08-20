@@ -30,6 +30,12 @@ public sealed class VillageWorkforcePresentationSafetyTests
         Assert.Contains("State.SetFilter(filter)", result);
         Assert.Contains("State.SetNameQuery", result);
         Assert.Contains("State.ToggleComparison", result);
+        Assert.Contains(
+            "@bind:set=\"selected => SetComparisonSelectionAsync(candidate.CharacterId, selected)\"",
+            result);
+        Assert.Contains("@key=\"ResultsRenderKey\"", page);
+        Assert.Contains("ComparisonCleared=\"FocusAfterComparisonClear\"", page);
+        Assert.Contains("_lifetimeCancellation.Token", page);
     }
 
     [Fact]
@@ -39,17 +45,23 @@ public sealed class VillageWorkforcePresentationSafetyTests
         var result = Read(root,
             "TaiWuAPI", "Components", "VillageWorkforce",
             "VillageWorkforceResults.razor");
+        var evidence = Read(root,
+            "TaiWuAPI", "Components", "VillageWorkforce",
+            "VillageWorkforceCandidateEvidence.razor");
 
         Assert.Contains("type=\"radio\"", result);
         Assert.Contains("type=\"checkbox\"", result);
-        Assert.Contains("<details class=\"workforce-candidate-evidence\">", result);
+        Assert.Contains("<details class=\"workforce-candidate-evidence\">", evidence);
+        Assert.Equal(
+            4,
+            CountOccurrences(result, "<VillageWorkforceCandidateEvidence"));
         Assert.Contains("scope=\"col\"", result);
         Assert.Contains("scope=\"row\"", result);
         Assert.Contains("aria-live=\"polite\"", result);
         Assert.Contains("inert=", result);
         Assert.DoesNotContain(
             "<details class=\"workforce-candidate-evidence\" open",
-            result);
+            evidence);
         Assert.DoesNotContain(">@candidate.CharacterId", result);
         Assert.DoesNotContain("> @candidate.CharacterId", result);
         Assert.DoesNotContain("data-character-id", result);

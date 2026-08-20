@@ -128,17 +128,21 @@ public enum VillageWorkforceApiDiagnosticSeverity
 
 public sealed record VillageWorkforceApiQuery
 {
+    [Required]
     [Range(0, short.MaxValue)]
-    public short AreaId { get; init; }
+    public short? AreaId { get; init; }
 
+    [Required]
     [Range(0, short.MaxValue)]
-    public short BlockId { get; init; }
+    public short? BlockId { get; init; }
 
+    [Required]
     [Range(0, short.MaxValue)]
-    public short BuildingBlockIndex { get; init; }
+    public short? BuildingBlockIndex { get; init; }
 
+    [Required]
     [Range(0, sbyte.MaxValue)]
-    public int ManagerSlotIndex { get; init; }
+    public int? ManagerSlotIndex { get; init; }
 
     [Required]
     [StringLength(80, MinimumLength = 1)]

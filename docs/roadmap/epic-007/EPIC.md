@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | Active — awaiting closure decisions |
+| Status | Active — awaiting product-owner completion decision |
 | Milestone | 7 |
 | Target release | TBD |
-| Last updated | 2026-08-18 |
+| Last updated | 2026-08-20 |
 
 ## Summary
 
@@ -363,7 +363,7 @@ prove stable identity and ordering; source hashes prove non-interference.
 - [x] All required settlement facts are read through one bounded save session.
 - [x] The API exposes typed states without local paths, raw proprietary data,
       or mutation-capable types.
-- [ ] The UI is bilingual, responsive, keyboard accessible, and concise, with
+- [x] The UI is bilingual, responsive, keyboard accessible, and concise, with
       evidence available through progressive disclosure.
 - [x] A manual checklist never claims or triggers an in-game change.
 - [x] Automated and representative manual verification prove non-interference.
@@ -388,8 +388,8 @@ prove stable identity and ordering; source hashes prove non-interference.
 
 ## Completion decision
 
-Technical and guarded representative verification are complete. Final
-wide/narrow visual confirmation and explicit product-owner approval remain
+Technical, guarded representative, independent, and wide/narrow in-app browser
+verification are complete. Only explicit product-owner approval remains
 pending in [E7-011](../../reviews/E7-011-manual-verification.md).
 
 ## Delivery reference

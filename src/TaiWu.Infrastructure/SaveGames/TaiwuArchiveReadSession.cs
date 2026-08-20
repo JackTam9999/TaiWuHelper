@@ -59,7 +59,6 @@ internal sealed class TaiwuArchiveReadSession(
                     var reused = await ProjectCurrentArchiveAsync(
                             fullSaveFilePath,
                             revisionBefore,
-                            fingerprintBefore,
                             project,
                             cancellationToken)
                         .ConfigureAwait(false);
@@ -145,10 +144,9 @@ internal sealed class TaiwuArchiveReadSession(
         && PathsEqual(current.SaveFilePath, saveFilePath)
         && current.Revision == revision;
 
-    private async Task<ReusedProjection<TResult>> ProjectCurrentArchiveAsync<TResult>(
+    private Task<ReusedProjection<TResult>> ProjectCurrentArchiveAsync<TResult>(
         string saveFilePath,
         ReadOnlyFileRevision revisionBefore,
-        ReadOnlyFileFingerprint fingerprintBefore,
         Func<TaiwuArchiveReadContext, CancellationToken, TResult> project,
         CancellationToken cancellationToken)
     {
@@ -172,23 +170,15 @@ internal sealed class TaiwuArchiveReadSession(
             throw new TaiwuArchiveChangedException();
         }
 
-        var fingerprintAfterStarted = _timeProvider.GetTimestamp();
-        var fingerprintAfter = await fingerprintProvider.CaptureAsync(
-                saveFilePath,
-                cancellationToken)
-            .ConfigureAwait(false);
-        var fingerprintAfterElapsed = _timeProvider.GetElapsedTime(
-            fingerprintAfterStarted);
-        if (fingerprintBefore != fingerprintAfter)
-        {
-            CurrentArchive = null;
-            throw new TaiwuArchiveChangedException();
-        }
-
-        return new ReusedProjection<TResult>(
+        // The full pre-projection fingerprint is required even when size and
+        // mtime match so metadata-preserving replacements cannot reuse stale
+        // GameData. Once that identity is confirmed, the cheap revision check
+        // above rejects revision-changing writes during the short, in-memory
+        // projection without hashing the entire archive twice.
+        return Task.FromResult(new ReusedProjection<TResult>(
             result,
             projectElapsed,
-            fingerprintAfterElapsed);
+            FingerprintAfterElapsed: TimeSpan.Zero));
     }
 
     private static bool PathsEqual(string left, string right) =>

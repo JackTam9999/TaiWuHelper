@@ -231,6 +231,41 @@ public sealed class VillageWorkforceControllerTests
             Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Missing_target_coordinates_are_safe_400_before_workflow()
+    {
+        var snapshot = Snapshot([Worker(101, 60)]);
+        var reader = Substitute.For<IVillageWorkforceSnapshotReader>();
+        var finder = Substitute.For<IFindVillageWorkforce>();
+        var valid = Query(snapshot);
+        var incompleteQueries = new[]
+        {
+            valid with { AreaId = null },
+            valid with { BlockId = null },
+            valid with { BuildingBlockIndex = null },
+            valid with { ManagerSlotIndex = null }
+        };
+        var controller = new VillageWorkforceController(reader, finder);
+
+        foreach (var query in incompleteQueries)
+        {
+            var action = await controller.Result(
+                query,
+                TestContext.Current.CancellationToken);
+            var result = Assert.IsType<ObjectResult>(action.Result);
+            var problem = Assert.IsType<ProblemDetails>(result.Value);
+
+            Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+            Assert.Equal(
+                "VILLAGE_WORKFORCE_REQUEST_INVALID",
+                problem.Extensions["code"]);
+        }
+
+        await finder.DidNotReceive().ExecuteAsync(
+            Arg.Any<VillageWorkforceFinderRequest>(),
+            Arg.Any<CancellationToken>());
+    }
+
     [Theory]
     [InlineData(VillageWorkforceSnapshotReadStatus.SaveUnavailable, 404)]
     [InlineData(VillageWorkforceSnapshotReadStatus.UnsupportedVersion, 422)]

@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Status | Complete — final manual visual confirmation scheduled in E7-011 |
-| Evidence date | 2026-08-18 |
+| Status | Complete |
+| Evidence date | 2026-08-20 |
 | Epic | [EPIC-007](../roadmap/epic-007/EPIC.md) |
 | Backlog item | [E7-009](../roadmap/epic-007/BACKLOG.md#e7-009--deliver-the-bilingual-accessible-village-workforce-ui) |
 | UI contract | [UI-007](../roadmap/epic-007/UI-007-village-workforce-planner.md) |
@@ -21,7 +21,9 @@ worker list. The current assignment is summarized before alternatives. Each
 worker row retains only rank, localized display name, exact value or typed
 unavailable state, evaluation state, decisive evidence, and comparison control.
 Requirements, the single verified component, and redacted provenance live in
-one closed native disclosure per worker.
+one closed native disclosure per worker. The same disclosure is now present
+for the current assignment and for both workers in the comparison, so no
+displayed worker loses its hard-gate, component, or provenance evidence.
 
 ## Identity and repetition controls
 
@@ -47,7 +49,9 @@ result heading or safe error summary. The initial result renders ten comparable
 alternatives; explicit expansion and every other large filter use 25-row pages.
 Filter changes announce visible/full counts without changing immutable counts
 or ranks. A third comparison checkbox is disabled after two selections, with
-visible explanatory text.
+visible explanatory text. The selected alternative remains visibly checked
+and enabled, while clearing the comparison restores keyboard focus to that
+same control.
 
 Six-attribute, martial-aptitude, and life-skill-aptitude averages render as
 descriptive saved context with 6/6, 14/14, and 16/16 coverage. They are excluded
@@ -78,18 +82,20 @@ Focused Release tests cover:
 - route, navigation, single-DOM responsive CSS, and forbidden-capability
   architecture checks.
 
-The Release solution build passes with zero warnings and zero errors. The live
-localhost route returned HTTP 200 and completed the configured target discovery
-read. The read remained bounded to the existing immutable archive session.
-The full default Release matrix passed 1,398 tests, skipped 15 explicitly
-environment-gated integrations, and failed none.
+The Release solution build passes with zero warnings and zero errors. The full
+default Release matrix contains 1,420 tests: 1,405 passed, 15 explicitly
+environment-gated integrations skipped, and none failed. The configured-save
+workforce class additionally passed 2 of 2 with zero skips.
 
-The in-app browser runtime could not initialize in this workspace because its
-bundled RPC dependency was rejected by the local trusted-code-path check. No
-alternate browser automation was substituted. E7-011 therefore retains the
-final wide English and narrow Traditional Chinese visual confirmation, using
-synthetic data only; the rendering and semantic parity gates are already
-automated here.
+The prescribed in-app browser completed the final visual and functional pass
+against the live configured-save route. English at 1280 by 900 CSS pixels and
+Traditional Chinese at 390 by 844 exposed the same target, current assignment,
+candidate ordering, selected comparison, evidence disclosures, and checklist.
+Neither viewport had document-level horizontal overflow. Narrow comparison
+cards repeat each worker label before its value after the wide table header is
+visually hidden. Native checkbox state, disabled alternatives, comparison
+evidence, and focus restoration after clear were verified from the rendered
+DOM rather than inferred from source markup.
 
 ## Safety conclusion
 

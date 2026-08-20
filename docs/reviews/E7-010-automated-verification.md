@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Status | Complete |
-| Evidence date | 2026-08-18 |
+| Evidence date | 2026-08-20 |
 | Epic | [EPIC-007](../roadmap/epic-007/EPIC.md) |
 | Backlog item | [E7-010](../roadmap/epic-007/BACKLOG.md#e7-010--verify-safety-batching-determinism-and-cross-layer-parity) |
 | Source boundary | [E7-000 evidence](../scenarios/E7-000-village-workforce-evidence.md) |
@@ -12,8 +12,8 @@
 
 The complete Epic 7 technical vertical passes its Domain, Application,
 Infrastructure, API, Presentation, localization, architecture, Release, and
-guarded local verification. The full default matrix contains 1,409 tests:
-1,395 passed, 14 guarded local-source scenarios skipped explicitly, and none
+guarded local verification. The full default matrix contains 1,420 tests:
+1,405 passed, 15 guarded local-source scenarios skipped explicitly, and none
 failed. The Release solution build completed with zero warnings and zero
 errors.
 
@@ -33,7 +33,7 @@ exact source fingerprint, or proprietary source text is recorded here.
 
 | Boundary | Coverage and invariant | Result |
 |---|---|---|
-| Domain | Typed identities and evidence, immutable snapshot, verified rules, evaluator states, exact ties, shortlist filters/comparison, manual-plan identity | 45 passed |
+| Domain | Typed identities and evidence, immutable snapshot, verified rules, evaluator states, exact ties, current-only comparison, shortlist filters/comparison, manual-plan identity | 46 passed |
 | Application | One snapshot read per execution, status mapping, cancellation, revision isolation, deterministic orchestration and complete identity repetition | 22 passed |
 | Infrastructure unit | Registration and archive reuse, preserved-metadata replacement detection, changed-during-read rejection, and cache invalidation | 9 passed |
 | Infrastructure guarded | One bounded archive session, repeatable projection, 30-second cold/3-second warm budgets, and three-file before/after guard | 2 passed, 0 skipped |
@@ -81,27 +81,31 @@ failure or numeric zero.
 ## Guarded local archive and performance
 
 E7-000 originally observed a 15.418-second cold projection and a 1.881-second
-warm projection. A later architecture hardening requires full content
-fingerprints before and after every reused projection. That verification is
-necessary to detect a save replaced with the same size and timestamp and a
-save changed during projection, so E7-010 does not remove it to preserve the
-old two-second target.
+warm projection. Architecture hardening requires a full content fingerprint
+before every reused projection so a save replaced with the same size and
+timestamp cannot reuse stale GameData. The post-projection guard now recaptures
+the cheap size-and-timestamp revision instead of hashing the full archive a
+second time. This retains preserved-metadata replacement detection before
+reuse and rejects revision-changing writes during projection while removing
+duplicate whole-file work from the warm path.
 
 Sequential Release measurements on the current configured source were:
 
 | Probe | Cold | Warm | Guard result |
 |---|---:|---:|---|
 | E7-000 aggregate evidence | 18.838 s | 2.753 s | 3 of 3 unchanged |
-| E7-003 production snapshot | 19.218 s | 2.714 s | 3 of 3 unchanged |
+| E7-003 production snapshot before correction | 19.218 s | 2.714 s | 3 of 3 unchanged |
+| Live production validation after correction | 18.414–23.280 s | 1.449–1.565 s | read-only route; full pre-reuse SHA retained |
 
-The enforced budgets are therefore 30 seconds cold and three seconds warm.
+The enforced budgets remain 30 seconds cold and three seconds warm.
 Both tests share `TaiwuArchivePerformanceCollection`, whose disabled
 parallelization prevents another real-save cold load from consuming the same
-process-wide GameData lock inside the timed interval. Running both classes in
-one command passed 2 of 2 in 33.694 seconds with zero skips.
+process-wide GameData lock inside the timed interval. The configured-save
+workforce class passed 2 of 2 in 33.741 seconds with zero
+skips, including the warm guard that previously reproduced at 4.082 seconds.
 
 The default matrix does not receive a private save path. Both cases then report
-an explicit `TAIWU_INTEGRATION_SAVE_PATH` skip; they are two of the 14 expected
+an explicit `TAIWU_INTEGRATION_SAVE_PATH` skip; they are two of the 15 expected
 environment-dependent skips rather than silent omissions.
 
 ## Capability and batching boundaries
@@ -124,11 +128,11 @@ forbids efficiency guessing and save/building/worker mutation APIs.
 | Gate | Result |
 |---|---|
 | `dotnet build TaiWu.slnx -c Release --no-restore` | Passed, 0 warnings, 0 errors |
-| Full default Release matrix | 1,409 total; 1,395 passed; 14 skipped; 0 failed |
-| Epic 7 Domain namespace | 45 passed |
+| Full default Release matrix | 1,420 total; 1,405 passed; 15 skipped; 0 failed |
+| Epic 7 Domain namespace | 46 passed |
 | Epic 7 Application namespace | 22 passed |
 | Focused Infrastructure unit boundary | 9 passed |
-| Focused API/Presentation and JSON boundary | 41 passed |
+| Focused API/Presentation and JSON boundary | 43 passed |
 | Focused semantic/workforce architecture boundary | 5 passed |
 | Guarded workforce integration | 2 passed; 0 skipped |
 | `git diff --check` | Passed |
@@ -136,5 +140,5 @@ forbids efficiency guessing and save/building/worker mutation APIs.
 ## Remaining gate
 
 No automated E7-010 blocker remains. E7-011 owns representative manual review,
-the final wide/narrow bilingual visual check deferred by E7-009, epic-wide
-traceability, and the product owner's explicit completion decision.
+epic-wide traceability, and the product owner's explicit completion decision;
+the final wide/narrow bilingual visual check is now complete.

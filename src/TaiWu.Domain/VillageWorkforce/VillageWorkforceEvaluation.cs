@@ -461,17 +461,21 @@ public sealed class WorkforceComparison
             return WorkforceComparisonOutcome.Unavailable;
         }
 
-        if (!first.IsRankable || !second.IsRankable
-            || first.Result is null || second.Result is null)
+        if (!HasComparableResult(first) || !HasComparableResult(second))
         {
             return WorkforceComparisonOutcome.NotComparable;
         }
 
-        return first.Result.Value.CompareTo(second.Result.Value) switch
+        return first.Result!.Value.CompareTo(second.Result!.Value) switch
         {
             > 0 => WorkforceComparisonOutcome.Higher,
             < 0 => WorkforceComparisonOutcome.Lower,
             _ => WorkforceComparisonOutcome.Equal
         };
     }
+
+    private static bool HasComparableResult(WorkforceEvaluation evaluation) =>
+        (evaluation.IsRankable
+            || evaluation.State == WorkforceEvaluationState.CurrentOnly)
+        && evaluation.Result is not null;
 }

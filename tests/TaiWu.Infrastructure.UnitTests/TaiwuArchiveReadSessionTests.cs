@@ -160,7 +160,7 @@ public sealed class TaiwuArchiveReadSessionTests
             Assert.Equal(1, first);
             Assert.Equal(2, second);
             Assert.Equal(3, revisions.CaptureCount);
-            Assert.Equal(4, fingerprints.CaptureCount);
+            Assert.Equal(3, fingerprints.CaptureCount);
             Assert.Equal(1, loader.LoadCount);
         }
         finally

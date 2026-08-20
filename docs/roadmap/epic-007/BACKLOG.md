@@ -489,7 +489,7 @@ and presentation contracts.
 
 ### E7-011 — Validate the representative assignment and close Epic 7
 
-**Status:** Blocked — final visual and product-owner decisions required
+**Status:** Awaiting product-owner completion decision
 
 **Priority:** P1
 
@@ -504,7 +504,7 @@ deferred work, and request the product-owner completion decision.
 
 - [x] The selected local assignment scenario matches documented source facts
       without exposing proprietary identities or data.
-- [ ] English and Traditional Chinese wide/narrow states expose the same facts.
+- [x] English and Traditional Chinese wide/narrow states expose the same facts.
 - [x] Empty, tied, ineligible, incomplete, unsupported, conflict, and failure
       states are reviewed with synthetic data.
 - [x] Repeated runs retain stable normalized result facts, source identity,
@@ -513,8 +513,8 @@ deferred work, and request the product-owner completion decision.
 - [x] Every Epic 7 acceptance criterion links to implementation or evidence.
 - [x] Unsupported settlement, recruitment, development, library, persistence,
       and game-control mechanics remain explicit future work.
-- [x] Independent Epic 7 closure review is consciously deferred to the
-      post-epic review/refactoring phase.
+- [x] Independent Epic 7 closure review is complete and every actionable
+      finding is corrected and reverified.
 - [ ] The product owner records the Epic 7 completion decision.
 
 #### Evidence
@@ -556,12 +556,12 @@ deferred work, and request the product-owner completion decision.
 
 ### E7-R4 — Restore descriptive context and close review gaps
 
-**Status:** Complete — automated; E7-011 retains product-owner visual acceptance
+**Status:** Complete — automated and visual; E7-011 retains final product-owner acceptance
 
 - [x] Show six attributes and martial/life aptitudes as display-only context.
 - [x] Add representative-scale rendering and single-read regression coverage.
-- [x] Re-run the full Release matrix plus bilingual rendering and responsive
-      contract review; live product-owner visual acceptance remains E7-011.
+- [x] Re-run the full Release matrix plus bilingual rendering, responsive
+      browser review, comparison focus, and evidence-disclosure checks.
 
 ## Future work outside Epic 7
 

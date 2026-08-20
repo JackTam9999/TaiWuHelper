@@ -165,11 +165,13 @@
     }
     else if (_model is not null)
     {
-        <VillageWorkforceResults Model="_model"
+        <VillageWorkforceResults @key="ResultsRenderKey"
+                                 Model="_model"
                                  State="_interaction"
                                  Comparison="_comparison"
                                  IsPrevious="IsPreviousResult"
-                                 ComparisonChanged="RebuildComparison" />
+                                 ComparisonChanged="OnComparisonChanged"
+                                 ComparisonCleared="FocusAfterComparisonClear" />
     }
 </section>
 
@@ -178,6 +180,7 @@
         WorkforceObjectiveKind.ShopManagerBaseLifeSkillQualification,
         VerifiedVillageWorkforceRules.ObjectiveVersion);
     private readonly VillageWorkforceInteractionState _interaction = new();
+    private readonly CancellationTokenSource _lifetimeCancellation = new();
     private IReadOnlyList<ShopManagerTarget> _targets = [];
     private int? _draftGroupIndex;
     private int? _draftTargetIndex;
@@ -188,6 +191,10 @@
     private VillageWorkforceComparisonViewModel? _comparison;
     private VillageWorkforceNoticeViewModel? _notice;
     private VillageWorkforceNoticeViewModel? _targetNotice;
+    private VillageWorkforceFinderStatus? _noticeStatus;
+    private VillageWorkforceSnapshotReadStatus? _targetNoticeStatus;
+    private bool _noticeWasCancelled;
+    private bool _targetNoticeWasCancelled;
     private CancellationTokenSource? _requestCancellation;
     private bool _targetsLoading;
     private bool _isLoading;
@@ -254,6 +261,10 @@
     private bool IsPreviousResult => _model is not null
         && _draftTargetIndex != _submittedTargetIndex;
 
+    private string ResultsRenderKey =>
+        $"{_submittedTargetIndex}:{IsPreviousResult}:"
+        + string.Join(',', _interaction.SelectedCharacterIds);
+
     protected override async Task OnInitializedAsync()
     {
         await LoadTargetsAsync();
@@ -261,12 +272,18 @@
 
     protected override void OnParametersSet()
     {
-        if (_result is not null
-            && _result.HasAuthoritativeResult
-            && _mappedLanguage != Language)
+        if (_mappedLanguage == Language)
+        {
+            return;
+        }
+
+        if (_result is not null && _result.HasAuthoritativeResult)
         {
             MapCurrentResult();
         }
+
+        RemapNotices();
+        _mappedLanguage = Language;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -290,19 +307,19 @@
     private async Task LoadTargetsAsync()
     {
         _targetsLoading = true;
-        _targetNotice = null;
+        ClearTargetNotice();
         try
         {
             var read = await SnapshotReader.ReadAsync(
-                VillageWorkforceSnapshotReadRequest.Current);
+                VillageWorkforceSnapshotReadRequest.Current,
+                _lifetimeCancellation.Token);
             if (read.Snapshot is null)
             {
                 _snapshotRead = null;
                 _targets = [];
                 _draftGroupIndex = null;
                 _draftTargetIndex = null;
-                _targetNotice = VillageWorkforceViewModelMapper
-                    .MapDiscoveryFailure(read.Status, Language);
+                SetTargetFailure(read.Status);
                 return;
             }
 
@@ -313,16 +330,17 @@
                 ? DraftGroup.Positions[0].OptionIndex
                 : null;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (
+            !_lifetimeCancellation.IsCancellationRequested)
         {
             _snapshotRead = null;
             _targets = [];
             _draftGroupIndex = null;
             _draftTargetIndex = null;
-            _targetNotice = new VillageWorkforceNoticeViewModel(
-                Text(VillageWorkforceUiTextKey.CancelledTitle),
-                Text(VillageWorkforceUiTextKey.CancelledMessage),
-                CanRetry: true);
+            SetTargetCancelled();
+        }
+        catch (OperationCanceledException)
+        {
         }
         catch (Exception exception)
         {
@@ -333,10 +351,7 @@
             _targets = [];
             _draftGroupIndex = null;
             _draftTargetIndex = null;
-            _targetNotice = VillageWorkforceViewModelMapper
-                .MapDiscoveryFailure(
-                    VillageWorkforceSnapshotReadStatus.ReadFailed,
-                    Language);
+            SetTargetFailure(VillageWorkforceSnapshotReadStatus.ReadFailed);
         }
         finally
         {
@@ -380,9 +395,10 @@
         var target = _targets[targetIndex].Identity;
         _requestCancellation?.Cancel();
         _requestCancellation?.Dispose();
-        _requestCancellation = new CancellationTokenSource();
+        _requestCancellation = CancellationTokenSource
+            .CreateLinkedTokenSource(_lifetimeCancellation.Token);
         _isLoading = true;
-        _notice = null;
+        ClearInspectionNotice();
         _result = null;
         _model = null;
         _comparison = null;
@@ -402,26 +418,23 @@
             }
             else
             {
-                _notice = VillageWorkforceViewModelMapper.MapFailure(
-                    result.Status,
-                    Language);
+                SetInspectionFailure(result.Status);
                 _pendingFocusId = "workforce-error-summary";
             }
         }
+        catch (OperationCanceledException) when (
+            !_lifetimeCancellation.IsCancellationRequested)
+        {
+            SetInspectionCancelled();
+            _pendingFocusId = "workforce-error-summary";
+        }
         catch (OperationCanceledException)
         {
-            _notice = new VillageWorkforceNoticeViewModel(
-                Text(VillageWorkforceUiTextKey.CancelledTitle),
-                Text(VillageWorkforceUiTextKey.CancelledMessage),
-                CanRetry: true);
-            _pendingFocusId = "workforce-error-summary";
         }
         catch (Exception exception)
         {
             Logger.LogError(exception, "Village workforce inspection failed safely.");
-            _notice = VillageWorkforceViewModelMapper.MapFailure(
-                VillageWorkforceFinderStatus.ReadFailed,
-                Language);
+            SetInspectionFailure(VillageWorkforceFinderStatus.ReadFailed);
             _pendingFocusId = "workforce-error-summary";
         }
         finally
@@ -463,13 +476,115 @@
             Language);
     }
 
+    private void OnComparisonChanged()
+    {
+        RebuildComparison();
+        if (_model is null)
+        {
+            return;
+        }
+
+        var selectedAlternative = _interaction.SelectedCharacterIds
+            .FirstOrDefault(characterId =>
+                characterId != _model.Current.CharacterId);
+        var focusTarget = _model.Candidates.FirstOrDefault(candidate =>
+            candidate.CharacterId == selectedAlternative);
+        if (focusTarget is not null)
+        {
+            _pendingFocusId =
+                $"workforce-compare-{focusTarget.DisplayOrdinal}";
+        }
+    }
+
+    private void FocusAfterComparisonClear(string elementId) =>
+        _pendingFocusId = elementId;
+
+    private void ClearTargetNotice()
+    {
+        _targetNotice = null;
+        _targetNoticeStatus = null;
+        _targetNoticeWasCancelled = false;
+    }
+
+    private void SetTargetFailure(VillageWorkforceSnapshotReadStatus status)
+    {
+        _targetNoticeStatus = status;
+        _targetNoticeWasCancelled = false;
+        _targetNotice = VillageWorkforceViewModelMapper.MapDiscoveryFailure(
+            status,
+            Language);
+        _mappedLanguage = Language;
+    }
+
+    private void SetTargetCancelled()
+    {
+        _targetNoticeStatus = null;
+        _targetNoticeWasCancelled = true;
+        _targetNotice = CancelledNotice();
+        _mappedLanguage = Language;
+    }
+
+    private void ClearInspectionNotice()
+    {
+        _notice = null;
+        _noticeStatus = null;
+        _noticeWasCancelled = false;
+    }
+
+    private void SetInspectionFailure(VillageWorkforceFinderStatus status)
+    {
+        _noticeStatus = status;
+        _noticeWasCancelled = false;
+        _notice = VillageWorkforceViewModelMapper.MapFailure(status, Language);
+        _mappedLanguage = Language;
+    }
+
+    private void SetInspectionCancelled()
+    {
+        _noticeStatus = null;
+        _noticeWasCancelled = true;
+        _notice = CancelledNotice();
+        _mappedLanguage = Language;
+    }
+
+    private void RemapNotices()
+    {
+        if (_targetNoticeStatus is { } targetStatus)
+        {
+            _targetNotice = VillageWorkforceViewModelMapper
+                .MapDiscoveryFailure(targetStatus, Language);
+        }
+        else if (_targetNoticeWasCancelled)
+        {
+            _targetNotice = CancelledNotice();
+        }
+
+        if (_noticeStatus is { } status)
+        {
+            _notice = VillageWorkforceViewModelMapper.MapFailure(
+                status,
+                Language);
+        }
+        else if (_noticeWasCancelled)
+        {
+            _notice = CancelledNotice();
+        }
+    }
+
+    private VillageWorkforceNoticeViewModel CancelledNotice() => new(
+        Text(VillageWorkforceUiTextKey.CancelledTitle),
+        Text(VillageWorkforceUiTextKey.CancelledMessage),
+        CanRetry: true);
+
     private string Text(VillageWorkforceUiTextKey key) =>
         VillageWorkforceUiText.Get(Language, key);
 
     public ValueTask DisposeAsync()
     {
+        _lifetimeCancellation.Cancel();
         _requestCancellation?.Cancel();
         _requestCancellation?.Dispose();
+        _lifetimeCancellation.Dispose();
         return ValueTask.CompletedTask;
     }
 }

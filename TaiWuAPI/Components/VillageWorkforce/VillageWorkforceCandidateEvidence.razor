@@ -1,0 +1,93 @@
+@using TaiWu.Application.Localization
+@using TaiWuAPI.Presentation
+
+<details class="workforce-candidate-evidence">
+    <summary>
+        @if (IncludeCandidateLabel)
+        {
+            <strong>@Candidate.Label</strong>
+            <span aria-hidden="true">·</span>
+        }
+        @Text(VillageWorkforceUiTextKey.EvidenceDetails)
+        <span>
+            @Candidate.PassedRequirements/@Candidate.Requirements.Count
+            @Text(VillageWorkforceUiTextKey.RequirementsPassed)
+            · @Candidate.Components.Count
+            @Text(VillageWorkforceUiTextKey.VerifiedComponents)
+        </span>
+    </summary>
+    <div class="workforce-candidate-details">
+        <section>
+            <h4>@Text(VillageWorkforceUiTextKey.Requirements)</h4>
+            <ol>
+                @foreach (var requirement in Candidate.Requirements
+                    .OrderBy(item => item.Order))
+                {
+                    <li>
+                        <strong>@requirement.Outcome</strong>
+                        <span>@requirement.Explanation</span>
+                        @if (requirement.ConflictCount > 0)
+                        {
+                            <small>
+                                @Text(VillageWorkforceUiTextKey.Conflicting):
+                                @requirement.ConflictCount
+                            </small>
+                        }
+                    </li>
+                }
+            </ol>
+        </section>
+        <section>
+            <h4>@Text(VillageWorkforceUiTextKey.Components)</h4>
+            @if (Candidate.Components.Count == 0)
+            {
+                <p>@Text(VillageWorkforceUiTextKey.Unavailable)</p>
+            }
+            @foreach (var component in Candidate.Components)
+            {
+                <p>
+                    <strong>
+                        @component.Contribution @component.UnitLabel
+                    </strong>
+                    <span>@component.Explanation</span>
+                </p>
+            }
+        </section>
+        <section>
+            <h4>@Text(VillageWorkforceUiTextKey.Provenance)</h4>
+            @if (Provenance.Count == 0)
+            {
+                <p>@Text(VillageWorkforceUiTextKey.Unavailable)</p>
+            }
+            else
+            {
+                <ul>
+                    @foreach (var provenance in Provenance)
+                    {
+                        <li>@provenance.Source · @provenance.Version</li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+</details>
+
+@code {
+    [Parameter, EditorRequired]
+    public VillageWorkforceCandidateViewModel Candidate { get; set; } = null!;
+
+    [Parameter]
+    public bool IncludeCandidateLabel { get; set; }
+
+    [CascadingParameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    private IReadOnlyList<VillageWorkforceProvenanceViewModel> Provenance =>
+        Candidate.Requirements.SelectMany(item => item.Provenance)
+            .Concat(Candidate.Components.SelectMany(item => item.Provenance))
+            .Distinct()
+            .ToArray();
+
+    private string Text(VillageWorkforceUiTextKey key) =>
+        VillageWorkforceUiText.Get(Language, key);
+}

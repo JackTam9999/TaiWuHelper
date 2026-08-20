@@ -95,6 +95,9 @@
                 <small>@Model.Current.DecisiveEvidence</small>
             }
         </div>
+        <div class="workforce-current-evidence">
+            <VillageWorkforceCandidateEvidence Candidate="Model.Current" />
+        </div>
     </section>
 
     <section class="workforce-candidates"
@@ -246,10 +249,11 @@
                             <td data-label="@Text(VillageWorkforceUiTextKey.Compare)">
                                 <label class="workforce-compare-control">
                                     <input id="workforce-compare-@candidate.DisplayOrdinal"
+                                           @key="(candidate.CharacterId, State.IsSelected(candidate.CharacterId), State.ComparisonReady, IsPrevious)"
                                            type="checkbox"
-                                           checked="@State.IsSelected(candidate.CharacterId)"
                                            disabled="@(IsPrevious || State.IsSelectionDisabled(candidate.CharacterId))"
-                                           @onchange="() => ToggleComparisonAsync(candidate.CharacterId)" />
+                                           @bind:get="State.IsSelected(candidate.CharacterId)"
+                                           @bind:set="selected => SetComparisonSelectionAsync(candidate.CharacterId, selected)" />
                                     <span>@Text(State.IsSelected(candidate.CharacterId)
                                         ? VillageWorkforceUiTextKey.SelectedForComparison
                                         : VillageWorkforceUiTextKey.SelectForComparison)</span>
@@ -258,58 +262,8 @@
                         </tr>
                         <tr class="workforce-candidate-detail-row">
                             <td colspan="5">
-                                <details class="workforce-candidate-evidence">
-                                    <summary>
-                                        @Text(VillageWorkforceUiTextKey.EvidenceDetails)
-                                        <span>
-                                            @candidate.PassedRequirements/@candidate.Requirements.Count
-                                            @Text(VillageWorkforceUiTextKey.RequirementsPassed)
-                                            · @candidate.Components.Count
-                                            @Text(VillageWorkforceUiTextKey.VerifiedComponents)
-                                        </span>
-                                    </summary>
-                                    <div class="workforce-candidate-details">
-                                        <section>
-                                            <h4>@Text(VillageWorkforceUiTextKey.Requirements)</h4>
-                                            <ol>
-                                                @foreach (var requirement in candidate.Requirements.OrderBy(item => item.Order))
-                                                {
-                                                    <li>
-                                                        <strong>@requirement.Outcome</strong>
-                                                        <span>@requirement.Explanation</span>
-                                                        @if (requirement.ConflictCount > 0)
-                                                        {
-                                                            <small>@Text(VillageWorkforceUiTextKey.Conflicting): @requirement.ConflictCount</small>
-                                                        }
-                                                    </li>
-                                                }
-                                            </ol>
-                                        </section>
-                                        <section>
-                                            <h4>@Text(VillageWorkforceUiTextKey.Components)</h4>
-                                            @if (candidate.Components.Count == 0)
-                                            {
-                                                <p>@Text(VillageWorkforceUiTextKey.Unavailable)</p>
-                                            }
-                                            @foreach (var component in candidate.Components)
-                                            {
-                                                <p>
-                                                    <strong>@component.Contribution @component.UnitLabel</strong>
-                                                    <span>@component.Explanation</span>
-                                                </p>
-                                            }
-                                        </section>
-                                        <section>
-                                            <h4>@Text(VillageWorkforceUiTextKey.Provenance)</h4>
-                                            <ul>
-                                                @foreach (var provenance in Provenance(candidate))
-                                                {
-                                                    <li>@provenance.Source · @provenance.Version</li>
-                                                }
-                                            </ul>
-                                        </section>
-                                    </div>
-                                </details>
+                                <VillageWorkforceCandidateEvidence
+                                    Candidate="candidate" />
                             </td>
                         </tr>
                     }
@@ -386,28 +340,48 @@
                 <tbody>
                     <tr>
                         <th scope="row">@Text(VillageWorkforceUiTextKey.State)</th>
-                        <td>@Comparison.First.StateLabel</td>
-                        <td>@Comparison.Second.StateLabel</td>
+                        <td data-label="@Comparison.First.Label">
+                            @Comparison.First.StateLabel
+                        </td>
+                        <td data-label="@Comparison.Second.Label">
+                            @Comparison.Second.StateLabel
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row">@Text(VillageWorkforceUiTextKey.SavedBaseQualification)</th>
-                        <td>@Value(Comparison.FirstValue, Comparison.UnitLabel)</td>
-                        <td>@Value(Comparison.SecondValue, Comparison.UnitLabel)</td>
+                        <td data-label="@Comparison.First.Label">
+                            @Value(Comparison.FirstValue, Comparison.UnitLabel)
+                        </td>
+                        <td data-label="@Comparison.Second.Label">
+                            @Value(Comparison.SecondValue, Comparison.UnitLabel)
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row">@Text(VillageWorkforceUiTextKey.MainAttributeAverage)</th>
-                        <td>@CapabilityValue(Comparison.First.CapabilitySummary?.MainAttributes)</td>
-                        <td>@CapabilityValue(Comparison.Second.CapabilitySummary?.MainAttributes)</td>
+                        <td data-label="@Comparison.First.Label">
+                            @CapabilityValue(Comparison.First.CapabilitySummary?.MainAttributes)
+                        </td>
+                        <td data-label="@Comparison.Second.Label">
+                            @CapabilityValue(Comparison.Second.CapabilitySummary?.MainAttributes)
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row">@Text(VillageWorkforceUiTextKey.MartialAptitudeAverage)</th>
-                        <td>@CapabilityValue(Comparison.First.CapabilitySummary?.MartialDisciplines)</td>
-                        <td>@CapabilityValue(Comparison.Second.CapabilitySummary?.MartialDisciplines)</td>
+                        <td data-label="@Comparison.First.Label">
+                            @CapabilityValue(Comparison.First.CapabilitySummary?.MartialDisciplines)
+                        </td>
+                        <td data-label="@Comparison.Second.Label">
+                            @CapabilityValue(Comparison.Second.CapabilitySummary?.MartialDisciplines)
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row">@Text(VillageWorkforceUiTextKey.LifeSkillAptitudeAverage)</th>
-                        <td>@CapabilityValue(Comparison.First.CapabilitySummary?.LifeSkillDisciplines)</td>
-                        <td>@CapabilityValue(Comparison.Second.CapabilitySummary?.LifeSkillDisciplines)</td>
+                        <td data-label="@Comparison.First.Label">
+                            @CapabilityValue(Comparison.First.CapabilitySummary?.LifeSkillDisciplines)
+                        </td>
+                        <td data-label="@Comparison.Second.Label">
+                            @CapabilityValue(Comparison.Second.CapabilitySummary?.LifeSkillDisciplines)
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row">@Text(VillageWorkforceUiTextKey.RelativeResult)</th>
@@ -415,6 +389,15 @@
                     </tr>
                 </tbody>
             </table>
+
+            <div class="workforce-comparison-evidence">
+                <VillageWorkforceCandidateEvidence
+                    Candidate="Comparison.First"
+                    IncludeCandidateLabel="true" />
+                <VillageWorkforceCandidateEvidence
+                    Candidate="Comparison.Second"
+                    IncludeCandidateLabel="true" />
+            </div>
 
             @if (Comparison.ManualChecklist.Count > 0)
             {
@@ -467,6 +450,9 @@
     [Parameter]
     public EventCallback ComparisonChanged { get; set; }
 
+    [Parameter]
+    public EventCallback<string> ComparisonCleared { get; set; }
+
     [CascadingParameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
 
@@ -518,29 +504,37 @@
 
     private void NextPage() => State.NextPage(Model);
 
-    private async Task ToggleComparisonAsync(int characterId)
+    private async Task SetComparisonSelectionAsync(
+        int characterId,
+        bool selected)
     {
+        if (State.IsSelected(characterId) == selected)
+        {
+            return;
+        }
+
         State.ToggleComparison(characterId, Model.Current.CharacterId);
         await ComparisonChanged.InvokeAsync();
     }
 
     private async Task ClearComparisonAsync()
     {
+        var selectedAlternative = State.SelectedCharacterIds
+            .FirstOrDefault(characterId =>
+                characterId != Model.Current.CharacterId);
+        var focusTarget = Model.Candidates.FirstOrDefault(candidate =>
+            candidate.CharacterId == selectedAlternative);
         State.ClearComparison();
         await ComparisonChanged.InvokeAsync();
+        await ComparisonCleared.InvokeAsync(focusTarget is null
+            ? "workforce-result-heading"
+            : $"workforce-compare-{focusTarget.DisplayOrdinal}");
     }
 
     private string RankLabel(VillageWorkforceCandidateViewModel candidate) =>
         candidate.State == VillageWorkforceApiEvaluationState.Tied
             ? $"{Text(VillageWorkforceUiTextKey.Tied)} {candidate.CompetitionRank}"
             : $"{Text(VillageWorkforceUiTextKey.Rank)} {candidate.CompetitionRank}";
-
-    private static IReadOnlyList<VillageWorkforceProvenanceViewModel>
-        Provenance(VillageWorkforceCandidateViewModel candidate) =>
-        candidate.Requirements.SelectMany(item => item.Provenance)
-            .Concat(candidate.Components.SelectMany(item => item.Provenance))
-            .Distinct()
-            .ToArray();
 
     private string Value(decimal? value, string unit) => value.HasValue
         ? $"{value.Value} {unit}"
