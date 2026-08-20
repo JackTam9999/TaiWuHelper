@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Planned |
+| Status | Accepted |
 | Epic | [EPIC-008](./EPIC.md) |
 | Backlog item | [E8-001](./BACKLOG.md#e8-001--define-tactical-plan-search-score-and-ui-semantics) |
 | Route | Existing combat recommendation page (`/`) |
@@ -114,9 +114,9 @@ native disclosures.
 └ 未向遊戲傳送任何操作。 ─────────┘
 ```
 
-The sketches illustrate hierarchy, not verified mechanics or final copy. E8-000
-may leave a stage unsupported; the UI must show that state rather than invent a
-placeholder instruction.
+The sketches illustrate hierarchy, not verified mechanics. E8-000 leaves the
+initial vertical's Finish stage unsupported and its finish state fallback-only;
+the UI must show that state rather than invent a placeholder instruction.
 
 ## Result header
 
@@ -138,8 +138,9 @@ headings.
 
 ## Plan-stage semantics
 
-Plan stages use a semantic ordered list. An absent stage is not renumbered into
-a different meaning.
+Plan stages use a semantic ordered list. An omitted stage renders no placeholder
+action, while an unsupported relevant stage renders its exact limitation. In
+both cases later stages retain their canonical ordinals and meanings.
 
 ### Preparation
 
@@ -251,6 +252,12 @@ The collapsed summary reports:
 - the first option, exploration, time, result, or cancellation bound that
   limited completeness.
 
+These are non-overlapping units. `Learned skill directions considered` is the
+candidate universe. Candidate decisions account for each universe member once;
+combinations explored and feasible results are separate search counts. `Search
+complete` is shown only when the normalized eligible space is exhausted and
+every distinct feasible result is retained.
+
 The summary never uses `best`, `optimal`, or `complete` after any active bound.
 A truncated result may still be displayed as `Highest-ranked result found
 within the stated bounds`.
@@ -270,7 +277,9 @@ Each group is initially bounded. Additional rows are shown in pages of at most
 ## Policy and score explanation
 
 The plan reuses the existing Safe, Balanced, and Aggressive control. Epic 8
-does not introduce arbitrary user weights.
+does not introduce arbitrary user weights. Their published tactical weights,
+component meanings, and unavailable-component renormalization are defined by
+[the tactical planning contract](../../architecture/TACTICAL-COMBAT-PLANNING-CONTRACT.md#tactical-score-semantics).
 
 The score disclosure shows each component's:
 
@@ -281,10 +290,13 @@ The score disclosure shows each component's:
 - decisive target-chain or execution evidence; and
 - limitation.
 
-Unavailable components display `Not included in this result` rather than zero.
+Unavailable components display `Not included in this result` rather than zero;
+their base weight remains explainable, while applied weight and contribution
+remain unavailable.
 Duplicate target coverage is presented once with any separately verified
-layered contribution. Unused slots are described neutrally unless a typed
-reserve or marginal-value rule affected ranking.
+layered contribution. Unused slots are described neutrally and do not affect
+ranking unless a typed reserve or marginal-value rule applies to the exact
+plan.
 
 No progress bar, percentage ring, star rating, difficulty grade, predicted
 damage, survival chance, or win probability is shown.
@@ -362,7 +374,7 @@ page has no horizontal document overflow at 390 CSS pixels.
 
 ## Bilingual terminology
 
-These terms are provisional until E8-000 and E8-001 confirm the first vertical:
+These terms are accepted for the version-1 interaction contract:
 
 | Contract term | English | Traditional Chinese |
 |---|---|---|
@@ -376,6 +388,8 @@ These terms are provisional until E8-000 and E8-001 confirm the first vertical:
 | fallback | Fallback | 後備方案 |
 | manual action | Do manually | 手動操作 |
 | expected purpose | Expected verified purpose | 已驗證預期用途 |
+| observed state | Observed state | 已觀察狀態 |
+| verified transition | Verified transition | 已驗證轉換 |
 | needs confirmation | Needs confirmation | 需要確認 |
 | unsupported | Unsupported | 不支援 |
 | conflicting | Conflicting | 資料衝突 |
@@ -387,6 +401,10 @@ These terms are provisional until E8-000 and E8-001 confirm the first vertical:
 | result found within bounds | Result found within stated bounds | 在所述限制內找到的結果 |
 | finish evidence unavailable | Finish evidence unavailable | 缺少收尾證據 |
 | no action sent | No action was sent to the game | 未向遊戲傳送任何操作 |
+
+Candidate decisions, search terminators, cache diagnostics, and score-state
+terms use the complete bilingual table in
+[the tactical planning contract](../../architecture/TACTICAL-COMBAT-PLANNING-CONTRACT.md#bilingual-terminology).
 
 ## Content rules
 

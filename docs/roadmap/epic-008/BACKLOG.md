@@ -146,7 +146,7 @@ first vertical only after exact semantics and standalone safety are recorded.
 
 ### E8-001 — Define tactical-plan, search, score, and UI semantics
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -159,31 +159,31 @@ interaction rules before implementing public Domain or API contracts.
 
 #### Acceptance criteria
 
-- [ ] Preparation, opening, target-state trigger, recovery, finish, and
+- [x] Preparation, opening, target-state trigger, recovery, finish, and
       fallback stages have distinct definitions and ordering semantics.
-- [ ] A stage may be unsupported or omitted without fabricating a complete
+- [x] A stage may be unsupported or omitted without fabricating a complete
       timeline.
-- [ ] Observed state, verified transition, expected purpose, manual action,
+- [x] Observed state, verified transition, expected purpose, manual action,
       fallback, and unresolved evidence use different labels and semantics.
-- [ ] Candidate admitted, rejected, unsupported, irrelevant, and dominated
+- [x] Candidate admitted, rejected, unsupported, irrelevant, and dominated
       states are defined without implying character weakness.
-- [ ] Candidate-universe, relevance, dominance, exploration, time, result,
+- [x] Candidate-universe, relevance, dominance, exploration, time, result,
       cancellation, and cache-reuse diagnostics have exact meanings.
-- [ ] Safe, Balanced, and Aggressive policy meanings remain distinct when a
+- [x] Safe, Balanced, and Aggressive policy meanings remain distinct when a
       component is unavailable.
-- [ ] Damage, layered protection, duplicate coverage, execution cost, and
+- [x] Damage, layered protection, duplicate coverage, execution cost, and
       unused-capacity presentation rules are explicit.
-- [ ] Shared evidence and limitations appear once per result; plan steps show
+- [x] Shared evidence and limitations appear once per result; plan steps show
       only step-specific conditions and reasons.
-- [ ] Wide and narrow layouts expose the same facts from one semantic
+- [x] Wide and narrow layouts expose the same facts from one semantic
       structure without requiring a causal graph.
-- [ ] Keyboard focus, live announcements, disclosures, policy changes,
+- [x] Keyboard focus, live announcements, disclosures, policy changes,
       observation replacement, and failure recovery are defined.
-- [ ] English and Traditional Chinese terms are defined before implementation.
-- [ ] No label, button, or status implies execution, automation, guaranteed
+- [x] English and Traditional Chinese terms are defined before implementation.
+- [x] No label, button, or status implies execution, automation, guaranteed
       success, or probability of victory.
 
-#### Planned evidence
+#### Evidence
 
 - Completed [UI-008](./UI-008-tactical-combat-planner.md).
 - `docs/architecture/TACTICAL-COMBAT-PLANNING-CONTRACT.md`.

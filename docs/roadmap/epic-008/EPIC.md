@@ -434,7 +434,8 @@ manual review, independent closure review, and explicit product-owner approval.
 
 Implementation order and item-level evidence are tracked in
 [the Epic 8 backlog](./BACKLOG.md). The interaction contract is recorded in
-[UI-008](./UI-008-tactical-combat-planner.md).
+[UI-008](./UI-008-tactical-combat-planner.md) and the accepted
+[tactical planning product contract](../../architecture/TACTICAL-COMBAT-PLANNING-CONTRACT.md).
 
 PI-012 was promoted into this epic from
 [future product ideas](../FUTURE-PRODUCT-IDEAS.md#pi-012--evidence-backed-tactical-combat-planner)
