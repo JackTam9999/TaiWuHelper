@@ -82,7 +82,7 @@ public static class TacticalCombatViewModelMapper
             selectedScore?.Components.Select(MapScore).ToArray() ?? [],
             MapCandidates(response, skillNames),
             evidence,
-            Prefix(response.Identity?.SemanticFingerprint));
+            response.Identity?.SemanticFingerprint ?? "—");
     }
 
     private static TacticalStageViewModel MapStage(
@@ -619,8 +619,4 @@ public static class TacticalCombatViewModelMapper
         return null;
     }
 
-    private static string Prefix(string? fingerprint) =>
-        string.IsNullOrWhiteSpace(fingerprint)
-            ? "—"
-            : fingerprint[..Math.Min(12, fingerprint.Length)];
 }

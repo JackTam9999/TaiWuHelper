@@ -211,6 +211,38 @@ public sealed partial class TacticalCombatRenderingTests
     }
 
     [Fact]
+    public void Candidate_paging_is_scoped_to_one_semantic_result()
+    {
+        var group = new TacticalCandidateGroupViewModel(
+            TacticalCandidatePresentationGroup.Rejected,
+            Enumerable.Range(1, 30)
+                .Select(index => new TacticalCandidateViewModel(
+                    $"Named option {index}",
+                    SkillCategory.Attack,
+                    PracticeDirection.Reverse,
+                    RequiresBreakthrough: false,
+                    new BilingualText("Rejected.", "未採用。")))
+                .ToArray());
+        var first = Model();
+        var replacement = first with
+        {
+            SemanticFingerprint = new string('F', 64)
+        };
+        var state = new TacticalCandidatePagingState();
+
+        state.ResetFor(first.SemanticFingerprint);
+        Assert.Equal(25, state.Visible(group).Count);
+        state.ShowMore(group);
+        Assert.Equal(30, state.Visible(group).Count);
+
+        state.ResetFor(first.SemanticFingerprint);
+        Assert.Equal(30, state.Visible(group).Count);
+
+        state.ResetFor(replacement.SemanticFingerprint);
+        Assert.Equal(25, state.Visible(group).Count);
+    }
+
+    [Fact]
     public async Task Unavailable_score_is_excluded_instead_of_rendered_as_zero()
     {
         var text = VisibleText(await RenderAsync(Model()));

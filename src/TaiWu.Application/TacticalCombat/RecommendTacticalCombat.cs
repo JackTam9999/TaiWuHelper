@@ -63,26 +63,20 @@ public sealed class RecommendTacticalCombat(
             stage = PipelineStage.Rule;
             work.RuleResolutions++;
             var contextRequest = request.SearchRequest.ContextRequest;
-            var gameDataVersion = snapshot.Metadata.GameDataVersion.IsAvailable
-                ? snapshot.Metadata.GameDataVersion.Value
-                : TacticalContextGameDataVersions.Unavailable;
-            resolution = VerifiedTacticalCombatRuleSets.HistoricalMagicSound
-                .Resolve(
-                    gameDataVersion,
-                    contextRequest.TargetGoalCodes,
-                    contextRequest.Evidence);
+            resolution = TacticalExecutionContextProjection.ResolveRules(
+                snapshot,
+                contextRequest,
+                cancellationToken);
 
             stage = PipelineStage.Context;
             work.ContextProjections++;
-            var context = TacticalExecutionContextProjector.Project(
+            contextRead = TacticalExecutionContextProjection.Project(
                 snapshot,
+                contextRequest,
                 resolution,
-                contextRequest.Proposal ?? DefaultProposal(snapshot),
-                cancellationToken);
-            contextRead = new TacticalExecutionContextReadResult(
-                context,
-                snapshot.Metadata.CapturedAtUtc,
-                LatestObservation(snapshot));
+                cancellationToken,
+                contextRequest.Proposal ?? DefaultProposal(snapshot));
+            var context = contextRead.Context;
 
             if (!resolution.IsResolved)
             {
@@ -282,13 +276,6 @@ public sealed class RecommendTacticalCombat(
                 identity);
         }
     }
-
-    private static DateTimeOffset? LatestObservation(CombatSnapshot snapshot) =>
-        snapshot.FieldSources
-            .Where(item => item.Source
-                == SnapshotDataSource.CurrentScreenObservation)
-            .Select(item => (DateTimeOffset?)item.CapturedAtUtc)
-            .Max();
 
     private static TacticalExecutionProposal DefaultProposal(
         CombatSnapshot snapshot)

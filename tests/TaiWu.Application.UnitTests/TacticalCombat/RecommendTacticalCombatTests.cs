@@ -88,6 +88,39 @@ public sealed class RecommendTacticalCombatTests
     }
 
     [Fact]
+    public async Task Recommendation_and_context_reader_share_one_projection()
+    {
+        var fixture = Fixture();
+        var contextReader = Substitute.For<ICombatSnapshotReader>();
+        contextReader.ReadAsync(
+                fixture.SnapshotRequest,
+                Arg.Any<CancellationToken>())
+            .Returns(fixture.Snapshot);
+        var token = TestContext.Current.CancellationToken;
+
+        var recommendation = await fixture.Subject.ExecuteAsync(
+            fixture.Request,
+            token);
+        var context = await new ReadTacticalExecutionContext(contextReader)
+            .ExecuteAsync(
+                fixture.Request.SearchRequest.ContextRequest,
+                token);
+
+        Assert.Equal(
+            context.Context.SemanticFingerprint,
+            recommendation.Context!.Context.SemanticFingerprint);
+        Assert.Equal(
+            context.CapturedAtUtc,
+            recommendation.Context.CapturedAtUtc);
+        Assert.Equal(
+            context.LatestObservationAtUtc,
+            recommendation.Context.LatestObservationAtUtc);
+        Assert.Equal(
+            context.Context.RuleSetFingerprint,
+            recommendation.RuleResolution!.RuleSetFingerprint);
+    }
+
+    [Fact]
     public async Task Repeated_and_shuffled_requests_retain_every_semantic_identity()
     {
         var fixture = Fixture();

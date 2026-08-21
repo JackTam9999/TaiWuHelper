@@ -17,18 +17,23 @@ public sealed class DiscoverTacticalCandidates(ICombatSnapshotReader reader)
             cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var projection = ReadTacticalExecutionContext.ProjectSnapshot(
+        var resolution = TacticalExecutionContextProjection.ResolveRules(
             snapshot,
             request.ContextRequest,
             cancellationToken);
+        var contextRead = TacticalExecutionContextProjection.Project(
+            snapshot,
+            request.ContextRequest,
+            resolution,
+            cancellationToken);
         var discovery = TacticalCandidateDiscovery.Discover(
             snapshot.Player,
-            projection.Result.Context,
-            projection.RuleResolution,
+            contextRead.Context,
+            resolution,
             request.Limits,
             cancellationToken);
         return new TacticalCandidateDiscoveryReadResult(
-            projection.Result,
+            contextRead,
             discovery);
     }
 }

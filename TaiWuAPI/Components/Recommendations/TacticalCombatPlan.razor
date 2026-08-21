@@ -371,9 +371,7 @@
 </section>
 
 @code {
-    private const int CandidatePageSize = 25;
-    private readonly Dictionary<TacticalCandidatePresentationGroup, int>
-        _visibleCandidateCounts = [];
+    private readonly TacticalCandidatePagingState _candidatePaging = new();
 
     [Parameter, EditorRequired]
     public TacticalPlanSurfaceState SurfaceState { get; set; }
@@ -383,6 +381,9 @@
 
     [Parameter]
     public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    protected override void OnParametersSet() =>
+        _candidatePaging.ResetFor(Model?.SemanticFingerprint);
 
     private bool IsInactive => SurfaceState is
         TacticalPlanSurfaceState.Loading
@@ -431,18 +432,17 @@
     };
 
     private IReadOnlyList<TacticalCandidateViewModel> VisibleCandidates(
-        TacticalCandidateGroupViewModel group)
-    {
-        var count = _visibleCandidateCounts.GetValueOrDefault(
-            group.Group,
-            CandidatePageSize);
-        return group.Candidates.Take(count).ToArray();
-    }
+        TacticalCandidateGroupViewModel group) =>
+        _candidatePaging.Visible(group);
 
     private void ShowMore(TacticalCandidatePresentationGroup group)
     {
-        _visibleCandidateCounts[group] = _visibleCandidateCounts
-            .GetValueOrDefault(group, CandidatePageSize) + CandidatePageSize;
+        var candidates = Model?.CandidateGroups.SingleOrDefault(item =>
+            item.Group == group);
+        if (candidates is not null)
+        {
+            _candidatePaging.ShowMore(candidates);
+        }
     }
 
     private string Number(decimal? value) => value.HasValue

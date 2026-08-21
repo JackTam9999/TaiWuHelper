@@ -60,12 +60,17 @@ public sealed record TacticalCombatViewModel(
     IReadOnlyList<TacticalScoreComponentViewModel> ScoreComponents,
     IReadOnlyList<TacticalCandidateGroupViewModel> CandidateGroups,
     IReadOnlyList<TacticalEvidenceSummaryViewModel> Evidence,
-    string SemanticFingerprintPrefix)
+    string SemanticFingerprint)
 {
     public bool HasPlan => Stages.Count > 0;
 
     public bool IsPartial => Status ==
         TacticalCombatRecommendationStatus.PartialEvidence;
+
+    public string SemanticFingerprintPrefix =>
+        string.IsNullOrWhiteSpace(SemanticFingerprint)
+            ? "—"
+            : SemanticFingerprint[..Math.Min(12, SemanticFingerprint.Length)];
 }
 
 public sealed record TacticalStageViewModel(

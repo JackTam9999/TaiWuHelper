@@ -18,21 +18,26 @@ public sealed class SearchTacticalLoadouts(
             cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var projection = ReadTacticalExecutionContext.ProjectSnapshot(
+        var resolution = TacticalExecutionContextProjection.ResolveRules(
             snapshot,
             request.ContextRequest,
             cancellationToken);
+        var contextRead = TacticalExecutionContextProjection.Project(
+            snapshot,
+            request.ContextRequest,
+            resolution,
+            cancellationToken);
         var discovery = TacticalCandidateDiscovery.Discover(
             snapshot.Player,
-            projection.Result.Context,
-            projection.RuleResolution,
+            contextRead.Context,
+            resolution,
             request.DiscoveryLimits,
             cancellationToken);
         var search = TacticalLoadoutSearch.Search(
             new TacticalLoadoutSearchRequest(
                 snapshot.Player,
-                projection.Result.Context,
-                projection.RuleResolution,
+                contextRead.Context,
+                resolution,
                 discovery,
                 request.Bounds,
                 request.IrrelevanceProofs,
@@ -40,7 +45,7 @@ public sealed class SearchTacticalLoadouts(
             timeProvider,
             cancellationToken);
         return new TacticalLoadoutSearchReadResult(
-            projection.Result,
+            contextRead,
             discovery,
             search);
     }
