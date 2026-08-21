@@ -89,6 +89,92 @@
                 @T(TacticalCombatUiTextKey.InformationOnlyNotice)
             </p>
 
+            @if (Model.SelectedLoadout is { } loadout)
+            {
+                <section class="tactical-selected-loadout"
+                         aria-labelledby="tactical-selected-loadout-heading">
+                    <h4 id="tactical-selected-loadout-heading">
+                        @Text("Exact selected loadout", "精確所選運功")
+                    </h4>
+                    <dl class="tactical-counts">
+                        @foreach (var category in loadout.Categories)
+                        {
+                            <div>
+                                <dt>@UiText.Get(Language, category.Category.ToString())</dt>
+                                <dd>@category.Used / @category.Capacity
+                                    @if (category.UniversalSlotContribution > 0)
+                                    {
+                                        <small>
+                                            +@category.UniversalSlotContribution
+                                            @Text(" universal", " 萬用")
+                                        </small>
+                                    }
+                                </dd>
+                            </div>
+                        }
+                    </dl>
+                    <p>
+                        <strong>@Text("Universal slots", "萬用格"):</strong>
+                        @loadout.UniversalSlots.TotalSlots
+                        · @Text("Attack", "摧破") @loadout.UniversalSlots.Attack
+                        · @Text("Agility", "輕靈") @loadout.UniversalSlots.Agility
+                        · @Text("Defense", "護體") @loadout.UniversalSlots.Defense
+                        · @Text("Support", "奇竅") @loadout.UniversalSlots.Assistance
+                    </p>
+                    <ul class="tactical-loadout-skills">
+                        @foreach (var skill in loadout.Skills)
+                        {
+                            <li>
+                                <strong>@skill.Name</strong>
+                                <span>
+                                    @TacticalCombatUiText.Direction(
+                                        Language,
+                                        skill.Direction)
+                                    · @Text("cost", "格數") @skill.EffectiveCost
+                                    · @TacticalCombatUiText.Assignment(
+                                        Language,
+                                        skill.Assignment)
+                                </span>
+                                @if (skill.RecoveryCastCount > 0)
+                                {
+                                    <small>
+                                        @Text("Recovery casts", "恢復施放"):
+                                        @skill.RecoveryCastCount
+                                    </small>
+                                }
+                            </li>
+                        }
+                    </ul>
+                    @if (loadout.OptionalAlternatives.Count > 0)
+                    {
+                        <details>
+                            <summary>@Text("Optional alternatives", "可選替代功法")</summary>
+                            <ul>
+                                @foreach (var skill in loadout.OptionalAlternatives)
+                                {
+                                    <li>
+                                        @skill.Name
+                                        · @TacticalCombatUiText.Direction(
+                                            Language,
+                                            skill.Direction)
+                                        · @Text("cost", "格數") @skill.EffectiveCost
+                                    </li>
+                                }
+                            </ul>
+                        </details>
+                    }
+                    <details>
+                        <summary>@Text("Manual loadout changes", "手動運功變更")</summary>
+                        <ol>
+                            @foreach (var change in loadout.Changes)
+                            {
+                                <li>@change.Action.For(Language)</li>
+                            }
+                        </ol>
+                    </details>
+                </section>
+            }
+
             @if (Model.HasPlan)
             {
                 <ol class="tactical-stage-list">
@@ -451,6 +537,9 @@
 
     private string T(TacticalCombatUiTextKey key) =>
         TacticalCombatUiText.Get(Language, key);
+
+    private string Text(string english, string chinese) =>
+        Language == TaiwuLanguage.Chinese ? chinese : english;
 
     private string StageState(TacticalPlanStageState state) => state switch
     {

@@ -445,8 +445,23 @@ public static class TacticalCombatResponseMapper
                     category,
                     loadout.Proposal.Skills.Get(category),
                     Map(loadout.SlotBudgets[category])))],
-            Map(loadout.Proposal.GenericSlotAllocation));
+            Map(loadout.Proposal.GenericSlotAllocation),
+            [.. value.SelectedLoadoutPlan.SelectedSkills.Select(Map)],
+            [.. value.SelectedLoadoutPlan.OptionalAlternatives.Select(Map)],
+            [.. value.LoadoutChanges.Select(Map)]);
     }
+
+    private static TacticalLoadoutSkillResponse Map(
+        TacticalLoadoutSkillPlan value) => new(
+        value.Candidate.SkillId,
+        value.Category,
+        value.Candidate.Direction,
+        value.EffectiveCost,
+        value.Assignment,
+        value.RoleKind,
+        value.RecoveryCastCount,
+        value.IsScoringEligible,
+        value.LimitationIdentity);
 
     private static TacticalPlanResponse? MapPlan(
         TacticalCompiledCombatPlan? compiled)
@@ -519,16 +534,19 @@ public static class TacticalCombatResponseMapper
                             branch.TargetStep?.Code))],
                     MapEvidence(step.Evidence)))],
                 MapEvidence(item.Evidence)))],
-            [.. compiled.PreparationChecks.Select(item =>
-                new TacticalPreparationCheckResponse(
-                    item.Identity,
-                    item.Kind,
-                    item.ManualActionIdentity,
-                    item.Category,
-                    item.SkillId,
-                    item.Direction))],
+            [.. compiled.PreparationChecks.Select(Map)],
             MapEvidence(plan.SharedEvidence));
     }
+
+    private static TacticalPreparationCheckResponse Map(
+        TacticalPreparationCheck value) => new(
+        value.Identity,
+        value.Kind,
+        value.ManualActionIdentity,
+        value.Category,
+        value.SkillId,
+        value.Direction,
+        value.ReferenceIdentity);
 
     private static TacticalRequirementEvaluationResponse Map(
         TacticalRequirementEvaluation value) => new(

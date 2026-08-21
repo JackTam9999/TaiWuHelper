@@ -362,6 +362,32 @@ public static class TacticalCombatUiText
             _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null)
         });
 
+    public static string Assignment(
+        TaiwuLanguage language,
+        TacticalLoadoutAssignmentKind assignment) => Pick(
+        language,
+        assignment switch
+        {
+            TacticalLoadoutAssignmentKind.MainActiveAttack =>
+                ("Main active attack", "主力摧破"),
+            TacticalLoadoutAssignmentKind.ActiveAttack =>
+                ("Active attack", "主動摧破"),
+            TacticalLoadoutAssignmentKind.ActiveDefensePrimary =>
+                ("Primary active defense", "主用護體"),
+            TacticalLoadoutAssignmentKind.ActiveAgilityPrimary =>
+                ("Primary active agility", "主用輕靈"),
+            TacticalLoadoutAssignmentKind.EquippedPassive =>
+                ("Equipped passive", "裝備被動"),
+            TacticalLoadoutAssignmentKind.SwitchOnlyBackup =>
+                ("Switch-only backup", "切換備用"),
+            TacticalLoadoutAssignmentKind.Conditional =>
+                ("Conditional role", "條件角色"),
+            TacticalLoadoutAssignmentKind.OptionalAlternative =>
+                ("Optional alternative", "可選替代"),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(assignment), assignment, null)
+        });
+
     public static string Source(
         TaiwuLanguage language,
         TacticalEvidenceSourceKind source) => Pick(language, source switch

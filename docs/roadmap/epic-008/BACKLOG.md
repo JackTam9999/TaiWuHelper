@@ -1074,7 +1074,7 @@ counter options and retaining the current loadout.
 
 ### E8-F06 — Compile an exact loadout and manual execution plan
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -1087,22 +1087,35 @@ the game and audited against the same evidence.
 
 #### Acceptance criteria
 
-- [ ] Show every category's used/available capacity, each selected skill's
+- [x] Show every category's used/available capacity, each selected skill's
       effective cost and direction, and the universal-slot assignment.
-- [ ] Separate the main active attack, active agility, active defense, equipped
+- [x] Separate the main active attack, active agility, active defense, equipped
       passive, switch-only backup, and optional alternative roles.
-- [ ] List exact remove, add, direction-change, breakthrough/book-page, weapon,
+- [x] List exact remove, add, direction-change, breakthrough/book-page, weapon,
       and legendary-slot preparation steps without implying that the helper
       performs them.
-- [ ] Compile opening, target-cast trigger, Reverse `604`, three-cast recovery,
+- [x] Compile opening, target-cast trigger, Reverse `604`, three-cast recovery,
       active-role switching, reset pressure, finish, and fallback stages only
       where their transitions are supported.
-- [ ] Keep unknown live conditions as concise manual checks or unresolved
+- [x] Keep unknown live conditions as concise manual checks or unresolved
       branches and never convert them into optimistic defaults.
-- [ ] The comparison, selected loadout, score, candidate diagnostics, and plan
+- [x] The comparison, selected loadout, score, candidate diagnostics, and plan
       share one immutable semantic identity and cannot disagree.
-- [ ] English and Traditional Chinese outputs expose the same skills, costs,
+- [x] English and Traditional Chinese outputs expose the same skills, costs,
       conditions, limitations, and information-only boundary.
+
+#### Evidence
+
+- [E8-F06 exact manual loadout and plan](../../scenarios/E8-F06-exact-manual-loadout-plan.md).
+- [E8-F06 sanitized metadata](../../scenarios/evidence/E8-F06-exact-manual-loadout-plan-metadata.json).
+- `CurrentTacticalLoadoutPackageTests`: 6 passed, 0 failed; the current package,
+  manifest, exact preparation comparison, three-cast recovery, switches,
+  alternatives and coherent fingerprints are pinned.
+- `TacticalCombatRenderingTests`: 29 passed, 0 failed; English and Traditional
+  Chinese expose equivalent selected-loadout facts and retain player-visible
+  names plus the information-only boundary.
+- Release build: 0 warnings and 0 errors; full suite: 1,636 total, 1,612
+  passed, 0 failed, and 24 expected guarded-local skips.
 
 ### E8-F07 — Verify the current-version golden anti-magic-sound vertical
 

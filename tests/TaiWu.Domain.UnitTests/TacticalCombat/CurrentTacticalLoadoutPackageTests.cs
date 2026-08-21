@@ -169,6 +169,137 @@ public sealed class CurrentTacticalLoadoutPackageTests
             [requirement], confirmed).IsAccepted);
     }
 
+    [Fact]
+    public void Current_package_compiles_exact_manifest_changes_and_battle_order()
+    {
+        var fixture = Fixture(confirmWhiskTricks: true);
+        var request = Request(fixture);
+        var search = TacticalLoadoutSearch.Search(
+            request,
+            cancellationToken: TestContext.Current.CancellationToken);
+        var scoringRequest = new TacticalCombatScoringRequest(
+            RecommendationPolicy.Balanced,
+            request,
+            search);
+        var scoring = TacticalCombatScorer.Score(
+            scoringRequest,
+            TestContext.Current.CancellationToken);
+        var selected = Assert.Single(scoring.RankedCandidates, candidate =>
+            HasSkills(candidate.Candidate, 604, 686, 295, 303, 134, 150));
+
+        var compiled = TacticalCombatPlanCompiler.Compile(
+            new TacticalPlanCompilationRequest(
+                scoringRequest,
+                scoring,
+                selected.Candidate.StableKey),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(5, compiled.SelectedLoadoutPlan.Categories.Length);
+        Assert.All(compiled.SelectedLoadoutPlan.Categories, category =>
+            Assert.InRange(category.Used, 0, category.Capacity));
+        Assert.Equal(
+            TacticalLoadoutAssignmentKind.MainActiveAttack,
+            SkillPlan(compiled, 604).Assignment);
+        Assert.Equal(3, SkillPlan(compiled, 686).RecoveryCastCount);
+        Assert.Equal(
+            TacticalLoadoutAssignmentKind.ActiveDefensePrimary,
+            SkillPlan(compiled, 295).Assignment);
+        Assert.Equal(
+            TacticalLoadoutAssignmentKind.SwitchOnlyBackup,
+            SkillPlan(compiled, 303).Assignment);
+        Assert.Equal(
+            TacticalLoadoutAssignmentKind.ActiveAgilityPrimary,
+            SkillPlan(compiled, 134).Assignment);
+        Assert.Equal(
+            TacticalLoadoutAssignmentKind.SwitchOnlyBackup,
+            SkillPlan(compiled, 150).Assignment);
+
+        Assert.Equal(5, compiled.PreparationChecks.Count(check =>
+            check.Kind == TacticalPreparationCheckKind.Capacity));
+        Assert.Contains(compiled.PreparationChecks, check =>
+            check.ManualActionIdentity == "EQUIP_WEAPON_TYPE_6");
+        Assert.Contains(compiled.PreparationChecks, check =>
+            check.ManualActionIdentity == "EQUIP_WEAPON_TYPE_9");
+        Assert.Contains(compiled.PreparationChecks, check =>
+            check.ManualActionIdentity == "CONFIRM_USABLE_WHISK_TRICKS");
+        Assert.Contains(compiled.PreparationChecks, check =>
+            check.ManualActionIdentity.StartsWith(
+                "CONFIRM_UNIVERSAL_SLOTS_",
+                StringComparison.Ordinal));
+
+        var recovery = Stage(compiled, TacticalPlanStage.Recovery);
+        Assert.Equal(TacticalPlanStageState.Supported, recovery.State);
+        Assert.Equal([686, 686, 686], recovery.Steps.Select(step =>
+            step.SkillId!.Value));
+        Assert.Equal(
+            [
+                "CAST_REVERSE_SKILL_686_FOR_LOCK_LAYER_1",
+                "CAST_REVERSE_SKILL_686_FOR_LOCK_LAYER_2",
+                "CAST_REVERSE_SKILL_686_FOR_LOCK_LAYER_3"
+            ],
+            recovery.Steps.Select(step => step.ManualActionIdentity));
+        var response = Stage(
+            compiled,
+            TacticalPlanStage.TargetStateResponse);
+        Assert.Contains(response.Steps, step =>
+            step.ManualActionIdentity
+                == "SWITCH_ACTIVE_DEFENSE_TO_SKILL_303");
+        Assert.Contains(response.Steps, step =>
+            step.ManualActionIdentity
+                == "SWITCH_ACTIVE_AGILITY_TO_SKILL_150");
+        Assert.DoesNotContain(
+            compiled.Plan.Transitions,
+            transition => transition.ExpectedPurposeIdentity
+                == "DEFEAT_MARK_RESET");
+        Assert.Equal(
+            TacticalPlanStageState.Unsupported,
+            Stage(compiled, TacticalPlanStage.Finish).State);
+        Assert.Equal(search.SemanticFingerprint,
+            compiled.SearchSemanticFingerprint);
+        Assert.Equal(scoring.SemanticFingerprint,
+            compiled.ScoringSemanticFingerprint);
+        Assert.Equal(search.CandidateDecisions.Length,
+            compiled.Plan.Candidates.Length);
+        Assert.Equal(selected.Candidate.StableKey,
+            compiled.SelectedLoadout.Candidate.StableKey);
+
+        var alternativeSelection = Assert.Single(
+            scoring.RankedCandidates,
+            candidate => HasSkills(
+                candidate.Candidate,
+                604,
+                686,
+                295,
+                134));
+        var withAlternatives = TacticalCombatPlanCompiler.Compile(
+            new TacticalPlanCompilationRequest(
+                scoringRequest,
+                scoring,
+                alternativeSelection.Candidate.StableKey),
+            TestContext.Current.CancellationToken);
+        Assert.Contains(
+            withAlternatives.SelectedLoadoutPlan.OptionalAlternatives,
+            skill => skill.Candidate.SkillId == 303
+                && skill.Assignment
+                    == TacticalLoadoutAssignmentKind.OptionalAlternative);
+        Assert.Contains(
+            withAlternatives.SelectedLoadoutPlan.OptionalAlternatives,
+            skill => skill.Candidate.SkillId == 150
+                && skill.Assignment
+                    == TacticalLoadoutAssignmentKind.OptionalAlternative);
+    }
+
+    private static TacticalLoadoutSkillPlan SkillPlan(
+        TacticalCompiledCombatPlan compiled,
+        int skillId) => Assert.Single(
+        compiled.SelectedLoadoutPlan.SelectedSkills,
+        skill => skill.Candidate.SkillId == skillId);
+
+    private static TacticalPlanStageDefinition Stage(
+        TacticalCompiledCombatPlan compiled,
+        TacticalPlanStage stage) => compiled.Plan.Stages.Single(item =>
+        item.Stage == stage);
+
     private static TacticalLoadoutSearchResult Search(FixtureData fixture) =>
         TacticalLoadoutSearch.Search(
             Request(fixture),

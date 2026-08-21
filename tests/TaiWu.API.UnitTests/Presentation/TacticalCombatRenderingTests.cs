@@ -74,6 +74,38 @@ public sealed partial class TacticalCombatRenderingTests
         Assert.Contains("未向遊戲傳送任何操作", text);
     }
 
+    [Fact]
+    public async Task Exact_loadout_is_bilingual_and_keeps_identical_skill_facts()
+    {
+        var model = Model() with { SelectedLoadout = SelectedLoadout() };
+        var english = VisibleText(await RenderAsync(model));
+        var chinese = VisibleText(await RenderAsync(
+            model,
+            TaiwuLanguage.Chinese));
+
+        Assert.Contains("Exact selected loadout", english);
+        Assert.Contains("Main active attack", english);
+        Assert.Contains("Switch-only backup", english);
+        Assert.Contains("Recovery casts: 3", english);
+        Assert.Contains("Manual loadout changes", english);
+        Assert.Contains("精確所選運功", chinese);
+        Assert.Contains("主力摧破", chinese);
+        Assert.Contains("切換備用", chinese);
+        Assert.Contains("恢復施放: 3", chinese);
+        Assert.Contains("手動運功變更", chinese);
+        foreach (var exact in new[]
+                 {
+                     "Reverse suppression",
+                     "Recovery cast",
+                     "Defense backup",
+                     "2 / 10"
+                 })
+        {
+            Assert.Contains(exact, english);
+            Assert.Contains(exact, chinese);
+        }
+    }
+
     [Theory]
     [InlineData(TacticalPlanSurfaceState.Loading,
         "Calculating a complete replacement result")]
@@ -281,6 +313,8 @@ public sealed partial class TacticalCombatRenderingTests
         AssertBilingual<TacticalSearchTerminator>(
             TacticalCombatUiText.SearchTerminator);
         AssertBilingual<PracticeDirection>(TacticalCombatUiText.Direction);
+        AssertBilingual<TacticalLoadoutAssignmentKind>(
+            TacticalCombatUiText.Assignment);
         AssertBilingual<TacticalEvidenceSourceKind>(TacticalCombatUiText.Source);
     }
 
@@ -445,7 +479,10 @@ public sealed partial class TacticalCombatRenderingTests
                 TotalScore: 1m,
                 [selectedIdentity],
                 [],
-                new GenericSlotPlanResponse(0, 0, 0, 0, 0))
+                new GenericSlotPlanResponse(0, 0, 0, 0, 0),
+                Skills: [],
+                OptionalAlternatives: [],
+                Changes: [])
         };
         var names = candidates.ToDictionary(
             item => item.SkillId,
@@ -475,6 +512,7 @@ public sealed partial class TacticalCombatRenderingTests
         DateTimeOffset.Parse("2026-08-20T11:59:00Z"),
         "0.0.0.0-HISTORICAL",
         TacticalFinishDisposition.FallbackOnly,
+        SelectedLoadout: null,
         Enum.GetValues<TacticalPlanStage>().Select(Stage).ToArray(),
         [Gap(TacticalConditionPresentationState.Conflicting)],
         Search(isComplete: true, TacticalSearchTerminator.None, 0),
@@ -482,6 +520,61 @@ public sealed partial class TacticalCombatRenderingTests
         CandidateGroups(),
         [Evidence()],
         "ABCDEF123456");
+
+    private static TacticalSelectedLoadoutViewModel SelectedLoadout() => new(
+        new string('E', 64),
+        88m,
+        [
+            new TacticalLoadoutCategoryViewModel(
+                SkillCategory.Neigong, 0, 6, 0),
+            new TacticalLoadoutCategoryViewModel(
+                SkillCategory.Attack, 2, 10, 1),
+            new TacticalLoadoutCategoryViewModel(
+                SkillCategory.Agility, 0, 7, 3),
+            new TacticalLoadoutCategoryViewModel(
+                SkillCategory.Defense, 2, 9, 1),
+            new TacticalLoadoutCategoryViewModel(
+                SkillCategory.Assistance, 0, 4, 3)
+        ],
+        new GenericSlotAllocation(8, 1, 3, 1, 3),
+        [
+            new TacticalLoadoutSkillViewModel(
+                604,
+                "Reverse suppression",
+                SkillCategory.Attack,
+                PracticeDirection.Reverse,
+                2,
+                TacticalLoadoutAssignmentKind.MainActiveAttack,
+                0,
+                true,
+                new BilingualText("Verified.", "已驗證。")),
+            new TacticalLoadoutSkillViewModel(
+                686,
+                "Recovery cast",
+                SkillCategory.Attack,
+                PracticeDirection.Reverse,
+                2,
+                TacticalLoadoutAssignmentKind.ActiveAttack,
+                3,
+                true,
+                new BilingualText("Verified.", "已驗證。")),
+            new TacticalLoadoutSkillViewModel(
+                303,
+                "Defense backup",
+                SkillCategory.Defense,
+                PracticeDirection.Reverse,
+                2,
+                TacticalLoadoutAssignmentKind.SwitchOnlyBackup,
+                0,
+                false,
+                new BilingualText("Switch only.", "只供切換。"))
+        ],
+        OptionalAlternatives: [],
+        [new TacticalLoadoutChangeViewModel(
+            TacticalPreparationCheckKind.Weapon,
+            new BilingualText(
+                "Equip weapon type 9 manually.",
+                "手動裝備武器類型 9。"))]);
 
     private static TacticalCombatResponse EmptyResponse() => new(
         TacticalCombatRecommendationStatus.Success,

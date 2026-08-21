@@ -75,6 +75,7 @@ public static class TacticalCombatViewModelMapper
             response.Snapshot?.LatestObservationAtUtc,
             response.Snapshot?.GameDataVersion,
             response.Plan?.FinishDisposition,
+            MapSelectedLoadout(response.SelectedLoadout, skillNames),
             stages,
             MapGaps(response),
             response.Search is null ? null : MapSearch(response.Search),
@@ -82,6 +83,103 @@ public static class TacticalCombatViewModelMapper
             MapCandidates(response, skillNames),
             evidence,
             response.Identity?.SemanticFingerprint ?? "—");
+    }
+
+    private static TacticalSelectedLoadoutViewModel? MapSelectedLoadout(
+        TacticalSelectedLoadoutResponse? selected,
+        IReadOnlyDictionary<int, string> skillNames)
+    {
+        if (selected is null)
+        {
+            return null;
+        }
+
+        var categories = selected.Categories.Select(category =>
+            new TacticalLoadoutCategoryViewModel(
+                category.Category,
+                category.SlotBudget.Used
+                    ?? throw new ArgumentException(
+                        "A selected feasible loadout requires known slot use."),
+                category.SlotBudget.Capacity,
+                category.Category == SkillCategory.Neigong
+                    ? 0
+                    : category.Category switch
+                    {
+                        SkillCategory.Attack => selected.UniversalSlots.Attack,
+                        SkillCategory.Agility => selected.UniversalSlots.Agility,
+                        SkillCategory.Defense => selected.UniversalSlots.Defense,
+                        SkillCategory.Assistance =>
+                            selected.UniversalSlots.Assistance,
+                        _ => 0
+                    })).ToArray();
+        var universal = new GenericSlotAllocation(
+            selected.UniversalSlots.TotalAvailable,
+            selected.UniversalSlots.Attack,
+            selected.UniversalSlots.Agility,
+            selected.UniversalSlots.Defense,
+            selected.UniversalSlots.Assistance);
+        return new TacticalSelectedLoadoutViewModel(
+            selected.Fingerprint,
+            selected.TotalScore,
+            categories,
+            universal,
+            selected.Skills.Select(MapSkill).ToArray(),
+            selected.OptionalAlternatives.Select(MapSkill).ToArray(),
+            selected.Changes.Select(change =>
+                new TacticalLoadoutChangeViewModel(
+                    change.Kind,
+                    ChangeText(change, skillNames))).ToArray());
+
+        TacticalLoadoutSkillViewModel MapSkill(
+            TacticalLoadoutSkillResponse skill) => new(
+            skill.SkillId,
+            skillNames.GetValueOrDefault(
+                skill.SkillId,
+                $"Skill {skill.SkillId}"),
+            skill.Category,
+            skill.Direction,
+            skill.EffectiveCost,
+            skill.Assignment,
+            skill.RecoveryCastCount,
+            skill.IsScoringEligible,
+            new BilingualText(
+                $"Verified limitation: {skill.LimitationIdentity}.",
+                $"已驗證限制：{skill.LimitationIdentity}。"));
+    }
+
+    private static BilingualText ChangeText(
+        TacticalPreparationCheckResponse change,
+        IReadOnlyDictionary<int, string> skillNames)
+    {
+        var skill = change.SkillId.HasValue
+            ? skillNames.GetValueOrDefault(
+                change.SkillId.Value,
+                $"Skill {change.SkillId.Value}")
+            : null;
+        var detail = change.ReferenceIdentity is null
+            ? change.ManualActionIdentity
+            : $"{change.ManualActionIdentity} [{change.ReferenceIdentity}]";
+        return change.Kind switch
+        {
+            TacticalPreparationCheckKind.RemoveSkill => new(
+                $"Remove {skill} manually.",
+                $"手動移除{skill}。"),
+            TacticalPreparationCheckKind.AddSkill => new(
+                $"Add {skill} manually.",
+                $"手動加入{skill}。"),
+            TacticalPreparationCheckKind.ChangeDirection => new(
+                $"Change {skill} to {change.Direction} practice manually.",
+                $"手動把{skill}改為{(change.Direction == PracticeDirection.Reverse ? "逆練" : "正練")}。"),
+            TacticalPreparationCheckKind.CompleteBreakthrough => new(
+                $"Complete the required {change.Direction} breakthrough/pages for {skill} before adding it.",
+                $"加入{skill}前，先完成所需的{(change.Direction == PracticeDirection.Reverse ? "逆練" : "正練")}突破／書頁。"),
+            TacticalPreparationCheckKind.LegendaryCostAssignment => new(
+                $"Assign the exact legendary slot to {skill}: {detail}.",
+                $"把指定奇書格分配給{skill}：{detail}。"),
+            _ => new(
+                $"Confirm manually: {detail}.",
+                $"手動確認：{detail}。")
+        };
     }
 
     private static TacticalStageViewModel MapStage(

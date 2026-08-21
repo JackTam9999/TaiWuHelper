@@ -289,7 +289,21 @@ public sealed record TacticalSelectedLoadoutResponse(
     decimal TotalScore,
     IReadOnlyList<string> SelectedCandidates,
     IReadOnlyList<TacticalLoadoutCategoryResponse> Categories,
-    GenericSlotPlanResponse UniversalSlots);
+    GenericSlotPlanResponse UniversalSlots,
+    IReadOnlyList<TacticalLoadoutSkillResponse> Skills,
+    IReadOnlyList<TacticalLoadoutSkillResponse> OptionalAlternatives,
+    IReadOnlyList<TacticalPreparationCheckResponse> Changes);
+
+public sealed record TacticalLoadoutSkillResponse(
+    int SkillId,
+    SkillCategory Category,
+    PracticeDirection Direction,
+    int EffectiveCost,
+    TacticalLoadoutAssignmentKind Assignment,
+    TacticalRoleKind RoleKind,
+    int RecoveryCastCount,
+    bool IsScoringEligible,
+    string LimitationIdentity);
 
 public sealed record TacticalLoadoutCategoryResponse(
     SkillCategory Category,
@@ -389,7 +403,8 @@ public sealed record TacticalPreparationCheckResponse(
     string ManualActionIdentity,
     SkillCategory? Category,
     int? SkillId,
-    PracticeDirection? Direction);
+    PracticeDirection? Direction,
+    string? ReferenceIdentity);
 
 public sealed record TacticalEvidenceResponse(
     TacticalEvidenceSourceKind Source,

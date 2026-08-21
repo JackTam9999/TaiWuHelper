@@ -54,6 +54,7 @@ public sealed record TacticalCombatViewModel(
     DateTimeOffset? LatestObservationAtUtc,
     string? GameDataVersion,
     TacticalFinishDisposition? FinishDisposition,
+    TacticalSelectedLoadoutViewModel? SelectedLoadout,
     IReadOnlyList<TacticalStageViewModel> Stages,
     IReadOnlyList<TacticalGapViewModel> CriticalGaps,
     TacticalSearchSummaryViewModel? Search,
@@ -72,6 +73,36 @@ public sealed record TacticalCombatViewModel(
             ? "—"
             : SemanticFingerprint[..Math.Min(12, SemanticFingerprint.Length)];
 }
+
+public sealed record TacticalSelectedLoadoutViewModel(
+    string Fingerprint,
+    decimal TotalScore,
+    IReadOnlyList<TacticalLoadoutCategoryViewModel> Categories,
+    GenericSlotAllocation UniversalSlots,
+    IReadOnlyList<TacticalLoadoutSkillViewModel> Skills,
+    IReadOnlyList<TacticalLoadoutSkillViewModel> OptionalAlternatives,
+    IReadOnlyList<TacticalLoadoutChangeViewModel> Changes);
+
+public sealed record TacticalLoadoutCategoryViewModel(
+    SkillCategory Category,
+    int Used,
+    int Capacity,
+    int UniversalSlotContribution);
+
+public sealed record TacticalLoadoutSkillViewModel(
+    int SkillId,
+    string Name,
+    SkillCategory Category,
+    PracticeDirection Direction,
+    int EffectiveCost,
+    TacticalLoadoutAssignmentKind Assignment,
+    int RecoveryCastCount,
+    bool IsScoringEligible,
+    BilingualText Limitation);
+
+public sealed record TacticalLoadoutChangeViewModel(
+    TacticalPreparationCheckKind Kind,
+    BilingualText Action);
 
 public sealed record TacticalStageViewModel(
     TacticalPlanStage Stage,

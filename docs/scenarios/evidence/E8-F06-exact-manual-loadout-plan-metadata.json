@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E8-F06",
+  "observationDate": "2026-08-21",
+  "status": "complete",
+  "runtimeGameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+  "tacticalRuleFingerprint": "64051C1234CECDFDCE070134FDA0380826154D16C1F171B52B6F7FE1C64ECD5D",
+  "selectedLoadoutSchema": "TACTICAL_SELECTED_LOADOUT_V2",
+  "manifest": {
+    "allCategoryCapacityRowsRequired": true,
+    "effectiveSkillCostAndDirectionExposed": true,
+    "universalAllocationExposed": true,
+    "primaryDefenseMaximum": 1,
+    "primaryAgilityMaximum": 1,
+    "switchOnlyBackupsSeparated": true,
+    "optionalAlternativesSeparated": true
+  },
+  "manualPreparation": {
+    "exactRemoveAddDirectionAndBreakthroughSteps": true,
+    "weaponAndExecutionRequirementsExpanded": true,
+    "legendarySlotReferencePreserved": true,
+    "helperPerformsGameAction": false
+  },
+  "battleSequence": {
+    "sixTypedStages": true,
+    "reverse604TargetResponse": true,
+    "recoveryCastSteps": 3,
+    "sameFeasibleRecoverySkillMayRepeat": true,
+    "activeRoleSwitchesExplicit": true,
+    "unsupportedResetInferred": false,
+    "unsupportedFinishInferred": false
+  },
+  "presentation": {
+    "english": true,
+    "traditionalChinese": true,
+    "sameSkillFactsAcrossLanguages": true,
+    "playerVisibleNumericSkillIdentity": false,
+    "informationOnlyBoundary": true
+  },
+  "verification": {
+    "currentPackageAndCompilerTestsPassed": 6,
+    "tacticalRenderingTestsPassed": 29,
+    "domainUnitPassed": 677,
+    "applicationUnitPassed": 232,
+    "architecturePassed": 114,
+    "releaseBuildWarnings": 0,
+    "releaseBuildErrors": 0,
+    "fullSuiteTotal": 1636,
+    "fullSuitePassed": 1612,
+    "fullSuiteExpectedSkipped": 24,
+    "fullSuiteFailed": 0
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsSaveHash": false,
+    "containsCharacterIdentifier": false,
+    "containsLocalizedTargetName": false,
+    "containsGameBinaryContent": false,
+    "containsCompleteRawDescription": false,
+    "containsScreenshot": false
+  }
+}
+

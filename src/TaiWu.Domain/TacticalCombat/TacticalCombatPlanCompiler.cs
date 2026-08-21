@@ -38,6 +38,10 @@ public static class TacticalCombatPlanCompiler
             selected,
             resolution,
             cancellationToken);
+        var selectedLoadoutPlan = BuildSelectedLoadoutPlan(
+            scoringRequest,
+            selected,
+            selectedRoles);
         var preparationChecks = BuildPreparationChecks(
             searchRequest,
             selected,
@@ -83,6 +87,7 @@ public static class TacticalCombatPlanCompiler
 
         return new TacticalCompiledCombatPlan(
             selected,
+            selectedLoadoutPlan,
             plan,
             disposition,
             preparationChecks,
@@ -387,6 +392,115 @@ public static class TacticalCombatPlanCompiler
         ];
     }
 
+    private static TacticalSelectedLoadoutPlan BuildSelectedLoadoutPlan(
+        TacticalCombatScoringRequest request,
+        TacticalScoredLoadout selected,
+        ImmutableArray<SelectedRole> selectedRoles)
+    {
+        var candidate = selected.Candidate;
+        var package = candidate.Package;
+        var selectedKeys = candidate.SelectedCandidates.ToHashSet();
+        var scoringKeys = package.ScoringEligibleCandidates.ToHashSet();
+        var defensePrimary = package.ActiveDefenseRotation.PrimaryCandidate;
+        var agilityPrimary = package.ActiveAgilityRotation.PrimaryCandidate;
+        var backups = package.ActiveDefenseRotation.BackupCandidates
+            .Concat(package.ActiveAgilityRotation.BackupCandidates)
+            .ToHashSet();
+        var mainAttack = package.Recovery.SuppressionCandidate
+            ?? selectedRoles.Where(item =>
+                    scoringKeys.Contains(item.Candidate)
+                    && item.Rule.UseKinds.Contains(
+                        TacticalRoleUseKind.ActiveAttack))
+                .Select(item => item.Candidate)
+                .OrderBy(item => item.StableKey, StringComparer.Ordinal)
+                .FirstOrDefault();
+        var recoveryCounts = package.Recovery.CastSteps
+            .GroupBy(item => item.Candidate)
+            .ToDictionary(group => group.Key, group => group.Count());
+        var entries = request.SearchRequest.Discovery.Entries
+            .Where(item => item.IsAdmitted)
+            .ToDictionary(item => item.Consideration.Identity);
+        var categories = Enum.GetValues<SkillCategory>().Select(category =>
+        {
+            var budget = candidate.Loadout.SlotBudgets[category];
+            return new TacticalLoadoutCategoryPlan(
+                category,
+                budget.Used.Value,
+                budget.Capacity,
+                category == SkillCategory.Neigong
+                    ? 0
+                    : candidate.Loadout.Proposal.GenericSlotAllocation
+                        .Get(category));
+        });
+        var selectedSkills = selectedRoles.Select(role => SkillPlan(
+            entries[role.Candidate],
+            Assignment(role),
+            scoringKeys.Contains(role.Candidate),
+            recoveryCounts.GetValueOrDefault(role.Candidate)));
+        var alternatives = request.SearchResult.CandidateDecisions
+            .Where(item => item.Decision == TacticalCandidateDecision.Admitted
+                && !selectedKeys.Contains(item.Identity))
+            .Select(item => entries[item.Identity])
+            .Select(entry => SkillPlan(
+                entry,
+                TacticalLoadoutAssignmentKind.OptionalAlternative,
+                isScoringEligible: false,
+                recoveryCastCount: 0));
+        return new TacticalSelectedLoadoutPlan(
+            categories,
+            candidate.Loadout.Proposal.GenericSlotAllocation,
+            selectedSkills,
+            alternatives);
+
+        TacticalLoadoutAssignmentKind Assignment(SelectedRole role)
+        {
+            if (role.Candidate == mainAttack)
+            {
+                return TacticalLoadoutAssignmentKind.MainActiveAttack;
+            }
+
+            if (role.Candidate == defensePrimary)
+            {
+                return TacticalLoadoutAssignmentKind.ActiveDefensePrimary;
+            }
+
+            if (role.Candidate == agilityPrimary)
+            {
+                return TacticalLoadoutAssignmentKind.ActiveAgilityPrimary;
+            }
+
+            if (backups.Contains(role.Candidate))
+            {
+                return TacticalLoadoutAssignmentKind.SwitchOnlyBackup;
+            }
+
+            if (role.Rule.UseKinds.Contains(TacticalRoleUseKind.ActiveAttack))
+            {
+                return TacticalLoadoutAssignmentKind.ActiveAttack;
+            }
+
+            return role.Rule.UseKinds.Contains(
+                    TacticalRoleUseKind.EquippedPassive)
+                ? TacticalLoadoutAssignmentKind.EquippedPassive
+                : TacticalLoadoutAssignmentKind.Conditional;
+        }
+
+        static TacticalLoadoutSkillPlan SkillPlan(
+            TacticalCandidateDiscoveryEntry entry,
+            TacticalLoadoutAssignmentKind assignment,
+            bool isScoringEligible,
+            int recoveryCastCount) => new(
+            entry.Consideration.Identity,
+            entry.Category,
+            entry.EffectiveCost.Value,
+            assignment,
+            entry.Role!.Identity.Kind,
+            entry.Role.UseKinds,
+            recoveryCastCount,
+            isScoringEligible,
+            entry.Role.LimitationIdentity);
+    }
+
     private static ImmutableArray<TacticalPreparationCheck> BuildPreparationChecks(
         TacticalLoadoutSearchRequest request,
         TacticalScoredLoadout selected,
@@ -445,51 +559,60 @@ public static class TacticalCombatPlanCompiler
             }
         }
 
-        seeds.AddRange(
-        [
-            new PreparationSeed(
+        foreach (var category in Enum.GetValues<SkillCategory>())
+        {
+            var budget = selected.Candidate.Loadout.SlotBudgets[category];
+            seeds.Add(new PreparationSeed(
                 TacticalPreparationCheckKind.Capacity,
-                "CONFIRM_SELECTED_CAPACITY",
+                $"CONFIRM_{TacticalCombatText.EnumKey(category)}_CAPACITY_"
+                + $"{budget.Used.Value}_OF_{budget.Capacity}",
+                category,
                 null,
                 null,
-                null,
-                null),
-            new PreparationSeed(
-                TacticalPreparationCheckKind.UniversalSlotAllocation,
-                "CONFIRM_UNIVERSAL_SLOT_ALLOCATION",
-                null,
-                null,
-                null,
-                null),
-            new PreparationSeed(
+                null));
+        }
+
+        var universal = proposal.GenericSlotAllocation;
+        seeds.Add(new PreparationSeed(
+            TacticalPreparationCheckKind.UniversalSlotAllocation,
+            $"CONFIRM_UNIVERSAL_SLOTS_{universal.TotalSlots}_"
+            + $"{universal.Attack}_{universal.Agility}_"
+            + $"{universal.Defense}_{universal.Assistance}",
+            null,
+            null,
+            null,
+            null));
+        foreach (var assignment in proposal.LegendaryCostAssignments)
+        {
+            seeds.Add(new PreparationSeed(
                 TacticalPreparationCheckKind.LegendaryCostAssignment,
-                "CONFIRM_LEGENDARY_COST_ASSIGNMENTS",
+                $"ASSIGN_LEGENDARY_COST_SKILL_{assignment.SkillId}",
+                assignment.Category,
+                assignment.SkillId,
+                null,
+                null,
+                assignment.Slot.SlotReference));
+        }
+
+        foreach (var requirement in proposal.Requirements
+                     .OrderBy(item => item.GetType().Name,
+                         StringComparer.Ordinal)
+                     .ThenBy(item => item.EvidenceReference,
+                         StringComparer.Ordinal))
+        {
+            var kind = requirement is WeaponRequirement
+                or WeaponUnlockRequirement
+                    ? TacticalPreparationCheckKind.Weapon
+                    : TacticalPreparationCheckKind.ExecutionContext;
+            seeds.Add(new PreparationSeed(
+                kind,
+                RequirementAction(requirement),
                 null,
                 null,
                 null,
-                null),
-            new PreparationSeed(
-                TacticalPreparationCheckKind.Equipment,
-                "CONFIRM_SELECTED_EQUIPMENT_REQUIREMENTS",
                 null,
-                null,
-                null,
-                null),
-            new PreparationSeed(
-                TacticalPreparationCheckKind.Weapon,
-                "CONFIRM_SELECTED_WEAPON_REQUIREMENTS",
-                null,
-                null,
-                null,
-                null),
-            new PreparationSeed(
-                TacticalPreparationCheckKind.ExecutionContext,
-                "CONFIRM_SELECTED_EXECUTION_CONTEXT",
-                null,
-                null,
-                null,
-                null)
-        ]);
+                requirement.EvidenceReference));
+        }
         foreach (var selectedRole in selectedRoles.Where(item =>
             item.Rule.Timing == TacticalTransitionTiming.BeforeCombat))
         {
@@ -517,9 +640,34 @@ public static class TacticalCombatPlanCompiler
                 item.Action,
                 item.Category,
                 item.SkillId,
-                item.Direction))
+                item.Direction,
+                item.ReferenceIdentity))
         ];
     }
+
+    private static string RequirementAction(CombatRequirement requirement) =>
+        requirement switch
+        {
+            WeaponRequirement value =>
+                $"EQUIP_WEAPON_TYPE_{value.WeaponTypeId}",
+            WeaponUnlockRequirement value =>
+                $"CONFIRM_WEAPON_TYPE_{value.WeaponTypeId}_UNLOCKED",
+            TrickRequirement value =>
+                $"CONFIRM_TRICK_TYPE_{value.TrickTypeId}_COUNT_"
+                + $"AT_LEAST_{value.MinimumCount}",
+            RangeRequirement value =>
+                $"CONFIRM_DISTANCE_{value.MinimumInclusive?.ToString() ?? "ANY"}_"
+                + $"TO_{value.MaximumInclusive?.ToString() ?? "ANY"}",
+            ResourceRequirement value =>
+                $"CONFIRM_{TacticalCombatText.EnumKey(value.Resource)}_"
+                + $"AT_LEAST_{value.MinimumAmount}",
+            SkillActivationRequirement value =>
+                $"CONFIRM_SKILL_{value.SkillId}_"
+                + TacticalCombatText.EnumKey(value.RequiredState),
+            ManualConfirmationRequirement value =>
+                $"CONFIRM_{value.Code}",
+            _ => throw new ArgumentOutOfRangeException(nameof(requirement))
+        };
 
     private static void AddPreparationContracts(
         IEnumerable<TacticalPreparationCheck> checks,
@@ -666,7 +814,18 @@ public static class TacticalCombatPlanCompiler
                 continue;
             }
 
-            var stage = role.Rule.Timing is TacticalTransitionTiming.CombatStart
+            if (!selected.Candidate.Package.ScoringEligibleCandidates.Contains(
+                    role.Candidate)
+                && role.Rule.UseKinds.Any(kind => kind is
+                    TacticalRoleUseKind.ActiveDefense
+                    or TacticalRoleUseKind.ActiveAgility))
+            {
+                continue;
+            }
+
+            var stage = role.Rule.UseKinds.Contains(
+                    TacticalRoleUseKind.OpeningUse)
+                || role.Rule.Timing is TacticalTransitionTiming.CombatStart
                     or TacticalTransitionTiming.BeforeFirstUse
                 ? TacticalPlanStage.Opening
                 : TacticalPlanStage.TargetStateResponse;
@@ -680,6 +839,14 @@ public static class TacticalCombatPlanCompiler
                 request,
                 projection));
         }
+
+
+        BuildActivationSwitchDrafts(
+            request,
+            selected,
+            selectedRoles,
+            projection,
+            result);
 
         BuildRecoveryDrafts(
             request,
@@ -700,6 +867,39 @@ public static class TacticalCombatPlanCompiler
             projection,
             result);
         return result;
+    }
+
+    private static void BuildActivationSwitchDrafts(
+        TacticalCombatScoringRequest request,
+        TacticalScoredLoadout selected,
+        ImmutableArray<SelectedRole> selectedRoles,
+        Projection projection,
+        DraftSet result)
+    {
+        var defense = selected.Candidate.Package.ActiveDefenseRotation
+            .BackupCandidates.Select(item => (
+                Candidate: item,
+                Action: $"SWITCH_ACTIVE_DEFENSE_TO_SKILL_{item.SkillId}"));
+        var agility = selected.Candidate.Package.ActiveAgilityRotation
+            .BackupCandidates.Select(item => (
+                Candidate: item,
+                Action: $"SWITCH_ACTIVE_AGILITY_TO_SKILL_{item.SkillId}"));
+        foreach (var backup in defense.Concat(agility)
+                     .OrderBy(item => item.Candidate.StableKey,
+                         StringComparer.Ordinal))
+        {
+            var role = selectedRoles.Single(item =>
+                item.Candidate == backup.Candidate);
+            result.Response.Add(RoleDraft(
+                role,
+                TacticalPlanStage.TargetStateResponse,
+                result.Response.Count + 1,
+                request,
+                projection,
+                backup.Action,
+                $"STEP_SWITCH_{backup.Candidate.SkillId}_"
+                + TacticalCombatText.EnumKey(backup.Candidate.Direction)));
+        }
     }
 
     private static StepDraft RoleDraft(
@@ -805,6 +1005,37 @@ public static class TacticalCombatPlanCompiler
         DraftSet result,
         CancellationToken cancellationToken)
     {
+        var package = selected.Candidate.Package.Recovery;
+        if (package.State != TacticalPackageResolutionState.NotApplicable)
+        {
+            if (package.State == TacticalPackageResolutionState.Unresolved)
+            {
+                result.RecoveryState = TacticalPlanStageState.Unsupported;
+                result.RecoveryLimitation = package.ReasonIdentity;
+                return;
+            }
+
+            result.RecoveryState = TacticalPlanStageState.Supported;
+            result.RecoveryLimitation = package.ReasonIdentity;
+            foreach (var step in package.CastSteps)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var role = selectedRoles.Single(item =>
+                    item.Candidate == step.Candidate);
+                result.Recovery.Add(RoleDraft(
+                    role,
+                    TacticalPlanStage.Recovery,
+                    step.Sequence,
+                    request,
+                    projection,
+                    $"CAST_REVERSE_SKILL_{step.Candidate.SkillId}_"
+                    + $"FOR_LOCK_LAYER_{step.Sequence}",
+                    $"STEP_RECOVERY_LAYER_{step.Sequence:00}"));
+            }
+
+            return;
+        }
+
         var selfLock = selectedRoles.Any(item => item.Rule.Transitions.Any(
             transition => request.SearchRequest.RuleResolution.Transitions
                 .Single(match => match.Rule.Identity == transition).Rule.Purpose
@@ -1211,7 +1442,8 @@ public static class TacticalCombatPlanCompiler
         SkillCategory? Category,
         int? SkillId,
         PracticeDirection? Direction,
-        string? RoleIdentity);
+        string? RoleIdentity,
+        string? ReferenceIdentity = null);
 
     private sealed record PreparationContract(
         TacticalFactIdentity Fact,
