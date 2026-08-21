@@ -62,7 +62,7 @@ public sealed record RecommendationPageState(
                 RecommendationPageStatus.AmbiguousTarget,
                 "Multiple targets matched",
                 $"{matchCount} possible targets were found. Select one using "
-                + "its name, age, and named location.",
+                + "its name, age, consummate level, and named location.",
                 "If the intended opponent is still unclear, gather more "
                 + "in-game evidence before requesting a recommendation.",
                 CanRetryRead: false),

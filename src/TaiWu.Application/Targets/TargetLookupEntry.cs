@@ -10,7 +10,8 @@ public sealed record TargetLookupEntry
         int blockId,
         string? locationDisplayName = null,
         TargetLookupKind kind = TargetLookupKind.RegularCharacter,
-        int? templateId = null)
+        int? templateId = null,
+        int? consummateLevel = null)
     {
         if (characterId <= 0)
         {
@@ -51,6 +52,14 @@ public sealed record TargetLookupEntry
                 "Character template ID cannot be negative.");
         }
 
+        if (consummateLevel is < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(consummateLevel),
+                consummateLevel,
+                "Consummate level cannot be negative.");
+        }
+
         if (kind == TargetLookupKind.StoryCharacter
             && !templateId.HasValue)
         {
@@ -69,6 +78,7 @@ public sealed record TargetLookupEntry
             : locationDisplayName.Trim();
         Kind = kind;
         TemplateId = templateId;
+        ConsummateLevel = consummateLevel;
     }
 
     public int CharacterId { get; }
@@ -86,6 +96,8 @@ public sealed record TargetLookupEntry
     public TargetLookupKind Kind { get; }
 
     public int? TemplateId { get; }
+
+    public int? ConsummateLevel { get; }
 
     public bool HasValidLocation => AreaId >= 0 && BlockId >= 0;
 }

@@ -923,6 +923,66 @@ public sealed partial class RecommendationComponentRenderingTests
     }
 
     [Fact]
+    public async Task Target_results_distinguish_same_name_story_characters()
+    {
+        TargetLookupEntry[] matches =
+        [
+            new(
+                101,
+                "筠兒",
+                age: 24,
+                areaId: -1,
+                blockId: -1,
+                kind: TargetLookupKind.StoryCharacter,
+                templateId: 700,
+                consummateLevel: 16),
+            new(
+                202,
+                "筠兒",
+                age: 24,
+                areaId: -1,
+                blockId: -1,
+                kind: TargetLookupKind.StoryCharacter,
+                templateId: 701,
+                consummateLevel: 18),
+            new(
+                303,
+                "筠兒",
+                age: 24,
+                areaId: -1,
+                blockId: -1,
+                kind: TargetLookupKind.StoryCharacter,
+                templateId: 702)
+        ];
+        var parameters = new Dictionary<string, object?>
+        {
+            [nameof(TargetSearchResults.Matches)] = matches,
+            [nameof(TargetSearchResults.SelectedCharacterId)] = 202
+        };
+
+        var english = await RenderAsync<TargetSearchResults>(parameters);
+        var chineseParameters = new Dictionary<string, object?>(parameters)
+        {
+            [nameof(TargetSearchResults.Language)] = TaiwuLanguage.Chinese
+        };
+        var chinese = await RenderAsync<TargetSearchResults>(
+            chineseParameters,
+            TaiwuLanguage.Chinese);
+
+        Assert.Contains("Consummate level 16", VisibleText(english));
+        Assert.Contains("Selected target", VisibleText(english));
+        Assert.Contains("Choose this target", VisibleText(english));
+        Assert.Contains("aria-pressed=\"true\"", english);
+        Assert.Contains("精純 16", VisibleText(chinese));
+        Assert.Contains("精純 18", VisibleText(chinese));
+        Assert.Contains("精純 無法取得", VisibleText(chinese));
+        Assert.Contains("已選目標", VisibleText(chinese));
+        Assert.Contains("選擇此目標", VisibleText(chinese));
+        Assert.DoesNotContain("#101", VisibleText(english));
+        Assert.DoesNotContain("#202", VisibleText(chinese));
+    }
+
+    [Fact]
     public async Task Layout_renders_chinese_when_language_is_selected()
     {
         RenderFragment body = builder =>

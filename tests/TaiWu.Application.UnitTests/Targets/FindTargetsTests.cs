@@ -52,6 +52,7 @@ public sealed class FindTargetsTests
                 Assert.Equal("何春石", first.DisplayName);
                 Assert.Equal(10, first.AreaId);
                 Assert.Equal(20, first.BlockId);
+                Assert.Equal(16, first.ConsummateLevel);
                 Assert.Equal(
                     "辽东 · 鸭绿江 · 玄石之地",
                     first.LocationDisplayName);
@@ -61,6 +62,7 @@ public sealed class FindTargetsTests
                 Assert.Equal("何春石", second.DisplayName);
                 Assert.Equal(11, second.AreaId);
                 Assert.Equal(21, second.BlockId);
+                Assert.Equal(18, second.ConsummateLevel);
             });
     }
 
@@ -235,6 +237,19 @@ public sealed class FindTargetsTests
     }
 
     [Fact]
+    public void Target_rejects_a_negative_consummate_level()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new TargetLookupEntry(
+                61848,
+                "邋遢道長",
+                age: 40,
+                areaId: 10,
+                blockId: 369,
+                consummateLevel: -1));
+    }
+
+    [Fact]
     public void Reader_is_a_query_only_game_data_port()
     {
         Assert.True(
@@ -268,13 +283,15 @@ public sealed class FindTargetsTests
                     age: 52,
                     areaId: 10,
                     blockId: 20,
-                    "辽东 · 鸭绿江 · 玄石之地"),
+                    "辽东 · 鸭绿江 · 玄石之地",
+                    consummateLevel: 16),
                 new TargetLookupEntry(
                     20000,
                     "何春石",
                     age: 41,
                     areaId: 11,
-                    blockId: 21),
+                    blockId: 21,
+                    consummateLevel: 18),
                 new TargetLookupEntry(
                     30000,
                     "太吾賢鑒",

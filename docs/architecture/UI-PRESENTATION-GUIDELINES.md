@@ -43,8 +43,8 @@ game-owned data or control the running game.
 Every player-visible game entity must be identified by its localized in-game
 name, never by a numeric ID or raw technical reference.
 
-- Characters use their in-game name. Age and a named location may disambiguate
-  characters with the same name.
+- Characters use their in-game name. Age, consummate level, and a named
+  location may disambiguate characters with the same name.
 - Skills use their in-game name in cards, setup actions, battle plans,
   requirements, warnings, observation controls, and evidence summaries.
 - Locations, weapons, tricks, effects, features, and other game entities use a

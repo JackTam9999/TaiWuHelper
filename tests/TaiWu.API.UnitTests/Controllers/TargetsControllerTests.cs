@@ -40,6 +40,7 @@ public sealed class TargetsControllerTests
             {
                 Assert.Equal("target:16317", first.Reference);
                 Assert.Equal("何春石", first.DisplayName);
+                Assert.Equal(16, first.ConsummateLevel);
                 Assert.Equal(TargetLookupKind.RegularCharacter, first.Kind);
                 Assert.Null(first.TemplateId);
                 Assert.Equal("location:10:20", first.Location.Reference);
@@ -51,6 +52,7 @@ public sealed class TargetsControllerTests
             {
                 Assert.Equal("target:20000", second.Reference);
                 Assert.Equal("何春石", second.DisplayName);
+                Assert.Equal(18, second.ConsummateLevel);
                 Assert.Equal("location:11:21", second.Location.Reference);
             });
         await reader.Received(1).ReadAsync(
@@ -191,13 +193,15 @@ public sealed class TargetsControllerTests
                             age: 52,
                             areaId: 10,
                             blockId: 20,
-                            "辽东 · 鸭绿江 · 玄石之地"),
+                            "辽东 · 鸭绿江 · 玄石之地",
+                            consummateLevel: 16),
                         new TargetLookupEntry(
                             20000,
                             "何春石",
                             age: 41,
                             areaId: 11,
-                            blockId: 21),
+                            blockId: 21,
+                            consummateLevel: 18),
                         new TargetLookupEntry(
                             61848,
                             "邋遢道長",

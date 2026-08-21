@@ -131,12 +131,16 @@ public sealed class UiTextTests
             },
             {
                 "31 possible targets were found. Select one using its name, "
-                + "age, and named location.",
-                "找到 31 個可能的目標。請依姓名、年齡與地點名稱選擇。"
+                + "age, consummate level, and named location.",
+                "找到 31 個可能的目標。請依姓名、年齡、精純與地點名稱選擇。"
             },
             {
                 "葛贵婵 is selected for the next read-only analysis.",
                 "已選擇葛贵婵，將用於下一次唯讀分析。"
+            },
+            {
+                "Consummate level",
+                "精純"
             },
             {
                 "Report a visible sparring loadout",

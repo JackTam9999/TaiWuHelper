@@ -137,7 +137,8 @@ internal sealed class TaiwuTargetLookupReader(
                     location.BlockId,
                     locationName,
                     kind,
-                    templateId));
+                    templateId,
+                    character.GetConsummateLevel()));
         }
         catch (Exception exception)
             when (exception is ArgumentException

@@ -29,14 +29,18 @@ Each match includes:
 - character ID;
 - display name;
 - current age;
+- current consummate level (`consummateLevel`, shown as `精純` in Chinese),
+  when available;
 - target kind (`RegularCharacter` or `StoryCharacter`);
 - the fixed character-template ID when the name came from a story-character
   template; and
 - area ID and block ID; and
 - stable `location:{areaId}:{blockId}` reference.
 
-Age and numeric location provide disambiguating context when multiple
-characters share a name without depending on localized map display text.
+Age, consummate level, numeric location, and save character ID provide API
+consumers with disambiguating context when multiple characters share a name.
+Player-facing clients should identify those characters using the localized
+name, age, consummate level, and resolved location rather than numeric IDs.
 
 Fixed story characters can have an empty ordinary full name. The reader first
 uses the ordinary save name, then falls back to the installed `Character`

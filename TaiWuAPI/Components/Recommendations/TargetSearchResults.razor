@@ -1,0 +1,83 @@
+@using TaiWu.Application.Localization
+@using TaiWu.Application.Targets
+
+<div class="target-results" aria-label="@T("Target search results")">
+    @foreach (var target in Matches)
+    {
+        var selected = target.CharacterId == SelectedCharacterId;
+        <button type="button"
+                class="@ResultClass(selected)"
+                aria-pressed="@selected.ToString().ToLowerInvariant()"
+                @onclick="() => TargetSelected.InvokeAsync(target)">
+            <span class="target-result-main">
+                <strong class="target-result-name">
+                    @target.DisplayName
+                    @if (target.Kind == TargetLookupKind.StoryCharacter)
+                    {
+                        <em>@T("Story character")</em>
+                    }
+                </strong>
+                <span class="target-result-stats">
+                    <span>@target.Age @T("years")</span>
+                    <span>
+                        @T("Consummate level")
+                        <strong>@ConsummateLevel(target)</strong>
+                    </span>
+                </span>
+            </span>
+            <small class="target-result-location">@LocationName(target)</small>
+            <span class="target-result-selection">
+                @if (selected)
+                {
+                    <span aria-hidden="true">✓</span>
+                    @T("Selected target")
+                }
+                else
+                {
+                    @T("Choose this target")
+                }
+            </span>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<TargetLookupEntry> Matches { get; set; } = [];
+
+    [Parameter]
+    public int? SelectedCharacterId { get; set; }
+
+    [Parameter]
+    public TaiwuLanguage Language { get; set; } = TaiwuLanguage.English;
+
+    [Parameter]
+    public EventCallback<TargetLookupEntry> TargetSelected { get; set; }
+
+    private static string ResultClass(bool selected) => selected
+        ? "target-result selected"
+        : "target-result";
+
+    private string LocationName(TargetLookupEntry target)
+    {
+        if (target.LocationDisplayName is not null)
+        {
+            return target.LocationDisplayName;
+        }
+
+        if (target.HasValidLocation)
+        {
+            return $"{T("Area")} {target.AreaId} · "
+                + $"{T("Block")} {target.BlockId}";
+        }
+
+        return target.Kind == TargetLookupKind.StoryCharacter
+            ? T("Not currently placed on the map")
+            : T("Location unavailable");
+    }
+
+    private string ConsummateLevel(TargetLookupEntry target) =>
+        target.ConsummateLevel?.ToString() ?? T("Unavailable");
+
+    private string T(string english) => UiText.Get(Language, english);
+}

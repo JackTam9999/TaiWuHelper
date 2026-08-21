@@ -13,7 +13,7 @@ internal static partial class DynamicUiText
         if (match.Success)
         {
             return $"找到 {match.Groups["count"].Value} 個可能的目標。"
-                + "請依姓名、年齡與地點名稱選擇。";
+                + "請依姓名、年齡、精純與地點名稱選擇。";
         }
 
         match = ComparisonStyleUnavailablePattern().Match(english);
@@ -419,7 +419,7 @@ internal static partial class DynamicUiText
     };
 
     [GeneratedRegex(
-        @"^(?<count>\d+) possible targets were found\. Select one using its name, age, and named location\.$",
+        @"^(?<count>\d+) possible targets were found\. Select one using its name, age, consummate level, and named location\.$",
         RegexOptions.CultureInvariant)]
     private static partial Regex PossibleTargetsPattern();
 

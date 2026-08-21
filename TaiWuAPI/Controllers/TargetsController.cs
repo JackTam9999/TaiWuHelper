@@ -67,6 +67,7 @@ public sealed class TargetsController(
                     entry.CharacterId,
                     entry.DisplayName,
                     entry.Age,
+                    entry.ConsummateLevel,
                     entry.Kind,
                     entry.TemplateId,
                     new TargetLocationResponse(
