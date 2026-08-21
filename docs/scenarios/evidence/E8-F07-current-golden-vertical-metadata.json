@@ -7,7 +7,7 @@
   "tacticalRuleFingerprint": "64051C1234CECDFDCE070134FDA0380826154D16C1F171B52B6F7FE1C64ECD5D",
   "representativeCapacity": [6, 10, 7, 9, 4],
   "acceptanceUsageCeiling": [6, 9, 7, 8, 4],
-  "sanitizedFixtureUsage": [0, 4, 4, 4, 4],
+  "sanitizedFixtureUsage": [0, 4, 2, 6, 2],
   "guardedProjectionUsage": [0, 4, 2, 6, 2],
   "referencePackage": {
     "reverseSuppressionSkillId": 604,

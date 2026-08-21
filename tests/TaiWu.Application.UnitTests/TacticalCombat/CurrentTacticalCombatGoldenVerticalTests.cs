@@ -14,10 +14,41 @@ public sealed class CurrentTacticalCombatGoldenVerticalTests
     private static readonly TacticalCombatRuleSet Rules =
         VerifiedTacticalCombatRuleSets.CurrentLaterMagicSound;
 
-    private static readonly int[] ReferenceSkillIds =
+    private static readonly SkillSpec[] GoldenSkills =
     [
-        604, 616, 147, 150, 295, 303, 265, 267
+        new(604, SkillCategory.Attack, PracticeDirection.Reverse, 1064, 3,
+            CombatSkillElement.Metal),
+        new(616, SkillCategory.Attack, PracticeDirection.Reverse, 1251, 1,
+            CombatSkillElement.Metal),
+        new(147, SkillCategory.Agility, PracticeDirection.Direct, 260, 1,
+            CombatSkillElement.Metal),
+        new(150, SkillCategory.Agility, PracticeDirection.Reverse, 989, 1,
+            CombatSkillElement.Wood),
+        new(295, SkillCategory.Defense, PracticeDirection.Reverse, 919, 3,
+            CombatSkillElement.Metal),
+        new(303, SkillCategory.Defense, PracticeDirection.Reverse, 927, 3,
+            CombatSkillElement.Wood),
+        new(265, SkillCategory.Assistance, PracticeDirection.Reverse, 889, 1,
+            CombatSkillElement.Water),
+        new(267, SkillCategory.Assistance, PracticeDirection.Direct, 165, 1,
+            CombatSkillElement.Water)
     ];
+
+    private static readonly int[] ReferenceSkillIds =
+        [.. GoldenSkills.Select(item => item.SkillId)];
+
+    private static readonly TacticalCandidateIdentity[] ReferenceCandidates =
+    [
+        .. GoldenSkills.Select(item => new TacticalCandidateIdentity(
+                item.SkillId,
+                item.Direction))
+            .OrderBy(item => item.SkillId)
+            .ThenBy(item => item.Direction)
+    ];
+
+    private static readonly int[] ExpectedUsage = [0, 4, 2, 6, 2];
+
+    private static readonly int[] AcceptedUsageLimits = [6, 9, 7, 8, 4];
 
     [Fact]
     public async Task Current_reference_package_is_feasible_layered_and_stable()
@@ -34,112 +65,11 @@ public sealed class CurrentTacticalCombatGoldenVerticalTests
             shuffled.Request,
             token);
 
-        Assert.Equal(TacticalCombatRecommendationStatus.Success, first.Status);
-        Assert.DoesNotContain(
-            "UNSUPPORTED_GAME_DATA_RULE_CHAIN",
-            first.ReasonIdentity,
-            StringComparison.Ordinal);
-        Assert.Equal(new string('D', 64), first.Identity!.SnapshotFingerprint);
-        Assert.Equal(Rules.Fingerprint, first.Identity.RuleFingerprint);
-        Assert.True(first.Search!.IsComplete);
-
-        var reference = Assert.Single(first.Search.FeasibleResults, HasReference);
-        Assert.Equal(
-            TacticalPackageResolutionState.Complete,
-            reference.Package.Recovery.State);
-        Assert.Equal(
-            new TacticalCandidateIdentity(604, PracticeDirection.Reverse),
-            reference.Package.Recovery.SuppressionCandidate);
-        Assert.Equal(3, reference.Package.Recovery.CastSteps.Length);
-        Assert.All(reference.Package.Recovery.CastSteps, step =>
-        {
-            Assert.Equal(
-                new TacticalCandidateIdentity(616, PracticeDirection.Reverse),
-                step.Candidate);
-            Assert.Equal(2, step.EffectiveSlotCost);
-        });
-        Assert.Equal(
-            new TacticalCandidateIdentity(147, PracticeDirection.Direct),
-            reference.Package.ActiveAgilityRotation.PrimaryCandidate);
-        Assert.Equal(
-            [new TacticalCandidateIdentity(150, PracticeDirection.Reverse)],
-            reference.Package.ActiveAgilityRotation.BackupCandidates);
-        Assert.Equal(
-            new TacticalCandidateIdentity(295, PracticeDirection.Reverse),
-            reference.Package.ActiveDefenseRotation.PrimaryCandidate);
-        Assert.Equal(
-            [new TacticalCandidateIdentity(303, PracticeDirection.Reverse)],
-            reference.Package.ActiveDefenseRotation.BackupCandidates);
-
-        var capacityLimits = new[] { 6, 9, 7, 8, 4 };
-        Assert.Equal(
-            new[] { 0, 4, 4, 4, 4 },
-            reference.Loadout.SlotBudgets.Values.Select(item =>
-                item.Used.Value));
-        Assert.All(reference.Loadout.SlotBudgets.Values, budget =>
-            Assert.InRange(
-                budget.Used.Value,
-                0,
-                capacityLimits[(int)budget.Category]));
-
-        Assert.All(ReferenceSkillIds, skillId =>
-        {
-            var entry = Assert.Single(first.Discovery!.Entries, item =>
-                item.SkillId == skillId && item.IsAdmitted);
-            Assert.Equal(
-                TacticalCandidateDecision.Admitted,
-                Assert.Single(first.Search.CandidateDecisions, item =>
-                    item.Identity == entry.Consideration.Identity).Decision);
-        });
-        var scoredReference = Assert.Single(
-            first.Scoring!.RankedCandidates,
-            item => item.Candidate.StableKey == reference.StableKey);
-        var layering = scoredReference.Get(
-            TacticalScoreComponentKind.LayeredProtection);
-        Assert.True(layering.IsAvailable);
-        Assert.True(layering.NormalizedValue > 0);
-        Assert.Contains(layering.RawInputs, input =>
-            input.Identity.Contains(
-                "CURRENT_REVERSE_265_INCREASES_MIND_DEFENSE",
-                StringComparison.Ordinal));
+        AssertReferenceResult(first);
 
         foreach (var result in new[] { repeated, reordered })
         {
-            Assert.Equal(first.Status, result.Status);
-            Assert.Equal(
-                first.Identity.SemanticFingerprint,
-                result.Identity!.SemanticFingerprint);
-            Assert.Equal(
-                first.Context!.Context.SemanticFingerprint,
-                result.Context!.Context.SemanticFingerprint);
-            Assert.Equal(
-                first.Discovery!.SemanticFingerprint,
-                result.Discovery!.SemanticFingerprint);
-            Assert.Equal(
-                first.Search.SemanticFingerprint,
-                result.Search!.SemanticFingerprint);
-            Assert.Equal(
-                first.Search.Coverage.Fingerprint,
-                result.Search.Coverage.Fingerprint);
-            Assert.Equal(
-                first.Search.CandidateDecisions.Select(DecisionIdentity),
-                result.Search.CandidateDecisions.Select(DecisionIdentity));
-            Assert.Equal(
-                first.Scoring.SemanticFingerprint,
-                result.Scoring!.SemanticFingerprint);
-            Assert.Equal(
-                first.CompiledPlan!.SelectedLoadoutFingerprint,
-                result.CompiledPlan!.SelectedLoadoutFingerprint);
-            Assert.Equal(
-                first.CompiledPlan.SemanticFingerprint,
-                result.CompiledPlan.SemanticFingerprint);
-            Assert.Equal(
-                first.LegacyComparison!.ComparisonReference,
-                result.LegacyComparison!.ComparisonReference);
-            Assert.Equal(
-                reference.StableKey,
-                Assert.Single(result.Search.FeasibleResults, HasReference)
-                    .StableKey);
+            AssertStableArtifacts(first, result);
         }
     }
 
@@ -163,10 +93,124 @@ public sealed class CurrentTacticalCombatGoldenVerticalTests
         Assert.Equal(Rules.Fingerprint, result.Identity!.RuleFingerprint);
     }
 
+    private static void AssertReferenceResult(
+        TacticalCombatRecommendationResult result)
+    {
+        Assert.Equal(TacticalCombatRecommendationStatus.Success, result.Status);
+        Assert.Equal(new string('D', 64), result.Identity!.SnapshotFingerprint);
+        Assert.Equal(Rules.Fingerprint, result.Identity.RuleFingerprint);
+        Assert.True(result.Search!.IsComplete);
+
+        var reference = Reference(result);
+        Assert.Equal(
+            TacticalPackageResolutionState.Complete,
+            reference.Package.Recovery.State);
+        Assert.Equal(
+            new TacticalCandidateIdentity(604, PracticeDirection.Reverse),
+            reference.Package.Recovery.SuppressionCandidate);
+        Assert.Equal(3, reference.Package.Recovery.CastSteps.Length);
+        Assert.All(reference.Package.Recovery.CastSteps, step =>
+        {
+            Assert.Equal(
+                new TacticalCandidateIdentity(616, PracticeDirection.Reverse),
+                step.Candidate);
+            Assert.Equal(1, step.EffectiveSlotCost);
+        });
+        Assert.Equal(
+            new TacticalCandidateIdentity(147, PracticeDirection.Direct),
+            reference.Package.ActiveAgilityRotation.PrimaryCandidate);
+        Assert.Equal(
+            [new TacticalCandidateIdentity(150, PracticeDirection.Reverse)],
+            reference.Package.ActiveAgilityRotation.BackupCandidates);
+        Assert.Equal(
+            new TacticalCandidateIdentity(295, PracticeDirection.Reverse),
+            reference.Package.ActiveDefenseRotation.PrimaryCandidate);
+        Assert.Equal(
+            [new TacticalCandidateIdentity(303, PracticeDirection.Reverse)],
+            reference.Package.ActiveDefenseRotation.BackupCandidates);
+
+        Assert.Equal(
+            ExpectedUsage,
+            reference.Loadout.SlotBudgets.Values.Select(item =>
+                item.Used.Value));
+        Assert.All(reference.Loadout.SlotBudgets.Values, budget =>
+            Assert.InRange(
+                budget.Used.Value,
+                0,
+                AcceptedUsageLimits[(int)budget.Category]));
+
+        Assert.All(ReferenceCandidates, candidate =>
+        {
+            var entry = Assert.Single(result.Discovery!.Entries, item =>
+                item.Consideration.Identity == candidate && item.IsAdmitted);
+            Assert.Equal(
+                TacticalCandidateDecision.Admitted,
+                Assert.Single(result.Search.CandidateDecisions, item =>
+                    item.Identity == entry.Consideration.Identity).Decision);
+        });
+        var scoredReference = Assert.Single(
+            result.Scoring!.RankedCandidates,
+            item => item.Candidate.StableKey == reference.StableKey);
+        var layering = scoredReference.Get(
+            TacticalScoreComponentKind.LayeredProtection);
+        Assert.True(layering.IsAvailable);
+        Assert.True(layering.NormalizedValue > 0);
+        Assert.Contains(layering.RawInputs, input =>
+            input.Identity.Contains(
+                "CURRENT_REVERSE_265_INCREASES_MIND_DEFENSE",
+                StringComparison.Ordinal));
+    }
+
+    private static void AssertStableArtifacts(
+        TacticalCombatRecommendationResult expected,
+        TacticalCombatRecommendationResult actual)
+    {
+        Assert.Equal(expected.Status, actual.Status);
+        Assert.Equal(
+            expected.Identity!.SemanticFingerprint,
+            actual.Identity!.SemanticFingerprint);
+        Assert.Equal(
+            expected.Context!.Context.SemanticFingerprint,
+            actual.Context!.Context.SemanticFingerprint);
+        Assert.Equal(
+            expected.Discovery!.SemanticFingerprint,
+            actual.Discovery!.SemanticFingerprint);
+        Assert.Equal(
+            expected.Search!.SemanticFingerprint,
+            actual.Search!.SemanticFingerprint);
+        Assert.Equal(
+            expected.Search.Coverage.Fingerprint,
+            actual.Search.Coverage.Fingerprint);
+        Assert.Equal(
+            expected.Search.CandidateDecisions.Select(DecisionIdentity),
+            actual.Search.CandidateDecisions.Select(DecisionIdentity));
+        Assert.Equal(
+            expected.Scoring!.SemanticFingerprint,
+            actual.Scoring!.SemanticFingerprint);
+        Assert.Equal(
+            expected.CompiledPlan!.SelectedLoadoutFingerprint,
+            actual.CompiledPlan!.SelectedLoadoutFingerprint);
+        Assert.Equal(
+            expected.CompiledPlan.SemanticFingerprint,
+            actual.CompiledPlan.SemanticFingerprint);
+        Assert.Equal(
+            expected.LegacyComparison!.ComparisonReference,
+            actual.LegacyComparison!.ComparisonReference);
+        Assert.Equal(
+            Reference(expected).StableKey,
+            Reference(actual).StableKey);
+    }
+
+    private static TacticalFeasibleLoadoutResult Reference(
+        TacticalCombatRecommendationResult result) => Assert.Single(
+        result.Search!.FeasibleResults,
+        HasReference);
+
     private static bool HasReference(TacticalFeasibleLoadoutResult candidate) =>
-        candidate.SelectedCandidates.Select(item => item.SkillId)
-            .Order()
-            .SequenceEqual(ReferenceSkillIds.Order());
+        candidate.SelectedCandidates
+            .OrderBy(item => item.SkillId)
+            .ThenBy(item => item.Direction)
+            .SequenceEqual(ReferenceCandidates);
 
     private static string DecisionIdentity(
         TacticalCandidateConsideration item) => string.Join('|',
@@ -250,17 +294,7 @@ public sealed class CurrentTacticalCombatGoldenVerticalTests
 
     private static CombatSnapshot Snapshot(bool shuffle)
     {
-        CombatSkillSnapshot[] learned =
-        [
-            Skill(604, SkillCategory.Attack, PracticeDirection.Reverse, 1064),
-            Skill(616, SkillCategory.Attack, PracticeDirection.Reverse, 1251),
-            Skill(147, SkillCategory.Agility, PracticeDirection.Direct, 260),
-            Skill(150, SkillCategory.Agility, PracticeDirection.Reverse, 989),
-            Skill(295, SkillCategory.Defense, PracticeDirection.Reverse, 919),
-            Skill(303, SkillCategory.Defense, PracticeDirection.Reverse, 927),
-            Skill(265, SkillCategory.Assistance, PracticeDirection.Reverse, 889),
-            Skill(267, SkillCategory.Assistance, PracticeDirection.Direct, 165)
-        ];
+        var learned = GoldenSkills.Select(Skill).ToArray();
         if (shuffle)
         {
             learned = [.. learned.Reverse()];
@@ -329,26 +363,22 @@ public sealed class CurrentTacticalCombatGoldenVerticalTests
         new GenericSlotAllocation(0, 0, 0, 0, 0),
         legendaryCostAssignments: []);
 
-    private static CombatSkillSnapshot Skill(
-        int skillId,
-        SkillCategory category,
-        PracticeDirection direction,
-        int effectId) => new(
-        skillId,
+    private static CombatSkillSnapshot Skill(SkillSpec spec) => new(
+        spec.SkillId,
         SnapshotValue<string>.Available("sanitized skill"),
-        category,
-        SnapshotValue<int>.Available(3),
-        SnapshotValue<bool>.Available(true),
-        SnapshotValue<PracticeDirection>.Available(direction),
+        spec.Category,
+        SnapshotValue<int>.Available(spec.GridCost),
+        SnapshotValue<bool>.Available(false),
+        SnapshotValue<PracticeDirection>.Available(spec.Direction),
         SkillSlotContribution.None,
-        direction == PracticeDirection.Direct
-            ? SnapshotValue<int>.Available(effectId)
+        spec.Direction == PracticeDirection.Direct
+            ? SnapshotValue<int>.Available(spec.EffectId)
             : SnapshotValue<int>.Unavailable("Opposite direction not required."),
-        direction == PracticeDirection.Reverse
-            ? SnapshotValue<int>.Available(effectId)
+        spec.Direction == PracticeDirection.Reverse
+            ? SnapshotValue<int>.Available(spec.EffectId)
             : SnapshotValue<int>.Unavailable("Opposite direction not required."),
         breakthroughDirections: null,
-        SnapshotValue<CombatSkillElement>.Available(CombatSkillElement.Water));
+        SnapshotValue<CombatSkillElement>.Available(spec.Element));
 
     private static TacticalRuleEvidenceObservation[] ConfirmedEvidence() =>
         Rules.Transitions.SelectMany(item => item.EvidenceRequirements)
@@ -393,4 +423,12 @@ public sealed class CurrentTacticalCombatGoldenVerticalTests
     private sealed record TestFixture(
         RecommendTacticalCombat Subject,
         TacticalCombatRecommendationRequest Request);
+
+    private sealed record SkillSpec(
+        int SkillId,
+        SkillCategory Category,
+        PracticeDirection Direction,
+        int EffectId,
+        int GridCost,
+        CombatSkillElement Element);
 }

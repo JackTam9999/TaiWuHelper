@@ -27,9 +27,9 @@ The manually audited reference package is:
 | Defense | Reverse 即身成佛 as the active defense; Reverse 鬼降大法 as a switch-only mind-mark backup |
 | Assistance | Direct 墨玉功 for distraction-duration mitigation; Reverse 冰清玉潔 for a separate mind-defense layer |
 
-The sanitized fixture uses `0/4/4/4/4` of the five category capacities. The
-guarded installed-save projection uses `0/4/2/6/2`. Both remain within the
-acceptance ceiling of `6/9/7/8/4` for a screen-observed `6/10/7/9/4` context.
+The sanitized fixture and guarded installed-save projection both use
+`0/4/2/6/2` of the five category capacities. They remain within the acceptance
+ceiling of `6/9/7/8/4` for a screen-observed `6/10/7/9/4` context.
 The active defense and agility backups remain equipped alternatives and are not
 scored as simultaneously active effects.
 
