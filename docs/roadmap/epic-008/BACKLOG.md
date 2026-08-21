@@ -727,7 +727,7 @@ search, scoring, plan, source, performance, and presentation contracts.
 
 ### E8-013 — Validate the golden tactical plan and close Epic 8
 
-**Status:** In progress
+**Status:** Complete
 
 **Priority:** P1
 
@@ -772,11 +772,11 @@ product-owner completion decision.
 - [x] Additional targets, broader skill roles, persistence, outcome learning,
       screenshots, simulation, probabilities, and game control remain explicit
       future work.
-- [ ] Independent Epic 8 closure review is complete and every actionable
+- [x] Independent Epic 8 closure review is complete and every actionable
       finding is corrected and reverified.
-- [ ] The product owner records the Epic 8 completion decision.
+- [x] The product owner records the Epic 8 completion decision.
 
-#### Evidence in progress
+#### Evidence
 
 - [E8-013 representative verification](../../reviews/E8-013-manual-verification.md).
 - Latest focused refactor audit: 99 tactical Domain, 27 tactical Application,
@@ -793,10 +793,304 @@ product-owner completion decision.
   inspected save, GameData, and language hash and timestamp unchanged.
 - Completion decision in `EPIC.md` and the roadmap index.
 
+## Planned follow-up backlog after Epic 8
+
+The following items address the gap found while manually preparing the current
+character for the later magic-sound target encounter. They are deliberately
+outside the Epic 8 completion boundary: E8-013 may close the historical
+representative vertical without implying that the newer installed GameData,
+the exact current target, or a complete cross-category loadout is supported.
+
+The follow-up outcome is not one hard-coded loadout. Given one immutable
+current-version snapshot and exact target evidence, the planner should be able
+to discover, rank, and explain a coherent loadout that:
+
+- fits every displayed category budget and universal-slot allocation;
+- uses only learned or demonstrably achievable practice directions;
+- covers the target's Direct-practice magic-sound, mark, resonance, reset,
+  movement, range, and execution-pressure chain where each mechanic is
+  independently verified;
+- pairs Reverse `604` suppression with three exact feasible Reverse-practice
+  recovery casts rather than leaving the self-lock unresolved;
+- distinguishes equipped passives, the one active defense, the one active
+  agility skill, switching choices, and fallback skills; and
+- remains information-only and preserves every unsupported or conflicting
+  fact.
+
+### Follow-up delivery order
+
+| Order | Item | Outcome |
+|---:|---|---|
+| 1 | E8-F01 | The newer installed GameData and representative player/target evidence are reverified |
+| 2 | E8-F02 | The exact later-encounter target chain is typed without broad archetype assumptions |
+| 3 | E8-F03 | Every relevant learned skill can enter discovery through a versioned tactical role |
+| 4 | E8-F04 | Real capacity, direction, weapon, distance, resource, and active-role facts reach feasibility checks |
+| 5 | E8-F05 | Package-aware search can assemble suppression, recovery, control, and layered protection coherently |
+| 6 | E8-F06 | The selected loadout becomes an exact manual preparation and battle sequence |
+| 7 | E8-F07 | A current-version golden scenario proves useful output, safe fallback, and non-interference |
+
+### E8-F01 — Reverify the current GameData and representative combat evidence
+
+**Status:** In progress
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E8-013; Epic 2 catalogue and character atlas; ADR-0001
+
+Run a new read-only evidence gate for the installed
+`1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20` GameData before any historical
+rule is authorized for current recommendations.
+
+#### Acceptance criteria
+
+- [x] Record the exact versions and fingerprints for sources used by the
+      scenario, and an explicit reason for every unavailable helper source.
+- [ ] Reverify stable skill identity, raw Direct/Reverse effect identity,
+      activation timing, base cost, effective cost inputs, requirements, and
+      limitations for every E8-F03 candidate.
+- [ ] Compare the historical and installed versions field by field; unchanged
+      IDs or localized text alone do not authorize a rule.
+- [x] Keep the installed version `Unsupported` until every rule needed by the
+      minimum vertical is independently authorized.
+- [x] Store only sanitized version, identity, count, hash, timing, and invariant
+      metadata in the repository; do not commit saves, binaries, complete raw
+      descriptions, or personal paths.
+- [x] Guarded probes preserve all inspected save, GameData, language, and
+      catalogue hashes and timestamps before and after the read.
+
+#### Evidence in progress
+
+- [E8-F01 current-version tactical evidence](../../scenarios/E8-F01-current-tactical-evidence.md).
+- `CurrentTacticalCombatEvidenceIntegrationTests`: 2 passed, 0 failed, 0
+  skipped against the inspected installed sources and current save.
+- Static identity, cost, timing-value, effect-ID, requirement, bilingual-text,
+  player membership, direction, breakthrough, and source-precedence facts are
+  captured. Behavioral semantics and the historical/current field comparison
+  remain open, so production support is still withheld.
+
+### E8-F02 — Model the exact later magic-sound target and encounter phase
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** M
+
+**Dependencies:** E8-F01; Epic 3 observation provenance; Epic 5 playbooks
+
+Replace the generic magic-sound family assumption with one sanitized exact
+target/phase profile whose important mechanics are independently evidenced.
+
+#### Acceptance criteria
+
+- [ ] Bind the target and encounter phase to stable exact evidence without
+      exposing proprietary raw payloads or relying on a localized name.
+- [ ] Represent the verified Direct-practice cast set, mind-loss damage,
+      distraction marks, resonance cascade, defeat-mark reset, movement/range
+      pressure, and speed pressure as separate typed facts and transitions.
+- [ ] Record whether the target's broader Direct-practice coverage makes
+      Reverse `604` applicable; do not generalize from the magic-sound subset.
+- [ ] Represent target inner-power, agility, footwork, distance, and close-range
+      pressure only where exact version-matched evidence supports them.
+- [ ] Preserve phase, live mark count, temporary layers, current distance, and
+      resource state as unavailable or manual observations when the immutable
+      snapshot cannot supply them.
+- [ ] Add target-profile and causal-chain fixtures for complete, partial,
+      conflicting, wrong-phase, and unsupported-version states.
+
+### E8-F03 — Expand current-version typed tactical-role coverage
+
+**Status:** Planned
+
+**Priority:** P0
+
+**Estimate:** L
+
+**Dependencies:** E8-F01, E8-F02
+
+Add the complementary roles that the current narrow catalogue omits. The
+initial evidence set should evaluate, without assuming acceptance, the
+following groups:
+
+- suppression and Reverse-recovery attacks: `604`, `686`, `602`, `616`, `599`;
+- agility, speed, hit, and distance control: `134`, `150`, `151`, `147`, `148`;
+- active defense, mark removal, mitigation, and counter-pressure: `295`, `303`,
+  `2`, `289`; and
+- equipped mind/defense support: `267`, `265`, `280`, `252`.
+
+Existing alternatives such as `624`, `291`, and `611` remain candidates only
+when their current-version semantics and execution requirements are reverified.
+
+#### Acceptance criteria
+
+- [ ] Every accepted role binds exact skill ID, practice direction, raw effect
+      ID, supported GameData version, timing, purpose, requirements,
+      interactions, evidence, and limitations.
+- [ ] Unsupported directions, neutral direction, unfinished breakthrough,
+      missing book-page evidence, and inner-power backlash remain hard gates.
+- [ ] Roles distinguish equipped passive, active attack, active defense, active
+      agility, persistent state, switch-only backup, and one-time opening use.
+- [ ] Reverse-practice casts that can remove a Reverse `604` self-lock layer
+      receive an explicit recovery role only after their cast is executable.
+- [ ] Weapon, trick, release, distance, true-Qi, stance, breath, and other
+      requirements stay typed; unknown requirements never become satisfied.
+- [ ] Raw descriptions remain display evidence and never generate or broaden a
+      tactical role automatically.
+- [ ] The complete learned-skill atlas reports admitted, infeasible,
+      irrelevant, and unsupported outcomes for the expanded role set.
+
+### E8-F04 — Project a complete current and proposed execution context
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** L
+
+**Dependencies:** E8-F01, E8-F03; Epic 4 comparison contracts
+
+Replace the legacy recommendation path's empty weapon, trick, distance,
+resource, and unlock context with one coherent immutable projection.
+
+#### Acceptance criteria
+
+- [ ] Carry equipped and unlocked weapon types, usable tricks/styles, current or
+      opening distance, stance, breath, verified resources, active defense,
+      active agility, and inner-power/backlash facts where available.
+- [ ] Carry exact category capacities, current use, universal-slot allocation,
+      effective costs, mastery reductions, and legendary-book cost assignments
+      from the same snapshot or newer confirmed manual observation.
+- [ ] Preserve the evidence precedence between the current screen/manual
+      observation and the last stable disk save without silently merging them.
+- [ ] Represent learned direction separately from a direction that the player
+      can achieve through a verified manual breakthrough/book-page step.
+- [ ] Distinguish current-loadout facts from proposed-loadout facts throughout
+      feasibility, comparison, scoring, and plan compilation.
+- [ ] Do not add screenshot capture, OCR, persistence, runtime inspection, or
+      any mutation capability; missing screen facts remain typed manual inputs
+      or unavailable states.
+- [ ] Cover the representative displayed budget `6/10/7/9/4` and alternative
+      universal-slot allocations without assuming those capacities for other
+      snapshots.
+
+### E8-F05 — Add package-aware full-loadout discovery, search, and scoring
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** L
+
+**Dependencies:** E8-F02 through E8-F04
+
+Search coherent cross-category packages rather than adding only curated
+counter options and retaining the current loadout.
+
+#### Acceptance criteria
+
+- [ ] Every learned skill with an exact current-version role may enter the
+      option universe independently of the legacy counter whitelist.
+- [ ] A Reverse `604` package includes three exact feasible Reverse-practice
+      cast steps, their costs and requirements, or an explicit unresolved
+      recovery branch; score alone cannot waive this constraint.
+- [ ] Search can combine suppression, recovery attacks, movement/range control,
+      one active-defense rotation, one active-agility rotation, equipped
+      passives, and conditional backups across all categories.
+- [ ] Simultaneously equipped defenses or agility skills are not scored as if
+      all active-only effects operate at once.
+- [ ] Weapon/trick/distance requirements, direction feasibility, backlash,
+      effective cost, category capacity, and universal-slot allocation are hard
+      constraints before scoring.
+- [ ] Scoring rewards marginal causal coverage, timing, execution reliability,
+      complementary layers, and verified target interaction without
+      double-counting duplicate protection or inventing damage.
+- [ ] Dominance and relevance pruning preserve coupled recovery packages; every
+      exclusion has a stable diagnostic.
+- [ ] Search remains deterministic, cancellable, bounded, and explicit about
+      option, exploration, time, and result truncation.
+- [ ] Tests assert tactical invariants and feasibility rather than hard-coding
+      one unique winning loadout.
+
+### E8-F06 — Compile an exact loadout and manual execution plan
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** M
+
+**Dependencies:** E8-F04, E8-F05
+
+Turn the selected package into instructions that can be reproduced manually in
+the game and audited against the same evidence.
+
+#### Acceptance criteria
+
+- [ ] Show every category's used/available capacity, each selected skill's
+      effective cost and direction, and the universal-slot assignment.
+- [ ] Separate the main active attack, active agility, active defense, equipped
+      passive, switch-only backup, and optional alternative roles.
+- [ ] List exact remove, add, direction-change, breakthrough/book-page, weapon,
+      and legendary-slot preparation steps without implying that the helper
+      performs them.
+- [ ] Compile opening, target-cast trigger, Reverse `604`, three-cast recovery,
+      active-role switching, reset pressure, finish, and fallback stages only
+      where their transitions are supported.
+- [ ] Keep unknown live conditions as concise manual checks or unresolved
+      branches and never convert them into optimistic defaults.
+- [ ] The comparison, selected loadout, score, candidate diagnostics, and plan
+      share one immutable semantic identity and cannot disagree.
+- [ ] English and Traditional Chinese outputs expose the same skills, costs,
+      conditions, limitations, and information-only boundary.
+
+### E8-F07 — Verify the current-version golden anti-magic-sound vertical
+
+**Status:** Planned
+
+**Priority:** P1
+
+**Estimate:** L
+
+**Dependencies:** E8-F01 through E8-F06
+
+Prove that the broader planner can produce a useful current-version result
+without weakening Epic 8's evidence or safety contracts.
+
+#### Acceptance criteria
+
+- [ ] A sanitized current-version fixture no longer returns
+      `UNSUPPORTED_GAME_DATA_RULE_CHAIN` after, and only after, all required
+      current-version rules are authorized.
+- [ ] The representative `6/10/7/9/4` scenario admits at least one package with
+      used capacity no greater than `6/9/7/8/4`, exact direction feasibility,
+      Reverse `604` suppression, three feasible Reverse-practice recovery
+      casts, movement/range control, active-defense choices, and layered mind
+      protection.
+- [ ] The manually audited reference configuration is feasible and is not
+      incorrectly pruned; an evidence-equivalent higher-scoring configuration
+      may still be selected.
+- [ ] Complete, partial, conflicting, wrong-phase, unsupported-version,
+      missing-context, no-candidate, truncated, and cancelled paths remain
+      typed and tested.
+- [ ] Historical-version behavior remains deterministic, or becomes explicitly
+      unsupported through a documented lifecycle decision; it is never
+      silently reinterpreted as the current version.
+- [ ] Domain, Application, Infrastructure, API, Presentation, localization,
+      architecture, and guarded local integration tests cover the new boundary.
+- [ ] Repeated and shuffled inputs retain stable candidates, pruning, score,
+      selected loadout, comparison, plan, and fingerprints.
+- [ ] Release verification records zero warnings, performance/search bounds,
+      source hash preservation, and absolute game non-interference.
+
 ## Future work outside Epic 8
 
-- Additional exact targets, archetype families, causal chains, tactical roles,
-  and verified effects beyond the first vertical.
+- The current-version complete anti-magic-sound expansion is planned in
+  E8-F01 through E8-F07 above; promotion into a new epic remains a product-owner
+  decision.
+- Additional exact targets and archetype families beyond that planned
+  expansion.
 - A general combat simulator, hidden-state inference, predicted turn sequence,
   damage distribution, target difficulty, or probability of victory.
 - Persisted plans, observations, preferences, recommendations, reported

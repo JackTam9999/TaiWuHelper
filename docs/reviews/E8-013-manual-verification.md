@@ -2,13 +2,13 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress |
+| Status | Complete |
 | Evidence date | 2026-08-21 |
 | Epic | [EPIC-008](../roadmap/epic-008/EPIC.md) |
 | Backlog item | [E8-013](../roadmap/epic-008/BACKLOG.md#e8-013--validate-the-golden-tactical-plan-and-close-epic-8) |
 | Automated evidence | [E8-012 verification](./E8-012-automated-verification.md) |
 | UI evidence | [E8-011 browser verification](./assets/epic-008/E8-011-browser-verification.md) |
-| Completion decision | Pending independent review and product-owner decision |
+| Completion decision | Approved on 2026-08-21 after independent closure review |
 | Proprietary data committed | None |
 
 ## Current result
@@ -23,10 +23,11 @@ search diagnostics, policy differences, bilingual rendering, and every required
 synthetic lifecycle state remain coherent across Domain, Application, API, and
 Presentation.
 
-Epic 8 is not yet closed. After an initial unstable attempt was rejected, a
-stable retry passed both guarded local tactical integrations. An independent
-closure review still requires explicit authorization, and the product owner has
-not recorded a completion decision.
+Epic 8 is complete. After an initial unstable attempt was rejected, a stable
+retry passed both guarded local tactical integrations. The authorized
+independent closure review found no remaining actionable defect, and the
+product owner approved completion on 2026-08-21. Current-version behavioral
+reauthorization remains separate follow-up work and is not implied by closure.
 
 ## Representative tactical-plan review
 
@@ -151,8 +152,8 @@ committed.
 
 ## Self-review and refactor corrections
 
-This pass is a maintainer self-review and does not replace the required
-independent closure review.
+This earlier maintainer self-review preceded, and did not replace, the
+independent closure review recorded below.
 
 | Finding | Correction and proof |
 |---|---|
@@ -171,6 +172,35 @@ local skips, and 0 failed. The architecture assembly was rerun from its normal
 repository-relative output because its source-boundary tests intentionally
 locate the repository from the assembly path; all 114 architecture tests passed.
 
+## Independent closure review
+
+The product owner authorized the independent closure review on 2026-08-21. The
+review was performed after the maintainer refactors and treated the committed
+Epic 8 implementation, contracts, evidence, and tests as the review subject.
+
+The review independently checked:
+
+- exact-version rule rejection and the installed-version `Unsupported` result;
+- candidate admission through typed roles and every existing hard feasibility
+  gate;
+- proposal precedence, current-loadout unavailable facts, and one-snapshot
+  context parity;
+- accepted-loadout, comparison, score, preparation, plan-step skill identity,
+  and full-result fingerprint agreement;
+- search bounds, truncation, cancellation, fallback-only finish semantics, and
+  absence of optimality or victory claims;
+- candidate paging replacement, bilingual typed rendering, and narrow/wide
+  information parity; and
+- filesystem, process, screenshot, upload, persistence, automation, input,
+  game-control, and mutation capability exclusions.
+
+No remaining actionable finding was identified. A fresh Release build passed
+with 0 warnings and 0 errors. The complete non-opt-in suite passed with 1,601
+tests: 1,584 passed, 17 expected guarded-local skips, and 0 failed. Both
+authorized tactical guarded integrations then passed against the current local
+save with no skips; their before/after source checks retained the save, GameData,
+and language sources unchanged.
+
 ## Deferred work
 
 Additional targets and skill roles, current-version behavioral reauthorization,
@@ -184,10 +214,11 @@ in the [Epic 8 backlog](../roadmap/epic-008/BACKLOG.md#future-work-outside-epic-
 
 - [x] Rerun the two guarded tactical integrations against a stable, unlocked
       current save and record unchanged save, GameData, and language sources.
-- [ ] Complete an independent Epic 8 closure review and correct every actionable
-      finding. Delegating this review requires explicit user authorization.
-- [ ] Request and record the product-owner completion decision after all
+- [x] Complete an independent Epic 8 closure review and correct every actionable
+      finding. No remaining actionable finding was identified.
+- [x] Request and record the product-owner completion decision after all
       technical and independent-review gates pass.
 
-Until all three gates are complete, E8-013 and Epic 8 remain in progress and no
-closure commit should be created.
+All three gates are complete. The product owner approved Epic 8 completion on
+2026-08-21; the current-version expansion remains a separate evidence-gated
+follow-up.

@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress |
+| Status | Complete |
 | Milestone | 8 |
 | Target release | TBD |
-| Last updated | 2026-08-20 |
+| Last updated | 2026-08-21 |
 
 ## Summary
 
@@ -406,7 +406,7 @@ source hashes prove non-interference.
       bounded behavior, source non-interference, and the selected scenario's
       tactical invariants.
 - [x] No result claims a probability of victory or introduces game control.
-- [ ] The product owner records the Epic 8 completion decision.
+- [x] The product owner records the Epic 8 completion decision.
 
 ## Risks and mitigations
 
@@ -427,8 +427,13 @@ source hashes prove non-interference.
 
 ## Completion decision
 
-Not yet complete. Completion requires E8-000 through E8-013, representative
-manual review, independent closure review, and explicit product-owner approval.
+Technical, guarded representative, independent, and bilingual responsive
+verification are complete. The product owner approved completion on
+2026-08-21, as recorded in
+[E8-013](../../reviews/E8-013-manual-verification.md). The completed boundary
+remains the historical representative tactical vertical; current-version
+behavior and the broader anti-magic-sound loadout expansion remain separately
+evidence-gated in E8-F01 through E8-F07.
 
 ## Delivery reference
 

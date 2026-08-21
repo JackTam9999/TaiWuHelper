@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E8-F01",
+  "observationDate": "2026-08-21",
+  "status": "partial-behavior-verification-pending",
+  "installedSources": {
+    "runtimeGameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+    "configurationProductVersion": "1.0.0",
+    "exactConfigurationFingerprintCompared": true,
+    "runtimeAndConfigurationVersionMustBothBindRules": true,
+    "behaviorAuthorized": false
+  },
+  "staticCandidates": {
+    "expected": 19,
+    "matched": 19,
+    "importErrors": 0,
+    "bilingualDirectAndReverseDescriptionsPresent": 19,
+    "completeDescriptionsCommitted": false,
+    "skillIds": [
+      2,
+      134,
+      147,
+      148,
+      150,
+      151,
+      252,
+      265,
+      267,
+      280,
+      289,
+      295,
+      303,
+      599,
+      602,
+      604,
+      616,
+      624,
+      686
+    ]
+  },
+  "playerEvidence": {
+    "learnedCandidates": 19,
+    "equippedCandidates": 9,
+    "masteredCandidates": 0,
+    "activeDirect": 8,
+    "activeReverse": 6,
+    "reverseBreakthroughAvailable": 2,
+    "directOrReverseBreakthroughAvailable": 3,
+    "savePathCommitted": false,
+    "saveHashCommitted": false,
+    "saveContentCommitted": false
+  },
+  "capacityEvidence": {
+    "diskUsedSlotsAvailable": false,
+    "diskCapacities": [6, 9, 6, 10, 5],
+    "diskUniversalAllocation": [1, 3, 1, 3],
+    "manualScreenCapacities": [6, 10, 7, 9, 4],
+    "manualScreenTakesPrecedence": true
+  },
+  "unavailableSources": {
+    "helperCatalogue": "not-read-because-wal-and-shm-were-present",
+    "standaloneInspector": "failed-closed-before-save-read"
+  },
+  "guardedVerification": {
+    "staticGuardedFiles": 8,
+    "playerGuardedFiles": 9,
+    "allGuardedFilesUnchanged": true,
+    "focusedPassed": 2,
+    "focusedFailed": 0,
+    "focusedSkipped": 0
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsSaveHash": false,
+    "containsCharacterIdentifier": false,
+    "containsTargetIdentifier": false,
+    "containsGameBinaryContent": false,
+    "containsCompleteLanguageResource": false,
+    "containsScreenshot": false
+  }
+}

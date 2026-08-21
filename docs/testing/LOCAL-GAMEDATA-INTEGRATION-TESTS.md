@@ -187,3 +187,26 @@ two-candidate fixture. The feasibility cache records four canonical misses and
 zero false hits. Application work counts remain exactly one snapshot read, rule
 resolution, context projection, discovery, search, score, and plan compilation
 per successful request.
+
+## Post-Epic 8 current-version tactical evidence gate
+
+E8-F01 adds an explicit opt-in check for the broader current-version candidate
+set without rebuilding or querying a helper catalogue:
+
+```powershell
+$env:TAIWU_INTEGRATION_CURRENT_TACTICAL_EVIDENCE = '1'
+$env:TAIWU_INTEGRATION_SAVE_PATH = '<path-to-current-local.sav>'
+dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.IntegrationTests.csproj -c Release --no-restore -- --no-progress --filter-class '*CurrentTacticalCombatEvidenceIntegrationTests*'
+```
+
+The first test reads 19 exact installed definitions twice and checks runtime
+and configuration version identity, configuration fingerprint, static fields,
+effect IDs, requirement IDs/values, and bilingual Direct/Reverse text. It
+guards the runtime assembly, configuration assembly, and six language sources.
+
+The second test reads the current player snapshot twice and checks the same 19
+learned candidates, their active or achievable directions, mastery, equipment,
+and the disk capacity/allocation state. It adds the save to the guarded source
+set. Neither test authorizes behavior from raw descriptions or unchanged IDs;
+the installed runtime remains unsupported until the remaining E8-F01 behavior
+evidence is accepted.

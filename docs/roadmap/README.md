@@ -13,7 +13,7 @@ with the epic that owns them.
 | [EPIC-005: Target archetypes and counter playbooks](./epic-005/EPIC.md) | Complete | 5 | [Backlog](./epic-005/BACKLOG.md) |
 | [EPIC-006: Evidence-aware companion role and candidate finder](./epic-006/EPIC.md) | Complete | 6 | [Backlog](./epic-006/BACKLOG.md) |
 | [EPIC-007: Evidence-aware village workforce and building assignment planner](./epic-007/EPIC.md) | Complete | 7 | [Backlog](./epic-007/BACKLOG.md) · [UI specification](./epic-007/UI-007-village-workforce-planner.md) |
-| [EPIC-008: Evidence-backed exact-target tactical combat planner](./epic-008/EPIC.md) | In progress | 8 | [Backlog](./epic-008/BACKLOG.md) · [UI specification](./epic-008/UI-008-tactical-combat-planner.md) |
+| [EPIC-008: Evidence-backed exact-target tactical combat planner](./epic-008/EPIC.md) | Complete | 8 | [Backlog](./epic-008/BACKLOG.md) · [UI specification](./epic-008/UI-008-tactical-combat-planner.md) |
 
 ## Shared discovery
 

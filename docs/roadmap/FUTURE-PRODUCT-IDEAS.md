@@ -5,7 +5,7 @@
 | Status | Ongoing discovery |
 | Scope | Ongoing product discovery after Epic 8 promotion |
 | Related epics | EPIC-001 through EPIC-008 |
-| Last updated | 2026-08-20 |
+| Last updated | 2026-08-21 |
 
 ## Purpose
 
@@ -370,6 +370,39 @@ inspect runtime memory, capture input, execute combat, equip skills, change
 practice direction, allocate slots, write a save, simulate unsupported hidden
 mechanics, or claim a probability of victory.
 
+### PI-013 — Current-version complete anti-magic-sound loadout expansion
+
+**Status:** Planned as a non-blocking post-Epic 8 follow-up in
+[E8-F01 through E8-F07](./epic-008/BACKLOG.md#planned-follow-up-backlog-after-epic-8).
+
+Extend Epic 8's historical representative tactical vertical to the newer
+installed GameData and one exact later magic-sound encounter. The expansion
+should close the concrete gap between a narrow verified hard-counter list and a
+coherent full loadout across inner power, attack, agility, defense, Qiqiao, and
+universal-slot allocation.
+
+The evidence gate comes first. The target's exact encounter phase,
+Direct-practice coverage, marks, resonance, reset, movement, range, and speed
+pressure must be independently reverified for the installed version. The
+planner may then add typed roles for complementary suppression-recovery
+attacks, footwork and distance control, active-defense choices, and equipped
+mind-protection passives. Localized descriptions and unchanged IDs alone do
+not authorize current-version mechanics.
+
+Candidate search should operate over every learned skill with an exact verified
+role, not only a curated counter whitelist. Coupled constraints must keep
+Reverse `604` together with three executable Reverse-practice recovery casts,
+respect mutually exclusive active defense/agility effects, enforce weapon,
+distance, trick, direction, backlash, cost, and capacity requirements, and
+report why every unsupported or pruned skill was excluded.
+
+Acceptance should use a sanitized current-version scenario and tactical
+invariants rather than one hard-coded answer. A manually audited reference
+loadout must remain feasible and discoverable, while the planner may select an
+evidence-equivalent alternative with a better disclosed score. All output
+remains read-only, information-only, bounded, deterministic, and explicit
+about unsupported live facts.
+
 ## Suggested promotion order
 
 ### Completed promotions
@@ -394,22 +427,20 @@ The product owner promoted and completed these discovery ideas:
    [EPIC-007](./epic-007/EPIC.md) on 2026-08-18 and completed after evidence,
    implementation, corrective review, representative verification, and
    product-owner approval on 2026-08-20.
-
-### Active promotion
-
-The evidence-backed exact-target tactical combat planner was promoted to
-[EPIC-008](./epic-008/EPIC.md) on 2026-08-20. Epic 8 starts with a blocking
-evidence gate and one representative magic-sound tactical vertical. It does
-not assume every desired causal transition, recovery route, finish path, or
-learned-skill role is verified, and it does not simulate or control combat.
+7. Evidence-backed exact-target tactical combat planner — promoted to
+   [EPIC-008](./epic-008/EPIC.md) on 2026-08-20 and completed after its
+   historical evidence gate, implementation, guarded representative checks,
+   independent closure review, and product-owner approval on 2026-08-21.
 
 ### Current candidates after Epic 8 selection
 
-1. Companion development planner.
-2. Library and book planning, assessed after the Epic 7 source boundary rather
+1. Current-version complete anti-magic-sound loadout expansion, after Epic 8
+   closes and its new evidence gate succeeds.
+2. Companion development planner.
+3. Library and book planning, assessed after the Epic 7 source boundary rather
    than assumed to share its first assignment vertical.
-3. Version-aware observation, recommendation, and outcome persistence.
-4. Shareable recommendation card, which may remain a smaller enhancement
+4. Version-aware observation, recommendation, and outcome persistence.
+5. Shareable recommendation card, which may remain a smaller enhancement
    because copy and print foundations already exist.
 
 The companion and settlement ideas intentionally remain separate. They may
