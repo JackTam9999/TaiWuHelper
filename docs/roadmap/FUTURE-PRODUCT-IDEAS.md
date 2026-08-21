@@ -434,8 +434,8 @@ The product owner promoted and completed these discovery ideas:
 
 ### Current candidates after Epic 8 selection
 
-1. Current-version complete anti-magic-sound loadout expansion, after Epic 8
-   closes and its new evidence gate succeeds.
+1. Current-version complete anti-magic-sound loadout expansion; Epic 8 and
+   E8-F01 are complete, with exact-target work continuing in E8-F02.
 2. Companion development planner.
 3. Library and book planning, assessed after the Epic 7 source boundary rather
    than assumed to share its first assignment vertical.

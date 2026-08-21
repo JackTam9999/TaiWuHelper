@@ -831,7 +831,7 @@ to discover, rank, and explain a coherent loadout that:
 
 ### E8-F01 — Reverify the current GameData and representative combat evidence
 
-**Status:** In progress
+**Status:** Complete
 
 **Priority:** P0
 
@@ -847,10 +847,10 @@ rule is authorized for current recommendations.
 
 - [x] Record the exact versions and fingerprints for sources used by the
       scenario, and an explicit reason for every unavailable helper source.
-- [ ] Reverify stable skill identity, raw Direct/Reverse effect identity,
+- [x] Reverify stable skill identity, raw Direct/Reverse effect identity,
       activation timing, base cost, effective cost inputs, requirements, and
       limitations for every E8-F03 candidate.
-- [ ] Compare the historical and installed versions field by field; unchanged
+- [x] Compare the historical and installed versions field by field; unchanged
       IDs or localized text alone do not authorize a rule.
 - [x] Keep the installed version `Unsupported` until every rule needed by the
       minimum vertical is independently authorized.
@@ -860,15 +860,17 @@ rule is authorized for current recommendations.
 - [x] Guarded probes preserve all inspected save, GameData, language, and
       catalogue hashes and timestamps before and after the read.
 
-#### Evidence in progress
+#### Evidence
 
 - [E8-F01 current-version tactical evidence](../../scenarios/E8-F01-current-tactical-evidence.md).
-- `CurrentTacticalCombatEvidenceIntegrationTests`: 2 passed, 0 failed, 0
+- [E8-F01 current behavior contracts](../../scenarios/evidence/E8-F01-current-behavior-contracts.md).
+- `CurrentTacticalCombatEvidenceIntegrationTests`: 3 passed, 0 failed, 0
   skipped against the inspected installed sources and current save.
 - Static identity, cost, timing-value, effect-ID, requirement, bilingual-text,
   player membership, direction, breakthrough, and source-precedence facts are
-  captured. Behavioral semantics and the historical/current field comparison
-  remain open, so production support is still withheld.
+  captured. All 19 runtime behavior chains and five overlapping historical
+  production roles are independently compared; production support remains
+  withheld until E8-F02 and E8-F03 complete their target and rule gates.
 
 ### E8-F02 — Model the exact later magic-sound target and encounter phase
 

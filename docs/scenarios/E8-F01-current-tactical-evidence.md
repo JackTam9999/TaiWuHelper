@@ -2,16 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Status | In progress — static and player evidence captured; behavioral verification pending |
+| Status | Complete — current candidate definitions, player state and behavior contracts verified |
 | Backlog item | [E8-F01](../roadmap/epic-008/BACKLOG.md#e8-f01--reverify-the-current-gamedata-and-representative-combat-evidence) |
 | Inspection date | 2026-08-21 |
 | Runtime GameData | `1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20` |
 | Sanitized record | [E8-F01-current-tactical-metadata.json](./evidence/E8-F01-current-tactical-metadata.json) |
+| Behavior record | [E8-F01 current behavior contracts](./evidence/E8-F01-current-behavior-contracts.md) |
 
 ## Decision
 
-The current-version evidence gate has started, but it does **not** yet authorize
-production tactical rules for the installed runtime.
+The current-version candidate evidence gate is complete. It authorizes the
+recorded static, player-feasibility and candidate-behavior facts as inputs to
+E8-F02 through E8-F04, but it does **not** by itself authorize a production
+tactical rule set for the installed runtime.
 
 The read-only capture proved that all 19 initial complementary candidate skills
 exist in the installed configuration with exact stable identity, category,
@@ -20,16 +23,18 @@ Direct/Reverse effect IDs, requirement identities and values, and bilingual
 Direct/Reverse display text. It also proved that the current save contains all
 19 candidates and preserved their active or achievable direction state.
 
-These are static and player-feasibility facts. Unchanged IDs and display text do
-not prove current runtime behavior, activation timing semantics, interactions,
-or limitations. `VerifiedTacticalCombatRuleSets.HistoricalMagicSound` therefore
-remains historical-only, and the installed runtime must continue to return
-`UNSUPPORTED_GAME_DATA_RULE_CHAIN` until the remaining behavior evidence is
-accepted.
+The behavior gate separately resolved all 19 concrete runtime effect types and
+audited their direction branches, activation events, shared base behavior and
+called combat operations. Exact inherited method-chain fingerprints now fail
+if implementation changes despite unchanged IDs or text. The existing
+`VerifiedTacticalCombatRuleSets.HistoricalMagicSound` remains historical-only,
+and the installed runtime must continue to return
+`UNSUPPORTED_GAME_DATA_RULE_CHAIN` until E8-F02 and E8-F03 supply the exact
+target and minimum typed current-version rule set.
 
 ## Read-only method
 
-The capture used two new opt-in guarded integration checks:
+The capture used three opt-in guarded integration checks:
 
 1. `Current_candidate_definitions_are_available` read the installed runtime,
    configuration, bilingual combat-skill, special-effect, and legendary-book
@@ -37,6 +42,10 @@ The capture used two new opt-in guarded integration checks:
 2. `Current_player_candidate_state_is_repeatable` read one immutable combat
    snapshot twice, compared its save and GameData revisions, and compared the
    save plus the same eight installed sources before and after.
+3. `Current_candidate_behavior_contracts_are_version_bound` loaded a byte copy
+   of the installed runtime assembly, inspected metadata and method bodies for
+   all 19 exact behavior chains, and preserved the installed assembly before
+   and after. It did not instantiate effects or invoke combat handlers.
 
 The checks use the repository's read-only configuration source and archive
 reader. They do not rebuild the helper catalogue, write a test database, cache
@@ -73,10 +82,11 @@ The exact expected record identities are retained in
 descriptions are read and checked for presence but are not committed as
 mechanical rules.
 
-The seven historical tactical candidates retain their expected current
-configuration effect IDs where they overlap this set. That continuity is useful
-for investigation, but it does not carry historical behavioral authorization
-across the runtime-version boundary.
+Five of the seven historical production candidates overlap this set. Their
+cost, effect identity and behavior were compared field by field in the
+[behavior record](./evidence/E8-F01-current-behavior-contracts.md); all five
+were reverified against the current runtime rather than authorized from
+continuity. Historical candidates `291` and `611` remain outside this gate.
 
 ## Current player result
 
@@ -121,31 +131,20 @@ workspace, reproducing the E8-013 failure mode. The repository guarded archive
 reader succeeded, and the inspector was not rebuilt or worked around by
 modifying its source discovery during this evidence gate.
 
-## Remaining F01 evidence
+## Behavior result and downstream boundary
 
-F01 remains in progress because these facts are not yet independently
-authorized for the current runtime:
+The completed behavior audit distinguishes active attacks, active defenses,
+active agility skills, equipped assistance effects and combat-start layers. It
+also reverified the symmetric Direct/Reverse `604` suppression and three-layer
+recovery contract. The sanitized semantic matrix and exact implementation
+fingerprints are in the
+[behavior record](./evidence/E8-F01-current-behavior-contracts.md).
 
-A one-time read-only reflection probe confirmed that the runtime contains
-specialized combat-skill effect classes, but its public surface exposed only
-type and member names. That cannot prove numerical behavior, trigger
-conditions, direction differences, or interactions. The exploratory failing
-probe was therefore removed instead of being retained as a false evidence
-gate.
-
-- the behavioral meaning and activation timing of each new Direct/Reverse
-  effect identity;
-- the current-version interaction between Reverse `604`, its three-layer
-  self-lock, and exact feasible Reverse recovery casts;
-- active-only defense and agility effects versus equipped passive effects;
-- weapon, trick, distance, resource, stance, breath, and backlash requirements
-  that cannot be inferred from static requirement IDs alone; and
-- exact target/encounter mechanics, which belong to E8-F02 after the F01 rule
-  boundary is accepted.
-
-No current-version production rule will be added until the minimum behavioral
-set is complete. Unknown candidates stay unsupported rather than receiving a
-role from their name or raw description.
+F01 does not invent the missing execution context. Weapon, trick, distance,
+resource, stance, breath, backlash, effective cost and active-role values stay
+explicit inputs to E8-F04. Exact target and encounter mechanics belong to
+E8-F02, while role selection and production rule authorization belong to
+E8-F03. Unknown or unselected behavior stays unsupported.
 
 ## Verification
 
@@ -155,8 +154,9 @@ $env:TAIWU_INTEGRATION_SAVE_PATH = '<current-save>'
 dotnet test tests\TaiWu.Infrastructure.IntegrationTests\TaiWu.Infrastructure.IntegrationTests.csproj -c Release --no-restore -- --no-progress --filter-class '*CurrentTacticalCombatEvidenceIntegrationTests*'
 ```
 
-Result: 2 passed, 0 failed, 0 skipped. The static test retained 8 of 8 guarded
-files; the player test retained 9 of 9 guarded files, including the save.
+Result: 3 passed, 0 failed, 0 skipped. The static test retained 8 of 8 guarded
+files; the player test retained 9 of 9 guarded files, including the save; the
+behavior test retained the installed runtime assembly unchanged.
 
 No save, game file, installed language resource, helper catalogue, running
 process, runtime memory location, or in-game state was modified.

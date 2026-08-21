@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.Localization;
@@ -64,6 +66,28 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         616|learned=true|direction=Reverse|grid=1|mastered=False|brokenOut=True|canBreakthrough=False|available=|completed=|equipped=True
         624|learned=true|direction=Unavailable|grid=1|mastered=False|brokenOut=False|canBreakthrough=True|available=Direct,Reverse|completed=|equipped=False
         686|learned=true|direction=Unavailable|grid=2|mastered=False|brokenOut=False|canBreakthrough=True|available=Direct,Reverse|completed=|equipped=False
+        """;
+
+    private const string ExpectedBehaviorIdentities = """
+        GameData.Domains.SpecialEffect.CombatSkill.Baihuagu.Agile.WanHuaTingYuShi|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.BuffHitOrDebuffAvoid|D15D599201B0379EB3D07B7BE1A436692B1950A2D300C31B90986C1ABD3A441A|methods=63
+        GameData.Domains.SpecialEffect.CombatSkill.Fulongtan.Blade.FuLongDaoFa|GameData.Domains.SpecialEffect.CombatSkill.Common.Attack.ChangePowerByEquipType|B3ADC8D5580C027BF0B23A37ABA33227021ECC2106C8E3DEBF2D75DAA3ACE87B|methods=55
+        GameData.Domains.SpecialEffect.CombatSkill.Jingangzong.Blade.LuoChaDaoFa|GameData.Domains.SpecialEffect.CombatSkill.Common.Attack.AttackBodyPart|F2184B0E9AA5895B4EF4611C7CBEFACD678D9710B30C3972E2FFEAD2E5061F3D|methods=56
+        GameData.Domains.SpecialEffect.CombatSkill.Jingangzong.DefenseAndAssist.JiShenChengFo|GameData.Domains.SpecialEffect.CombatSkill.Common.Defense.DefenseSkillBase|6C8CEB88479CDCAE1ACA8B763191810FA644CE4F021B1F0439BDF1D0FA764293|methods=57
+        GameData.Domains.SpecialEffect.CombatSkill.Jingangzong.DefenseAndAssist.NaMaiGong|GameData.Domains.SpecialEffect.CombatSkill.Common.Defense.DefenseSkillBase|AD9D0C97915378C44F160639073B5A710FDF1EE6FB3DF1D2950B7C75A4BE599E|methods=55
+        GameData.Domains.SpecialEffect.CombatSkill.Kongsangpai.DefenseAndAssist.SanBuJiuHouFa|GameData.Domains.SpecialEffect.CombatSkill.Common.Assist.AssistSkillBase|3007115D9054EA4FF4B68DE05977E7ED8A611C5EAC5F4533C5FD155EDDE39600|methods=62
+        GameData.Domains.SpecialEffect.CombatSkill.NoSect.DefenseAndAssist.ShuiHuoYingQiGong|GameData.Domains.SpecialEffect.CombatSkill.Common.Defense.DefenseSkillBase|67EC714E340B0E0352AE5C8919D8586231A50F4E062D1A16DC785F39E5BA9573|methods=56
+        GameData.Domains.SpecialEffect.CombatSkill.Ranshanpai.Agile.WuGuiBu|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.ChangeAttackHitType|5B4C84FA07177ECD250A74E7D3E9B68FCD2A65E013D274BA0A89E15EB04852D9|methods=58
+        GameData.Domains.SpecialEffect.CombatSkill.Ranshanpai.Agile.YuFengFu|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|A7FD8E6523AD80D6D07B4BC667C8812867F094814809D816B851ADDE4075F7A7|methods=55
+        GameData.Domains.SpecialEffect.CombatSkill.Shixiangmen.Agile.HengJiangSuo|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|ACBCD0C6937CAB2C0C6BA28ED6848E009F4A506DAD2921DC9F2D79527810A80C|methods=55
+        GameData.Domains.SpecialEffect.CombatSkill.Shixiangmen.Agile.TieQiaoGong|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|F815CFA476891675ACBF5F2733EE54AC037B2FB2F1A78F69B7AAFD3F4D599B1B|methods=54
+        GameData.Domains.SpecialEffect.CombatSkill.Shixiangmen.Blade.JinNiZhenMoDao|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|EC6B2CB425F7B8CCE7649F521544F33E3AD862D9DC11B649C798D81A2BB86A08|methods=55
+        GameData.Domains.SpecialEffect.CombatSkill.Shixiangmen.Blade.KaiShanKuaiDao|GameData.Domains.SpecialEffect.CombatSkill.Common.Attack.GetTrick|E05595281A020499674C34872B781C6B48EC24431F5DA6EBE99DFEC70FA69E2B|methods=53
+        GameData.Domains.SpecialEffect.CombatSkill.Shixiangmen.Blade.ZhanAoDaoFa|GameData.Domains.SpecialEffect.CombatSkill.Common.Attack.AttackBodyPart|F4760E850C3530743123C3B04B875C5EA5F45B917E12487E3EF6983FF838DD19|methods=56
+        GameData.Domains.SpecialEffect.CombatSkill.Shixiangmen.DefenseAndAssist.BingWenZhuoSu|GameData.Domains.SpecialEffect.CombatSkill.Common.Assist.AssistSkillBase|DFB244D0C82487A2199094FE5CF29EBF3EC05C18092E9C0298C950E32E5A3A4B|methods=62
+        GameData.Domains.SpecialEffect.CombatSkill.Wudangpai.Whip.LaoJunFuChenGong|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|B7D887AD9D2AE4F72F5A03BEE48A29C51F2987D80A17F4106AA3EC8A7F7BBDBE|methods=50
+        GameData.Domains.SpecialEffect.CombatSkill.Wuxianjiao.DefenseAndAssist.GuiJiangDaFa|GameData.Domains.SpecialEffect.CombatSkill.Common.Defense.DefenseSkillBase|29105157E0BF97DD69FA49B4B34DF77F6845925E6A60275444584A47B8FD7F6D|methods=58
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.DefenseAndAssist.BingQingYuJie|GameData.Domains.SpecialEffect.CombatSkill.Common.Assist.AssistSkillBase|7773B0097C8AA3735E5EC60C28FC9D0AE3853D0F28FE43C35E6B4873AFF507C1|methods=60
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.DefenseAndAssist.MoYuGong|GameData.Domains.SpecialEffect.CombatSkill.Common.Assist.AssistSkillBase|56FBD75E80B3FD8892421EC0046119C2C9B981EE9A3F0DA364A0B9AD5E8810B3|methods=58
         """;
 
     private static readonly int[] CandidateSkillIds =
@@ -169,6 +193,54 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         finally
         {
             var after = await CaptureAsync(guardedPaths);
+            Assert.Equal(before, after);
+        }
+    }
+
+    [Fact]
+    public async Task Current_candidate_behavior_contracts_are_version_bound()
+    {
+        RequireEvidenceOptIn();
+        var located = new TaiwuCatalogueSourcePathProvider().Resolve();
+        Assert.SkipUnless(
+            located.IsAvailable,
+            "E8-F01 skipped: installed GameData catalogue sources are "
+            + "unavailable.");
+        var runtimeAssembly = GameDataRuntimePath(located.Paths!);
+        var before = await CaptureAsync([runtimeAssembly]);
+
+        try
+        {
+            Assert.Equal(
+                ExpectedGameDataVersion,
+                FileVersionInfo.GetVersionInfo(runtimeAssembly)
+                    .ProductVersion);
+            var bytes = await File.ReadAllBytesAsync(
+                runtimeAssembly,
+                TestContext.Current.CancellationToken);
+            var assembly = Assembly.Load(bytes);
+            var expected = BehaviorLines();
+            var expectedTypeNames = expected
+                .Select(line => line.Split('|', 2)[0])
+                .ToHashSet(StringComparer.Ordinal);
+            var actual = assembly.GetTypes()
+                .Where(type => type.FullName is not null
+                    && expectedTypeNames.Contains(type.FullName))
+                .OrderBy(type => type.FullName, StringComparer.Ordinal)
+                .Select(BehaviorIdentity)
+                .ToArray();
+
+            Assert.Equal(expected, actual);
+            output.WriteLine(
+                "E8-F01 current tactical behavior contracts: "
+                + "gameData={0}; candidates={1}/{2}; guardedFiles=1.",
+                ExpectedGameDataVersion,
+                actual.Length,
+                expected.Length);
+        }
+        finally
+        {
+            var after = await CaptureAsync([runtimeAssembly]);
             Assert.Equal(before, after);
         }
     }
@@ -302,6 +374,60 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         ExpectedPlayerCandidateStates
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(item => item.Trim())
+            .ToArray();
+
+    private static string[] BehaviorLines() => ExpectedBehaviorIdentities
+        .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+        .Select(item => item.Trim())
+        .ToArray();
+
+    private static string BehaviorIdentity(Type type)
+    {
+        var behaviorTypes = BehaviorTypeChain(type).ToArray();
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        foreach (var behaviorType in behaviorTypes)
+        {
+            hash.AppendData(Encoding.UTF8.GetBytes(
+                (behaviorType.FullName ?? behaviorType.Name) + "\n"));
+            foreach (var method in DeclaredMethodsAndConstructors(behaviorType))
+            {
+                hash.AppendData(Encoding.UTF8.GetBytes(
+                    (method.ToString() ?? method.Name) + "\n"));
+                hash.AppendData(method.GetMethodBody()?.GetILAsByteArray() ?? []);
+            }
+        }
+
+        return string.Join('|',
+            type.FullName ?? type.Name,
+            type.BaseType?.FullName ?? "<none>",
+            Convert.ToHexString(hash.GetHashAndReset()),
+            "methods=" + behaviorTypes.Sum(item =>
+                DeclaredMethodsAndConstructors(item).Length));
+    }
+
+    private static IEnumerable<Type> BehaviorTypeChain(Type type)
+    {
+        for (var current = type;
+             current is not null
+             && current.Namespace?.StartsWith(
+                 "GameData.Domains.SpecialEffect.CombatSkill",
+                 StringComparison.Ordinal) == true;
+             current = current.BaseType)
+        {
+            yield return current;
+        }
+    }
+
+    private static MethodBase[] DeclaredMethodsAndConstructors(Type type) =>
+        type.GetMethods(
+                BindingFlags.Public | BindingFlags.NonPublic
+                | BindingFlags.Instance | BindingFlags.Static
+                | BindingFlags.DeclaredOnly)
+            .Cast<MethodBase>()
+            .Concat(type.GetConstructors(
+                BindingFlags.Public | BindingFlags.NonPublic
+                | BindingFlags.Instance | BindingFlags.Static))
+            .OrderBy(method => method.ToString(), StringComparer.Ordinal)
             .ToArray();
 
     private static void RequireEvidenceOptIn() => Assert.SkipUnless(

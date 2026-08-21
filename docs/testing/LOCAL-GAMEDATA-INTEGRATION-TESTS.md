@@ -207,6 +207,12 @@ guards the runtime assembly, configuration assembly, and six language sources.
 The second test reads the current player snapshot twice and checks the same 19
 learned candidates, their active or achievable directions, mastery, equipment,
 and the disk capacity/allocation state. It adds the save to the guarded source
-set. Neither test authorizes behavior from raw descriptions or unchanged IDs;
-the installed runtime remains unsupported until the remaining E8-F01 behavior
-evidence is accepted.
+set.
+
+The third test loads a byte copy of the installed runtime and pins the concrete
+effect type, base type, inherited combat-skill behavior chain, ordered method
+signatures, and method-body bytes for all 19 candidates. It does not instantiate
+effects or invoke combat handlers. Candidate behavior authorization therefore
+depends on exact current code rather than raw descriptions or unchanged IDs;
+the installed runtime still remains unsupported until E8-F02 and E8-F03 supply
+the exact target and typed minimum rule set.

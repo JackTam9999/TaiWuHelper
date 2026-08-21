@@ -2,13 +2,14 @@
   "schemaVersion": 1,
   "scenarioId": "E8-F01",
   "observationDate": "2026-08-21",
-  "status": "partial-behavior-verification-pending",
+  "status": "complete",
   "installedSources": {
     "runtimeGameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
     "configurationProductVersion": "1.0.0",
     "exactConfigurationFingerprintCompared": true,
     "runtimeAndConfigurationVersionMustBothBindRules": true,
-    "behaviorAuthorized": false
+    "candidateBehaviorEvidenceAuthorized": true,
+    "productionRuleSetAuthorized": false
   },
   "staticCandidates": {
     "expected": 19,
@@ -50,6 +51,17 @@
     "saveHashCommitted": false,
     "saveContentCommitted": false
   },
+  "behaviorEvidence": {
+    "expectedCandidates": 19,
+    "matchedCandidates": 19,
+    "exactInheritedMethodChainFingerprintsCompared": true,
+    "directionBranchesAudited": true,
+    "activationTimingAudited": true,
+    "effectsInstantiated": false,
+    "combatHandlersInvoked": false,
+    "historicalProductionCandidatesCompared": 5,
+    "historicalCandidatesOutsideGate": 2
+  },
   "capacityEvidence": {
     "diskUsedSlotsAvailable": false,
     "diskCapacities": [6, 9, 6, 10, 5],
@@ -64,8 +76,9 @@
   "guardedVerification": {
     "staticGuardedFiles": 8,
     "playerGuardedFiles": 9,
+    "behaviorGuardedFiles": 1,
     "allGuardedFilesUnchanged": true,
-    "focusedPassed": 2,
+    "focusedPassed": 3,
     "focusedFailed": 0,
     "focusedSkipped": 0
   },
