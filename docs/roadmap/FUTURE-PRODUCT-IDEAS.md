@@ -435,8 +435,8 @@ The product owner promoted and completed these discovery ideas:
 ### Current candidates after Epic 8 selection
 
 1. Current-version complete anti-magic-sound loadout expansion; Epic 8 and
-   E8-F01 through E8-F03 are complete, with coherent live execution-context
-   projection continuing in E8-F04.
+   E8-F01 through E8-F04 are complete, with package-aware search continuing in
+   E8-F05.
 2. Companion development planner.
 3. Library and book planning, assessed after the Epic 7 source boundary rather
    than assumed to share its first assignment vertical.

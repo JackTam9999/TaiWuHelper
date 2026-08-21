@@ -41,7 +41,7 @@ public sealed class ReadTacticalExecutionContextTests
     }
 
     [Fact]
-    public async Task Execute_returns_typed_unsupported_context_for_current_version()
+    public async Task Execute_returns_typed_unsupported_context_for_unrecognized_version()
     {
         var reader = Substitute.For<ICombatSnapshotReader>();
         var snapshot = Snapshot("1.0.0+current");
@@ -59,6 +59,74 @@ public sealed class ReadTacticalExecutionContextTests
 
         Assert.False(result.Context.HasCompatibleRules);
         Assert.Empty(result.Context.ResolvedRules);
+        await reader.Received(1).ReadAsync(snapshotRequest, cancellationToken);
+    }
+
+    [Fact]
+    public async Task Execute_selects_exact_current_rules_and_manual_observation()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var rules = VerifiedTacticalCombatRuleSets.CurrentLaterMagicSound;
+        var snapshot = Snapshot(rules.SupportedGameDataVersions[0]);
+        var snapshotRequest = new CombatSnapshotReadRequest("local.sav", 2);
+        var observedAt = DateTimeOffset.Parse("2026-08-20T11:00:00Z");
+        var observation = new TacticalExecutionObservation(
+            "E8-F04-CURRENT-OBSERVATION",
+            confirmsNewerThanSave: true,
+            distance: 5,
+            resources:
+            [
+                new CombatResourceAmount(
+                    CombatResourceKind.Stance,
+                    SnapshotValue<int>.Available(100))
+            ]);
+        var request = new TacticalExecutionContextReadRequest(
+            snapshotRequest,
+            rules.SupportedTargetGoalCodes,
+            evidence: [],
+            currentObservation: observation,
+            currentObservationAt: observedAt);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        reader.ReadAsync(snapshotRequest, cancellationToken).Returns(snapshot);
+
+        var result = await new ReadTacticalExecutionContext(reader)
+            .ExecuteAsync(request, cancellationToken);
+
+        Assert.True(result.Context.HasCompatibleRules);
+        Assert.Equal(rules.Fingerprint, result.Context.RuleSetFingerprint);
+        Assert.Equal(5, result.Context.Current.Distance.Value);
+        Assert.Equal(100, result.Context.Current.Stance.Value);
+        Assert.Equal(observedAt, result.LatestObservationAtUtc);
+        Assert.NotEmpty(result.Context.ResolvedRules);
+        await reader.Received(1).ReadAsync(snapshotRequest, cancellationToken);
+    }
+
+    [Fact]
+    public async Task Execute_rejects_an_observation_older_than_the_save()
+    {
+        var reader = Substitute.For<ICombatSnapshotReader>();
+        var snapshot = Snapshot();
+        var snapshotRequest = new CombatSnapshotReadRequest("local.sav", 2);
+        var request = new TacticalExecutionContextReadRequest(
+            snapshotRequest,
+            VerifiedTacticalCombatRuleSets.HistoricalMagicSound
+                .SupportedTargetGoalCodes,
+            evidence: [],
+            currentObservation: new TacticalExecutionObservation(
+                "E8-F04-STALE",
+                confirmsNewerThanSave: true,
+                distance: 5),
+            currentObservationAt:
+                DateTimeOffset.Parse("2026-08-20T08:30:00Z"));
+        var cancellationToken = TestContext.Current.CancellationToken;
+        reader.ReadAsync(snapshotRequest, cancellationToken).Returns(snapshot);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            new ReadTacticalExecutionContext(reader).ExecuteAsync(
+                request,
+                cancellationToken));
+
+        Assert.Contains("newer than the save", exception.Message);
         await reader.Received(1).ReadAsync(snapshotRequest, cancellationToken);
     }
 

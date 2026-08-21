@@ -977,7 +977,7 @@ when their current-version semantics and execution requirements are reverified.
 
 ### E8-F04 — Project a complete current and proposed execution context
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -990,24 +990,38 @@ resource, and unlock context with one coherent immutable projection.
 
 #### Acceptance criteria
 
-- [ ] Carry equipped and unlocked weapon types, usable tricks/styles, current or
+- [x] Carry equipped and unlocked weapon types, usable tricks/styles, current or
       opening distance, stance, breath, verified resources, active defense,
       active agility, and inner-power/backlash facts where available.
-- [ ] Carry exact category capacities, current use, universal-slot allocation,
+- [x] Carry exact category capacities, current use, universal-slot allocation,
       effective costs, mastery reductions, and legendary-book cost assignments
       from the same snapshot or newer confirmed manual observation.
-- [ ] Preserve the evidence precedence between the current screen/manual
+- [x] Preserve the evidence precedence between the current screen/manual
       observation and the last stable disk save without silently merging them.
-- [ ] Represent learned direction separately from a direction that the player
+- [x] Represent learned direction separately from a direction that the player
       can achieve through a verified manual breakthrough/book-page step.
-- [ ] Distinguish current-loadout facts from proposed-loadout facts throughout
+- [x] Distinguish current-loadout facts from proposed-loadout facts throughout
       feasibility, comparison, scoring, and plan compilation.
-- [ ] Do not add screenshot capture, OCR, persistence, runtime inspection, or
+- [x] Do not add screenshot capture, OCR, persistence, runtime inspection, or
       any mutation capability; missing screen facts remain typed manual inputs
       or unavailable states.
-- [ ] Cover the representative displayed budget `6/10/7/9/4` and alternative
+- [x] Cover the representative displayed budget `6/10/7/9/4` and alternative
       universal-slot allocations without assuming those capacities for other
       snapshots.
+
+#### Evidence
+
+- [E8-F04 coherent current/proposed context](../../scenarios/E8-F04-current-execution-context.md).
+- [E8-F04 sanitized metadata](../../scenarios/evidence/E8-F04-current-execution-context-metadata.json).
+- `TacticalExecutionContextTests` cover complete/partial observations,
+  precedence, conflicts, current/proposed separation, tricks/styles/resources,
+  stale confirmation and alternative allocations.
+- `ReadTacticalExecutionContextTests` prove exact current rule selection,
+  observation-time validation, diagnostic time handling and one snapshot read.
+- Two guarded context checks passed against the current save/runtime with all
+  inspected files unchanged; no live facts absent from evidence were invented.
+- Release build: 0 warnings and 0 errors; full suite: 1,629 total, 1,605
+  passed, 0 failed, and 24 expected guarded-local skips.
 
 ### E8-F05 — Add package-aware full-loadout discovery, search, and scoring
 

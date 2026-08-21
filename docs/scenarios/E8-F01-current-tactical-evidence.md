@@ -115,7 +115,7 @@ observation remains `6/10/7/9/4`.
 
 The screen observation is authoritative for the current proposed loadout. The
 disk values remain useful evidence of the saved revision, but cannot overwrite
-the newer screen capacity or invent used-slot totals. E8-F04 must carry this
+the newer screen capacity or invent used-slot totals. E8-F04 now carries this
 precedence as typed current-screen/manual observation rather than silently
 merging the two sources.
 

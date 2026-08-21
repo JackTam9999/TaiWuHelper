@@ -93,7 +93,7 @@ The Release solution build completed with zero warnings or errors; the full
 suite passed 1,598 of 1,621 tests with 23 expected guarded-local skips and no
 failures.
 
-E8-F03 completes role authorization. E8-F04 must next project the remaining
-live weapon, trick, distance, resource, active-defense and active-agility facts
-into one coherent current/proposed execution context before search may claim a
-fully executable loadout.
+E8-F03 completes role authorization. E8-F04 has since added the coherent
+current/proposed execution context and preserves absent live weapon, trick,
+distance, resource, active-defense and active-agility facts as unknown. E8-F05
+must next assemble and rank feasible cross-category packages.

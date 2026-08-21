@@ -127,10 +127,12 @@ never passed to the proposed-assignment calculator.
 
 Shared counter requirements are evaluated against proposed facts without
 turning a missing set into empty. Equipped-passive, active-defense,
-active-agility, distance, weapon, unlock, and resource requirements therefore
-remain unknown until their exact facts are supplied. Trick counts are not in
-the E8-004 verified context and remain unknown. The conditional Reverse `611`
-release has no complete typed shared-counter requirement, so it remains
+active-agility, distance, weapon, unlock, trick-count, and resource requirements
+therefore remain unknown until their exact facts are supplied. E8-F04 carries
+typed trick counts when observed or proposed; the current E8-F03 generic
+weapon-trick confirmations remain manual because exact trick-type evidence was
+not authorized. The conditional Reverse `611` release has no complete typed
+shared-counter requirement, so it remains
 `EXECUTION_REQUIREMENTS_NOT_TYPED` rather than being admitted from its name or
 limitation text.
 

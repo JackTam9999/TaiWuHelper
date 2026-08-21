@@ -46,7 +46,7 @@ public sealed class TacticalExecutionContextIntegrationTests
                 savePath,
                 target!.CharacterId,
                 language: TaiwuLanguage.Chinese),
-            VerifiedTacticalCombatRuleSets.HistoricalMagicSound
+            VerifiedTacticalCombatRuleSets.CurrentLaterMagicSound
                 .SupportedTargetGoalCodes,
             evidence: []);
         using var cancelled = new CancellationTokenSource();
@@ -76,8 +76,11 @@ public sealed class TacticalExecutionContextIntegrationTests
         Assert.Equal(
             first.Context.GameDataVersion.Value,
             second.Context.GameDataVersion.Value);
-        Assert.False(first.Context.HasCompatibleRules);
-        Assert.Empty(first.Context.ResolvedRules);
+        Assert.True(first.Context.HasCompatibleRules);
+        Assert.NotEmpty(first.Context.ResolvedRules);
+        Assert.Equal(
+            VerifiedTacticalCombatRuleSets.CurrentLaterMagicSound.Fingerprint,
+            first.Context.RuleSetFingerprint);
     }
 
     private static string RequireSavePath()

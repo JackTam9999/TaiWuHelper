@@ -11,6 +11,7 @@ public static class TacticalExecutionContextProjector
     private const string ProposalEvidence = "PROPOSED_PLAN";
     private const string RuntimeEvidence = "RUNTIME_NOT_CAPTURED";
     private const string ConfigurationEvidence = "INSTALLED_CONFIGURATION";
+    private const string ManualEvidence = "MANUAL_EXECUTION_OBSERVATION";
 
     public static TacticalExecutionContext Project(
         CombatSnapshot snapshot,
@@ -20,6 +21,20 @@ public static class TacticalExecutionContextProjector
             snapshot,
             ruleResolution,
             proposal,
+            observation: null,
+            useCurrentLoadoutBaseline: false,
+            cancellationToken);
+
+    public static TacticalExecutionContext ProjectObserved(
+        CombatSnapshot snapshot,
+        TacticalCombatRuleResolution ruleResolution,
+        TacticalExecutionObservation observation,
+        TacticalExecutionProposal? proposal = null,
+        CancellationToken cancellationToken = default) => ProjectCore(
+            snapshot,
+            ruleResolution,
+            proposal,
+            observation ?? throw new ArgumentNullException(nameof(observation)),
             useCurrentLoadoutBaseline: false,
             cancellationToken);
 
@@ -30,6 +45,19 @@ public static class TacticalExecutionContextProjector
             snapshot,
             ruleResolution,
             proposal: null,
+            observation: null,
+            useCurrentLoadoutBaseline: true,
+            cancellationToken);
+
+    public static TacticalExecutionContext ProjectCurrentLoadout(
+        CombatSnapshot snapshot,
+        TacticalCombatRuleResolution ruleResolution,
+        TacticalExecutionObservation observation,
+        CancellationToken cancellationToken = default) => ProjectCore(
+            snapshot,
+            ruleResolution,
+            proposal: null,
+            observation ?? throw new ArgumentNullException(nameof(observation)),
             useCurrentLoadoutBaseline: true,
             cancellationToken);
 
@@ -37,6 +65,7 @@ public static class TacticalExecutionContextProjector
         CombatSnapshot snapshot,
         TacticalCombatRuleResolution ruleResolution,
         TacticalExecutionProposal? proposal,
+        TacticalExecutionObservation? observation,
         bool useCurrentLoadoutBaseline,
         CancellationToken cancellationToken)
     {
@@ -45,10 +74,12 @@ public static class TacticalExecutionContextProjector
         cancellationToken.ThrowIfCancellationRequested();
 
         ValidateVersion(snapshot, ruleResolution);
+        ValidateObservationConfirmation(observation);
         var observationFingerprint = ObservationFingerprint(
             snapshot.FieldSources,
+            observation,
             cancellationToken);
-        var current = ProjectCurrent(snapshot, cancellationToken);
+        var current = ProjectCurrent(snapshot, observation, cancellationToken);
         var proposed = useCurrentLoadoutBaseline
             ? CurrentLoadoutBaseline(current)
             : ProjectProposed(current, proposal, cancellationToken);
@@ -69,6 +100,7 @@ public static class TacticalExecutionContextProjector
         current.EquippedWeaponTypeIds,
         current.UnlockedWeaponTypeIds,
         current.UsableCombatStyleIds,
+        current.TrickCounts,
         current.Distance,
         current.Stance,
         current.Breath,
@@ -84,6 +116,7 @@ public static class TacticalExecutionContextProjector
 
     private static CurrentTacticalExecutionFacts ProjectCurrent(
         CombatSnapshot snapshot,
+        TacticalExecutionObservation? observation,
         CancellationToken cancellationToken)
     {
         var weaponTypes = CurrentWeaponTypes(
@@ -107,23 +140,70 @@ public static class TacticalExecutionContextProjector
                 "INNER_POWER_SOURCE_UNAVAILABLE",
                 TacticalContextAvailability.FixedForRequest,
                 SaveEvidence);
+        var resources = observation?.Resources is { } observedResources
+            ? Observed(
+                observedResources,
+                "CURRENT_RESOURCES_OBSERVED")
+            : RuntimeUnknown<ImmutableArray<CombatResourceAmount>>(
+                "LIVE_RESOURCES_NOT_CAPTURED");
+        var equippedSkillFact = AvailableFromSnapshot(
+            snapshot,
+            CombatSnapshotObservationMerger.PlayerEquippedSkillsField,
+            equippedSkills,
+            "EQUIPPED_SKILLS_CAPTURED");
 
         return new CurrentTacticalExecutionFacts(
-            weaponTypes,
-            Unknown<ImmutableArray<int>>(
-                "UNLOCKED_WEAPON_TYPES_NOT_CAPTURED",
-                TacticalContextAvailability.PreCombatConfigurable,
-                RuntimeEvidence),
-            Unsupported<ImmutableArray<int>>(
-                "USABLE_COMBAT_STYLES_NOT_SUPPORTED",
-                RuntimeEvidence),
-            RuntimeUnknown<int>("LIVE_DISTANCE_NOT_CAPTURED"),
-            RuntimeUnknown<int>("LIVE_STANCE_NOT_CAPTURED"),
-            RuntimeUnknown<int>("LIVE_BREATH_NOT_CAPTURED"),
-            RuntimeUnknown<ImmutableArray<CombatResourceAmount>>(
-                "LIVE_RESOURCES_NOT_CAPTURED"),
-            RuntimeUnknown<int>("ACTIVE_DEFENSE_ROLE_NOT_CAPTURED"),
-            RuntimeUnknown<int>("ACTIVE_AGILITY_ROLE_NOT_CAPTURED"),
+            observation?.EquippedWeaponTypeIds is { } observedWeapons
+                ? Observed(
+                    observedWeapons,
+                    "CURRENT_WEAPON_TYPES_OBSERVED")
+                : weaponTypes,
+            observation?.UnlockedWeaponTypeIds is { } observedUnlocks
+                ? Observed(
+                    observedUnlocks,
+                    "CURRENT_UNLOCKED_WEAPON_TYPES_OBSERVED")
+                : RuntimeUnknown<ImmutableArray<int>>(
+                    "UNLOCKED_WEAPON_TYPES_NOT_CAPTURED"),
+            observation?.UsableCombatStyleIds is { } observedStyles
+                ? Observed(
+                    observedStyles,
+                    "CURRENT_COMBAT_STYLES_OBSERVED")
+                : RuntimeUnknown<ImmutableArray<int>>(
+                    "USABLE_COMBAT_STYLES_NOT_CAPTURED"),
+            observation?.TrickCounts is { } observedTricks
+                ? Observed(
+                    observedTricks,
+                    "CURRENT_TRICK_COUNTS_OBSERVED")
+                : RuntimeUnknown<ImmutableArray<CombatTrickCount>>(
+                    "LIVE_TRICK_COUNTS_NOT_CAPTURED"),
+            observation?.Distance is { } observedDistance
+                ? Observed(observedDistance, "CURRENT_DISTANCE_OBSERVED")
+                : RuntimeUnknown<int>("LIVE_DISTANCE_NOT_CAPTURED"),
+            ResourceNumber(
+                resources,
+                CombatResourceKind.Stance,
+                "CURRENT_STANCE_OBSERVED",
+                "LIVE_STANCE_NOT_CAPTURED"),
+            ResourceNumber(
+                resources,
+                CombatResourceKind.Breath,
+                "CURRENT_BREATH_OBSERVED",
+                "LIVE_BREATH_NOT_CAPTURED"),
+            resources,
+            observation?.ActiveDefenseSkillId is { } activeDefense
+                ? ObservedActiveSkill(
+                    activeDefense,
+                    equippedSkillFact,
+                    "CURRENT_ACTIVE_DEFENSE_OBSERVED",
+                    "ACTIVE_DEFENSE_NOT_IN_CURRENT_LOADOUT")
+                : RuntimeUnknown<int>("ACTIVE_DEFENSE_ROLE_NOT_CAPTURED"),
+            observation?.ActiveAgilitySkillId is { } activeAgility
+                ? ObservedActiveSkill(
+                    activeAgility,
+                    equippedSkillFact,
+                    "CURRENT_ACTIVE_AGILITY_OBSERVED",
+                    "ACTIVE_AGILITY_NOT_IN_CURRENT_LOADOUT")
+                : RuntimeUnknown<int>("ACTIVE_AGILITY_ROLE_NOT_CAPTURED"),
             innerPower,
             AvailableFromSnapshot(
                 snapshot,
@@ -148,11 +228,7 @@ public static class TacticalExecutionContextProjector
                     .PlayerLegendaryBookCostAssignmentsField,
                 snapshot.Player.LegendaryBookCostAssignments,
                 "LEGENDARY_COST_ASSIGNMENTS_CAPTURED"),
-            AvailableFromSnapshot(
-                snapshot,
-                CombatSnapshotObservationMerger.PlayerEquippedSkillsField,
-                equippedSkills,
-                "EQUIPPED_SKILLS_CAPTURED"));
+            equippedSkillFact);
     }
 
     private static ProposedTacticalExecutionFacts ProjectProposed(
@@ -168,12 +244,13 @@ public static class TacticalExecutionContextProjector
                     "PROPOSED_WEAPON_TYPES_NOT_SUPPLIED"),
                 ProposalUnknown<ImmutableArray<int>>(
                     "PROPOSED_UNLOCKED_WEAPON_TYPES_NOT_SUPPLIED"),
-                Unsupported<ImmutableArray<int>>(
-                    "USABLE_COMBAT_STYLES_NOT_SUPPORTED",
-                    RuntimeEvidence),
+                ProposalUnknown<ImmutableArray<int>>(
+                    "PROPOSED_COMBAT_STYLES_NOT_SUPPLIED"),
+                ProposalUnknown<ImmutableArray<CombatTrickCount>>(
+                    "PROPOSED_TRICK_COUNTS_NOT_SUPPLIED"),
                 ProposalUnknown<int>("PROPOSED_DISTANCE_NOT_SUPPLIED"),
-                RuntimeUnknown<int>("LIVE_STANCE_NOT_CAPTURED"),
-                RuntimeUnknown<int>("LIVE_BREATH_NOT_CAPTURED"),
+                ProposalUnknown<int>("PROPOSED_STANCE_NOT_SUPPLIED"),
+                ProposalUnknown<int>("PROPOSED_BREATH_NOT_SUPPLIED"),
                 ProposalUnknown<ImmutableArray<CombatResourceAmount>>(
                     "PROPOSED_RESOURCES_NOT_SUPPLIED"),
                 ProposalUnknown<int>(
@@ -197,13 +274,15 @@ public static class TacticalExecutionContextProjector
             .OrderBy(item => item.Key)
             .Select(item => new CombatResourceAmount(item.Key, item.Value))
             .ToImmutableArray();
+        var trickValues = requirements.TrickCounts
+            .OrderBy(item => item.Key)
+            .Select(item => new CombatTrickCount(item.Key, item.Value))
+            .ToImmutableArray();
         cancellationToken.ThrowIfCancellationRequested();
 
-        var resources = resourceValues.IsEmpty
-            || resourceValues.Any(item => !item.Amount.IsAvailable)
-            ? ProposalUnknown<ImmutableArray<CombatResourceAmount>>(
-                "PROPOSED_RESOURCES_INCOMPLETE")
-            : Proposed(resourceValues, "PROPOSED_RESOURCES_SUPPLIED");
+        var resources = Proposed(
+            resourceValues,
+            "PROPOSED_RESOURCES_SUPPLIED");
 
         return new ProposedTacticalExecutionFacts(
             Proposed(
@@ -214,16 +293,30 @@ public static class TacticalExecutionContextProjector
                 requirements.UnlockedWeaponTypeIds.Order()
                     .ToImmutableArray(),
                 "PROPOSED_UNLOCKED_WEAPON_TYPES_SUPPLIED"),
-            Unsupported<ImmutableArray<int>>(
-                "USABLE_COMBAT_STYLES_NOT_SUPPORTED",
-                RuntimeEvidence),
+            proposal.HasUsableCombatStyleIds
+                ? Proposed(
+                    proposal.UsableCombatStyleIds,
+                    "PROPOSED_COMBAT_STYLES_SUPPLIED")
+                : ProposalUnknown<ImmutableArray<int>>(
+                    "PROPOSED_COMBAT_STYLES_NOT_SUPPLIED"),
+            Proposed(
+                trickValues,
+                "PROPOSED_TRICK_COUNTS_SUPPLIED"),
             requirements.Distance.IsAvailable
                 ? Proposed(
                     requirements.Distance.Value,
                     "PROPOSED_DISTANCE_SUPPLIED")
                 : ProposalUnknown<int>("PROPOSED_DISTANCE_NOT_SUPPLIED"),
-            RuntimeUnknown<int>("LIVE_STANCE_NOT_CAPTURED"),
-            RuntimeUnknown<int>("LIVE_BREATH_NOT_CAPTURED"),
+            ResourceNumber(
+                resources,
+                CombatResourceKind.Stance,
+                "PROPOSED_STANCE_SUPPLIED",
+                "PROPOSED_STANCE_NOT_SUPPLIED"),
+            ResourceNumber(
+                resources,
+                CombatResourceKind.Breath,
+                "PROPOSED_BREATH_SUPPLIED",
+                "PROPOSED_BREATH_NOT_SUPPLIED"),
             resources,
             requirements.ActiveDefenseSkillId.HasValue
                 ? Proposed(
@@ -387,6 +480,74 @@ public static class TacticalExecutionContextProjector
         reason,
         ProposalEvidence);
 
+    private static TacticalContextFact<T> Observed<T>(
+        T value,
+        string reason) => TacticalContextFact<T>.Available(
+        value,
+        TacticalContextOrigin.ManualConfirmation,
+        TacticalContextAvailability.FixedForRequest,
+        reason,
+        ManualEvidence);
+
+    private static TacticalContextFact<int> ObservedActiveSkill(
+        int skillId,
+        TacticalContextFact<ImmutableArray<int>> equippedSkillIds,
+        string availableReason,
+        string conflictReason)
+    {
+        if (equippedSkillIds.IsAvailable
+            && equippedSkillIds.Value.Contains(skillId))
+        {
+            return Observed(skillId, availableReason);
+        }
+
+        return TacticalContextFact<int>.Unavailable(
+            TacticalContextFactState.Conflicting,
+            TacticalContextOrigin.ManualConfirmation,
+            TacticalContextAvailability.ManuallyObservable,
+            conflictReason,
+            equippedSkillIds.EvidenceIdentities
+                .Append(ManualEvidence)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray());
+    }
+
+    private static TacticalContextFact<int> ResourceNumber(
+        TacticalContextFact<ImmutableArray<CombatResourceAmount>> resources,
+        CombatResourceKind kind,
+        string availableReason,
+        string unavailableReason)
+    {
+        if (!resources.IsAvailable)
+        {
+            return TacticalContextFact<int>.Unavailable(
+                TacticalContextFactState.Unknown,
+                resources.Origin,
+                resources.Availability,
+                unavailableReason,
+                resources.EvidenceIdentities.ToArray());
+        }
+
+        var amount = resources.Value.SingleOrDefault(item =>
+            item.Resource == kind);
+        if (amount is null || !amount.Amount.IsAvailable)
+        {
+            return TacticalContextFact<int>.Unavailable(
+                TacticalContextFactState.Unknown,
+                resources.Origin,
+                resources.Availability,
+                unavailableReason,
+                resources.EvidenceIdentities.ToArray());
+        }
+
+        return TacticalContextFact<int>.Available(
+            amount.Amount.Value,
+            resources.Origin,
+            resources.Availability,
+            availableReason,
+            resources.EvidenceIdentities.ToArray());
+    }
+
     private static TacticalContextFact<T> ProposalUnknown<T>(string reason) =>
         TacticalContextFact<T>.Unavailable(
             TacticalContextFactState.Unknown,
@@ -415,20 +576,12 @@ public static class TacticalExecutionContextProjector
         reason,
         evidence);
 
-    private static TacticalContextFact<T> Unsupported<T>(
-        string reason,
-        string evidence) => TacticalContextFact<T>.Unavailable(
-        TacticalContextFactState.Unsupported,
-        TacticalContextOrigin.RuntimeUnavailable,
-        TacticalContextAvailability.RuntimeUnavailable,
-        reason,
-        evidence);
-
     private static string ObservationFingerprint(
         ImmutableArray<SnapshotFieldSource> sources,
+        TacticalExecutionObservation? observation,
         CancellationToken cancellationToken)
     {
-        var canonical = new StringBuilder("TACTICAL_OBSERVATION_REVISION_V1\n");
+        var canonical = new StringBuilder("TACTICAL_OBSERVATION_REVISION_V2\n");
         foreach (var source in sources.OrderBy(
             item => item.FieldPath,
             StringComparer.Ordinal))
@@ -437,6 +590,13 @@ public static class TacticalExecutionContextProjector
             canonical.Append(source.FieldPath).Append('|')
                 .Append(source.Source).Append('|')
                 .Append(source.EvidenceReference).Append('\n');
+        }
+
+        if (observation is not null)
+        {
+            canonical.Append("EXECUTION|")
+                .Append(observation.SemanticKey)
+                .Append('\n');
         }
 
         return TacticalCombatText.Fingerprint(canonical.ToString());
@@ -458,6 +618,19 @@ public static class TacticalExecutionContextProjector
                 "The tactical rule resolution must use the snapshot GameData version.",
                 nameof(resolution));
         }
+    }
+
+    private static void ValidateObservationConfirmation(
+        TacticalExecutionObservation? observation)
+    {
+        if (observation is null || observation.ConfirmsNewerThanSave)
+        {
+            return;
+        }
+
+        throw new ArgumentException(
+            "A tactical execution observation requires explicit newer-than-save confirmation.",
+            nameof(observation));
     }
 }
 

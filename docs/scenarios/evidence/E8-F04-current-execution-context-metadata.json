@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E8-F04",
+  "observationDate": "2026-08-21",
+  "status": "complete",
+  "runtimeGameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+  "tacticalRuleFingerprint": "64051C1234CECDFDCE070134FDA0380826154D16C1F171B52B6F7FE1C64ECD5D",
+  "contextSchema": "TACTICAL_EXECUTION_CONTEXT_V2",
+  "currentScreen": {
+    "categoryCapacities": [6, 10, 7, 9, 4],
+    "supersedesDiskCapacities": [6, 9, 6, 10, 5],
+    "usedSlotTotalsCaptured": false,
+    "universalSlots": {
+      "total": 8,
+      "attack": 1,
+      "agility": 3,
+      "defense": 1,
+      "assistance": 3
+    }
+  },
+  "currentLiveFactsUnavailable": [
+    "trick-counts",
+    "combat-styles",
+    "distance",
+    "stance",
+    "breath",
+    "resources",
+    "active-defense",
+    "active-agility"
+  ],
+  "representativeProposal": {
+    "equippedWeaponTypeIds": [9],
+    "unlockedWeaponTypeIds": [6, 9],
+    "distance": 5,
+    "stance": 100,
+    "breath": 100,
+    "defenseTrueQi": 3,
+    "activeDefenseSkillId": 2,
+    "activeAgilitySkillId": 134,
+    "trickCountsExplicitlyEmpty": true,
+    "combatStyleIdsExplicitlyEmpty": true,
+    "isClaimAboutCurrentBattle": false
+  },
+  "precedence": {
+    "screenReplacesWholeObservedField": true,
+    "manualObservationRequiresNewerConfirmation": true,
+    "staleObservationRejected": true,
+    "observationTimeExcludedFromDomainFingerprint": true,
+    "collectionsSilentlyMerged": false
+  },
+  "guardedVerification": {
+    "domainUnitPassed": 671,
+    "applicationUnitPassed": 232,
+    "architecturePassed": 114,
+    "focusedCurrentContextIntegrationPassed": 1,
+    "focusedExactProposalIntegrationPassed": 1,
+    "focusedFailed": 0,
+    "allGuardedFilesUnchanged": true,
+    "fullSuiteTotal": 1629,
+    "fullSuitePassed": 1605,
+    "fullSuiteExpectedSkipped": 24,
+    "fullSuiteFailed": 0
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsSaveHash": false,
+    "containsCharacterIdentifier": false,
+    "containsLocalizedTargetName": false,
+    "containsGameBinaryContent": false,
+    "containsCompleteRawDescription": false,
+    "containsScreenshot": false
+  }
+}

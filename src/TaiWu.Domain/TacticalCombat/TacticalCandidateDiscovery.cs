@@ -460,9 +460,7 @@ public static class TacticalCandidateDiscovery
                 "REQUIREMENT:ACTIVE_AGILITY"),
             _ => throw new ArgumentOutOfRangeException(nameof(requirement))
         },
-        TrickRequirement => new RequirementResult(
-            TacticalCandidateGateState.Unknown,
-            ["REQUIREMENT:TRICK_COUNTS", DiscoveryEvidence]),
+        TrickRequirement value => Trick(facts.TrickCounts, value),
         ManualConfirmationRequirement value => new RequirementResult(
             TacticalCandidateGateState.Unknown,
             [$"REQUIREMENT:{value.Code}", DiscoveryEvidence]),
@@ -522,6 +520,28 @@ public static class TacticalCandidateDiscovery
                 ? TacticalCandidateGateState.Passed
                 : TacticalCandidateGateState.Failed,
             fact.EvidenceIdentities.Append("REQUIREMENT:RESOURCE").ToArray());
+    }
+
+    private static RequirementResult Trick(
+        TacticalContextFact<ImmutableArray<CombatTrickCount>> fact,
+        TrickRequirement requirement)
+    {
+        if (!fact.IsAvailable)
+        {
+            return new RequirementResult(
+                TacticalCandidateGateState.Unknown,
+                fact.EvidenceIdentities.Append("REQUIREMENT:TRICK_COUNTS")
+                    .ToArray());
+        }
+
+        var count = fact.Value.SingleOrDefault(item =>
+            item.TrickTypeId == requirement.TrickTypeId);
+        return new RequirementResult(
+            count is not null && count.Count >= requirement.MinimumCount
+                ? TacticalCandidateGateState.Passed
+                : TacticalCandidateGateState.Failed,
+            fact.EvidenceIdentities.Append("REQUIREMENT:TRICK_COUNTS")
+                .ToArray());
     }
 
     private static TacticalCandidateGateResult BacklashGate(

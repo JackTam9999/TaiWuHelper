@@ -108,6 +108,7 @@ public sealed class CurrentTacticalExecutionFacts
         TacticalContextFact<ImmutableArray<int>> equippedWeaponTypeIds,
         TacticalContextFact<ImmutableArray<int>> unlockedWeaponTypeIds,
         TacticalContextFact<ImmutableArray<int>> usableCombatStyleIds,
+        TacticalContextFact<ImmutableArray<CombatTrickCount>> trickCounts,
         TacticalContextFact<int> distance,
         TacticalContextFact<int> stance,
         TacticalContextFact<int> breath,
@@ -126,6 +127,7 @@ public sealed class CurrentTacticalExecutionFacts
         EquippedWeaponTypeIds = equippedWeaponTypeIds;
         UnlockedWeaponTypeIds = unlockedWeaponTypeIds;
         UsableCombatStyleIds = usableCombatStyleIds;
+        TrickCounts = trickCounts;
         Distance = distance;
         Stance = stance;
         Breath = breath;
@@ -147,6 +149,9 @@ public sealed class CurrentTacticalExecutionFacts
     { get; }
 
     public TacticalContextFact<ImmutableArray<int>> UsableCombatStyleIds
+    { get; }
+
+    public TacticalContextFact<ImmutableArray<CombatTrickCount>> TrickCounts
     { get; }
 
     public TacticalContextFact<int> Distance { get; }
@@ -183,6 +188,7 @@ public sealed class CurrentTacticalExecutionFacts
         EquippedWeaponTypeIds,
         UnlockedWeaponTypeIds,
         UsableCombatStyleIds,
+        TrickCounts,
         Distance,
         Stance,
         Breath,
@@ -203,6 +209,7 @@ public sealed class ProposedTacticalExecutionFacts
         TacticalContextFact<ImmutableArray<int>> equippedWeaponTypeIds,
         TacticalContextFact<ImmutableArray<int>> unlockedWeaponTypeIds,
         TacticalContextFact<ImmutableArray<int>> usableCombatStyleIds,
+        TacticalContextFact<ImmutableArray<CombatTrickCount>> trickCounts,
         TacticalContextFact<int> distance,
         TacticalContextFact<int> stance,
         TacticalContextFact<int> breath,
@@ -221,6 +228,7 @@ public sealed class ProposedTacticalExecutionFacts
         EquippedWeaponTypeIds = equippedWeaponTypeIds;
         UnlockedWeaponTypeIds = unlockedWeaponTypeIds;
         UsableCombatStyleIds = usableCombatStyleIds;
+        TrickCounts = trickCounts;
         Distance = distance;
         Stance = stance;
         Breath = breath;
@@ -242,6 +250,9 @@ public sealed class ProposedTacticalExecutionFacts
     { get; }
 
     public TacticalContextFact<ImmutableArray<int>> UsableCombatStyleIds
+    { get; }
+
+    public TacticalContextFact<ImmutableArray<CombatTrickCount>> TrickCounts
     { get; }
 
     public TacticalContextFact<int> Distance { get; }
@@ -278,6 +289,7 @@ public sealed class ProposedTacticalExecutionFacts
         EquippedWeaponTypeIds,
         UnlockedWeaponTypeIds,
         UsableCombatStyleIds,
+        TrickCounts,
         Distance,
         Stance,
         Breath,
@@ -361,7 +373,7 @@ public sealed class TacticalExecutionContext
     private string CreateFingerprint()
     {
         var canonical = new StringBuilder()
-            .Append("TACTICAL_EXECUTION_CONTEXT_V1\n")
+            .Append("TACTICAL_EXECUTION_CONTEXT_V2\n")
             .Append(SourceRevisionFingerprint).Append('\n')
             .Append(ObservationRevisionFingerprint).Append('\n')
             .Append(RuleSetFingerprint).Append('\n')
@@ -404,6 +416,7 @@ internal static class TacticalExecutionContextKeys
         TacticalContextFact<ImmutableArray<int>> equippedWeaponTypeIds,
         TacticalContextFact<ImmutableArray<int>> unlockedWeaponTypeIds,
         TacticalContextFact<ImmutableArray<int>> usableCombatStyleIds,
+        TacticalContextFact<ImmutableArray<CombatTrickCount>> trickCounts,
         TacticalContextFact<int> distance,
         TacticalContextFact<int> stance,
         TacticalContextFact<int> breath,
@@ -422,6 +435,7 @@ internal static class TacticalExecutionContextKeys
             $"EQUIPPED_WEAPONS|{Set(equippedWeaponTypeIds)}",
             $"UNLOCKED_WEAPONS|{Set(unlockedWeaponTypeIds)}",
             $"COMBAT_STYLES|{Set(usableCombatStyleIds)}",
+            $"TRICK_COUNTS|{Tricks(trickCounts)}",
             $"DISTANCE|{Number(distance)}",
             $"STANCE|{Number(stance)}",
             $"BREATH|{Number(breath)}",
@@ -444,6 +458,13 @@ internal static class TacticalExecutionContextKeys
     private static string Number(TacticalContextFact<int> fact) =>
         fact.SemanticKey(fact.IsAvailable
             ? fact.Value.ToString(CultureInfo.InvariantCulture)
+            : "NONE");
+
+    private static string Tricks(
+        TacticalContextFact<ImmutableArray<CombatTrickCount>> fact) =>
+        fact.SemanticKey(fact.IsAvailable
+            ? string.Join("||", fact.Value.Select(item =>
+                $"{item.TrickTypeId}:{item.Count}"))
             : "NONE");
 
     private static string Resources(

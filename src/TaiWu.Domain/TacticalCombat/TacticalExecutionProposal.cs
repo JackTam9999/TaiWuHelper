@@ -10,12 +10,24 @@ public sealed class TacticalExecutionProposal
         SlotBudgetSet? slotBudgets = null,
         GenericSlotAllocation? universalSlotAllocation = null,
         IEnumerable<LegendaryBookCostAssignment>?
-            legendaryCostAssignments = null)
+            legendaryCostAssignments = null,
+        IEnumerable<int>? usableCombatStyleIds = null)
     {
         RequirementContext = requirementContext
             ?? throw new ArgumentNullException(nameof(requirementContext));
         SlotBudgets = slotBudgets;
         UniversalSlotAllocation = universalSlotAllocation;
+        HasUsableCombatStyleIds = usableCombatStyleIds is not null;
+        var styles = (usableCombatStyleIds ?? []).ToImmutableArray();
+        if (styles.Any(item => item < 0)
+            || styles.Distinct().Count() != styles.Length)
+        {
+            throw new ArgumentException(
+                "Proposed combat-style IDs must be non-negative and unique.",
+                nameof(usableCombatStyleIds));
+        }
+
+        UsableCombatStyleIds = [.. styles.Order()];
         HasLegendaryCostAssignments = legendaryCostAssignments is not null;
         var assignments = (legendaryCostAssignments ?? []).ToImmutableArray();
         if (assignments.Any(item => item is null)
@@ -47,6 +59,10 @@ public sealed class TacticalExecutionProposal
     public GenericSlotAllocation? UniversalSlotAllocation { get; }
 
     public bool HasLegendaryCostAssignments { get; }
+
+    public bool HasUsableCombatStyleIds { get; }
+
+    public ImmutableArray<int> UsableCombatStyleIds { get; }
 
     public ImmutableArray<LegendaryBookCostAssignment>
         LegendaryCostAssignments

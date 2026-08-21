@@ -20,6 +20,23 @@ public static class VerifiedTacticalCombatRuleSets
     public static TacticalCombatRuleSet CurrentLaterMagicSound { get; } =
         CreateCurrentLaterMagicSound();
 
+    public static TacticalCombatRuleResolution ResolveExact(
+        string gameDataVersion,
+        IEnumerable<string> targetGoalCodes,
+        IEnumerable<TacticalRuleEvidenceObservation> evidence) =>
+        string.Equals(
+            gameDataVersion,
+            CurrentLaterMagicSound.SupportedGameDataVersions[0],
+            StringComparison.Ordinal)
+            ? CurrentLaterMagicSound.Resolve(
+                gameDataVersion,
+                targetGoalCodes,
+                evidence)
+            : HistoricalMagicSound.Resolve(
+                gameDataVersion,
+                targetGoalCodes,
+                evidence);
+
     private const string MindPressure =
         "POSITIVE_MAGIC_SOUND_MIND_DAMAGE";
     private const string Distraction =

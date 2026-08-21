@@ -23,7 +23,7 @@ public sealed class TacticalExecutionContextTests
             TacticalContextFactState.Unknown,
             result.Current.UnlockedWeaponTypeIds.State);
         Assert.Equal(
-            TacticalContextFactState.Unsupported,
+            TacticalContextFactState.Unknown,
             result.Current.UsableCombatStyleIds.State);
         Assert.Equal(
             TacticalContextAvailability.ManuallyObservable,
@@ -36,6 +36,128 @@ public sealed class TacticalExecutionContextTests
             result.Current.LegendaryCostSlots.Origin);
         Assert.True(result.Current.InnerPower.IsAvailable);
         Assert.Equal(7, result.Current.InnerPower.Value.StateId);
+    }
+
+    [Fact]
+    public void Manual_observation_and_proposal_remain_distinct_complete_facts()
+    {
+        var observation = new TacticalExecutionObservation(
+            "E8-F04-MANUAL-CURRENT",
+            confirmsNewerThanSave: true,
+            equippedWeaponTypeIds: [9],
+            unlockedWeaponTypeIds: [6, 9],
+            trickCounts: [new CombatTrickCount(7, 3)],
+            usableCombatStyleIds: [4],
+            distance: 5,
+            resources:
+            [
+                Amount(CombatResourceKind.Stance, 100),
+                Amount(CombatResourceKind.Breath, 80),
+                Amount(CombatResourceKind.DefenseTrueQi, 3)
+            ],
+            activeDefenseSkillId: 604);
+        var requirements = new CombatRequirementContext(
+            equippedWeaponTypeIds: [77],
+            trickCounts: [new CombatTrickCount(8, 2)],
+            SnapshotValue<int>.Available(6),
+            resources:
+            [
+                Amount(CombatResourceKind.Stance, 12),
+                Amount(CombatResourceKind.Breath, 11)
+            ],
+            unlockedWeaponTypeIds: [77, 88],
+            equippedSkillIds: [604],
+            activeDefenseSkillId: 604);
+        var proposal = new TacticalExecutionProposal(
+            requirements,
+            usableCombatStyleIds: [5]);
+
+        var result = TacticalExecutionContextProjector.ProjectObserved(
+            Snapshot(),
+            Resolution(),
+            observation,
+            proposal,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([9], result.Current.EquippedWeaponTypeIds.Value);
+        Assert.Equal([6, 9], result.Current.UnlockedWeaponTypeIds.Value);
+        Assert.Equal(3, Assert.Single(result.Current.TrickCounts.Value).Count);
+        Assert.Equal([4], result.Current.UsableCombatStyleIds.Value);
+        Assert.Equal(5, result.Current.Distance.Value);
+        Assert.Equal(100, result.Current.Stance.Value);
+        Assert.Equal(80, result.Current.Breath.Value);
+        Assert.Equal(604, result.Current.ActiveDefenseSkillId.Value);
+        Assert.Equal(
+            TacticalContextOrigin.ManualConfirmation,
+            result.Current.Distance.Origin);
+
+        Assert.Equal([77], result.Proposed.EquippedWeaponTypeIds.Value);
+        Assert.Equal(2, Assert.Single(result.Proposed.TrickCounts.Value).Count);
+        Assert.Equal([5], result.Proposed.UsableCombatStyleIds.Value);
+        Assert.Equal(6, result.Proposed.Distance.Value);
+        Assert.Equal(12, result.Proposed.Stance.Value);
+        Assert.Equal(11, result.Proposed.Breath.Value);
+        Assert.Equal(
+            TacticalContextOrigin.ProposedPlan,
+            result.Proposed.Distance.Origin);
+    }
+
+    [Fact]
+    public void Partial_observation_preserves_save_fallback_and_unknown_live_facts()
+    {
+        var result = TacticalExecutionContextProjector.ProjectCurrentLoadout(
+            Snapshot(),
+            Resolution(),
+            new TacticalExecutionObservation(
+                "E8-F04-DISTANCE-ONLY",
+                confirmsNewerThanSave: true,
+                distance: 5),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([42], result.Current.EquippedWeaponTypeIds.Value);
+        Assert.Equal(5, result.Current.Distance.Value);
+        Assert.False(result.Current.UnlockedWeaponTypeIds.IsAvailable);
+        Assert.False(result.Current.TrickCounts.IsAvailable);
+        Assert.False(result.Current.Stance.IsAvailable);
+        Assert.Same(result.Current.Distance, result.Proposed.Distance);
+    }
+
+    [Fact]
+    public void Observed_active_skill_conflicts_with_the_same_revision_loadout()
+    {
+        var result = TacticalExecutionContextProjector.ProjectCurrentLoadout(
+            Snapshot(),
+            Resolution(),
+            new TacticalExecutionObservation(
+                "E8-F04-CONFLICTING-ACTIVE",
+                confirmsNewerThanSave: true,
+                activeAgilitySkillId: 134),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            TacticalContextFactState.Conflicting,
+            result.Current.ActiveAgilitySkillId.State);
+        Assert.Equal(
+            "ACTIVE_AGILITY_NOT_IN_CURRENT_LOADOUT",
+            result.Current.ActiveAgilitySkillId.ReasonIdentity);
+    }
+
+    [Fact]
+    public void Unconfirmed_manual_observation_cannot_override_the_save()
+    {
+        var observation = new TacticalExecutionObservation(
+            "E8-F04-STALE",
+            confirmsNewerThanSave: false,
+            distance: 5);
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            TacticalExecutionContextProjector.ProjectCurrentLoadout(
+                Snapshot(),
+                Resolution(),
+                observation,
+                TestContext.Current.CancellationToken));
+
+        Assert.Contains("newer-than-save confirmation", exception.Message);
     }
 
     [Fact]
@@ -84,6 +206,39 @@ public sealed class TacticalExecutionContextTests
         Assert.False(result.Proposed.SlotBudgets.IsAvailable);
         Assert.Throws<InvalidOperationException>(
             () => result.Proposed.Distance.Value);
+    }
+
+    [Fact]
+    public void Explicit_alternative_budget_and_universal_allocation_are_preserved()
+    {
+        var budgets = new SlotBudgetSet(
+        [
+            new SlotBudget(SkillCategory.Neigong, 0, 6),
+            new SlotBudget(SkillCategory.Attack, 0, 11),
+            new SlotBudget(SkillCategory.Agility, 0, 7),
+            new SlotBudget(SkillCategory.Defense, 0, 8),
+            new SlotBudget(SkillCategory.Assistance, 0, 5)
+        ]);
+        var allocation = new GenericSlotAllocation(8, 2, 2, 2, 2);
+        var proposal = new TacticalExecutionProposal(
+            new CombatRequirementContext(
+                equippedWeaponTypeIds: [],
+                trickCounts: [],
+                SnapshotValue<int>.Unavailable("Opening range undecided."),
+                resources: [],
+                unlockedWeaponTypeIds: [],
+                equippedSkillIds: []),
+            budgets,
+            allocation,
+            legendaryCostAssignments: []);
+
+        var result = Project(Snapshot(), proposal);
+
+        Assert.Same(budgets, result.Proposed.SlotBudgets.Value);
+        Assert.Same(allocation, result.Proposed.UniversalSlotAllocation.Value);
+        Assert.Equal(
+            TacticalContextOrigin.ProposedPlan,
+            result.Proposed.SlotBudgets.Origin);
     }
 
     [Fact]
@@ -326,4 +481,8 @@ public sealed class TacticalExecutionContextTests
         new SlotBudget(SkillCategory.Defense, 0, 8),
         new SlotBudget(SkillCategory.Assistance, 0, 2)
     ]);
+
+    private static CombatResourceAmount Amount(
+        CombatResourceKind kind,
+        int value) => new(kind, SnapshotValue<int>.Available(value));
 }

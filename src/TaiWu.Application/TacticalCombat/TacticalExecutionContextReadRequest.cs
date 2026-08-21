@@ -10,7 +10,9 @@ public sealed class TacticalExecutionContextReadRequest
         CombatSnapshotReadRequest snapshotRequest,
         IEnumerable<string> targetGoalCodes,
         IEnumerable<TacticalRuleEvidenceObservation> evidence,
-        TacticalExecutionProposal? proposal = null)
+        TacticalExecutionProposal? proposal = null,
+        TacticalExecutionObservation? currentObservation = null,
+        DateTimeOffset? currentObservationAt = null)
     {
         SnapshotRequest = snapshotRequest
             ?? throw new ArgumentNullException(nameof(snapshotRequest));
@@ -19,6 +21,15 @@ public sealed class TacticalExecutionContextReadRequest
             nameof(targetGoalCodes));
         Evidence = CopyUniqueEvidence(evidence);
         Proposal = proposal;
+        CurrentObservation = currentObservation;
+        if (currentObservation is null && currentObservationAt.HasValue)
+        {
+            throw new ArgumentException(
+                "An execution-observation time requires an observation.",
+                nameof(currentObservationAt));
+        }
+
+        CurrentObservationAtUtc = currentObservationAt?.ToUniversalTime();
     }
 
     public CombatSnapshotReadRequest SnapshotRequest { get; }
@@ -28,6 +39,10 @@ public sealed class TacticalExecutionContextReadRequest
     public ImmutableArray<TacticalRuleEvidenceObservation> Evidence { get; }
 
     public TacticalExecutionProposal? Proposal { get; }
+
+    public TacticalExecutionObservation? CurrentObservation { get; }
+
+    public DateTimeOffset? CurrentObservationAtUtc { get; }
 
     private static ImmutableArray<string> CopyUnique(
         IEnumerable<string> values,

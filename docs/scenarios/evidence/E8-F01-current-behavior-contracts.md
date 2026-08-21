@@ -83,7 +83,7 @@ promoted historical rules.
 - E8-F02 has identified one exact target and encounter phase. Candidate
   behavior alone still does not authorize a tactical role.
 - E8-F03 converted only the required audited facts into typed tactical roles.
-- E8-F04 must supply weapon, trick, distance, resource, backlash, active-role,
+- E8-F04 supplies weapon, trick, distance, resource, backlash, active-role,
   effective-cost and capacity inputs from one coherent source precedence.
 - The installed runtime remains `Unsupported` until the minimum vertical owns
   every required target, role and execution rule.

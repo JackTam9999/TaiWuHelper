@@ -7,6 +7,7 @@ using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.CombatSkills;
 using TaiWu.Application.Localization;
 using TaiWu.Application.Targets;
+using TaiWu.Application.TacticalCombat;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.CombatThreats;
@@ -621,6 +622,164 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
     }
 
     [Fact]
+    public async Task Current_and_proposed_execution_context_is_coherent_and_read_only()
+    {
+        RequireEvidenceOptIn("E8-F04");
+        var savePath = RequireSavePath("E8-F04");
+        var located = new TaiwuCatalogueSourcePathProvider().Resolve();
+        Assert.SkipUnless(
+            located.IsAvailable,
+            "E8-F04 skipped: installed GameData catalogue sources are "
+            + "unavailable.");
+        var guardedPaths = GuardedPaths(located.Paths!)
+            .Append(savePath)
+            .ToArray();
+        var before = await CaptureAsync(guardedPaths);
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var lookup = await provider
+                .GetRequiredService<ITargetLookupReader>()
+                .ReadAsync(
+                    new TargetLookupReadRequest(
+                        savePath,
+                        TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+            var target = lookup.Entries.Single(item =>
+                item.Kind == TargetLookupKind.StoryCharacter
+                && item.TemplateId
+                    == VerifiedExactTargetEncounterRuleSets
+                        .LaterMagicSoundTargetTemplateId);
+            var diskSnapshot = await provider
+                .GetRequiredService<ICombatSnapshotReader>()
+                .ReadAsync(
+                    new CombatSnapshotReadRequest(
+                        savePath,
+                        target.CharacterId,
+                        language: TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+            Assert.Equal(
+                TargetEncounterBindingStatus.Complete,
+                ResolveCurrentLaterPhase(
+                    lookup.GameDataVersion!,
+                    target.TemplateId,
+                    diskSnapshot).Status);
+
+            var screenCapacities = new[] { 6, 10, 7, 9, 4 };
+            var screenBudgets = new SlotBudgetSet(
+                Enum.GetValues<SkillCategory>().Select(category =>
+                    new SlotBudget(
+                        category,
+                        SnapshotValue<int>.Unavailable(
+                            "E8-F04 screen evidence did not capture used slots."),
+                        screenCapacities[(int)category])));
+            var loadoutObservation = new PlayerLoadoutObservation(
+                DateTimeOffset.UtcNow,
+                "E8-F04-CURRENT-SCREEN-LOADOUT",
+                diskSnapshot.Player.EquippedSkills,
+                diskSnapshot.Player.GenericSlotAllocation,
+                screenBudgets);
+            var equippedIds = Enum.GetValues<SkillCategory>()
+                .SelectMany(category =>
+                    diskSnapshot.Player.EquippedSkills.Get(category))
+                .Distinct()
+                .Order()
+                .ToArray();
+            Assert.Contains(2, equippedIds);
+            Assert.Contains(134, equippedIds);
+            var proposal = new TacticalExecutionProposal(
+                new CombatRequirementContext(
+                    equippedWeaponTypeIds: [9],
+                    trickCounts: [],
+                    SnapshotValue<int>.Available(5),
+                    resources:
+                    [
+                        Resource(CombatResourceKind.Stance, 100),
+                        Resource(CombatResourceKind.Breath, 100),
+                        Resource(CombatResourceKind.DefenseTrueQi, 3)
+                    ],
+                    unlockedWeaponTypeIds: [6, 9],
+                    equippedSkillIds: equippedIds,
+                    activeDefenseSkillId: 2,
+                    activeAgilitySkillId: 134),
+                screenBudgets,
+                diskSnapshot.Player.GenericSlotAllocation,
+                legendaryCostAssignments: [],
+                usableCombatStyleIds: []);
+            var rules = VerifiedTacticalCombatRuleSets
+                .CurrentLaterMagicSound;
+            var request = new TacticalExecutionContextReadRequest(
+                new CombatSnapshotReadRequest(
+                    savePath,
+                    target.CharacterId,
+                    loadoutObservation,
+                    TaiwuLanguage.Chinese),
+                rules.SupportedTargetGoalCodes,
+                CurrentRuleEvidence("E8-F04"),
+                proposal);
+            var first = await provider
+                .GetRequiredService<IReadTacticalExecutionContext>()
+                .ExecuteAsync(
+                    request,
+                    TestContext.Current.CancellationToken);
+            var second = await provider
+                .GetRequiredService<IReadTacticalExecutionContext>()
+                .ExecuteAsync(
+                    request,
+                    TestContext.Current.CancellationToken);
+
+            Assert.Equal(
+                first.Context.SemanticFingerprint,
+                second.Context.SemanticFingerprint);
+            Assert.Equal(rules.Fingerprint, first.Context.RuleSetFingerprint);
+            Assert.Equal(
+                TacticalContextOrigin.CurrentScreenObservation,
+                first.Context.Current.SlotBudgets.Origin);
+            Assert.Equal(
+                screenCapacities,
+                first.Context.Current.SlotBudgets.Value.Values.Select(item =>
+                    item.Capacity));
+            Assert.All(
+                first.Context.Current.SlotBudgets.Value.Values,
+                item => Assert.False(item.Used.IsAvailable));
+            Assert.False(first.Context.Current.TrickCounts.IsAvailable);
+            Assert.False(first.Context.Current.Distance.IsAvailable);
+            Assert.False(first.Context.Current.Resources.IsAvailable);
+            Assert.False(first.Context.Current.ActiveDefenseSkillId.IsAvailable);
+            Assert.False(first.Context.Current.ActiveAgilitySkillId.IsAvailable);
+
+            Assert.Equal([9], first.Context.Proposed.EquippedWeaponTypeIds.Value);
+            Assert.Equal([6, 9], first.Context.Proposed.UnlockedWeaponTypeIds.Value);
+            Assert.Empty(first.Context.Proposed.TrickCounts.Value);
+            Assert.Empty(first.Context.Proposed.UsableCombatStyleIds.Value);
+            Assert.Equal(5, first.Context.Proposed.Distance.Value);
+            Assert.Equal(100, first.Context.Proposed.Stance.Value);
+            Assert.Equal(100, first.Context.Proposed.Breath.Value);
+            Assert.Equal(2, first.Context.Proposed.ActiveDefenseSkillId.Value);
+            Assert.Equal(134, first.Context.Proposed.ActiveAgilitySkillId.Value);
+            Assert.Equal(
+                TacticalContextOrigin.ProposedPlan,
+                first.Context.Proposed.Distance.Origin);
+
+            output.WriteLine(
+                "E8-F04 coherent execution context: currentScreen="
+                + "6/10/7/9/4; currentLiveFacts=unknown; proposedWeapon=9; "
+                + "proposedDistance=5; proposedStance=100; "
+                + "proposedBreath=100; activeDefense=2; activeAgility=134; "
+                + "guardedFiles={0}.",
+                guardedPaths.Length);
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            Assert.Equal(before, after);
+        }
+    }
+
+    [Fact]
     public async Task Current_player_candidate_state_is_repeatable()
     {
         RequireEvidenceOptIn();
@@ -899,6 +1058,35 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         int skillId,
         PracticeDirection direction) => atlas.Entries.Single(item =>
             item.SkillId == skillId && item.Direction == direction);
+
+    private static TacticalRuleEvidenceObservation[] CurrentRuleEvidence(
+        string item) => VerifiedTacticalCombatRuleSets.CurrentLaterMagicSound
+        .Transitions
+        .SelectMany(rule => rule.EvidenceRequirements)
+        .Concat(VerifiedTacticalCombatRuleSets.CurrentLaterMagicSound.Roles
+            .SelectMany(rule => rule.EvidenceRequirements))
+        .DistinctBy(requirement => new
+        {
+            requirement.Identity.Code,
+            requirement.Scope,
+            requirement.Source
+        })
+        .Select(requirement => new TacticalRuleEvidenceObservation(
+            requirement.Identity,
+            requirement.Scope,
+            requirement.Source,
+            TacticalRuleEvidenceDisposition.Confirmed,
+            new TacticalEvidenceReference(
+                requirement.Source,
+                $"{item}-{requirement.Identity.Code}",
+                ExpectedGameDataVersion,
+                VerifiedTacticalCombatRuleSets.RuleVersion,
+                "CURRENT_LATER_PHASE_COMPLETE")))
+        .ToArray();
+
+    private static CombatResourceAmount Resource(
+        CombatResourceKind kind,
+        int value) => new(kind, SnapshotValue<int>.Available(value));
 
     private static string[] ExpectedLines() => ExpectedDefinitionIdentities
         .Split('\n', StringSplitOptions.RemoveEmptyEntries)

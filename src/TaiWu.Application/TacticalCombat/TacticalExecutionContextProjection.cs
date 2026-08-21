@@ -17,7 +17,7 @@ internal static class TacticalExecutionContextProjection
         var gameDataVersion = snapshot.Metadata.GameDataVersion.IsAvailable
             ? snapshot.Metadata.GameDataVersion.Value
             : TacticalContextGameDataVersions.Unavailable;
-        return VerifiedTacticalCombatRuleSets.HistoricalMagicSound.Resolve(
+        return VerifiedTacticalCombatRuleSets.ResolveExact(
             gameDataVersion,
             request.TargetGoalCodes,
             request.Evidence);
@@ -33,25 +33,69 @@ internal static class TacticalExecutionContextProjection
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(resolution);
         cancellationToken.ThrowIfCancellationRequested();
+        ValidateObservationPrecedence(snapshot, request);
 
-        var context = request.Proposal is null
-            ? TacticalExecutionContextProjector.ProjectCurrentLoadout(
-                snapshot,
-                resolution,
-                cancellationToken)
-            : TacticalExecutionContextProjector.Project(
-                snapshot,
-                resolution,
-                request.Proposal,
-                cancellationToken);
-        var latestObservationAtUtc = snapshot.FieldSources
+        var context = (request.Proposal, request.CurrentObservation) switch
+        {
+            (null, null) =>
+                TacticalExecutionContextProjector.ProjectCurrentLoadout(
+                    snapshot,
+                    resolution,
+                    cancellationToken),
+            (null, { } observation) =>
+                TacticalExecutionContextProjector.ProjectCurrentLoadout(
+                    snapshot,
+                    resolution,
+                    observation,
+                    cancellationToken),
+            ({ } proposal, null) =>
+                TacticalExecutionContextProjector.Project(
+                    snapshot,
+                    resolution,
+                    proposal,
+                    cancellationToken),
+            ({ } proposal, { } observation) =>
+                TacticalExecutionContextProjector.ProjectObserved(
+                    snapshot,
+                    resolution,
+                    observation,
+                    proposal,
+                    cancellationToken)
+        };
+        var snapshotObservationAtUtc = snapshot.FieldSources
             .Where(item => item.Source
                 == SnapshotDataSource.CurrentScreenObservation)
             .Select(item => (DateTimeOffset?)item.CapturedAtUtc)
+            .Max();
+        var latestObservationAtUtc = new[]
+            {
+                snapshotObservationAtUtc,
+                request.CurrentObservationAtUtc
+            }
             .Max();
         return new TacticalExecutionContextReadResult(
             context,
             snapshot.Metadata.CapturedAtUtc,
             latestObservationAtUtc);
+    }
+
+    private static void ValidateObservationPrecedence(
+        CombatSnapshot snapshot,
+        TacticalExecutionContextReadRequest request)
+    {
+        if (request.CurrentObservation is null
+            || !request.CurrentObservationAtUtc.HasValue
+            || !snapshot.Metadata.SaveLastWriteTimeUtc.IsAvailable)
+        {
+            return;
+        }
+
+        if (request.CurrentObservationAtUtc.Value
+            <= snapshot.Metadata.SaveLastWriteTimeUtc.Value)
+        {
+            throw new ArgumentException(
+                "A tactical execution observation must be newer than the save.",
+                nameof(request));
+        }
     }
 }

@@ -233,5 +233,13 @@ is absent. Used-slot totals not present in the screen evidence remain
 unavailable.
 
 E8-F02 therefore supplies the exact target boundary and E8-F03 supplies the
-typed minimum tactical-role set. E8-F04 remains responsible for the complete
-live current/proposed execution context.
+typed minimum tactical-role set.
+
+The seventh test supplies the newer current-screen capacities
+`6/10/7/9/4`, resolves the exact current rule set through the Application
+path, and projects current and proposed facts twice. It preserves absent live
+current tricks, distance, resources and active roles as unknown, while an
+explicit representative proposal carries weapon/unlock IDs, opening distance,
+stance, breath, defense true Qi and active-role selections. Both reads have the
+same semantic fingerprint and all guarded sources remain unchanged. E8-F04
+therefore completes the live current/proposed execution-context boundary.
