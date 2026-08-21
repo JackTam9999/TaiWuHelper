@@ -213,6 +213,17 @@ The third test loads a byte copy of the installed runtime and pins the concrete
 effect type, base type, inherited combat-skill behavior chain, ordered method
 signatures, and method-body bytes for all 19 candidates. It does not instantiate
 effects or invoke combat handlers. Candidate behavior authorization therefore
-depends on exact current code rather than raw descriptions or unchanged IDs;
-the installed runtime still remains unsupported until E8-F02 and E8-F03 supply
-the exact target and typed minimum rule set.
+depends on exact current code rather than raw descriptions or unchanged IDs.
+
+The fourth test locates the exact later encounter through its stable story
+template, reads its saved complete loadout, and verifies all 34 selected
+direction/effect signatures, the six magic-sound mind-damage steps, absence of
+the historical reset skill, unavailable base channel resistance, and manual
+live-state boundary. The fifth test pins declared implementation fingerprints
+for the exact global combat, reset, agility, and magic-sound types used by the
+phase model. Both checks guard every inspected source and do not instantiate
+effects or invoke handlers.
+
+E8-F02 therefore supplies the exact target boundary. The installed runtime
+still remains unsupported until E8-F03 supplies the typed minimum tactical
+role set.

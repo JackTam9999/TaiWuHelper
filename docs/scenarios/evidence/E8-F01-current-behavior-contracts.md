@@ -6,7 +6,7 @@
 | Evidence date | 2026-08-21 |
 | Runtime | `1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20` |
 | Candidate count | 19 |
-| Production support authorized | No — target and typed-role gates remain in E8-F02 and E8-F03 |
+| Production support authorized | No — E8-F02 completed the target gate; the E8-F03 typed-role gate remains |
 
 ## Method and boundary
 
@@ -80,8 +80,8 @@ promoted historical rules.
 
 ## Remaining gates
 
-- E8-F02 must identify one exact target and encounter phase. Candidate behavior
-  alone does not prove target applicability.
+- E8-F02 has identified one exact target and encounter phase. Candidate
+  behavior alone still does not authorize a tactical role.
 - E8-F03 must convert only the required audited facts into typed tactical roles.
 - E8-F04 must supply weapon, trick, distance, resource, backlash, active-role,
   effective-cost and capacity inputs from one coherent source precedence.

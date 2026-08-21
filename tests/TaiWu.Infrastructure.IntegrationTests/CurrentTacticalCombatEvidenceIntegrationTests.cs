@@ -9,7 +9,9 @@ using TaiWu.Application.Localization;
 using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
+using TaiWu.Domain.CombatThreats;
 using TaiWu.Infrastructure.Catalogue;
+using TaiWu.Infrastructure.SaveGames;
 using Xunit;
 
 namespace TaiWu.Infrastructure.IntegrationTests;
@@ -88,6 +90,28 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         GameData.Domains.SpecialEffect.CombatSkill.Wuxianjiao.DefenseAndAssist.GuiJiangDaFa|GameData.Domains.SpecialEffect.CombatSkill.Common.Defense.DefenseSkillBase|29105157E0BF97DD69FA49B4B34DF77F6845925E6A60275444584A47B8FD7F6D|methods=58
         GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.DefenseAndAssist.BingQingYuJie|GameData.Domains.SpecialEffect.CombatSkill.Common.Assist.AssistSkillBase|7773B0097C8AA3735E5EC60C28FC9D0AE3853D0F28FE43C35E6B4873AFF507C1|methods=60
         GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.DefenseAndAssist.MoYuGong|GameData.Domains.SpecialEffect.CombatSkill.Common.Assist.AssistSkillBase|56FBD75E80B3FD8892421EC0046119C2C9B981EE9A3F0DA364A0B9AD5E8810B3|methods=58
+        """;
+
+    private const string ExpectedLaterPhaseBehaviorIdentities = """
+        GameData.Domains.Combat.CombatCharacter|GameData.Common.BaseGameDataObject|A9F9F5934905366E7400E6BAD2C0D6FE496B6E3B6943D9A1C50D3DB62D2F9440|methods=686
+        GameData.Domains.Combat.CombatCharacterStateBase|System.Object|F2BC3D5E3ADCA63035C9204155F2BC6A89442975B5D788989763B8BB3392AB33|methods=22
+        GameData.Domains.Combat.CombatDomain|GameData.Common.BaseGameDataDomain|5EA3200605A5A9C661127F378C19AE54287986D3E7C2A3839D045335618648CA|methods=820
+        GameData.Domains.SpecialEffect.CombatSkill.Kongsangpai.DefenseAndAssist.JiuSeYuChanFa|GameData.Domains.SpecialEffect.CombatSkill.Common.Assist.AssistSkillBase|1E65853CB8F234085FA2DC153CCA20BAEBA83BA542CB111EBB6BCFD5E4E61961|methods=19
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.BieLiBu|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|BF0DA8BAE93A7CAE27983584BD214DF7755EFEA2087D712EFF4F5D6D1E378A04|methods=8
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.ChangEBenYue|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|0113B6BE4389DD79A449420B8654B351F87BF4FD4CE859C55548FF14D1BFCCFF|methods=6
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.GuSheTaXue|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.CheckHitEffect|74A780FCF95A17CCEA56753AC650CEDFA148B687FA93B080EABB44EA1B83C60E|methods=3
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.LuoShenLingBo|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|64998D1BA1F658F91769F6D09043987CC44C296B23E60AE9BC7AE36167A86764|methods=5
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.MeiDianTou|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AttackChangeMobility|52619A0D9DBCEE2D1433703519BB7C3B1C4EAB83E60D4B17DD39CC7921691BC0|methods=2
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.QingNvLvBing|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.BuffHitOrDebuffAvoid|3C82CBFF9B459C84F82012E29BCA6BE5C9AB3746B47A61AF6CFBB23F56D48784|methods=6
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.ShangYuGe|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|15D4974D282B3472061E1EBA3491638BE5E43054268011F7B5989A008BDDF74F|methods=7
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.WangXiaBaBu|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|CF12E636004B18864B5AB3E02DF9A68E4C2882F2A625ABFA929738DE5DB4B9A1|methods=5
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Agile.YuYiGong|GameData.Domains.SpecialEffect.CombatSkill.Common.Agile.AgileSkillBase|864E7D7246D2833CE936ADD8C84A6A630B388480B880F3D86E14D3D5D9A8B3B1|methods=8
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Music.DuanHunYouYinQu|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|6535085507B24F2F082E433E1C79480D9F7BCE1DABC25DB5C660A914C76EE606|methods=6
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Music.HouRenXiYi|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|5FA1ACC605DC58367B704918D66EA0F5F2F725B258DE834A02F65397D75145E5|methods=6
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Music.HuangZhuGe|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|3938384610F06AB559D7E5178321C4333F990DEB3F5BB810673074653E9F453D|methods=6
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Music.QingPingDiao|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|A0430363D2B71489D6DB864BE68B5B7E86D3B44541B093D4E928D12669DEDE0C|methods=6
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Music.SuNvTianYin|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|C43B106734E3FE05BE6ED6D349139778A1D452E58152305139F75B433CBCE68C|methods=6
+        GameData.Domains.SpecialEffect.CombatSkill.Xuannvpai.Music.XiangNvQiCangWu|GameData.Domains.SpecialEffect.CombatSkill.CombatSkillEffectBase|0892DFB7C7D87421CFFE6CCD0BF272D1293FEC039991DD43EDEF97F441FCE8E6|methods=7
         """;
 
     private static readonly int[] CandidateSkillIds =
@@ -246,6 +270,184 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
     }
 
     [Fact]
+    public async Task Current_later_magic_sound_phase_is_exact_and_read_only()
+    {
+        RequireEvidenceOptIn("E8-F02");
+        var savePath = RequireSavePath();
+        var located = new TaiwuCatalogueSourcePathProvider().Resolve();
+        Assert.SkipUnless(
+            located.IsAvailable,
+            "E8-F02 skipped: installed GameData catalogue sources are "
+            + "unavailable.");
+        var guardedPaths = GuardedPaths(located.Paths!)
+            .Append(savePath)
+            .ToArray();
+        var before = await CaptureAsync(guardedPaths);
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var lookup = await provider
+                .GetRequiredService<ITargetLookupReader>()
+                .ReadAsync(
+                    new TargetLookupReadRequest(
+                        savePath,
+                        TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+            var target = lookup.Entries.Single(item =>
+                item.Kind == TargetLookupKind.StoryCharacter
+                && item.TemplateId
+                    == VerifiedExactTargetEncounterRuleSets
+                        .LaterMagicSoundTargetTemplateId);
+            var snapshot = await provider
+                .GetRequiredService<ICombatSnapshotReader>()
+                .ReadAsync(
+                    new CombatSnapshotReadRequest(
+                        savePath,
+                        target.CharacterId,
+                        language: TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+
+            Assert.Equal(ExpectedGameDataVersion, lookup.GameDataVersion);
+            Assert.True(snapshot.Target.EquippedSkills.IsAvailable);
+            var equippedIds = Enum.GetValues<SkillCategory>()
+                .SelectMany(category =>
+                    snapshot.Target.EquippedSkills.Value.Get(category))
+                .Order()
+                .ToArray();
+            var learnedById = snapshot.Target.LearnedSkills.ToDictionary(
+                item => item.SkillId);
+            var signatures = equippedIds.Select(skillId =>
+            {
+                var skill = learnedById[skillId];
+                Assert.True(skill.Direction.IsAvailable);
+                Assert.True(skill.DirectEffectId.IsAvailable);
+                Assert.True(skill.ReverseEffectId.IsAvailable);
+                var effectId = skill.Direction.Value switch
+                {
+                    PracticeDirection.Direct => skill.DirectEffectId.Value,
+                    PracticeDirection.Reverse => skill.ReverseEffectId.Value,
+                    _ => throw new InvalidOperationException(
+                        "An exact target signature requires a practice "
+                        + "direction.")
+                };
+                return new TargetThreatSkillSignature(
+                    skillId,
+                    skill.Direction.Value,
+                    effectId);
+            }).ToArray();
+            var phaseEvidence = new TargetEncounterEvidence(
+                TargetEncounterEvidenceSource.SavedStoryTemplate,
+                "E8-F02-CURRENT-SAVE-STORY-TEMPLATE",
+                ExpectedGameDataVersion);
+            var loadoutEvidence = new TargetEncounterEvidence(
+                TargetEncounterEvidenceSource.SavedEquippedLoadout,
+                "E8-F02-CURRENT-SAVE-EQUIPPED-LOADOUT",
+                ExpectedGameDataVersion);
+            var observation = new TargetEncounterPhaseObservation(
+                lookup.GameDataVersion!,
+                [new(target.TemplateId!.Value, phaseEvidence)],
+                TargetLoadoutCoverageKind.CompleteCurrentLoadout,
+                signatures,
+                loadoutEvidence);
+            var rule = VerifiedExactTargetEncounterRuleSets
+                .CurrentLaterMagicSound;
+            var resolution = ExactTargetEncounterPhaseResolver.Resolve(
+                rule,
+                observation);
+
+            Assert.Equal(
+                TargetEncounterBindingStatus.Complete,
+                resolution.Status);
+            Assert.Equal(34, signatures.Length);
+            Assert.All(
+                signatures,
+                item => Assert.Equal(
+                    PracticeDirection.Direct,
+                    item.Direction));
+            Assert.DoesNotContain(287, equippedIds);
+            Assert.DoesNotContain(
+                snapshot.Target.LearnedSkills,
+                item => item.SkillId == 287);
+            Assert.False(snapshot.Target.BaseChannelResistance.IsAvailable);
+            Assert.Equal(
+                new[] { 20, 30, 40, 50, 120, 160 },
+                TaiwuTacticalCombatEvidenceProbe.ReadMindDamageSteps(
+                    rule.DirectMagicSoundSkillIds));
+            Assert.All(
+                rule.Facts.Where(item => item.Code.StartsWith(
+                    "LIVE_",
+                    StringComparison.Ordinal)
+                    || item.Kind is TargetEncounterFactKind.ActiveAgility
+                        or TargetEncounterFactKind.ActiveInnerPowerState),
+                item => Assert.Equal(
+                    TargetEncounterFactState.ManualObservationRequired,
+                    item.State));
+
+            output.WriteLine(
+                "E8-F02 exact later-phase evidence: templateBound=true; "
+                + "equipped=34; direct=34; magicSound=6; reset287=false; "
+                + "baseResistance=unavailable; guardedFiles={0}.",
+                guardedPaths.Length);
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            Assert.Equal(before, after);
+        }
+    }
+
+    [Fact]
+    public async Task Current_later_magic_sound_behaviors_are_version_bound()
+    {
+        RequireEvidenceOptIn("E8-F02");
+        var located = new TaiwuCatalogueSourcePathProvider().Resolve();
+        Assert.SkipUnless(
+            located.IsAvailable,
+            "E8-F02 skipped: installed GameData catalogue sources are "
+            + "unavailable.");
+        var runtimeAssembly = GameDataRuntimePath(located.Paths!);
+        var before = await CaptureAsync([runtimeAssembly]);
+
+        try
+        {
+            Assert.Equal(
+                ExpectedGameDataVersion,
+                FileVersionInfo.GetVersionInfo(runtimeAssembly)
+                    .ProductVersion);
+            var bytes = await File.ReadAllBytesAsync(
+                runtimeAssembly,
+                TestContext.Current.CancellationToken);
+            var assembly = Assembly.Load(bytes);
+            var expected = LaterPhaseBehaviorLines();
+            var names = expected
+                .Select(line => line.Split('|', 2)[0])
+                .ToHashSet(StringComparer.Ordinal);
+            var actual = assembly.GetTypes()
+                .Where(type => type.FullName is not null
+                    && names.Contains(type.FullName))
+                .OrderBy(type => type.FullName, StringComparer.Ordinal)
+                .Select(DeclaredTypeIdentity)
+                .ToArray();
+
+            Assert.Equal(expected, actual);
+            output.WriteLine(
+                "E8-F02 exact later-phase behavior identities: "
+                + "gameData={0}; identities={1}/{2}; guardedFiles=1.",
+                ExpectedGameDataVersion,
+                actual.Length,
+                expected.Length);
+        }
+        finally
+        {
+            var after = await CaptureAsync([runtimeAssembly]);
+            Assert.Equal(before, after);
+        }
+    }
+
+    [Fact]
     public async Task Current_player_candidate_state_is_repeatable()
     {
         RequireEvidenceOptIn();
@@ -381,6 +583,12 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         .Select(item => item.Trim())
         .ToArray();
 
+    private static string[] LaterPhaseBehaviorLines() =>
+        ExpectedLaterPhaseBehaviorIdentities
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(item => item.Trim())
+            .ToArray();
+
     private static string BehaviorIdentity(Type type)
     {
         var behaviorTypes = BehaviorTypeChain(type).ToArray();
@@ -403,6 +611,24 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
             Convert.ToHexString(hash.GetHashAndReset()),
             "methods=" + behaviorTypes.Sum(item =>
                 DeclaredMethodsAndConstructors(item).Length));
+    }
+
+    private static string DeclaredTypeIdentity(Type type)
+    {
+        var methods = DeclaredMethodsAndConstructors(type);
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        foreach (var method in methods)
+        {
+            hash.AppendData(Encoding.UTF8.GetBytes(
+                (method.ToString() ?? method.Name) + "\n"));
+            hash.AppendData(method.GetMethodBody()?.GetILAsByteArray() ?? []);
+        }
+
+        return string.Join('|',
+            type.FullName ?? type.Name,
+            type.BaseType?.FullName ?? "<none>",
+            Convert.ToHexString(hash.GetHashAndReset()),
+            "methods=" + methods.Length);
     }
 
     private static IEnumerable<Type> BehaviorTypeChain(Type type)
@@ -430,13 +656,27 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
             .OrderBy(method => method.ToString(), StringComparer.Ordinal)
             .ToArray();
 
-    private static void RequireEvidenceOptIn() => Assert.SkipUnless(
+    private static void RequireEvidenceOptIn(string item = "E8-F01") =>
+        Assert.SkipUnless(
         string.Equals(
             Environment.GetEnvironmentVariable(EvidenceVariable),
             "1",
             StringComparison.Ordinal),
-        $"E8-F01 skipped: set {EvidenceVariable}=1 to verify the installed "
+        $"{item} skipped: set {EvidenceVariable}=1 to verify the installed "
         + "current-version tactical evidence.");
+
+    private static string RequireSavePath()
+    {
+        var configured = Environment.GetEnvironmentVariable(SavePathVariable);
+        Assert.SkipWhen(
+            string.IsNullOrWhiteSpace(configured),
+            $"E8-F02 skipped: set {SavePathVariable} to a local Taiwu save.");
+        var path = Path.GetFullPath(configured!);
+        Assert.SkipUnless(
+            File.Exists(path),
+            $"E8-F02 skipped: {SavePathVariable} does not identify a file.");
+        return path;
+    }
 
     private static string[] ExpectedLines() => ExpectedDefinitionIdentities
         .Split('\n', StringSplitOptions.RemoveEmptyEntries)

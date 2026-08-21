@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E8-F02",
+  "observationDate": "2026-08-21",
+  "status": "complete",
+  "runtimeGameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+  "phase": {
+    "code": "LATER_MAGIC_SOUND_PHASE",
+    "bindingUsesStableStoryTemplate": true,
+    "bindingUsesLocalizedName": false,
+    "completeEquippedSkillCount": 34,
+    "directPracticeCount": 34,
+    "ruleFingerprint": "A60918FED854795294AC53FAEFC0E0DFE349E9F67BB30D978C1F47109DBD554D"
+  },
+  "equippedCategories": {
+    "innerPower": 9,
+    "attack": 9,
+    "agility": 9,
+    "defense": 3,
+    "assistance": 4
+  },
+  "magicSound": {
+    "skillIds": [726, 727, 728, 729, 732, 733],
+    "directEffectIds": [350, 351, 352, 353, 356, 357],
+    "mindDamageSteps": [20, 30, 40, 50, 120, 160],
+    "distractionMarkTransitionVerified": true,
+    "mindRhythmTransitionVerified": true,
+    "mindUpheavalTransitionVerified": true
+  },
+  "phaseSpecificFindings": {
+    "reverse604CoversCompleteDirectLoadout": true,
+    "defeatResetSkill287Learned": false,
+    "defeatResetSkill287Equipped": false,
+    "historicalResetAssumptionApplicable": false,
+    "innerPowerSkillSetKnown": true,
+    "agilitySkillSetKnown": true,
+    "onlyOneAgilityCanBeActive": true,
+    "baseChannelResistanceAvailable": false
+  },
+  "manualBattleFacts": [
+    "active-inner-power",
+    "active-agility",
+    "mind-mark-count",
+    "mind-rhythm-count",
+    "temporary-effect-layers",
+    "current-distance",
+    "current-resource-state"
+  ],
+  "typedFixtureCoverage": {
+    "complete": true,
+    "partial": true,
+    "conflicting": true,
+    "wrongPhase": true,
+    "unsupportedVersion": true
+  },
+  "guardedVerification": {
+    "focusedUnitPassed": 7,
+    "focusedIntegrationPassed": 2,
+    "focusedFailed": 0,
+    "allGuardedFilesUnchanged": true,
+    "runtimeImplementationIdentitiesCompared": 19
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsSaveHash": false,
+    "containsCharacterIdentifier": false,
+    "containsLocalizedTargetName": false,
+    "containsGameBinaryContent": false,
+    "containsCompleteRawDescription": false,
+    "containsScreenshot": false
+  }
+}

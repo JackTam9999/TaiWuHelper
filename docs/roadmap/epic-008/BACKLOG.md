@@ -870,11 +870,12 @@ rule is authorized for current recommendations.
   player membership, direction, breakthrough, and source-precedence facts are
   captured. All 19 runtime behavior chains and five overlapping historical
   production roles are independently compared; production support remains
-  withheld until E8-F02 and E8-F03 complete their target and rule gates.
+  withheld until E8-F03 completes the typed-role gate; E8-F02 has completed
+  the exact-target gate.
 
 ### E8-F02 — Model the exact later magic-sound target and encounter phase
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -887,20 +888,34 @@ target/phase profile whose important mechanics are independently evidenced.
 
 #### Acceptance criteria
 
-- [ ] Bind the target and encounter phase to stable exact evidence without
+- [x] Bind the target and encounter phase to stable exact evidence without
       exposing proprietary raw payloads or relying on a localized name.
-- [ ] Represent the verified Direct-practice cast set, mind-loss damage,
+- [x] Represent the verified Direct-practice cast set, mind-loss damage,
       distraction marks, resonance cascade, defeat-mark reset, movement/range
       pressure, and speed pressure as separate typed facts and transitions.
-- [ ] Record whether the target's broader Direct-practice coverage makes
+- [x] Record whether the target's broader Direct-practice coverage makes
       Reverse `604` applicable; do not generalize from the magic-sound subset.
-- [ ] Represent target inner-power, agility, footwork, distance, and close-range
+- [x] Represent target inner-power, agility, footwork, distance, and close-range
       pressure only where exact version-matched evidence supports them.
-- [ ] Preserve phase, live mark count, temporary layers, current distance, and
+- [x] Preserve phase, live mark count, temporary layers, current distance, and
       resource state as unavailable or manual observations when the immutable
       snapshot cannot supply them.
-- [ ] Add target-profile and causal-chain fixtures for complete, partial,
+- [x] Add target-profile and causal-chain fixtures for complete, partial,
       conflicting, wrong-phase, and unsupported-version states.
+
+#### Evidence
+
+- [E8-F02 exact current later phase](../../scenarios/E8-F02-current-later-magic-sound-phase.md).
+- [E8-F02 sanitized metadata](../../scenarios/evidence/E8-F02-current-later-magic-sound-metadata.json).
+- `ExactTargetEncounterPhaseResolverTests`: 7 passed, 0 failed.
+- `CurrentTacticalCombatEvidenceIntegrationTests`: 2 new F02 checks passed
+  against the current save and installed runtime with every guarded source
+  unchanged.
+- Release build: 0 warnings and 0 errors; full suite: 1,613 total, 1,591
+  passed, 0 failed, and 22 expected guarded-local skips.
+- The exact phase has 34 equipped Direct-practice skills and six exact
+  magic-sound attacks. Skill `287` is absent, so the historical reset
+  assumption is typed `NotPresent`/`NotApplicable` rather than generalized.
 
 ### E8-F03 — Expand current-version typed tactical-role coverage
 

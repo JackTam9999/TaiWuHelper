@@ -194,6 +194,18 @@ internal static class TaiwuTacticalCombatEvidenceProbe
                 Encoding.UTF8.GetBytes(string.Join('\n', signatureFacts)))));
     }
 
+    internal static IReadOnlyList<int> ReadMindDamageSteps(
+        IEnumerable<int> skillIds)
+    {
+        ArgumentNullException.ThrowIfNull(skillIds);
+        return skillIds.Select(skillId => Config.CombatSkill.Instance
+                .GetItem(checked((short)skillId))
+                ?.MindDamageStep
+            ?? throw new InvalidOperationException(
+                $"Combat skill {skillId} is unavailable."))
+            .ToArray();
+    }
+
     private static int CountLegendaryBookAssignments(
         CancellationToken cancellationToken)
     {
