@@ -20,7 +20,10 @@ public static class TacticalCombatScorer
         {
             cancellationToken.ThrowIfCancellationRequested();
             return ScoreCandidate(request, candidate, weights);
-        }).OrderByDescending(item => item.TotalScore)
+        }).OrderByDescending(item =>
+            item.Candidate.Package.Recovery.State
+                == TacticalPackageResolutionState.Unresolved ? 0 : 1)
+            .ThenByDescending(item => item.TotalScore)
             .ThenByDescending(item => Value(
                 item,
                 TacticalScoreComponentKind.CausalValue))
@@ -43,7 +46,7 @@ public static class TacticalCombatScorer
         TacticalFeasibleLoadoutResult candidate,
         TacticalScoringPolicyWeights weights)
     {
-        var selected = candidate.SelectedCandidates.ToHashSet();
+        var selected = candidate.Package.ScoringEligibleCandidates.ToHashSet();
         var entries = request.SearchRequest.Discovery.Entries
             .Where(item => selected.Contains(item.Consideration.Identity))
             .ToArray();
@@ -409,6 +412,32 @@ public static class TacticalCombatScorer
         List<TacticalScoreRawInput> inputs = [];
         List<string> limitations = [];
         var penalty = 0;
+        if (candidate.Package.Recovery.State
+            == TacticalPackageResolutionState.Unresolved)
+        {
+            inputs.Add(AvailableInput(
+                TacticalScoreInputKind.RecoveryRoute,
+                candidate.Package.Recovery.ReasonIdentity,
+                TacticalFactValue.Boolean(false),
+                "REVERSE_604_RECOVERY_BRANCH_UNRESOLVED",
+                commonEvidence));
+            limitations.Add(candidate.Package.Recovery.ReasonIdentity);
+            penalty += 100;
+        }
+        else if (candidate.Package.Recovery.State
+                 == TacticalPackageResolutionState.Complete)
+        {
+            foreach (var step in candidate.Package.Recovery.CastSteps)
+            {
+                inputs.Add(AvailableInput(
+                    TacticalScoreInputKind.RecoveryRoute,
+                    $"RECOVERY_CAST_{step.Sequence}:{step.Candidate.StableKey}",
+                    TacticalFactValue.Integer(step.EffectiveSlotCost),
+                    "EXACT_REVERSE_RECOVERY_CAST_RESOLVED",
+                    commonEvidence));
+            }
+        }
+
         foreach (var entry in entries.Where(item =>
                      RequiresPreparation(request.SearchRequest.Player, item)))
         {
@@ -467,7 +496,8 @@ public static class TacticalCombatScorer
         {
             inputs.Add(AvailableInput(
                 TacticalScoreInputKind.ResourceRequirement,
-                $"RESOURCE_{TacticalCombatText.EnumKey(requirement.Resource)}",
+                $"RESOURCE_{TacticalCombatText.EnumKey(requirement.Resource)}:"
+                + requirement.EvidenceReference,
                 TacticalFactValue.Integer(requirement.MinimumAmount),
                 "RESOURCE_READINESS_REQUIREMENT",
                 commonEvidence));

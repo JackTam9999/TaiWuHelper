@@ -16,7 +16,8 @@ public sealed class TacticalExecutionObservation
         int? distance = null,
         IEnumerable<CombatResourceAmount>? resources = null,
         int? activeDefenseSkillId = null,
-        int? activeAgilitySkillId = null)
+        int? activeAgilitySkillId = null,
+        IEnumerable<string>? confirmedManualConditionCodes = null)
     {
         if (string.IsNullOrWhiteSpace(evidenceReference))
         {
@@ -45,6 +46,9 @@ public sealed class TacticalExecutionObservation
         ActiveAgilitySkillId = ValidateNonNegative(
             activeAgilitySkillId,
             nameof(activeAgilitySkillId));
+        ConfirmedManualConditionCodes = CopyCodes(
+            confirmedManualConditionCodes,
+            nameof(confirmedManualConditionCodes));
         if (ActiveDefenseSkillId.HasValue
             && ActiveDefenseSkillId == ActiveAgilitySkillId)
         {
@@ -73,6 +77,8 @@ public sealed class TacticalExecutionObservation
 
     public int? ActiveAgilitySkillId { get; }
 
+    public ImmutableArray<string>? ConfirmedManualConditionCodes { get; }
+
     internal string SemanticKey => string.Join('|',
         EvidenceReference,
         ConfirmsNewerThanSave ? "CONFIRMED_NEWER" :
@@ -84,7 +90,8 @@ public sealed class TacticalExecutionObservation
         Number(Distance),
         ResourceValues(Resources),
         Number(ActiveDefenseSkillId),
-        Number(ActiveAgilitySkillId));
+        Number(ActiveAgilitySkillId),
+        Codes(ConfirmedManualConditionCodes));
 
     private static ImmutableArray<int>? CopyIds(
         IEnumerable<int>? values,
@@ -149,6 +156,30 @@ public sealed class TacticalExecutionObservation
         return [.. copied.OrderBy(item => item.Resource)];
     }
 
+    private static ImmutableArray<string>? CopyCodes(
+        IEnumerable<string>? values,
+        string parameterName)
+    {
+        if (values is null)
+        {
+            return null;
+        }
+
+        var copied = values.ToImmutableArray();
+        if (copied.Any(value => string.IsNullOrWhiteSpace(value)
+                || value.Any(character => !char.IsAsciiLetterUpper(character)
+                    && !char.IsDigit(character)
+                    && character != '_'))
+            || copied.Distinct(StringComparer.Ordinal).Count() != copied.Length)
+        {
+            throw new ArgumentException(
+                "Observed manual conditions must be unique stable uppercase codes.",
+                parameterName);
+        }
+
+        return [.. copied.Order(StringComparer.Ordinal)];
+    }
+
     private static int? ValidateNonNegative(int? value, string parameterName)
     {
         if (value < 0)
@@ -178,4 +209,9 @@ public sealed class TacticalExecutionObservation
 
     private static string Number(int? value) => value?.ToString(
         CultureInfo.InvariantCulture) ?? "UNOBSERVED";
+
+    private static string Codes(
+        ImmutableArray<string>? values) => values.HasValue
+        ? string.Join(',', values.Value)
+        : "UNOBSERVED";
 }

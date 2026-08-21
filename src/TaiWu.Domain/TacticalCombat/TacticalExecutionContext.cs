@@ -122,7 +122,9 @@ public sealed class CurrentTacticalExecutionFacts
             legendaryCostSlots,
         TacticalContextFact<ImmutableArray<LegendaryBookCostAssignment>>
             legendaryCostAssignments,
-        TacticalContextFact<ImmutableArray<int>> equippedSkillIds)
+        TacticalContextFact<ImmutableArray<int>> equippedSkillIds,
+        TacticalContextFact<ImmutableArray<string>>
+            confirmedManualConditionCodes)
     {
         EquippedWeaponTypeIds = equippedWeaponTypeIds;
         UnlockedWeaponTypeIds = unlockedWeaponTypeIds;
@@ -140,6 +142,7 @@ public sealed class CurrentTacticalExecutionFacts
         LegendaryCostSlots = legendaryCostSlots;
         LegendaryCostAssignments = legendaryCostAssignments;
         EquippedSkillIds = equippedSkillIds;
+        ConfirmedManualConditionCodes = confirmedManualConditionCodes;
     }
 
     public TacticalContextFact<ImmutableArray<int>> EquippedWeaponTypeIds
@@ -184,6 +187,10 @@ public sealed class CurrentTacticalExecutionFacts
 
     public TacticalContextFact<ImmutableArray<int>> EquippedSkillIds { get; }
 
+    public TacticalContextFact<ImmutableArray<string>>
+        ConfirmedManualConditionCodes
+    { get; }
+
     internal string SemanticKey => TacticalExecutionContextKeys.Facts(
         EquippedWeaponTypeIds,
         UnlockedWeaponTypeIds,
@@ -200,7 +207,8 @@ public sealed class CurrentTacticalExecutionFacts
         UniversalSlotAllocation,
         LegendaryCostSlots,
         LegendaryCostAssignments,
-        EquippedSkillIds);
+        EquippedSkillIds,
+        ConfirmedManualConditionCodes);
 }
 
 public sealed class ProposedTacticalExecutionFacts
@@ -223,7 +231,9 @@ public sealed class ProposedTacticalExecutionFacts
             legendaryCostSlots,
         TacticalContextFact<ImmutableArray<LegendaryBookCostAssignment>>
             legendaryCostAssignments,
-        TacticalContextFact<ImmutableArray<int>> equippedSkillIds)
+        TacticalContextFact<ImmutableArray<int>> equippedSkillIds,
+        TacticalContextFact<ImmutableArray<string>>
+            confirmedManualConditionCodes)
     {
         EquippedWeaponTypeIds = equippedWeaponTypeIds;
         UnlockedWeaponTypeIds = unlockedWeaponTypeIds;
@@ -241,6 +251,7 @@ public sealed class ProposedTacticalExecutionFacts
         LegendaryCostSlots = legendaryCostSlots;
         LegendaryCostAssignments = legendaryCostAssignments;
         EquippedSkillIds = equippedSkillIds;
+        ConfirmedManualConditionCodes = confirmedManualConditionCodes;
     }
 
     public TacticalContextFact<ImmutableArray<int>> EquippedWeaponTypeIds
@@ -285,6 +296,10 @@ public sealed class ProposedTacticalExecutionFacts
 
     public TacticalContextFact<ImmutableArray<int>> EquippedSkillIds { get; }
 
+    public TacticalContextFact<ImmutableArray<string>>
+        ConfirmedManualConditionCodes
+    { get; }
+
     internal string SemanticKey => TacticalExecutionContextKeys.Facts(
         EquippedWeaponTypeIds,
         UnlockedWeaponTypeIds,
@@ -301,7 +316,8 @@ public sealed class ProposedTacticalExecutionFacts
         UniversalSlotAllocation,
         LegendaryCostSlots,
         LegendaryCostAssignments,
-        EquippedSkillIds);
+        EquippedSkillIds,
+        ConfirmedManualConditionCodes);
 }
 
 public sealed class TacticalExecutionContext
@@ -373,7 +389,7 @@ public sealed class TacticalExecutionContext
     private string CreateFingerprint()
     {
         var canonical = new StringBuilder()
-            .Append("TACTICAL_EXECUTION_CONTEXT_V2\n")
+            .Append("TACTICAL_EXECUTION_CONTEXT_V3\n")
             .Append(SourceRevisionFingerprint).Append('\n')
             .Append(ObservationRevisionFingerprint).Append('\n')
             .Append(RuleSetFingerprint).Append('\n')
@@ -430,7 +446,9 @@ internal static class TacticalExecutionContextKeys
             legendaryCostSlots,
         TacticalContextFact<ImmutableArray<LegendaryBookCostAssignment>>
             legendaryCostAssignments,
-        TacticalContextFact<ImmutableArray<int>> equippedSkillIds) =>
+        TacticalContextFact<ImmutableArray<int>> equippedSkillIds,
+        TacticalContextFact<ImmutableArray<string>>
+            confirmedManualConditionCodes) =>
         string.Join('\n',
             $"EQUIPPED_WEAPONS|{Set(equippedWeaponTypeIds)}",
             $"UNLOCKED_WEAPONS|{Set(unlockedWeaponTypeIds)}",
@@ -447,10 +465,17 @@ internal static class TacticalExecutionContextKeys
             $"UNIVERSAL_SLOTS|{Generic(universalSlotAllocation)}",
             $"LEGENDARY_SLOTS|{LegendarySlots(legendaryCostSlots)}",
             $"LEGENDARY_ASSIGNMENTS|{LegendaryAssignments(legendaryCostAssignments)}",
-            $"EQUIPPED_SKILLS|{Set(equippedSkillIds)}");
+            $"EQUIPPED_SKILLS|{Set(equippedSkillIds)}",
+            $"MANUAL_CONDITIONS|{Codes(confirmedManualConditionCodes)}");
 
     private static string Set(
         TacticalContextFact<ImmutableArray<int>> fact) =>
+        fact.SemanticKey(fact.IsAvailable
+            ? string.Join(',', fact.Value)
+            : "NONE");
+
+    private static string Codes(
+        TacticalContextFact<ImmutableArray<string>> fact) =>
         fact.SemanticKey(fact.IsAvailable
             ? string.Join(',', fact.Value)
             : "NONE");

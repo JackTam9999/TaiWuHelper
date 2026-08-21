@@ -1025,7 +1025,7 @@ resource, and unlock context with one coherent immutable projection.
 
 ### E8-F05 — Add package-aware full-loadout discovery, search, and scoring
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -1038,28 +1038,39 @@ counter options and retaining the current loadout.
 
 #### Acceptance criteria
 
-- [ ] Every learned skill with an exact current-version role may enter the
+- [x] Every learned skill with an exact current-version role may enter the
       option universe independently of the legacy counter whitelist.
-- [ ] A Reverse `604` package includes three exact feasible Reverse-practice
+- [x] A Reverse `604` package includes three exact feasible Reverse-practice
       cast steps, their costs and requirements, or an explicit unresolved
       recovery branch; score alone cannot waive this constraint.
-- [ ] Search can combine suppression, recovery attacks, movement/range control,
+- [x] Search can combine suppression, recovery attacks, movement/range control,
       one active-defense rotation, one active-agility rotation, equipped
       passives, and conditional backups across all categories.
-- [ ] Simultaneously equipped defenses or agility skills are not scored as if
+- [x] Simultaneously equipped defenses or agility skills are not scored as if
       all active-only effects operate at once.
-- [ ] Weapon/trick/distance requirements, direction feasibility, backlash,
+- [x] Weapon/trick/distance requirements, direction feasibility, backlash,
       effective cost, category capacity, and universal-slot allocation are hard
       constraints before scoring.
-- [ ] Scoring rewards marginal causal coverage, timing, execution reliability,
+- [x] Scoring rewards marginal causal coverage, timing, execution reliability,
       complementary layers, and verified target interaction without
       double-counting duplicate protection or inventing damage.
-- [ ] Dominance and relevance pruning preserve coupled recovery packages; every
+- [x] Dominance and relevance pruning preserve coupled recovery packages; every
       exclusion has a stable diagnostic.
-- [ ] Search remains deterministic, cancellable, bounded, and explicit about
+- [x] Search remains deterministic, cancellable, bounded, and explicit about
       option, exploration, time, and result truncation.
-- [ ] Tests assert tactical invariants and feasibility rather than hard-coding
+- [x] Tests assert tactical invariants and feasibility rather than hard-coding
       one unique winning loadout.
+
+#### Evidence
+
+- [E8-F05 package-aware tactical search](../../scenarios/E8-F05-package-aware-tactical-search.md).
+- [E8-F05 sanitized metadata](../../scenarios/evidence/E8-F05-package-aware-tactical-search-metadata.json).
+- `CurrentTacticalLoadoutPackageTests`: 5 passed, 0 failed; three-cast recovery,
+  unresolved manual gates, active rotations, pruning preservation and explicit
+  manual confirmation are pinned without asserting one winner.
+- Domain 676, Application 232 and Architecture 114 tests passed.
+- Release build: 0 warnings and 0 errors; full suite: 1,634 total, 1,610
+  passed, 0 failed, and 24 expected guarded-local skips.
 
 ### E8-F06 — Compile an exact loadout and manual execution plan
 

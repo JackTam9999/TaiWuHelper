@@ -396,7 +396,10 @@ public static class TacticalCandidateDiscovery
         }
 
         var results = requirements
-            .Select(item => EvaluateRequirement(context.Proposed, item))
+            .Select(item => EvaluateRequirement(
+                context.Proposed,
+                item,
+                match.Rule))
             .ToArray();
         var evidence = results.SelectMany(item => item.Evidence)
             .Append(RuleEvidence)
@@ -426,7 +429,8 @@ public static class TacticalCandidateDiscovery
 
     private static RequirementResult EvaluateRequirement(
         ProposedTacticalExecutionFacts facts,
-        CombatRequirement requirement) => requirement switch
+        CombatRequirement requirement,
+        TacticalSkillRoleRule role) => requirement switch
     {
         WeaponRequirement value => Membership(
             facts.EquippedWeaponTypeIds,
@@ -444,6 +448,11 @@ public static class TacticalCandidateDiscovery
                     || item <= value.MaximumInclusive.Value),
             "REQUIREMENT:DISTANCE"),
         ResourceRequirement value => Resource(facts.Resources, value),
+        SkillActivationRequirement value when
+            role.UseKinds.Contains(TacticalRoleUseKind.SwitchOnlyBackup)
+            && value.RequiredState is SkillActivationState.ActiveDefense
+                or SkillActivationState.ActiveAgility =>
+            DeferredActivation(facts, value),
         SkillActivationRequirement value => value.RequiredState switch
         {
             SkillActivationState.EquippedPassive => Membership(
@@ -461,11 +470,49 @@ public static class TacticalCandidateDiscovery
             _ => throw new ArgumentOutOfRangeException(nameof(requirement))
         },
         TrickRequirement value => Trick(facts.TrickCounts, value),
-        ManualConfirmationRequirement value => new RequirementResult(
-            TacticalCandidateGateState.Unknown,
-            [$"REQUIREMENT:{value.Code}", DiscoveryEvidence]),
+        ManualConfirmationRequirement value => Manual(facts, value),
         _ => throw new ArgumentOutOfRangeException(nameof(requirement))
     };
+
+    private static RequirementResult DeferredActivation(
+        ProposedTacticalExecutionFacts facts,
+        SkillActivationRequirement requirement)
+    {
+        var evidence = requirement.RequiredState switch
+        {
+            SkillActivationState.ActiveDefense =>
+                facts.ActiveDefenseSkillId.EvidenceIdentities,
+            SkillActivationState.ActiveAgility =>
+                facts.ActiveAgilitySkillId.EvidenceIdentities,
+            _ => throw new ArgumentOutOfRangeException(nameof(requirement))
+        };
+        return new RequirementResult(
+            TacticalCandidateGateState.Passed,
+            evidence.Append(
+                    "ACTIVATION_ROTATION_DEFERRED_TO_PACKAGE")
+                .ToArray());
+    }
+
+    private static RequirementResult Manual(
+        ProposedTacticalExecutionFacts facts,
+        ManualConfirmationRequirement requirement)
+    {
+        var fact = facts.ConfirmedManualConditionCodes;
+        return !fact.IsAvailable
+            || !fact.Value.Contains(requirement.Code, StringComparer.Ordinal)
+            ? new RequirementResult(
+                TacticalCandidateGateState.Unknown,
+                fact.EvidenceIdentities
+                    .Append($"REQUIREMENT:{requirement.Code}")
+                    .Append(DiscoveryEvidence)
+                    .ToArray())
+            : new RequirementResult(
+                TacticalCandidateGateState.Passed,
+                fact.EvidenceIdentities
+                    .Append($"REQUIREMENT:{requirement.Code}")
+                    .Append(DiscoveryEvidence)
+                    .ToArray());
+    }
 
     private static RequirementResult Membership(
         TacticalContextFact<ImmutableArray<int>> fact,

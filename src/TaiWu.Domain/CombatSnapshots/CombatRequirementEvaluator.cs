@@ -43,9 +43,8 @@ public static class CombatRequirementEvaluator
                 $"Weapon type {value.WeaponTypeId} is not unlocked."),
             SkillActivationRequirement value =>
                 EvaluateSkillActivation(value, context),
-            ManualConfirmationRequirement value => Unknown(
-                value,
-                $"Manual confirmation is required: {value.Code}."),
+            ManualConfirmationRequirement value =>
+                EvaluateManualConfirmation(value, context),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(requirement),
                 requirement.GetType(),
@@ -150,6 +149,26 @@ public static class CombatRequirementEvaluator
             + $"{requirement.RequiredState}.",
             $"Skill {requirement.SkillId} does not satisfy "
             + $"{requirement.RequiredState}.");
+    }
+
+    private static CombatRequirementEvaluation EvaluateManualConfirmation(
+        ManualConfirmationRequirement requirement,
+        CombatRequirementContext context)
+    {
+        if (!context.HasConfirmedManualConditionCodes
+            || !context.ConfirmedManualConditionCodes.Contains(
+                requirement.Code))
+        {
+            return Unknown(
+                requirement,
+                $"Manual confirmation is required: {requirement.Code}.");
+        }
+
+        return EvaluateMembership(
+            requirement,
+            satisfied: true,
+            $"Manual condition {requirement.Code} was explicitly confirmed.",
+            string.Empty);
     }
 
     private static CombatRequirementEvaluation EvaluateMembership(

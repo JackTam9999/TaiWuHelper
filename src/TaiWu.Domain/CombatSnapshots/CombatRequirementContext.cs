@@ -12,7 +12,8 @@ public sealed record CombatRequirementContext
         IEnumerable<int> unlockedWeaponTypeIds,
         IEnumerable<int> equippedSkillIds,
         int? activeDefenseSkillId = null,
-        int? activeAgilitySkillId = null)
+        int? activeAgilitySkillId = null,
+        IEnumerable<string>? confirmedManualConditionCodes = null)
     {
         ArgumentNullException.ThrowIfNull(equippedWeaponTypeIds);
         ArgumentNullException.ThrowIfNull(trickCounts);
@@ -37,6 +38,11 @@ public sealed record CombatRequirementContext
         EquippedSkillIds = CopyIds(
             equippedSkillIds,
             nameof(equippedSkillIds));
+        HasConfirmedManualConditionCodes =
+            confirmedManualConditionCodes is not null;
+        ConfirmedManualConditionCodes = CopyCodes(
+            confirmedManualConditionCodes ?? [],
+            nameof(confirmedManualConditionCodes));
         TrickCounts = CopyTrickCounts(trickCounts);
         Resources = CopyResources(resources);
         Distance = distance;
@@ -75,6 +81,10 @@ public sealed record CombatRequirementContext
 
     public int? ActiveAgilitySkillId { get; }
 
+    public bool HasConfirmedManualConditionCodes { get; }
+
+    public ImmutableHashSet<string> ConfirmedManualConditionCodes { get; }
+
     private static ImmutableHashSet<int> CopyIds(
         IEnumerable<int> source,
         string parameterName)
@@ -95,6 +105,25 @@ public sealed record CombatRequirementContext
         }
 
         return [.. values];
+    }
+
+    private static ImmutableHashSet<string> CopyCodes(
+        IEnumerable<string> source,
+        string parameterName)
+    {
+        var values = source.ToArray();
+        if (values.Any(value => string.IsNullOrWhiteSpace(value)
+                || value.Any(character => !char.IsAsciiLetterUpper(character)
+                    && !char.IsDigit(character)
+                    && character != '_'))
+            || values.Distinct(StringComparer.Ordinal).Count() != values.Length)
+        {
+            throw new ArgumentException(
+                "Manual condition codes must be unique stable uppercase codes.",
+                parameterName);
+        }
+
+        return values.ToImmutableHashSet(StringComparer.Ordinal);
     }
 
     private static ImmutableDictionary<int, int> CopyTrickCounts(

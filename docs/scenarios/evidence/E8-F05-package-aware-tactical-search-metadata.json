@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E8-F05",
+  "observationDate": "2026-08-21",
+  "status": "complete",
+  "runtimeGameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+  "tacticalRuleFingerprint": "64051C1234CECDFDCE070134FDA0380826154D16C1F171B52B6F7FE1C64ECD5D",
+  "contextSchema": "TACTICAL_EXECUTION_CONTEXT_V3",
+  "packageContract": {
+    "reverse604SuppressionIsExactCurrentRoleOnly": true,
+    "requiredRecoveryCastSteps": 3,
+    "castMayRepeatOneFeasibleRecoveryRole": true,
+    "stepExposesEffectiveSlotCost": true,
+    "stepExposesTypedRequirements": true,
+    "unresolvedReason": "REVERSE_604_RECOVERY_CASTS_UNRESOLVED",
+    "scoreCanWaiveUnresolvedRecovery": false
+  },
+  "activationRotations": {
+    "activeDefensePrimaryMaximum": 1,
+    "activeAgilityPrimaryMaximum": 1,
+    "switchOnlyBackupsRetained": true,
+    "backupsScoredAsSimultaneouslyActive": false,
+    "missingPrimaryRemainsUnresolved": true
+  },
+  "hardGatesBeforeScoring": [
+    "ownership-and-mastery",
+    "practice-direction",
+    "raw-effect-and-rule-evidence",
+    "weapon-and-manual-trick-confirmation",
+    "distance-and-resource-readiness",
+    "inner-power-backlash",
+    "effective-cost-and-category-capacity",
+    "universal-slot-allocation"
+  ],
+  "manualConditionSemantics": {
+    "explicitStableCodesOnly": true,
+    "missingCodeState": "unknown",
+    "emptySetInferredWhenMissing": false
+  },
+  "verification": {
+    "packageInvariantTestsPassed": 5,
+    "domainUnitPassed": 676,
+    "applicationUnitPassed": 232,
+    "architecturePassed": 114,
+    "releaseBuildWarnings": 0,
+    "releaseBuildErrors": 0,
+    "fullSuiteTotal": 1634,
+    "fullSuitePassed": 1610,
+    "fullSuiteExpectedSkipped": 24,
+    "fullSuiteFailed": 0
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsSaveHash": false,
+    "containsCharacterIdentifier": false,
+    "containsLocalizedTargetName": false,
+    "containsGameBinaryContent": false,
+    "containsCompleteRawDescription": false,
+    "containsScreenshot": false
+  }
+}
+

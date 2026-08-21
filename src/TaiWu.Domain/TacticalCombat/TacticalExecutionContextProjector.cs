@@ -112,7 +112,8 @@ public static class TacticalExecutionContextProjector
         current.UniversalSlotAllocation,
         current.LegendaryCostSlots,
         current.LegendaryCostAssignments,
-        current.EquippedSkillIds);
+        current.EquippedSkillIds,
+        current.ConfirmedManualConditionCodes);
 
     private static CurrentTacticalExecutionFacts ProjectCurrent(
         CombatSnapshot snapshot,
@@ -228,7 +229,13 @@ public static class TacticalExecutionContextProjector
                     .PlayerLegendaryBookCostAssignmentsField,
                 snapshot.Player.LegendaryBookCostAssignments,
                 "LEGENDARY_COST_ASSIGNMENTS_CAPTURED"),
-            equippedSkillFact);
+            equippedSkillFact,
+            observation?.ConfirmedManualConditionCodes is { } observedCodes
+                ? Observed(
+                    observedCodes,
+                    "CURRENT_MANUAL_CONDITIONS_CONFIRMED")
+                : RuntimeUnknown<ImmutableArray<string>>(
+                    "MANUAL_CONDITIONS_NOT_CONFIRMED"));
     }
 
     private static ProposedTacticalExecutionFacts ProjectProposed(
@@ -266,7 +273,9 @@ public static class TacticalExecutionContextProjector
                 ProposalUnknown<ImmutableArray<LegendaryBookCostAssignment>>(
                     "PROPOSED_LEGENDARY_ASSIGNMENTS_NOT_SUPPLIED"),
                 ProposalUnknown<ImmutableArray<int>>(
-                    "PROPOSED_EQUIPPED_SKILLS_NOT_SUPPLIED"));
+                    "PROPOSED_EQUIPPED_SKILLS_NOT_SUPPLIED"),
+                ProposalUnknown<ImmutableArray<string>>(
+                    "PROPOSED_MANUAL_CONDITIONS_NOT_SUPPLIED"));
         }
 
         var requirements = proposal.RequirementContext;
@@ -352,7 +361,15 @@ public static class TacticalExecutionContextProjector
                     "PROPOSED_LEGENDARY_ASSIGNMENTS_NOT_SUPPLIED"),
             Proposed(
                 requirements.EquippedSkillIds.Order().ToImmutableArray(),
-                "PROPOSED_EQUIPPED_SKILLS_SUPPLIED"));
+                "PROPOSED_EQUIPPED_SKILLS_SUPPLIED"),
+            requirements.HasConfirmedManualConditionCodes
+                ? Proposed(
+                    requirements.ConfirmedManualConditionCodes
+                        .Order(StringComparer.Ordinal)
+                        .ToImmutableArray(),
+                    "PROPOSED_MANUAL_CONDITIONS_CONFIRMED")
+                : ProposalUnknown<ImmutableArray<string>>(
+                    "PROPOSED_MANUAL_CONDITIONS_NOT_SUPPLIED"));
     }
 
     private static ImmutableArray<TacticalResolvedRuleState> ProjectRules(
@@ -581,7 +598,7 @@ public static class TacticalExecutionContextProjector
         TacticalExecutionObservation? observation,
         CancellationToken cancellationToken)
     {
-        var canonical = new StringBuilder("TACTICAL_OBSERVATION_REVISION_V2\n");
+        var canonical = new StringBuilder("TACTICAL_OBSERVATION_REVISION_V3\n");
         foreach (var source in sources.OrderBy(
             item => item.FieldPath,
             StringComparer.Ordinal))

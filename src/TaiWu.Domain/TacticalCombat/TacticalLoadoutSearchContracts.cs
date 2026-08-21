@@ -215,10 +215,12 @@ public sealed record TacticalFeasibleLoadoutResult
 {
     internal TacticalFeasibleLoadoutResult(
         IEnumerable<TacticalCandidateIdentity> selectedCandidates,
-        FeasibleCombatLoadout loadout)
+        FeasibleCombatLoadout loadout,
+        TacticalLoadoutPackage package)
     {
         ArgumentNullException.ThrowIfNull(selectedCandidates);
         Loadout = loadout ?? throw new ArgumentNullException(nameof(loadout));
+        Package = package ?? throw new ArgumentNullException(nameof(package));
         SelectedCandidates = TacticalCombatText.CopyUnique(
             selectedCandidates,
             item => item.StableKey,
@@ -234,7 +236,13 @@ public sealed record TacticalFeasibleLoadoutResult
 
     public FeasibleCombatLoadout Loadout { get; }
 
+    public TacticalLoadoutPackage Package { get; }
+
     public string StableKey { get; }
+
+    internal string SemanticKey => string.Join('|',
+        StableKey,
+        Package.SemanticKey);
 }
 
 public sealed class TacticalLoadoutSearchResult
@@ -341,7 +349,7 @@ public sealed class TacticalLoadoutSearchResult
 
         foreach (var result in FeasibleResults)
         {
-            canonical.Append("RESULT|").Append(result.StableKey).Append('\n');
+            canonical.Append("RESULT|").Append(result.SemanticKey).Append('\n');
         }
 
         return TacticalCombatText.Fingerprint(canonical.ToString());

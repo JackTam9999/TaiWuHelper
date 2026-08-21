@@ -176,6 +176,14 @@ public static class TacticalLoadoutSearch
             .Where(item => item.AdmissionState
                 == TacticalCandidateAdmissionState.Admitted)
             .ToDictionary(item => item.StableKey, StringComparer.Ordinal);
+        var recoveryPackageRequired = admitted.Values.Any(item =>
+            item.SkillId == 604
+            && item.Direction == PracticeDirection.Reverse
+            && item.Role?.Identity.Kind == TacticalRoleKind.Suppression
+            && string.Equals(
+                item.Role.Identity.Code,
+                "CURRENT_REVERSE_604_DIRECT_SUPPRESSION",
+                StringComparison.Ordinal));
         var pruned = request.Discovery.Entries
             .Where(item => item.Consideration.Decision
                 == TacticalCandidateDecision.Irrelevant)
@@ -199,6 +207,13 @@ public static class TacticalLoadoutSearch
                     "Irrelevance can prune only a hard-gate-admitted candidate.",
                     nameof(request));
             }
+
+
+            PreserveRecoveryPackage(
+                proof.Candidate,
+                recoveryPackageRequired,
+                admitted,
+                request);
 
             pruned.Add(
                 proof.Candidate.StableKey,
@@ -225,6 +240,13 @@ public static class TacticalLoadoutSearch
                     "Dominance can compare only hard-gate-admitted candidates.",
                     nameof(request));
             }
+
+
+            PreserveRecoveryPackage(
+                proof.Dominated,
+                recoveryPackageRequired,
+                admitted,
+                request);
 
             if (pruned.ContainsKey(proof.Dominated.StableKey)
                 || pruned.ContainsKey(proof.Dominator.StableKey)
@@ -258,6 +280,22 @@ public static class TacticalLoadoutSearch
         }
 
         return new PruningResult(pruned);
+    }
+
+    private static void PreserveRecoveryPackage(
+        TacticalCandidateIdentity candidate,
+        bool recoveryPackageRequired,
+        IReadOnlyDictionary<string, TacticalCandidateDiscoveryEntry> admitted,
+        TacticalLoadoutSearchRequest request)
+    {
+        if (recoveryPackageRequired
+            && admitted[candidate.StableKey].Role?.Identity.Kind
+                == TacticalRoleKind.Recovery)
+        {
+            throw new ArgumentException(
+                "RECOVERY_PACKAGE_MEMBER_CANNOT_BE_PRUNED_WHILE_REVERSE_604_IS_ADMITTED",
+                nameof(request));
+        }
     }
 
     private static void ValidateProofContext(
@@ -376,6 +414,10 @@ public static class TacticalLoadoutSearch
             }
 
             ExploredCount++;
+            var package = TacticalLoadoutPackageBuilder.Build(
+                selected,
+                _request.Context.Proposed,
+                _request.RuleResolution);
             var key = selected.Count == 0
                 ? "EMPTY"
                 : string.Join('+', selected.Select(item => item.StableKey)
@@ -383,7 +425,7 @@ public static class TacticalLoadoutSearch
             if (!_feasibilityCache.TryGetValue(key, out var validation))
             {
                 FeasibilityCacheMisses++;
-                validation = Validate(selected);
+                validation = Validate(selected, package);
                 _feasibilityCache.Add(key, validation);
             }
             else
@@ -401,7 +443,8 @@ public static class TacticalLoadoutSearch
             {
                 Results.Add(new TacticalFeasibleLoadoutResult(
                     selected.Select(item => item.Consideration.Identity),
-                    validation.FeasibleLoadout!));
+                    validation.FeasibleLoadout!,
+                    package));
                 return;
             }
 
@@ -419,7 +462,8 @@ public static class TacticalLoadoutSearch
         }
 
         private CombatLoadoutFeasibilityResult Validate(
-            IReadOnlyList<TacticalCandidateDiscoveryEntry> selected)
+            IReadOnlyList<TacticalCandidateDiscoveryEntry> selected,
+            TacticalLoadoutPackage package)
         {
             var selectedIds = selected.Select(item => item.SkillId)
                 .Concat(_fixedRetentionIds)
@@ -433,12 +477,21 @@ public static class TacticalLoadoutSearch
                 Skills(SkillCategory.Agility),
                 Skills(SkillCategory.Defense),
                 Skills(SkillCategory.Assistance));
-            var projections = selected.Select(Project).ToArray();
-            var candidates = projections.Select(item => item.Candidate)
+            var projections = selected.Select(entry => new
+            {
+                Entry = entry,
+                Projection = Project(entry)
+            }).ToArray();
+            var candidates = projections.Select(item => item.Projection.Candidate)
                 .Concat(_fixedRetentionIds.Select(id =>
                     new CombatSkillCandidate(id)))
                 .ToArray();
-            var requirements = projections.SelectMany(item => item.Requirements)
+            var requirements = projections.SelectMany(item =>
+                    item.Projection.Requirements.Where(requirement =>
+                        IncludeRequirement(
+                            item.Entry,
+                            requirement,
+                            package)))
                 .DistinctBy(RequirementKey, StringComparer.Ordinal)
                 .ToArray();
             var facts = _request.Context.Proposed;
@@ -446,7 +499,9 @@ public static class TacticalLoadoutSearch
                 facts.EquippedWeaponTypeIds.IsAvailable
                     ? facts.EquippedWeaponTypeIds.Value
                     : [],
-                trickCounts: [],
+                facts.TrickCounts.IsAvailable
+                    ? facts.TrickCounts.Value
+                    : [],
                 facts.Distance.IsAvailable
                     ? SnapshotValue<int>.Available(facts.Distance.Value)
                     : SnapshotValue<int>.Unavailable(
@@ -457,7 +512,10 @@ public static class TacticalLoadoutSearch
                     : [],
                 selectedIds,
                 Active(facts.ActiveDefenseSkillId),
-                Active(facts.ActiveAgilitySkillId));
+                Active(facts.ActiveAgilitySkillId),
+                facts.ConfirmedManualConditionCodes.IsAvailable
+                    ? facts.ConfirmedManualConditionCodes.Value
+                    : null);
             var generic = facts.UniversalSlotAllocation.IsAvailable
                 ? facts.UniversalSlotAllocation.Value
                 : _request.Player.GenericSlotAllocation;
@@ -482,6 +540,29 @@ public static class TacticalLoadoutSearch
                 fact.IsAvailable && selectedIds.Contains(fact.Value)
                     ? fact.Value
                     : null;
+        }
+
+        private static bool IncludeRequirement(
+            TacticalCandidateDiscoveryEntry entry,
+            CombatRequirement requirement,
+            TacticalLoadoutPackage package)
+        {
+            if (requirement is not SkillActivationRequirement activation
+                || !entry.Role!.UseKinds.Contains(
+                    TacticalRoleUseKind.SwitchOnlyBackup))
+            {
+                return true;
+            }
+
+            var primary = activation.RequiredState switch
+            {
+                SkillActivationState.ActiveDefense =>
+                    package.ActiveDefenseRotation.PrimaryCandidate,
+                SkillActivationState.ActiveAgility =>
+                    package.ActiveAgilityRotation.PrimaryCandidate,
+                _ => entry.Consideration.Identity
+            };
+            return primary == entry.Consideration.Identity;
         }
 
         private CandidateProjection Project(
