@@ -1119,7 +1119,7 @@ the game and audited against the same evidence.
 
 ### E8-F07 — Verify the current-version golden anti-magic-sound vertical
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P1
 
@@ -1132,36 +1132,54 @@ without weakening Epic 8's evidence or safety contracts.
 
 #### Acceptance criteria
 
-- [ ] A sanitized current-version fixture no longer returns
+- [x] A sanitized current-version fixture no longer returns
       `UNSUPPORTED_GAME_DATA_RULE_CHAIN` after, and only after, all required
       current-version rules are authorized.
-- [ ] The representative `6/10/7/9/4` scenario admits at least one package with
+- [x] The representative `6/10/7/9/4` scenario admits at least one package with
       used capacity no greater than `6/9/7/8/4`, exact direction feasibility,
       Reverse `604` suppression, three feasible Reverse-practice recovery
       casts, movement/range control, active-defense choices, and layered mind
       protection.
-- [ ] The manually audited reference configuration is feasible and is not
+- [x] The manually audited reference configuration is feasible and is not
       incorrectly pruned; an evidence-equivalent higher-scoring configuration
       may still be selected.
-- [ ] Complete, partial, conflicting, wrong-phase, unsupported-version,
+- [x] Complete, partial, conflicting, wrong-phase, unsupported-version,
       missing-context, no-candidate, truncated, and cancelled paths remain
       typed and tested.
-- [ ] Historical-version behavior remains deterministic, or becomes explicitly
+- [x] Historical-version behavior remains deterministic, or becomes explicitly
       unsupported through a documented lifecycle decision; it is never
       silently reinterpreted as the current version.
-- [ ] Domain, Application, Infrastructure, API, Presentation, localization,
+- [x] Domain, Application, Infrastructure, API, Presentation, localization,
       architecture, and guarded local integration tests cover the new boundary.
-- [ ] Repeated and shuffled inputs retain stable candidates, pruning, score,
+- [x] Repeated and shuffled inputs retain stable candidates, pruning, score,
       selected loadout, comparison, plan, and fingerprints.
-- [ ] Release verification records zero warnings, performance/search bounds,
+- [x] Release verification records zero warnings, performance/search bounds,
       source hash preservation, and absolute game non-interference.
+
+#### Evidence
+
+- [E8-F07 current golden vertical](../../scenarios/E8-F07-current-golden-anti-magic-sound-vertical.md).
+- [E8-F07 sanitized metadata](../../scenarios/evidence/E8-F07-current-golden-vertical-metadata.json).
+- `CurrentTacticalCombatGoldenVerticalTests`: 2 passed, 0 failed; complete and
+  partial current-version results, the audited eight-skill package, capacity,
+  three-cast recovery, movement/range control, active rotations, layered mind
+  protection and repeated/shuffled identities are pinned.
+- `CurrentTacticalCombatEvidenceIntegrationTests.Current_golden_package_is_feasible_repeatable_and_read_only`:
+  passed against the installed version; all 256 combinations were searched,
+  Reverse `616` supplied three recovery casts, Reverse `686` was rejected for
+  `INNER_POWER_BACKLASH_ON_USE`, and all nine guarded files were unchanged.
+- Existing tactical rule, recommendation, search, compiler, API, bilingual
+  presentation, localization and architecture fixtures retain every typed
+  failure and historical lifecycle boundary.
+- Release build: 0 warnings and 0 errors; full suite: 1,639 total, 1,614
+  passed, 0 failed, and 25 expected guarded-local skips.
 
 ## Future work outside Epic 8
 
-- The current-version complete anti-magic-sound expansion is planned in
-  E8-F01 through E8-F07 above; promotion into a new epic remains a product-owner
-  decision.
-- Additional exact targets and archetype families beyond that planned
+- The current-version complete anti-magic-sound expansion was delivered in
+  E8-F01 through E8-F07 above. Any further target or mechanic expansion remains
+  a product-owner decision.
+- Additional exact targets and archetype families beyond this delivered
   expansion.
 - A general combat simulator, hidden-state inference, predicted turn sequence,
   damage distribution, target difficulty, or probability of victory.

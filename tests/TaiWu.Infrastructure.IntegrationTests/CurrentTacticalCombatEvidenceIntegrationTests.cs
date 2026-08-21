@@ -8,6 +8,7 @@ using TaiWu.Application.CombatSkills;
 using TaiWu.Application.Localization;
 using TaiWu.Application.Targets;
 using TaiWu.Application.TacticalCombat;
+using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.CombatThreats;
@@ -780,6 +781,254 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
     }
 
     [Fact]
+    public async Task Current_golden_package_is_feasible_repeatable_and_read_only()
+    {
+        RequireEvidenceOptIn("E8-F07");
+        var savePath = RequireSavePath("E8-F07");
+        var located = new TaiwuCatalogueSourcePathProvider().Resolve();
+        Assert.SkipUnless(
+            located.IsAvailable,
+            "E8-F07 skipped: installed GameData catalogue sources are "
+            + "unavailable.");
+        var guardedPaths = GuardedPaths(located.Paths!)
+            .Append(savePath)
+            .ToArray();
+        var before = await CaptureAsync(guardedPaths);
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var lookup = await provider
+                .GetRequiredService<ITargetLookupReader>()
+                .ReadAsync(
+                    new TargetLookupReadRequest(
+                        savePath,
+                        TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+            var target = lookup.Entries.Single(item =>
+                item.Kind == TargetLookupKind.StoryCharacter
+                && item.TemplateId
+                    == VerifiedExactTargetEncounterRuleSets
+                        .LaterMagicSoundTargetTemplateId);
+            var diskSnapshot = await provider
+                .GetRequiredService<ICombatSnapshotReader>()
+                .ReadAsync(
+                    new CombatSnapshotReadRequest(
+                        savePath,
+                        target.CharacterId,
+                        language: TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+            Assert.Equal(
+                TargetEncounterBindingStatus.Complete,
+                ResolveCurrentLaterPhase(
+                    lookup.GameDataVersion!,
+                    target.TemplateId,
+                    diskSnapshot).Status);
+
+            int[] referenceSkillIds =
+            [
+                604, 616, 147, 150, 295, 303, 265, 267
+            ];
+            var candidateSkillIds = referenceSkillIds.Append(686).ToArray();
+            var learnedById = diskSnapshot.Player.LearnedSkills
+                .ToDictionary(item => item.SkillId);
+            Assert.All(candidateSkillIds, skillId =>
+                Assert.True(learnedById.ContainsKey(skillId)));
+            var screenBudgets = new SlotBudgetSet(
+            [
+                new SlotBudget(SkillCategory.Neigong, 0, 6),
+                new SlotBudget(SkillCategory.Attack, 0, 10),
+                new SlotBudget(SkillCategory.Agility, 0, 7),
+                new SlotBudget(SkillCategory.Defense, 0, 9),
+                new SlotBudget(SkillCategory.Assistance, 0, 4)
+            ]);
+            var player = new PlayerCombatSnapshot(
+                diskSnapshot.Player.CharacterId,
+                diskSnapshot.Player.DisplayName,
+                candidateSkillIds.Select(skillId => learnedById[skillId]),
+                new CombatLoadoutSnapshot([], [], [], [], []),
+                equipment: [],
+                screenBudgets,
+                diskSnapshot.Player.GenericSlotAllocation,
+                legendaryBookCostSlots: [],
+                legendaryBookCostAssignments: [],
+                diskSnapshot.Player.InnerPowerState);
+            var snapshot = new CombatSnapshot(
+                diskSnapshot.Metadata,
+                player,
+                diskSnapshot.Target,
+                diskSnapshot.Warnings);
+            var proposal = new TacticalExecutionProposal(
+                new CombatRequirementContext(
+                    equippedWeaponTypeIds: [6, 9],
+                    trickCounts: [],
+                    SnapshotValue<int>.Available(5),
+                    resources:
+                    [
+                        Resource(CombatResourceKind.Stance, 100),
+                        Resource(CombatResourceKind.Breath, 100),
+                        Resource(CombatResourceKind.DefenseTrueQi, 3)
+                    ],
+                    unlockedWeaponTypeIds: [6, 9],
+                    equippedSkillIds: referenceSkillIds,
+                    activeDefenseSkillId: 295,
+                    activeAgilitySkillId: 147,
+                    confirmedManualConditionCodes:
+                    [
+                        "USABLE_BLADE_TRICKS",
+                        "CHARM_INPUT_AVAILABLE"
+                    ]),
+                screenBudgets,
+                diskSnapshot.Player.GenericSlotAllocation,
+                legendaryCostAssignments: []);
+            var rules = VerifiedTacticalCombatRuleSets
+                .CurrentLaterMagicSound;
+            var resolution = rules.Resolve(
+                ExpectedGameDataVersion,
+                rules.SupportedTargetGoalCodes,
+                CurrentRuleEvidence("E8-F07"));
+            var context = TacticalExecutionContextProjector.Project(
+                snapshot,
+                resolution,
+                proposal,
+                TestContext.Current.CancellationToken);
+            var discovery = TacticalCandidateDiscovery.Discover(
+                player,
+                context,
+                resolution,
+                cancellationToken: TestContext.Current.CancellationToken);
+            var searchRequest = new TacticalLoadoutSearchRequest(
+                player,
+                context,
+                resolution,
+                discovery,
+                new TacticalSearchBounds(
+                    maximumOptions: 8,
+                    maximumExploredCombinations: 256,
+                    maximumElapsed: TimeSpan.FromSeconds(30),
+                    maximumResults: 256));
+            var clock = new ZeroElapsedTimeProvider();
+            var first = TacticalLoadoutSearch.Search(
+                searchRequest,
+                clock,
+                TestContext.Current.CancellationToken);
+            var repeated = TacticalLoadoutSearch.Search(
+                searchRequest,
+                clock,
+                TestContext.Current.CancellationToken);
+
+            Assert.True(first.IsComplete);
+            Assert.Equal(
+                256,
+                first.Coverage.ExploredCombinationCount);
+            Assert.Equal(first.SemanticFingerprint, repeated.SemanticFingerprint);
+            var rejectedWhisk = AtlasEntry(
+                discovery,
+                686,
+                PracticeDirection.Reverse);
+            Assert.Equal(
+                TacticalCandidateAdmissionState.Infeasible,
+                rejectedWhisk.AdmissionState);
+            Assert.Contains(rejectedWhisk.Gates, gate =>
+                gate.Kind == TacticalCandidateGateKind.InnerPowerBacklash
+                && gate.State == TacticalCandidateGateState.Failed
+                && gate.ReasonIdentity == "INNER_POWER_BACKLASH_ON_USE");
+            var reference = first.FeasibleResults.SingleOrDefault(candidate =>
+                candidate.SelectedCandidates.Select(item => item.SkillId)
+                    .Order()
+                    .SequenceEqual(referenceSkillIds.Order()));
+            Assert.True(
+                reference is not null,
+                "Reference missing; admitted=" + string.Join(',',
+                    discovery.Entries.Where(item => item.IsAdmitted)
+                        .Select(item => $"{item.SkillId}:{item.Direction}"))
+                + "; closest=" + string.Join(';',
+                    first.FeasibleResults
+                        .OrderByDescending(item =>
+                            item.SelectedCandidates.Length)
+                        .Take(8)
+                        .Select(item => string.Join(',',
+                            item.SelectedCandidates.Select(candidate =>
+                                $"{candidate.SkillId}:{candidate.Direction}")))));
+            Assert.Equal(
+                TacticalPackageResolutionState.Complete,
+                reference!.Package.Recovery.State);
+            Assert.Equal(3, reference.Package.Recovery.CastSteps.Length);
+            Assert.Equal(
+                new TacticalCandidateIdentity(147, PracticeDirection.Direct),
+                reference.Package.ActiveAgilityRotation.PrimaryCandidate);
+            Assert.Equal(
+                [new TacticalCandidateIdentity(150, PracticeDirection.Reverse)],
+                reference.Package.ActiveAgilityRotation.BackupCandidates);
+            Assert.Equal(
+                new TacticalCandidateIdentity(295, PracticeDirection.Reverse),
+                reference.Package.ActiveDefenseRotation.PrimaryCandidate);
+            Assert.Equal(
+                [new TacticalCandidateIdentity(303, PracticeDirection.Reverse)],
+                reference.Package.ActiveDefenseRotation.BackupCandidates);
+            var limits = new[] { 6, 9, 7, 8, 4 };
+            Assert.All(reference.Loadout.SlotBudgets.Values, budget =>
+                Assert.InRange(
+                    budget.Used.Value,
+                    0,
+                    limits[(int)budget.Category]));
+            Assert.All(referenceSkillIds, skillId =>
+                Assert.Contains(first.CandidateDecisions, decision =>
+                    decision.Identity.SkillId == skillId
+                    && decision.Decision
+                        == TacticalCandidateDecision.Admitted));
+
+            var layerEvidence = new TacticalEvidenceReference(
+                TacticalEvidenceSourceKind.VerifiedRule,
+                "E8-F07-LAYERED-MIND-PROTECTION",
+                ExpectedGameDataVersion,
+                VerifiedTacticalCombatRuleSets.RuleVersion,
+                "CURRENT_LATER_PHASE_COMPLETE");
+            var scoring = TacticalCombatScorer.Score(
+                new TacticalCombatScoringRequest(
+                    RecommendationPolicy.Balanced,
+                    searchRequest,
+                    first,
+                    [
+                        new TacticalLayeringProof(
+                            new TacticalCandidateIdentity(
+                                267,
+                                PracticeDirection.Direct),
+                            new TacticalCandidateIdentity(
+                                265,
+                                PracticeDirection.Reverse),
+                            new TacticalTransitionIdentity(
+                                "CURRENT_REVERSE_265_INCREASES_MIND_DEFENSE"),
+                            TacticalLayeringKind.SeparateMitigation,
+                            context.SemanticFingerprint,
+                            [layerEvidence],
+                            "SEPARATE_MITIGATIONS_ARE_NOT_INVULNERABILITY")
+                    ]),
+                TestContext.Current.CancellationToken);
+            Assert.True(Assert.Single(scoring.RankedCandidates, item =>
+                    item.Candidate.StableKey == reference.StableKey)
+                .Get(TacticalScoreComponentKind.LayeredProtection)
+                .NormalizedValue > 0);
+
+            output.WriteLine(
+                "E8-F07 current golden package: search=256/256; "
+                + "recoverySkill=616; recoveryCasts=3; "
+                + "rejected686=inner-power-backlash; used={0}; "
+                + "sourceHashesPreserved=true; guardedFiles={1}.",
+                string.Join('/', reference.Loadout.SlotBudgets.Values
+                    .Select(item => item.Used.Value)),
+                guardedPaths.Length);
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            Assert.Equal(before, after);
+        }
+    }
+
+    [Fact]
     public async Task Current_player_candidate_state_is_repeatable()
     {
         RequireEvidenceOptIn();
@@ -1173,4 +1422,11 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         long Length,
         DateTime LastWriteUtc,
         string Sha256);
+
+    private sealed class ZeroElapsedTimeProvider : TimeProvider
+    {
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp() => 0;
+    }
 }

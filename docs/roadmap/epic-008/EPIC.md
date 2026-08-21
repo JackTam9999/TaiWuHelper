@@ -430,10 +430,11 @@ source hashes prove non-interference.
 Technical, guarded representative, independent, and bilingual responsive
 verification are complete. The product owner approved completion on
 2026-08-21, as recorded in
-[E8-013](../../reviews/E8-013-manual-verification.md). The completed boundary
-remains the historical representative tactical vertical; current-version
-behavior and the broader anti-magic-sound loadout expansion remain separately
-evidence-gated in E8-F01 through E8-F07.
+[E8-013](../../reviews/E8-013-manual-verification.md). The originally approved
+boundary remains the historical representative tactical vertical. The
+separately evidence-gated current-version behavior and broader anti-magic-sound
+loadout expansion were subsequently completed in E8-F01 through E8-F07
+on 2026-08-22 without changing that approval history.
 
 ## Delivery reference
 

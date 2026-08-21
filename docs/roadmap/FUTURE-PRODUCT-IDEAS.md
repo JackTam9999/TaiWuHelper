@@ -372,7 +372,7 @@ mechanics, or claim a probability of victory.
 
 ### PI-013 — Current-version complete anti-magic-sound loadout expansion
 
-**Status:** Planned as a non-blocking post-Epic 8 follow-up in
+**Status:** Completed on 2026-08-22 as the non-blocking post-Epic 8 follow-up
 [E8-F01 through E8-F07](./epic-008/BACKLOG.md#planned-follow-up-backlog-after-epic-8).
 
 Extend Epic 8's historical representative tactical vertical to the newer
@@ -434,14 +434,14 @@ The product owner promoted and completed these discovery ideas:
 
 ### Current candidates after Epic 8 selection
 
-1. Current-version complete anti-magic-sound loadout expansion; Epic 8 and
-   E8-F01 through E8-F04 are complete, with package-aware search continuing in
-   E8-F05.
-2. Companion development planner.
-3. Library and book planning, assessed after the Epic 7 source boundary rather
+The current-version complete anti-magic-sound loadout expansion was completed
+through E8-F07 on 2026-08-22 and is no longer an open candidate.
+
+1. Companion development planner.
+2. Library and book planning, assessed after the Epic 7 source boundary rather
    than assumed to share its first assignment vertical.
-4. Version-aware observation, recommendation, and outcome persistence.
-5. Shareable recommendation card, which may remain a smaller enhancement
+3. Version-aware observation, recommendation, and outcome persistence.
+4. Shareable recommendation card, which may remain a smaller enhancement
    because copy and print foundations already exist.
 
 The companion and settlement ideas intentionally remain separate. They may
