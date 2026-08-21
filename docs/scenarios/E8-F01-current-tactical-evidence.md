@@ -31,7 +31,7 @@ if implementation changes despite unchanged IDs or text. The existing
 and the installed runtime must continue to return
 `UNSUPPORTED_GAME_DATA_RULE_CHAIN` until the exact target and minimum typed
 current-version rule set are both supplied. E8-F02 has since completed the
-exact-target gate; E8-F03 remains open.
+exact-target gate and E8-F03 has completed the typed-role gate.
 
 ## Read-only method
 

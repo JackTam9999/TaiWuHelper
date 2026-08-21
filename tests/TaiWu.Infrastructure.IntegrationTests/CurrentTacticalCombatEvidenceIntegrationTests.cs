@@ -10,6 +10,7 @@ using TaiWu.Application.Targets;
 using TaiWu.Domain.CombatSkills;
 using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.CombatThreats;
+using TaiWu.Domain.TacticalCombat;
 using TaiWu.Infrastructure.Catalogue;
 using TaiWu.Infrastructure.SaveGames;
 using Xunit;
@@ -448,6 +449,178 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
     }
 
     [Fact]
+    public async Task Current_tactical_role_atlas_is_exact_repeatable_and_read_only()
+    {
+        RequireEvidenceOptIn("E8-F03");
+        var savePath = RequireSavePath("E8-F03");
+        var located = new TaiwuCatalogueSourcePathProvider().Resolve();
+        Assert.SkipUnless(
+            located.IsAvailable,
+            "E8-F03 skipped: installed GameData catalogue sources are "
+            + "unavailable.");
+        var guardedPaths = GuardedPaths(located.Paths!)
+            .Append(savePath)
+            .ToArray();
+        var before = await CaptureAsync(guardedPaths);
+
+        try
+        {
+            await using var provider = new ServiceCollection()
+                .AddTaiwuInfrastructure()
+                .BuildServiceProvider();
+            var lookup = await provider
+                .GetRequiredService<ITargetLookupReader>()
+                .ReadAsync(
+                    new TargetLookupReadRequest(
+                        savePath,
+                        TaiwuLanguage.Chinese),
+                    TestContext.Current.CancellationToken);
+            var target = lookup.Entries.Single(item =>
+                item.Kind == TargetLookupKind.StoryCharacter
+                && item.TemplateId
+                    == VerifiedExactTargetEncounterRuleSets
+                        .LaterMagicSoundTargetTemplateId);
+            var reader = provider.GetRequiredService<ICombatSnapshotReader>();
+            var diskSnapshot = await reader.ReadAsync(
+                new CombatSnapshotReadRequest(
+                    savePath,
+                    target.CharacterId,
+                    language: TaiwuLanguage.Chinese),
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(
+                TargetEncounterBindingStatus.Complete,
+                ResolveCurrentLaterPhase(lookup.GameDataVersion!, target.TemplateId,
+                    diskSnapshot).Status);
+
+            var screenCapacities = new[] { 6, 10, 7, 9, 4 };
+            var screenBudgets = new SlotBudgetSet(
+                Enum.GetValues<SkillCategory>().Select(category =>
+                    new SlotBudget(
+                        category,
+                        SnapshotValue<int>.Unavailable(
+                            "E8-F03 screen evidence did not capture used slots."),
+                        screenCapacities[(int)category])));
+            var screen = new PlayerLoadoutObservation(
+                DateTimeOffset.UtcNow,
+                "E8-F03-CURRENT-SCREEN-LOADOUT",
+                diskSnapshot.Player.EquippedSkills,
+                diskSnapshot.Player.GenericSlotAllocation,
+                screenBudgets);
+            var snapshot = await reader.ReadAsync(
+                new CombatSnapshotReadRequest(
+                    savePath,
+                    target.CharacterId,
+                    screen,
+                    TaiwuLanguage.Chinese),
+                TestContext.Current.CancellationToken);
+            Assert.Equal(
+                screenCapacities,
+                snapshot.Player.SlotBudgets.Values.Select(item =>
+                    item.Capacity));
+
+            var rules = VerifiedTacticalCombatRuleSets
+                .CurrentLaterMagicSound;
+            var evidence = rules.Transitions
+                .SelectMany(item => item.EvidenceRequirements)
+                .Concat(rules.Roles.SelectMany(item =>
+                    item.EvidenceRequirements))
+                .DistinctBy(item => new
+                {
+                    item.Identity.Code,
+                    item.Scope,
+                    item.Source
+                })
+                .Select(item => new TacticalRuleEvidenceObservation(
+                    item.Identity,
+                    item.Scope,
+                    item.Source,
+                    TacticalRuleEvidenceDisposition.Confirmed,
+                    new TacticalEvidenceReference(
+                        item.Source,
+                        $"E8-F03-{item.Identity.Code}",
+                        ExpectedGameDataVersion,
+                        VerifiedTacticalCombatRuleSets.RuleVersion,
+                        "CURRENT_LATER_PHASE_COMPLETE")))
+                .ToArray();
+            var resolution = rules.Resolve(
+                ExpectedGameDataVersion,
+                rules.SupportedTargetGoalCodes,
+                evidence);
+            var context = TacticalExecutionContextProjector
+                .ProjectCurrentLoadout(
+                    snapshot,
+                    resolution,
+                    TestContext.Current.CancellationToken);
+            var first = TacticalCandidateDiscovery.Discover(
+                snapshot.Player,
+                context,
+                resolution,
+                cancellationToken: TestContext.Current.CancellationToken);
+            var second = TacticalCandidateDiscovery.Discover(
+                snapshot.Player,
+                context,
+                resolution,
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.Equal(first.SemanticFingerprint, second.SemanticFingerprint);
+            Assert.Equal(19, first.Entries.Count(item => item.Role is not null));
+            Assert.Equal(
+                TacticalCandidateAdmissionState.Admitted,
+                AtlasEntry(first, 267, PracticeDirection.Direct)
+                    .AdmissionState);
+            Assert.Equal(
+                TacticalCandidateAdmissionState.Infeasible,
+                AtlasEntry(first, 599, PracticeDirection.Reverse)
+                    .AdmissionState);
+            Assert.Equal(
+                TacticalCandidateSupportState.UnsupportedEffect,
+                AtlasEntry(first, 604, PracticeDirection.Direct)
+                    .SupportState);
+            Assert.Equal(
+                TacticalCandidateAdmissionState.UnknownContext,
+                AtlasEntry(first, 604, PracticeDirection.Reverse)
+                    .AdmissionState);
+            Assert.Contains(
+                AtlasEntry(first, 604, PracticeDirection.Reverse).Gates,
+                item => item.Kind
+                        == TacticalCandidateGateKind.ExecutionRequirements
+                    && item.State == TacticalCandidateGateState.Unknown);
+            Assert.DoesNotContain(
+                first.Entries.Where(item => item.Role?.Identity.Kind
+                    == TacticalRoleKind.Recovery),
+                item => item.AdmissionState
+                    == TacticalCandidateAdmissionState.Admitted);
+            Assert.All(
+                new[]
+                {
+                    TacticalCandidateDecision.Admitted,
+                    TacticalCandidateDecision.Rejected,
+                    TacticalCandidateDecision.Unsupported,
+                    TacticalCandidateDecision.Irrelevant
+                },
+                decision => Assert.Contains(
+                    first.Entries,
+                    item => item.Consideration.Decision == decision));
+
+            output.WriteLine(
+                "E8-F03 current tactical role atlas: roles=19; "
+                + "screenBudgets=6/10/7/9/4; decisions={0}; "
+                + "recoveryAdmitted=0; guardedFiles={1}.",
+                string.Join(',', first.Entries
+                    .GroupBy(item => item.Consideration.Decision)
+                    .OrderBy(item => item.Key)
+                    .Select(item => $"{item.Key}:{item.Count()}")),
+                guardedPaths.Length);
+        }
+        finally
+        {
+            var after = await CaptureAsync(guardedPaths);
+            Assert.Equal(before, after);
+        }
+    }
+
+    [Fact]
     public async Task Current_player_candidate_state_is_repeatable()
     {
         RequireEvidenceOptIn();
@@ -665,18 +838,67 @@ public sealed class CurrentTacticalCombatEvidenceIntegrationTests(
         $"{item} skipped: set {EvidenceVariable}=1 to verify the installed "
         + "current-version tactical evidence.");
 
-    private static string RequireSavePath()
+    private static string RequireSavePath(string item = "E8-F02")
     {
         var configured = Environment.GetEnvironmentVariable(SavePathVariable);
         Assert.SkipWhen(
             string.IsNullOrWhiteSpace(configured),
-            $"E8-F02 skipped: set {SavePathVariable} to a local Taiwu save.");
+            $"{item} skipped: set {SavePathVariable} to a local Taiwu save.");
         var path = Path.GetFullPath(configured!);
         Assert.SkipUnless(
             File.Exists(path),
-            $"E8-F02 skipped: {SavePathVariable} does not identify a file.");
+            $"{item} skipped: {SavePathVariable} does not identify a file.");
         return path;
     }
+
+    private static TargetEncounterPhaseResolution ResolveCurrentLaterPhase(
+        string gameDataVersion,
+        int? templateId,
+        CombatSnapshot snapshot)
+    {
+        Assert.NotNull(templateId);
+        Assert.True(snapshot.Target.EquippedSkills.IsAvailable);
+        var equippedIds = Enum.GetValues<SkillCategory>()
+            .SelectMany(category =>
+                snapshot.Target.EquippedSkills.Value.Get(category))
+            .Order()
+            .ToArray();
+        var learnedById = snapshot.Target.LearnedSkills.ToDictionary(
+            item => item.SkillId);
+        var signatures = equippedIds.Select(skillId =>
+        {
+            var skill = learnedById[skillId];
+            Assert.True(skill.Direction.IsAvailable);
+            var effect = skill.Direction.Value == PracticeDirection.Direct
+                ? skill.DirectEffectId
+                : skill.ReverseEffectId;
+            Assert.True(effect.IsAvailable);
+            return new TargetThreatSkillSignature(
+                skillId,
+                skill.Direction.Value,
+                effect.Value);
+        });
+        return ExactTargetEncounterPhaseResolver.Resolve(
+            VerifiedExactTargetEncounterRuleSets.CurrentLaterMagicSound,
+            new TargetEncounterPhaseObservation(
+                gameDataVersion,
+                [new(templateId.Value, new TargetEncounterEvidence(
+                    TargetEncounterEvidenceSource.SavedStoryTemplate,
+                    "E8-F03-CURRENT-SAVE-STORY-TEMPLATE",
+                    ExpectedGameDataVersion))],
+                TargetLoadoutCoverageKind.CompleteCurrentLoadout,
+                signatures,
+                new TargetEncounterEvidence(
+                    TargetEncounterEvidenceSource.SavedEquippedLoadout,
+                    "E8-F03-CURRENT-SAVE-EQUIPPED-LOADOUT",
+                    ExpectedGameDataVersion)));
+    }
+
+    private static TacticalCandidateDiscoveryEntry AtlasEntry(
+        TacticalCandidateDiscoveryResult atlas,
+        int skillId,
+        PracticeDirection direction) => atlas.Entries.Single(item =>
+            item.SkillId == skillId && item.Direction == direction);
 
     private static string[] ExpectedLines() => ExpectedDefinitionIdentities
         .Split('\n', StringSplitOptions.RemoveEmptyEntries)

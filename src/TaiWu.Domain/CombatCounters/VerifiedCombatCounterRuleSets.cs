@@ -11,6 +11,9 @@ public static class VerifiedCombatCounterRuleSets
     public static CombatCounterRuleSet Epic5TargetFamilies { get; } =
         CreateEpic5TargetFamilies();
 
+    public static CombatCounterRuleSet CurrentMagicSound { get; } =
+        CreateCurrentMagicSound();
+
     private static CombatCounterRuleSet CreateGoldenMagicSound()
     {
         var catalog = VerifiedCombatEffectCatalogs.GoldenAntiMagic;
@@ -157,6 +160,258 @@ public static class VerifiedCombatCounterRuleSets
                     + "target's outer resistance.")
             ]);
     }
+
+    private static CombatCounterRuleSet CreateCurrentMagicSound()
+    {
+        var catalog = VerifiedCombatEffectCatalogs.CurrentAntiMagic;
+        string[] mind =
+        [
+            "POSITIVE_MAGIC_SOUND_MIND_DAMAGE",
+            "DISTRACTION_MARK_ACCUMULATION",
+            "MIND_RESONANCE_CASCADE"
+        ];
+        string[] direct = [.. mind, "DIRECT_PRACTICE_PHASE_COVERAGE"];
+        string[] movement =
+        [
+            "TARGET_MOVEMENT_RANGE_PRESSURE",
+            "TARGET_CAST_SPEED_PRESSURE"
+        ];
+        return new CombatCounterRuleSet(
+            catalog.GameDataVersion,
+            [
+                CurrentCounter(
+                    "CURRENT_REVERSE_604_SUPPRESSION",
+                    direct,
+                    CombatCounterStrength.HardCounter,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 604, PracticeDirection.Reverse, 1064),
+                    ActiveAttackRequirements(604, 9, 100,
+                        "USABLE_BLADE_TRICKS")),
+                CurrentCounter(
+                    "CURRENT_REVERSE_686_RECOVERY",
+                    [.. mind, "DIRECT_PRACTICE_PHASE_COVERAGE"],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 686, PracticeDirection.Reverse, 1422),
+                    ActiveAttackRequirements(686, 6, 80,
+                        "USABLE_WHISK_TRICKS")),
+                CurrentCounter(
+                    "CURRENT_REVERSE_602_RECOVERY_CONTROL",
+                    [.. direct, .. movement],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 602, PracticeDirection.Reverse, 1062),
+                    ActiveAttackRequirements(602, 9, 80,
+                        "USABLE_BLADE_TRICKS")),
+                CurrentCounter(
+                    "CURRENT_REVERSE_616_RECOVERY_PRESSURE",
+                    direct,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 616, PracticeDirection.Reverse, 1251),
+                    ActiveAttackRequirements(616, 9, 60,
+                        "USABLE_BLADE_TRICKS")),
+                CurrentCounter(
+                    "CURRENT_REVERSE_599_RECOVERY_TRICKS",
+                    direct,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 599, PracticeDirection.Reverse, 1059),
+                    ActiveAttackRequirements(599, 9, 60,
+                        "USABLE_BLADE_TRICKS")),
+                CurrentCounter(
+                    "CURRENT_REVERSE_134_RESONANCE",
+                    ["MIND_RESONANCE_CASCADE"],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAgility,
+                    Effect(catalog, 134, PracticeDirection.Reverse, 973),
+                    [ActiveAgility(134)]),
+                CurrentCounter(
+                    "CURRENT_REVERSE_150_WEAPON_PARRY",
+                    movement,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAgility,
+                    Effect(catalog, 150, PracticeDirection.Reverse, 989),
+                    [ActiveAgility(150)]),
+                CurrentCounter(
+                    "CURRENT_REVERSE_151_CAST_SPEED_CONTROL",
+                    ["TARGET_CAST_SPEED_PRESSURE"],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAgility,
+                    Effect(catalog, 151, PracticeDirection.Reverse, 990),
+                    [ActiveAgility(151)]),
+                CurrentCounter(
+                    "CURRENT_DIRECT_147_LONG_RANGE_HIT_CONTROL",
+                    movement,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAgility,
+                    Effect(catalog, 147, PracticeDirection.Direct, 260),
+                    [
+                        ActiveAgility(147),
+                        new RangeRequirement(
+                            5,
+                            null,
+                            CombatRequirementCriticality.Hard,
+                            "E8-F01:DIRECT_147_RANGE")
+                    ]),
+                CurrentCounter(
+                    "CURRENT_DIRECT_148_ADVANCE_COUNTER",
+                    movement,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAgility,
+                    Effect(catalog, 148, PracticeDirection.Direct, 261),
+                    [
+                        ActiveAgility(148),
+                        Manual("USABLE_WEAPON_ATTACK",
+                            "E8-F01:DIRECT_148_WEAPON")
+                    ]),
+                CurrentCounter(
+                    "CURRENT_REVERSE_295_HINDRANCE_DEFENSE",
+                    mind,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveDefense,
+                    Effect(catalog, 295, PracticeDirection.Reverse, 919),
+                    [
+                        ActiveDefense(295,
+                            "E8-F01:REVERSE_295_ACTIVE_DEFENSE"),
+                        new ResourceRequirement(
+                            CombatResourceKind.DefenseTrueQi,
+                            3,
+                            CombatRequirementCriticality.Hard,
+                            "E8-F01:REVERSE_295_DEFENSE_TRUE_QI")
+                    ]),
+                CurrentCounter(
+                    "CURRENT_REVERSE_303_MIND_MARK_CONVERSION",
+                    mind,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveDefense,
+                    Effect(catalog, 303, PracticeDirection.Reverse, 927),
+                    [ActiveDefense(303,
+                        "E8-F01:REVERSE_303_ACTIVE_DEFENSE")]),
+                CurrentCounter(
+                    "CURRENT_DIRECT_2_DAMAGE_REDUCTION",
+                    [.. mind, .. movement],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveDefense,
+                    Effect(catalog, 2, PracticeDirection.Direct, 1739),
+                    [ActiveDefense(2,
+                        "E8-F01:DIRECT_2_ACTIVE_DEFENSE")]),
+                CurrentCounter(
+                    "CURRENT_DIRECT_289_COUNTER_PRESSURE",
+                    movement,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveDefense,
+                    Effect(catalog, 289, PracticeDirection.Direct, 187),
+                    [
+                        ActiveDefense(289,
+                            "E8-F01:DIRECT_289_ACTIVE_DEFENSE"),
+                        Manual("SUCCESSFUL_WEAPON_COUNTER",
+                            "E8-F01:DIRECT_289_COUNTER")
+                    ]),
+                CurrentCounter(
+                    "CURRENT_DIRECT_267_MARK_DURATION",
+                    ["DISTRACTION_MARK_ACCUMULATION",
+                        "MIND_RESONANCE_CASCADE"],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.EquippedPassive,
+                    Effect(catalog, 267, PracticeDirection.Direct, 165),
+                    [Passive(267, "current-direct-267-equipped")]),
+                CurrentCounter(
+                    "CURRENT_REVERSE_265_MIND_DEFENSE",
+                    mind,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.EquippedPassive,
+                    Effect(catalog, 265, PracticeDirection.Reverse, 889),
+                    [
+                        Passive(265, "current-reverse-265-equipped"),
+                        Manual("CHARM_INPUT_AVAILABLE",
+                            "E8-F01:REVERSE_265_CHARM")
+                    ]),
+                CurrentCounter(
+                    "CURRENT_REVERSE_280_CLOSE_AVOIDANCE",
+                    [.. mind, .. movement],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.EquippedPassive,
+                    Effect(catalog, 280, PracticeDirection.Reverse, 904),
+                    [
+                        Passive(280, "current-reverse-280-equipped"),
+                        new RangeRequirement(
+                            null,
+                            4,
+                            CombatRequirementCriticality.Hard,
+                            "E8-F01:REVERSE_280_RANGE")
+                    ]),
+                CurrentCounter(
+                    "CURRENT_DIRECT_252_MOBILITY_SUSTAIN",
+                    movement,
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.EquippedPassive,
+                    Effect(catalog, 252, PracticeDirection.Direct, 150),
+                    [Passive(252, "current-direct-252-equipped")]),
+                CurrentCounter(
+                    "CURRENT_REVERSE_624_POWER_REDUCTION",
+                    ["POSITIVE_MAGIC_SOUND_MIND_DAMAGE",
+                        "DISTRACTION_MARK_ACCUMULATION"],
+                    CombatCounterStrength.Mitigation,
+                    CombatCounterActivationTiming.ActiveAttack,
+                    Effect(catalog, 624, PracticeDirection.Reverse, 1234),
+                    ActiveAttackRequirements(624, 9, 80,
+                        "USABLE_BLADE_TRICKS"))
+            ]);
+    }
+
+    private static CombatCounterRule CurrentCounter(
+        string code,
+        IEnumerable<string> goals,
+        CombatCounterStrength strength,
+        CombatCounterActivationTiming activation,
+        CombatEffectCatalogEntry effect,
+        IEnumerable<CombatRequirement> requirements) => new(
+        code,
+        goals,
+        strength,
+        activation,
+        effect,
+        requirements,
+        "Exact current-version role contract; live conditional values remain "
+        + "requirements rather than inferred facts.");
+
+    private static CombatRequirement[] ActiveAttackRequirements(
+        int skillId,
+        int weaponSubtype,
+        int stanceBreathCost,
+        string trickCode) =>
+    [
+        new WeaponRequirement(
+            weaponSubtype,
+            CombatRequirementCriticality.Hard,
+            $"E8-F01:SKILL_{skillId}:WEAPON"),
+        new ResourceRequirement(
+            CombatResourceKind.Stance,
+            stanceBreathCost,
+            CombatRequirementCriticality.Hard,
+            $"E8-F01:SKILL_{skillId}:STANCE"),
+        new ResourceRequirement(
+            CombatResourceKind.Breath,
+            stanceBreathCost,
+            CombatRequirementCriticality.Hard,
+            $"E8-F01:SKILL_{skillId}:BREATH"),
+        Manual(trickCode, $"E8-F01:SKILL_{skillId}:TRICKS")
+    ];
+
+    private static SkillActivationRequirement ActiveAgility(int skillId) =>
+        new(
+            skillId,
+            SkillActivationState.ActiveAgility,
+            CombatRequirementCriticality.Hard,
+            $"E8-F01:SKILL_{skillId}:ACTIVE_AGILITY");
+
+    private static ManualConfirmationRequirement Manual(
+        string code,
+        string evidence) => new(
+        code,
+        CombatRequirementCriticality.Hard,
+        evidence);
 
     private static SkillActivationRequirement Passive(
         int skillId,

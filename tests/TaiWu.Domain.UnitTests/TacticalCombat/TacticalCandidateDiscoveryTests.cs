@@ -42,11 +42,12 @@ public sealed class TacticalCandidateDiscoveryTests
             TacticalCandidateAdmissionState.RetainedOnly,
             retained.AdmissionState);
         Assert.Equal(
-            TacticalCandidateSupportState.UnsupportedEffect,
+            TacticalCandidateSupportState.IrrelevantSkill,
             retained.SupportState);
         Assert.Equal(
-            TacticalCandidateDecision.Unsupported,
+            TacticalCandidateDecision.Irrelevant,
             retained.Consideration.Decision);
+        Assert.Equal("CURRENT_RETENTION_ONLY", retained.Consideration.ReasonIdentity);
     }
 
     [Fact]
@@ -318,6 +319,46 @@ public sealed class TacticalCandidateDiscoveryTests
     }
 
     [Fact]
+    public void Current_loadout_uses_saved_legendary_cost_assignment()
+    {
+        var skill = Skill(
+            604,
+            SkillCategory.Attack,
+            mastered: false);
+        var slot = new LegendaryBookCostSlot(
+            "book:slot:shouzhi",
+            new LegendaryBookCostRule(
+                LegendaryBookCostEffect.Shouzhi,
+                SnapshotDataSource.Save,
+                "save:legendary-book:rule"));
+        var assignment = new LegendaryBookCostAssignment(
+            slot,
+            skill.SkillId,
+            skill.Category,
+            LegendaryBookAssignmentOrigin.Save,
+            "save:legendary-book:assignment");
+        var fixture = Fixture(
+            [skill],
+            equippedSkillIds: [skill.SkillId],
+            useCurrentLoadoutBaseline: true,
+            legendaryBookCostSlots: [slot],
+            legendaryBookCostAssignments: [assignment]);
+
+        var entry = Entry(
+            Discover(fixture),
+            skill.SkillId,
+            PracticeDirection.Reverse);
+
+        Assert.True(entry.EffectiveCost.IsAvailable);
+        Assert.Equal(1, entry.EffectiveCost.Value);
+        AssertGate(
+            entry,
+            TacticalCandidateGateKind.EffectiveCost,
+            TacticalCandidateGateState.Passed,
+            "EFFECTIVE_COST_VERIFIED");
+    }
+
+    [Fact]
     public void Enumeration_order_and_display_text_do_not_change_result()
     {
         var first = Fixture(
@@ -422,7 +463,11 @@ public sealed class TacticalCandidateDiscoveryTests
         IEnumerable<int>? equippedSkillIds = null,
         CombatSkillElement? backlashElement = CombatSkillElement.Fire,
         string? gameDataVersion = null,
-        bool configureKnownActiveRoles = true)
+        bool configureKnownActiveRoles = true,
+        bool useCurrentLoadoutBaseline = false,
+        IEnumerable<LegendaryBookCostSlot>? legendaryBookCostSlots = null,
+        IEnumerable<LegendaryBookCostAssignment>?
+            legendaryBookCostAssignments = null)
     {
         var skillValues = skills.ToArray();
         var equipped = (equippedSkillIds ?? []).ToHashSet();
@@ -452,8 +497,9 @@ public sealed class TacticalCandidateDiscoveryTests
             equipment: [],
             Budgets(),
             new GenericSlotAllocation(2, 1, 1, 0, 0),
-            legendaryBookCostSlots: [],
-            legendaryBookCostAssignments: [],
+            legendaryBookCostSlots: legendaryBookCostSlots ?? [],
+            legendaryBookCostAssignments:
+                legendaryBookCostAssignments ?? [],
             SnapshotValue<InnerPowerStateSnapshot>.Available(
                 new InnerPowerStateSnapshot(
                     1,
@@ -504,11 +550,16 @@ public sealed class TacticalCandidateDiscoveryTests
             Budgets(),
             new GenericSlotAllocation(2, 1, 1, 0, 0),
             legendaryCostAssignments: []);
-        var context = TacticalExecutionContextProjector.Project(
-            snapshot,
-            resolution,
-            proposal,
-            TestContext.Current.CancellationToken);
+        var context = useCurrentLoadoutBaseline
+            ? TacticalExecutionContextProjector.ProjectCurrentLoadout(
+                snapshot,
+                resolution,
+                TestContext.Current.CancellationToken)
+            : TacticalExecutionContextProjector.Project(
+                snapshot,
+                resolution,
+                proposal,
+                TestContext.Current.CancellationToken);
         return new FixtureData(snapshot, resolution, context);
     }
 

@@ -59,14 +59,16 @@ Support and admission are independent:
 
 | Dimension | States |
 |---|---|
-| Support | Verified role, unsupported effect, unsupported GameData version |
+| Support | Verified role, irrelevant skill, unsupported effect, unsupported GameData version |
 | Admission | Admitted, retained only, infeasible, unknown context, unsupported |
 
 A currently equipped skill with no target-specific tactical role is
-`RetainedOnly`; it is not evidence that the skill has tactical value. The core
-E8-002 `TacticalCandidateConsideration` remains the search-facing decision:
-admitted maps to `Admitted`, a failed hard gate maps to `Rejected`, and unknown,
-retained-only, or unsupported entries map to `Unsupported`.
+`RetainedOnly`; it is not evidence that the skill has tactical value. A skill
+with no role in either direction is `IrrelevantSkill`, while an exact known
+role requested in the opposite direction is `UnsupportedEffect`. The core
+E8-002 consideration maps exact admission to `Admitted`, failed hard gates to
+`Rejected`, absent target roles to `Irrelevant`, and unresolved live context or
+unsupported exact semantics to `Unsupported`.
 
 Unsupported effects remain visible with their exact skill and direction. A
 role verified only for the opposite direction reports
@@ -80,6 +82,8 @@ historical role projection and admits nothing.
 - typed role identity and purpose;
 - exact skill ID, direction, and raw effect ID;
 - transition timing;
+- explicit equipped-passive, active, persistent, switching or opening use
+  kinds;
 - the complete typed mechanic set;
 - exact selected target-goal and transition identities;
 - limitation identity; and
@@ -115,9 +119,11 @@ version evidence cannot become a generic candidate.
 
 Mastery is not invented as a universal prerequisite: verified unmastered state
 can pass while producing the unreduced cost. Unknown mastery blocks cost and
-admission. Cost uses an explicit proposed legendary assignment, explicitly no
+admission. Cost uses an explicit proposed legendary assignment, the
+saved/current-screen assignment for a current-loadout baseline, explicitly no
 assignment, or the proof that no legendary cost slot exists. A configurable
-assignment that was not supplied remains unknown.
+assignment that was not supplied remains unknown. Current assignments are
+never passed to the proposed-assignment calculator.
 
 Shared counter requirements are evaluated against proposed facts without
 turning a missing set into empty. Equipped-passive, active-defense,
@@ -160,3 +166,8 @@ Application tests prove the context and discovery share exactly one source
 read. Architecture tests include candidate files in the mutation, persistence,
 network, game-control, and unbounded-enumeration scan and forbid raw atlas
 display properties in the discovery result.
+
+Search converts preclassified irrelevant atlas entries into explicit
+`IrrelevantToTarget` pruning records so coverage counts and terminal decision
+collections remain one-to-one. Dominance still requires a separate explicit
+same-context proof.

@@ -224,6 +224,14 @@ for the exact global combat, reset, agility, and magic-sound types used by the
 phase model. Both checks guard every inspected source and do not instantiate
 effects or invoke handlers.
 
-E8-F02 therefore supplies the exact target boundary. The installed runtime
-still remains unsupported until E8-F03 supplies the typed minimum tactical
-role set.
+The sixth test binds that complete E8-F02 phase to the 19-role E8-F03 current
+rule set, overlays the newer confirmed `6/10/7/9/4` screen capacities, and
+discovers the full learned Direct/Reverse atlas twice. It verifies deterministic
+admitted, infeasible, irrelevant and unsupported outcomes, plus the rule that
+no Reverse `604` recovery cast is admitted while live trick/resource evidence
+is absent. Used-slot totals not present in the screen evidence remain
+unavailable.
+
+E8-F02 therefore supplies the exact target boundary and E8-F03 supplies the
+typed minimum tactical-role set. E8-F04 remains responsible for the complete
+live current/proposed execution context.

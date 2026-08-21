@@ -92,3 +92,14 @@ Epic 8 wraps six of these exact rules with causal transitions, narrower
 exact-target goals, evidence prerequisites, execution costs, and recovery
 limitations. It does not modify or name-match the shared counter catalogue.
 See [Versioned tactical transition and skill-role rules](./TACTICAL-COMBAT-RULES.md).
+
+## Current E8-F03 counter set
+
+`VerifiedCombatCounterRuleSets.CurrentMagicSound` is separate from the golden
+historical set and contains the 19 exact current roles. Its requirements remain
+typed: Blade subtype `9`, Whisk subtype `6`, stance/breath costs, active agility
+or defense identity, equipped-passive identity, distance bounds, defense true
+Qi, and manual weapon-trick or conditional confirmations. A manual
+confirmation evaluates `Unknown`, so the counter is not accessible until the
+live condition is supplied. In particular, the four Reverse lock-recovery
+attacks are roles but not automatically executable recovery steps.

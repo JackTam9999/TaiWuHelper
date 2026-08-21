@@ -175,11 +175,21 @@ public sealed class TacticalCandidateConsideration
         switch (Decision)
         {
             case TacticalCandidateDecision.Admitted:
-            case TacticalCandidateDecision.Irrelevant:
                 if (Roles.IsEmpty || !allSatisfied || DominatedBy is not null)
                 {
                     throw new ArgumentException(
-                        "An admitted or irrelevant candidate requires roles, satisfied requirements, and no dominator.");
+                        "An admitted candidate requires roles, satisfied requirements, and no dominator.");
+                }
+
+                break;
+            case TacticalCandidateDecision.Irrelevant:
+                if (DominatedBy is not null
+                    || (!Roles.IsEmpty && !allSatisfied))
+                {
+                    throw new ArgumentException(
+                        "An irrelevant candidate requires either no relevant "
+                        + "role or a feasible role proven irrelevant to the "
+                        + "target, and no dominator.");
                 }
 
                 break;

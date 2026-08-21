@@ -88,3 +88,18 @@ Epic 8 reuses these exact entries through versioned tactical role rules. Raw
 names and descriptions remain display evidence and are never parsed to create
 a transition or role. See
 [Versioned tactical transition and skill-role rules](./TACTICAL-COMBAT-RULES.md).
+
+## Current E8-F03 scope
+
+`VerifiedCombatEffectCatalogs.CurrentAntiMagic` is a separate 19-entry catalog
+for exact GameData product version
+`1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20`. It covers the precise
+direction/effect identities for skills `2`, `134`, `147`, `148`, `150`, `151`,
+`252`, `265`, `267`, `280`, `289`, `295`, `303`, `599`, `602`, `604`, `616`,
+`624`, and `686`. The typed mechanics include Direct-practice suppression and
+self-lock recovery, weapon/range/cast control, active-defense mitigation,
+mind-mark handling, mobility support, and attack-power reduction.
+
+This current catalog does not replace or fall back to the historical catalog.
+Its full role mapping, fingerprint and guarded evidence boundary are recorded
+in [E8-F03 current tactical role atlas](../scenarios/E8-F03-current-tactical-role-atlas.md).

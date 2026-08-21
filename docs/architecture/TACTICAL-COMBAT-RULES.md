@@ -8,19 +8,19 @@
 | Domain contract | [Tactical combat Domain](./TACTICAL-COMBAT-DOMAIN.md) |
 | Evidence boundary | [E8-000 tactical evidence](../scenarios/E8-000-tactical-combat-evidence.md) |
 | Rule version | `TACTICAL_COMBAT_RULES@1.0.0` |
-| Supported GameData | `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a` |
+| Supported GameData | Historical `1.0.0+68032f25c1d54dd4fb8fc65b7156e95bf87ec99a`; current exact-phase `1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20` |
 
 ## Purpose
 
-Encode only the causal relationships and exact skill roles authorized by
-E8-000 for the historical synthetic magic-sound vertical. The rules extend the
-existing effect catalogue, combat counters, target-threat taxonomy, and target
-playbook goals. They do not derive mechanics from names, descriptions, nearby
-IDs, archetype similarity, or the newer installed configuration.
+Encode only the causal relationships and exact skill roles authorized by the
+historical E8-000 evidence or the current E8-F01 through E8-F03 evidence. The
+rules extend the existing effect catalogue, combat counters, target-threat
+taxonomy, and target playbook goals. They do not derive mechanics from names,
+descriptions, nearby IDs, archetype similarity, or another GameData version.
 
-The installed `1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20`
-version is explicitly unsupported. Unchanged IDs in that version produce no
-nearest or stale tactical rules.
+The current installed version is supported only by
+`CurrentLaterMagicSound`, for the exact E8-F02 phase goals and 19 E8-F03
+roles. Historical rules never fall through into that version.
 
 ## Rule-set aggregate
 
@@ -33,6 +33,16 @@ nearest or stale tactical rules.
 - 14 `TacticalTransitionRule` definitions;
 - 7 `TacticalSkillRoleRule` definitions; and
 - an uppercase SHA-256 semantic fingerprint.
+
+`VerifiedTacticalCombatRuleSets.CurrentLaterMagicSound` separately contains:
+
+- semantic rule version `1.0.0` and one exact current GameData version;
+- six exact target-goal codes, excluding the absent historical reset loop;
+- 21 typed transitions and 19 exact skill roles;
+- seven explicit use kinds covering passive, active, switching, opening and
+  persistent behavior; and
+- fingerprint
+  `64051C1234CECDFDCE070134FDA0380826154D16C1F171B52B6F7FE1C64ECD5D`.
 
 `TacticalCombatRuleSet` copies, validates, deduplicates, and canonically orders
 all definitions. Every child rule must use the rule-set semantic version,
@@ -105,6 +115,14 @@ can expose only selected goal codes already covered by that counter. It also
 validates exact effect identity, complete mechanics, and compatible activation
 timing. Reverse `611` remains a conditional exact role without being added to
 the broad shared counter catalogue.
+
+The current set uses its own exact current effect catalogue and counter set.
+It includes Reverse `604`, four conditional Reverse recovery attacks, five
+agility/control roles, four active-defense roles, four equipped-passive roles,
+and Reverse `624` as an opening/persistent alternative. Weapon subtype,
+stance, breath, distance, defense true Qi, active-role, equipped-passive and
+manual trick/condition requirements are typed. Manual confirmation always
+evaluates `Unknown`; the role's existence is not proof that it is executable.
 
 ## Evidence prerequisites
 

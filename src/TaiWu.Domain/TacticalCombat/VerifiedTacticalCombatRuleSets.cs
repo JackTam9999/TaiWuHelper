@@ -17,12 +17,19 @@ public static class VerifiedTacticalCombatRuleSets
     public static TacticalCombatRuleSet HistoricalMagicSound { get; } =
         CreateHistoricalMagicSound();
 
+    public static TacticalCombatRuleSet CurrentLaterMagicSound { get; } =
+        CreateCurrentLaterMagicSound();
+
     private const string MindPressure =
         "POSITIVE_MAGIC_SOUND_MIND_DAMAGE";
     private const string Distraction =
         "DISTRACTION_MARK_ACCUMULATION";
     private const string Resonance = "MIND_RESONANCE_CASCADE";
     private const string Reset = "DEFEAT_MARK_RESET_LOOP";
+    private const string DirectCoverage =
+        "DIRECT_PRACTICE_PHASE_COVERAGE";
+    private const string Movement = "TARGET_MOVEMENT_RANGE_PRESSURE";
+    private const string Speed = "TARGET_CAST_SPEED_PRESSURE";
 
     private static TacticalCombatRuleSet CreateHistoricalMagicSound()
     {
@@ -378,6 +385,618 @@ public static class VerifiedTacticalCombatRuleSets
             transitions,
             roles);
     }
+
+    private static TacticalCombatRuleSet CreateCurrentLaterMagicSound()
+    {
+        var evidence = CurrentEvidence();
+        var coreExact = CurrentExact("CURRENT_LATER_PHASE_COMPLETE");
+        var mindExact = CurrentExact("CURRENT_TARGET_MIND_CHAIN");
+        var directExact = CurrentExact(
+            "CURRENT_TARGET_FULL_DIRECT_COVERAGE");
+        var movementExact = CurrentExact(
+            "CURRENT_TARGET_MOVEMENT_PRESSURE");
+        var speedExact = CurrentExact("CURRENT_TARGET_SPEED_PRESSURE");
+        var transitions = new[]
+        {
+            CurrentTransition(
+                "CURRENT_DIRECT_MAGIC_CAST_CREATES_MIND_PRESSURE",
+                TacticalRulePurpose.DirectMagicMindPressure,
+                TacticalTransitionTiming.DuringCast,
+                [Fact(TacticalFactKind.TargetSkillPhase,
+                    "CURRENT_TARGET_DIRECT_MAGIC_CAST_ACTIVE")],
+                [Fact(TacticalFactKind.Other,
+                    "CURRENT_PLAYER_MAGIC_MIND_PRESSURE")],
+                [MindPressure],
+                [coreExact, mindExact,
+                    CurrentBroad("CURRENT_MAGIC_SOUND_EFFECTS_VERIFIED")],
+                "NO_HIT_STRENGTH_OR_FREQUENCY_PREDICTION",
+                evidence),
+            CurrentTransition(
+                "CURRENT_MIND_PRESSURE_CREATES_DISTRACTION_MARK",
+                TacticalRulePurpose.DistractionMarkAccumulation,
+                TacticalTransitionTiming.OnObservedState,
+                [Fact(TacticalFactKind.Other,
+                    "CURRENT_PLAYER_MAGIC_MIND_PRESSURE")],
+                [Fact(TacticalFactKind.Mark,
+                    "CURRENT_PLAYER_DISTRACTION_MARK_PRESENT")],
+                [Distraction, Resonance],
+                [mindExact,
+                    CurrentBroad("CURRENT_MIND_MARK_CHAIN_VERIFIED")],
+                "LIVE_MARK_COUNT_REQUIRES_OBSERVATION",
+                evidence),
+            CurrentTransition(
+                "CURRENT_FIRST_MARK_STARTS_MIND_RHYTHM",
+                TacticalRulePurpose.MindResonanceCountdown,
+                TacticalTransitionTiming.OnObservedState,
+                [Fact(TacticalFactKind.Mark,
+                    "CURRENT_PLAYER_DISTRACTION_MARK_PRESENT")],
+                [Fact(TacticalFactKind.Resonance,
+                    "CURRENT_PLAYER_MIND_RHYTHM_ACTIVE")],
+                [Resonance],
+                [mindExact,
+                    CurrentBroad("CURRENT_MIND_RHYTHM_VERIFIED")],
+                "LIVE_RHYTHM_COUNT_REQUIRES_OBSERVATION",
+                evidence),
+            CurrentTransition(
+                "CURRENT_MIND_RHYTHM_ZERO_STARTS_UPHEAVAL",
+                TacticalRulePurpose.MindResonanceCascade,
+                TacticalTransitionTiming.OnObservedState,
+                [Fact(TacticalFactKind.Resonance,
+                    "CURRENT_PLAYER_MIND_RHYTHM_ZERO")],
+                [Fact(TacticalFactKind.Resonance,
+                    "CURRENT_PLAYER_MIND_UPHEAVAL_ACTIVE")],
+                [Resonance],
+                [mindExact,
+                    CurrentBroad("CURRENT_MIND_UPHEAVAL_VERIFIED")],
+                "NO_ELAPSED_TIME_OR_DURATION_SIMULATION",
+                evidence),
+            CurrentTransition(
+                "CURRENT_REVERSE_604_SUPPRESSES_DIRECT_PRACTICE",
+                TacticalRulePurpose.CastSuppression,
+                TacticalTransitionTiming.DuringCast,
+                [Fact(TacticalFactKind.TargetSkillPhase,
+                    "CURRENT_TARGET_DIRECT_PRACTICE_ACTIVE")],
+                [Fact(TacticalFactKind.TargetSkillPhase,
+                    "CURRENT_TARGET_DIRECT_PRACTICE_SUPPRESSED")],
+                [MindPressure, Distraction, Resonance, DirectCoverage],
+                [directExact,
+                    CurrentBroad("CURRENT_REVERSE_604_EFFECT_VERIFIED")],
+                "EXACT_REVERSE_DIRECTION_AND_CAST_REQUIRED",
+                evidence),
+            CurrentTransition(
+                "CURRENT_REVERSE_604_APPLIES_THREE_LAYER_LOCK",
+                TacticalRulePurpose.DirectPracticeSelfLock,
+                TacticalTransitionTiming.AfterCast,
+                [Fact(TacticalFactKind.PlayerReadiness,
+                    "CURRENT_PLAYER_REVERSE_604_COMPLETED")],
+                [Fact(TacticalFactKind.TemporaryLockout,
+                    "CURRENT_PLAYER_DIRECT_LOCK_THREE_LAYERS")],
+                [MindPressure, Distraction, Resonance, DirectCoverage],
+                [CurrentBroad("CURRENT_REVERSE_604_EFFECT_VERIFIED")],
+                "THREE_REVERSE_CASTS_REQUIRED_FOR_RECOVERY",
+                evidence),
+            CurrentTransition(
+                "CURRENT_FEASIBLE_REVERSE_CAST_REMOVES_LOCK_LAYER",
+                TacticalRulePurpose.DirectPracticeLockRecovery,
+                TacticalTransitionTiming.AfterManualAction,
+                [Fact(TacticalFactKind.PlayerReadiness,
+                    "CURRENT_PLAYER_FEASIBLE_REVERSE_CAST_COMPLETED")],
+                [Fact(TacticalFactKind.TemporaryLockout,
+                    "CURRENT_PLAYER_DIRECT_LOCK_LAYER_REMOVED")],
+                [MindPressure, Distraction, Resonance, DirectCoverage],
+                [CurrentBroad("CURRENT_REVERSE_CAST_RECOVERY_VERIFIED")],
+                "WEAPON_TRICK_RESOURCE_AND_DIRECTION_GATES_APPLY",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_134_SHORTENS_MIND_RHYTHM",
+                TacticalRulePurpose.ResonanceDurationReduction,
+                TacticalFactKind.Resonance,
+                "CURRENT_PLAYER_RESONANCE_DURATION_REDUCED",
+                [Resonance],
+                mindExact,
+                "CURRENT_REVERSE_134_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_150_ENABLES_WEAPON_PARRY",
+                TacticalRulePurpose.WeaponAttackParry,
+                TacticalFactKind.ActiveRole,
+                "CURRENT_ENEMY_WEAPON_ATTACK_PARRYABLE",
+                [Movement],
+                movementExact,
+                "CURRENT_REVERSE_150_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_151_REDUCES_CAST_SPEED",
+                TacticalRulePurpose.CastSpeedControl,
+                TacticalFactKind.ActiveRole,
+                "CURRENT_ENEMY_CAST_SPEED_REDUCED",
+                [Speed],
+                speedExact,
+                "CURRENT_REVERSE_151_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_DIRECT_147_REDUCES_LONG_RANGE_HIT",
+                TacticalRulePurpose.HitChanceControl,
+                TacticalFactKind.Distance,
+                "CURRENT_ENEMY_LONG_RANGE_HIT_REDUCED",
+                [Movement],
+                movementExact,
+                "CURRENT_DIRECT_147_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_DIRECT_148_COUNTERS_ADVANCE",
+                TacticalRulePurpose.MovementCounterattack,
+                TacticalFactKind.Distance,
+                "CURRENT_ENEMY_ADVANCE_COUNTERED",
+                [Movement],
+                movementExact,
+                "CURRENT_DIRECT_148_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_295_PROTECTS_AND_REMOVES_MARK",
+                TacticalRulePurpose.CriticalInjuryProtection,
+                TacticalFactKind.Mark,
+                "CURRENT_PLAYER_HINDRANCE_MARK_REMOVABLE",
+                [Distraction, Resonance],
+                mindExact,
+                "CURRENT_REVERSE_295_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_303_CONVERTS_MIND_MARK",
+                TacticalRulePurpose.MindMarkConversion,
+                TacticalFactKind.Mark,
+                "CURRENT_PLAYER_MIND_MARK_CONVERSION_AVAILABLE",
+                [Distraction, Resonance],
+                mindExact,
+                "CURRENT_REVERSE_303_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_DIRECT_2_REDUCES_DIRECT_DAMAGE",
+                TacticalRulePurpose.DirectDamageReduction,
+                TacticalFactKind.ActiveRole,
+                "CURRENT_PLAYER_DIRECT_DAMAGE_REDUCED",
+                [MindPressure, Movement],
+                coreExact,
+                "CURRENT_DIRECT_2_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_DIRECT_289_APPLIES_STANCE_PRESSURE",
+                TacticalRulePurpose.CounterStancePressure,
+                TacticalFactKind.Resource,
+                "CURRENT_ENEMY_STANCE_RECOVERY_REDUCED",
+                [Movement],
+                movementExact,
+                "CURRENT_DIRECT_289_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_DIRECT_267_SHORTENS_MARK_DURATION",
+                TacticalRulePurpose.MarkDurationReduction,
+                TacticalFactKind.Mark,
+                "CURRENT_PLAYER_DISTRACTION_DURATION_REDUCED",
+                [Distraction, Resonance],
+                mindExact,
+                "CURRENT_DIRECT_267_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_265_INCREASES_MIND_DEFENSE",
+                TacticalRulePurpose.MindDefenseIncrease,
+                TacticalFactKind.Other,
+                "CURRENT_PLAYER_MIND_DEFENSE_INCREASED",
+                [MindPressure, Distraction],
+                mindExact,
+                "CURRENT_REVERSE_265_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_280_INCREASES_CLOSE_AVOIDANCE",
+                TacticalRulePurpose.CloseRangeAvoidance,
+                TacticalFactKind.Distance,
+                "CURRENT_PLAYER_CLOSE_AVOIDANCE_INCREASED",
+                [MindPressure, Movement],
+                movementExact,
+                "CURRENT_REVERSE_280_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_DIRECT_252_RESTORES_MOBILITY",
+                TacticalRulePurpose.MobilitySustain,
+                TacticalFactKind.Resource,
+                "CURRENT_PLAYER_MOBILITY_RESTORED",
+                [Movement],
+                movementExact,
+                "CURRENT_DIRECT_252_EFFECT_VERIFIED",
+                evidence),
+            CurrentRoleTransition(
+                "CURRENT_REVERSE_624_REDUCES_ATTACK_POWER",
+                TacticalRulePurpose.EnemyAttackPowerReduction,
+                TacticalFactKind.Other,
+                "CURRENT_TARGET_ATTACK_POWER_REDUCED",
+                [MindPressure, Distraction],
+                coreExact,
+                "CURRENT_REVERSE_624_EFFECT_VERIFIED",
+                evidence)
+        };
+
+        var recoveryTransition =
+            "CURRENT_FEASIBLE_REVERSE_CAST_REMOVES_LOCK_LAYER";
+        var roles = new[]
+        {
+            CurrentRole(
+                TacticalRoleKind.Suppression,
+                "CURRENT_REVERSE_604_DIRECT_SUPPRESSION",
+                TacticalRulePurpose.CastSuppression,
+                TacticalTransitionTiming.DuringCast,
+                604,
+                PracticeDirection.Reverse,
+                1064,
+                [MindPressure, Distraction, Resonance, DirectCoverage],
+                ["CURRENT_REVERSE_604_SUPPRESSES_DIRECT_PRACTICE",
+                    "CURRENT_REVERSE_604_APPLIES_THREE_LAYER_LOCK"],
+                [directExact,
+                    CurrentBroad("CURRENT_REVERSE_604_EFFECT_VERIFIED")],
+                "THREE_LAYER_LOCK_REQUIRES_EXACT_RECOVERY_CASTS",
+                evidence,
+                "CURRENT_REVERSE_604_SUPPRESSION",
+                [TacticalRoleUseKind.ActiveAttack]),
+            CurrentRecoveryRole(686, 1422,
+                "CURRENT_REVERSE_686_LOCK_RECOVERY",
+                recoveryTransition,
+                evidence,
+                [TacticalRoleUseKind.ActiveAttack,
+                    TacticalRoleUseKind.OpeningUse,
+                    TacticalRoleUseKind.PersistentState]),
+            CurrentRecoveryRole(602, 1062,
+                "CURRENT_REVERSE_602_LOCK_RECOVERY_CONTROL",
+                recoveryTransition,
+                evidence,
+                [TacticalRoleUseKind.ActiveAttack]),
+            CurrentRecoveryRole(616, 1251,
+                "CURRENT_REVERSE_616_LOCK_RECOVERY_PRESSURE",
+                recoveryTransition,
+                evidence,
+                [TacticalRoleUseKind.ActiveAttack]),
+            CurrentRecoveryRole(599, 1059,
+                "CURRENT_REVERSE_599_LOCK_RECOVERY_TRICKS",
+                recoveryTransition,
+                evidence,
+                [TacticalRoleUseKind.ActiveAttack]),
+            CurrentMitigationRole(134, PracticeDirection.Reverse, 973,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_REVERSE_134_RESONANCE_DURATION",
+                TacticalRulePurpose.ResonanceDurationReduction,
+                [Resonance],
+                "CURRENT_REVERSE_134_SHORTENS_MIND_RHYTHM",
+                mindExact,
+                evidence,
+                "CURRENT_REVERSE_134_RESONANCE",
+                [TacticalRoleUseKind.ActiveAgility,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(150, PracticeDirection.Reverse, 989,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_REVERSE_150_WEAPON_PARRY",
+                TacticalRulePurpose.WeaponAttackParry,
+                [Movement],
+                "CURRENT_REVERSE_150_ENABLES_WEAPON_PARRY",
+                movementExact,
+                evidence,
+                "CURRENT_REVERSE_150_WEAPON_PARRY",
+                [TacticalRoleUseKind.ActiveAgility,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(151, PracticeDirection.Reverse, 990,
+                TacticalRoleKind.Interrupt,
+                "CURRENT_REVERSE_151_CAST_SPEED",
+                TacticalRulePurpose.CastSpeedControl,
+                [Speed],
+                "CURRENT_REVERSE_151_REDUCES_CAST_SPEED",
+                speedExact,
+                evidence,
+                "CURRENT_REVERSE_151_CAST_SPEED_CONTROL",
+                [TacticalRoleUseKind.ActiveAgility,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(147, PracticeDirection.Direct, 260,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_DIRECT_147_LONG_RANGE_HIT",
+                TacticalRulePurpose.HitChanceControl,
+                [Movement],
+                "CURRENT_DIRECT_147_REDUCES_LONG_RANGE_HIT",
+                movementExact,
+                evidence,
+                "CURRENT_DIRECT_147_LONG_RANGE_HIT_CONTROL",
+                [TacticalRoleUseKind.ActiveAgility,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(148, PracticeDirection.Direct, 261,
+                TacticalRoleKind.Interrupt,
+                "CURRENT_DIRECT_148_ADVANCE_COUNTER",
+                TacticalRulePurpose.MovementCounterattack,
+                [Movement],
+                "CURRENT_DIRECT_148_COUNTERS_ADVANCE",
+                movementExact,
+                evidence,
+                "CURRENT_DIRECT_148_ADVANCE_COUNTER",
+                [TacticalRoleUseKind.ActiveAgility,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(295, PracticeDirection.Reverse, 919,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_REVERSE_295_MARK_DEFENSE",
+                TacticalRulePurpose.CriticalInjuryProtection,
+                [Distraction, Resonance],
+                "CURRENT_REVERSE_295_PROTECTS_AND_REMOVES_MARK",
+                mindExact,
+                evidence,
+                "CURRENT_REVERSE_295_HINDRANCE_DEFENSE",
+                [TacticalRoleUseKind.ActiveDefense,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(303, PracticeDirection.Reverse, 927,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_REVERSE_303_MIND_MARK_CONVERSION",
+                TacticalRulePurpose.MindMarkConversion,
+                [Distraction, Resonance],
+                "CURRENT_REVERSE_303_CONVERTS_MIND_MARK",
+                mindExact,
+                evidence,
+                "CURRENT_REVERSE_303_MIND_MARK_CONVERSION",
+                [TacticalRoleUseKind.ActiveDefense,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(2, PracticeDirection.Direct, 1739,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_DIRECT_2_DAMAGE_REDUCTION",
+                TacticalRulePurpose.DirectDamageReduction,
+                [MindPressure, Movement],
+                "CURRENT_DIRECT_2_REDUCES_DIRECT_DAMAGE",
+                coreExact,
+                evidence,
+                "CURRENT_DIRECT_2_DAMAGE_REDUCTION",
+                [TacticalRoleUseKind.ActiveDefense,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(289, PracticeDirection.Direct, 187,
+                TacticalRoleKind.Interrupt,
+                "CURRENT_DIRECT_289_COUNTER_PRESSURE",
+                TacticalRulePurpose.CounterStancePressure,
+                [Movement],
+                "CURRENT_DIRECT_289_APPLIES_STANCE_PRESSURE",
+                movementExact,
+                evidence,
+                "CURRENT_DIRECT_289_COUNTER_PRESSURE",
+                [TacticalRoleUseKind.ActiveDefense,
+                    TacticalRoleUseKind.SwitchOnlyBackup]),
+            CurrentMitigationRole(267, PracticeDirection.Direct, 165,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_DIRECT_267_MARK_DURATION",
+                TacticalRulePurpose.MarkDurationReduction,
+                [Distraction, Resonance],
+                "CURRENT_DIRECT_267_SHORTENS_MARK_DURATION",
+                mindExact,
+                evidence,
+                "CURRENT_DIRECT_267_MARK_DURATION",
+                [TacticalRoleUseKind.EquippedPassive]),
+            CurrentMitigationRole(265, PracticeDirection.Reverse, 889,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_REVERSE_265_MIND_DEFENSE",
+                TacticalRulePurpose.MindDefenseIncrease,
+                [MindPressure, Distraction],
+                "CURRENT_REVERSE_265_INCREASES_MIND_DEFENSE",
+                mindExact,
+                evidence,
+                "CURRENT_REVERSE_265_MIND_DEFENSE",
+                [TacticalRoleUseKind.EquippedPassive]),
+            CurrentMitigationRole(280, PracticeDirection.Reverse, 904,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_REVERSE_280_CLOSE_AVOIDANCE",
+                TacticalRulePurpose.CloseRangeAvoidance,
+                [MindPressure, Movement],
+                "CURRENT_REVERSE_280_INCREASES_CLOSE_AVOIDANCE",
+                movementExact,
+                evidence,
+                "CURRENT_REVERSE_280_CLOSE_AVOIDANCE",
+                [TacticalRoleUseKind.EquippedPassive]),
+            CurrentMitigationRole(252, PracticeDirection.Direct, 150,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_DIRECT_252_MOBILITY_SUSTAIN",
+                TacticalRulePurpose.MobilitySustain,
+                [Movement],
+                "CURRENT_DIRECT_252_RESTORES_MOBILITY",
+                movementExact,
+                evidence,
+                "CURRENT_DIRECT_252_MOBILITY_SUSTAIN",
+                [TacticalRoleUseKind.EquippedPassive]),
+            CurrentMitigationRole(624, PracticeDirection.Reverse, 1234,
+                TacticalRoleKind.Mitigation,
+                "CURRENT_REVERSE_624_POWER_REDUCTION",
+                TacticalRulePurpose.EnemyAttackPowerReduction,
+                [MindPressure, Distraction],
+                "CURRENT_REVERSE_624_REDUCES_ATTACK_POWER",
+                coreExact,
+                evidence,
+                "CURRENT_REVERSE_624_POWER_REDUCTION",
+                [TacticalRoleUseKind.ActiveAttack,
+                    TacticalRoleUseKind.OpeningUse,
+                    TacticalRoleUseKind.PersistentState])
+        };
+
+        return new TacticalCombatRuleSet(
+            InitialSemanticVersion,
+            [VerifiedCombatEffectCatalogs.CurrentAntiMagic.GameDataVersion],
+            [MindPressure, Distraction, Resonance, DirectCoverage, Movement,
+                Speed],
+            transitions,
+            roles);
+    }
+
+    private static TacticalTransitionRule CurrentRoleTransition(
+        string code,
+        TacticalRulePurpose purpose,
+        TacticalFactKind resultKind,
+        string resultCode,
+        IEnumerable<string> goals,
+        TacticalRuleEvidenceRequirement exactRequirement,
+        string effectEvidenceCode,
+        TacticalEvidenceReference evidence) => CurrentTransition(
+        code,
+        purpose,
+        TacticalTransitionTiming.OnObservedState,
+        [Fact(TacticalFactKind.PlayerReadiness,
+            "CURRENT_ROLE_REQUIREMENTS_SATISFIED")],
+        [Fact(resultKind, resultCode)],
+        goals,
+        [exactRequirement, CurrentBroad(effectEvidenceCode)],
+        "ROLE_REQUIREMENTS_AND_LIVE_CONDITIONS_APPLY",
+        evidence);
+
+    private static TacticalTransitionRule CurrentTransition(
+        string code,
+        TacticalRulePurpose purpose,
+        TacticalTransitionTiming timing,
+        IEnumerable<TacticalFactIdentity> triggers,
+        IEnumerable<TacticalFactIdentity> results,
+        IEnumerable<string> goals,
+        IEnumerable<TacticalRuleEvidenceRequirement> requirements,
+        string limitation,
+        TacticalEvidenceReference evidence) => new(
+        new TacticalTransitionIdentity(code),
+        InitialSemanticVersion,
+        [VerifiedCombatEffectCatalogs.CurrentAntiMagic.GameDataVersion],
+        purpose,
+        timing,
+        triggers,
+        results,
+        goals,
+        requirements,
+        limitation,
+        [evidence]);
+
+    private static TacticalSkillRoleRule CurrentRecoveryRole(
+        int skillId,
+        int effectId,
+        string code,
+        string transition,
+        TacticalEvidenceReference evidence,
+        IEnumerable<TacticalRoleUseKind> useKinds) => CurrentRole(
+        TacticalRoleKind.Recovery,
+        code,
+        TacticalRulePurpose.DirectPracticeLockRecovery,
+        TacticalTransitionTiming.AfterManualAction,
+        skillId,
+        PracticeDirection.Reverse,
+        effectId,
+        [MindPressure, Distraction, Resonance, DirectCoverage],
+        [transition],
+        [CurrentExact("CURRENT_TARGET_FULL_DIRECT_COVERAGE"),
+            CurrentBroad($"CURRENT_REVERSE_{skillId}_EFFECT_VERIFIED")],
+        "ONLY_AN_EXECUTABLE_REVERSE_CAST_REMOVES_ONE_LAYER",
+        evidence,
+        skillId switch
+        {
+            686 => "CURRENT_REVERSE_686_RECOVERY",
+            602 => "CURRENT_REVERSE_602_RECOVERY_CONTROL",
+            616 => "CURRENT_REVERSE_616_RECOVERY_PRESSURE",
+            599 => "CURRENT_REVERSE_599_RECOVERY_TRICKS",
+            _ => throw new ArgumentOutOfRangeException(nameof(skillId))
+        },
+        useKinds);
+
+    private static TacticalSkillRoleRule CurrentMitigationRole(
+        int skillId,
+        PracticeDirection direction,
+        int effectId,
+        TacticalRoleKind kind,
+        string code,
+        TacticalRulePurpose purpose,
+        IEnumerable<string> goals,
+        string transition,
+        TacticalRuleEvidenceRequirement exactRequirement,
+        TacticalEvidenceReference evidence,
+        string counterCode,
+        IEnumerable<TacticalRoleUseKind> useKinds) => CurrentRole(
+        kind,
+        code,
+        purpose,
+        useKinds.Contains(TacticalRoleUseKind.ActiveAttack)
+            ? TacticalTransitionTiming.AfterCast
+            : TacticalTransitionTiming.OnObservedState,
+        skillId,
+        direction,
+        effectId,
+        goals,
+        [transition],
+        [exactRequirement,
+            CurrentBroad($"CURRENT_{direction.ToString().ToUpperInvariant()}_"
+                + $"{skillId}_EFFECT_VERIFIED")],
+        "EXACT_ACTIVATION_AND_LIVE_CONDITIONS_APPLY",
+        evidence,
+        counterCode,
+        useKinds);
+
+    private static TacticalSkillRoleRule CurrentRole(
+        TacticalRoleKind kind,
+        string code,
+        TacticalRulePurpose purpose,
+        TacticalTransitionTiming timing,
+        int skillId,
+        PracticeDirection direction,
+        int effectId,
+        IEnumerable<string> goals,
+        IEnumerable<string> transitions,
+        IEnumerable<TacticalRuleEvidenceRequirement> requirements,
+        string limitation,
+        TacticalEvidenceReference evidence,
+        string counterCode,
+        IEnumerable<TacticalRoleUseKind> useKinds)
+    {
+        var effect = CurrentEffect(skillId, direction, effectId);
+        return new TacticalSkillRoleRule(
+            new TacticalRoleIdentity(kind, code),
+            InitialSemanticVersion,
+            [VerifiedCombatEffectCatalogs.CurrentAntiMagic.GameDataVersion],
+            purpose,
+            timing,
+            effect,
+            effect.Mechanics,
+            goals,
+            transitions.Select(value => new TacticalTransitionIdentity(value)),
+            requirements,
+            limitation,
+            [evidence],
+            CurrentCounter(counterCode),
+            useKinds);
+    }
+
+    private static TacticalRuleEvidenceRequirement CurrentExact(
+        string code) => new(
+        new TacticalRuleEvidenceIdentity(code),
+        TacticalRuleEvidenceScope.ExactTarget,
+        TacticalEvidenceSourceKind.ConfirmedObservation);
+
+    private static TacticalRuleEvidenceRequirement CurrentBroad(
+        string code) => new(
+        new TacticalRuleEvidenceIdentity(code),
+        TacticalRuleEvidenceScope.BroadRule,
+        TacticalEvidenceSourceKind.VerifiedRule);
+
+    private static TacticalEvidenceReference CurrentEvidence() => new(
+        TacticalEvidenceSourceKind.VerifiedRule,
+        "E8-F03-CURRENT-TYPED-ROLE-EVIDENCE",
+        VerifiedCombatEffectCatalogs.CurrentAntiMagic.GameDataVersion,
+        RuleVersion,
+        "CURRENT_LATER_MAGIC_SOUND_ROLE_ATLAS");
+
+    private static CombatEffectCatalogEntry CurrentEffect(
+        int skillId,
+        PracticeDirection direction,
+        int effectId)
+    {
+        var catalog = VerifiedCombatEffectCatalogs.CurrentAntiMagic;
+        var resolution = catalog.Resolve(
+            catalog.GameDataVersion,
+            skillId,
+            direction,
+            effectId);
+        return resolution.IsRecognized
+            ? resolution.CatalogEntry!
+            : throw new InvalidOperationException(
+                $"Current tactical effect {effectId} is not verified.");
+    }
+
+    private static CombatCounterRule CurrentCounter(string code) =>
+        VerifiedCombatCounterRuleSets.CurrentMagicSound.Rules.Single(item =>
+            string.Equals(item.Code, code, StringComparison.Ordinal));
 
     private static TacticalTransitionRule Transition(
         string code,

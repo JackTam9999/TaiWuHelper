@@ -256,7 +256,9 @@ public static class TacticalCandidateDiscovery
             item.Rule.SkillId == skill.SkillId
             && item.Rule.Direction != direction.Direction);
         return new SupportResult(
-            TacticalCandidateSupportState.UnsupportedEffect,
+            wrongDirection
+                ? TacticalCandidateSupportState.UnsupportedEffect
+                : TacticalCandidateSupportState.IrrelevantSkill,
             Unsupported(
                 TacticalCandidateGateKind.TacticalRole,
                 wrongDirection
@@ -461,6 +463,9 @@ public static class TacticalCandidateDiscovery
         TrickRequirement => new RequirementResult(
             TacticalCandidateGateState.Unknown,
             ["REQUIREMENT:TRICK_COUNTS", DiscoveryEvidence]),
+        ManualConfirmationRequirement value => new RequirementResult(
+            TacticalCandidateGateState.Unknown,
+            [$"REQUIREMENT:{value.Code}", DiscoveryEvidence]),
         _ => throw new ArgumentOutOfRangeException(nameof(requirement))
     };
 
@@ -588,9 +593,13 @@ public static class TacticalCandidateDiscovery
             breakdown = assignment is null
                 ? CombatSkillCostCalculator
                     .CalculateWithoutLegendaryAssignment(player, skill.SkillId)
-                : CombatSkillCostCalculator.CalculateProposed(
-                    player,
-                    assignment);
+                : assignment.Origin == LegendaryBookAssignmentOrigin.Proposed
+                    ? CombatSkillCostCalculator.CalculateProposed(
+                        player,
+                        assignment)
+                    : CombatSkillCostCalculator.Calculate(
+                        player,
+                        skill.SkillId);
         }
         else if (context.Current.LegendaryCostSlots.IsAvailable
             && context.Current.LegendaryCostSlots.Value.IsEmpty)
@@ -745,6 +754,11 @@ public static class TacticalCandidateDiscovery
                     TacticalCandidateDecision.Admitted,
                 TacticalCandidateAdmissionState.Infeasible =>
                     TacticalCandidateDecision.Rejected,
+                _ when match is null
+                    && resolution.IsResolved
+                    && !resolution.Roles.Any(item =>
+                        item.Rule.SkillId == skill.SkillId) =>
+                            TacticalCandidateDecision.Irrelevant,
                 _ => TacticalCandidateDecision.Unsupported
             },
             match is null ? [] : [match.Rule.Identity],
@@ -760,7 +774,12 @@ public static class TacticalCandidateDiscovery
                 TacticalCandidateAdmissionState.UnknownContext =>
                     "CANDIDATE_CONTEXT_UNKNOWN",
                 TacticalCandidateAdmissionState.Unsupported =>
-                    "CANDIDATE_UNSUPPORTED",
+                    match is null
+                        && resolution.IsResolved
+                        && !resolution.Roles.Any(item =>
+                            item.Rule.SkillId == skill.SkillId)
+                        ? "CANDIDATE_IRRELEVANT"
+                        : "CANDIDATE_UNSUPPORTED",
                 _ => throw new ArgumentOutOfRangeException(nameof(admission))
             },
             evidence);

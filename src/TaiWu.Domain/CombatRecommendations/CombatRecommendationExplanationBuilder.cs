@@ -204,6 +204,8 @@ public static class CombatRecommendationExplanationBuilder
                 RecommendationConditionKind.WeaponUnlock,
             SkillActivationRequirement =>
                 RecommendationConditionKind.SkillActivation,
+            ManualConfirmationRequirement =>
+                RecommendationConditionKind.ManualConfirmation,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(requirement),
                 requirement.GetType().Name,

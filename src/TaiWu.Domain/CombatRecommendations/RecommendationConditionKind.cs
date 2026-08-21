@@ -7,5 +7,6 @@ public enum RecommendationConditionKind
     Range,
     Resource,
     WeaponUnlock,
-    SkillActivation
+    SkillActivation,
+    ManualConfirmation
 }

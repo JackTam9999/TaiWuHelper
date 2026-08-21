@@ -176,8 +176,17 @@ public static class TacticalLoadoutSearch
             .Where(item => item.AdmissionState
                 == TacticalCandidateAdmissionState.Admitted)
             .ToDictionary(item => item.StableKey, StringComparer.Ordinal);
-        Dictionary<string, TacticalPrunedCandidate> pruned =
-            new(StringComparer.Ordinal);
+        var pruned = request.Discovery.Entries
+            .Where(item => item.Consideration.Decision
+                == TacticalCandidateDecision.Irrelevant)
+            .ToDictionary(
+                item => item.StableKey,
+                item => new TacticalPrunedCandidate(
+                    item.Consideration.Identity,
+                    TacticalPruningRuleKind.IrrelevantToTarget,
+                    item.Consideration.ReasonIdentity,
+                    item.Consideration.Evidence),
+                StringComparer.Ordinal);
         foreach (var proof in request.IrrelevanceProofs)
         {
             ValidateProofContext(

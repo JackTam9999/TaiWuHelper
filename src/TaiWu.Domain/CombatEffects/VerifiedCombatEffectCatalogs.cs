@@ -138,6 +138,185 @@ public static class VerifiedCombatEffectCatalogs
                     CombatEffectMechanic.DrainEnemyRandomTrueQi)
             ]);
 
+    public static CombatEffectCatalog CurrentAntiMagic { get; } =
+        new(
+            "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+            [
+                CurrentEntry(
+                    604,
+                    "金猊鎮魔刀",
+                    PracticeDirection.Reverse,
+                    1064,
+                    "Suppresses Direct practice during the cast and then "
+                    + "applies three Direct-practice self-lock layers.",
+                    CombatEffectMechanic.SuppressEnemyDirectPractice,
+                    CombatEffectMechanic.LockOwnDirectPracticeThreeLayers),
+                CurrentEntry(
+                    686,
+                    "老君拂塵功",
+                    PracticeDirection.Reverse,
+                    1422,
+                    "Starts with finite hindrance-mark removal layers and "
+                    + "can restore a layer on a qualifying Reverse cast.",
+                    CombatEffectMechanic.RemoveOwnHindranceMarks,
+                    CombatEffectMechanic.RestoreFiniteMarkRemovalLayer,
+                    CombatEffectMechanic
+                        .RemoveOwnDirectPracticeLockLayerOnReverseCast),
+                CurrentEntry(
+                    602,
+                    "斬鰲刀法",
+                    PracticeDirection.Reverse,
+                    1062,
+                    "Raises leg direct damage and conditionally exhausts "
+                    + "enemy mobility and clears active agility.",
+                    CombatEffectMechanic.IncreaseOwnLegDirectDamage,
+                    CombatEffectMechanic.ExhaustEnemyMobility,
+                    CombatEffectMechanic.ClearEnemyActiveAgility,
+                    CombatEffectMechanic
+                        .RemoveOwnDirectPracticeLockLayerOnReverseCast),
+                CurrentEntry(
+                    616,
+                    "羅剎刀法",
+                    PracticeDirection.Reverse,
+                    1251,
+                    "Raises torso direct damage and conditionally worsens "
+                    + "one enemy external injury.",
+                    CombatEffectMechanic.IncreaseOwnTorsoDirectDamage,
+                    CombatEffectMechanic.WorsenEnemyExternalInjury,
+                    CombatEffectMechanic
+                        .RemoveOwnDirectPracticeLockLayerOnReverseCast),
+                CurrentEntry(
+                    599,
+                    "開山快刀",
+                    PracticeDirection.Reverse,
+                    1059,
+                    "Grants two chop tricks when the Reverse cast reaches "
+                    + "its verified branch.",
+                    CombatEffectMechanic.GrantOwnChopTricks,
+                    CombatEffectMechanic
+                        .RemoveOwnDirectPracticeLockLayerOnReverseCast),
+                CurrentEntry(
+                    134,
+                    "萬花聽雨式",
+                    PracticeDirection.Reverse,
+                    973,
+                    "Shortens the player's mind-resonance duration while "
+                    + "this agility skill is active.",
+                    CombatEffectMechanic
+                        .ShortenOwnMindResonanceDuration),
+                CurrentEntry(
+                    150,
+                    "五鬼步",
+                    PracticeDirection.Reverse,
+                    989,
+                    "Makes enemy weapon attacks parryable while this "
+                    + "agility skill is active.",
+                    CombatEffectMechanic.MakeEnemyWeaponAttacksParryable),
+                CurrentEntry(
+                    151,
+                    "御風符",
+                    PracticeDirection.Reverse,
+                    990,
+                    "Reduces enemy cast speed from accumulated movement "
+                    + "while this agility skill is active.",
+                    CombatEffectMechanic.ReduceEnemyCastSpeedByMovement),
+                CurrentEntry(
+                    147,
+                    "鐵橋功",
+                    PracticeDirection.Direct,
+                    260,
+                    "Reduces enemy hit probability at verified long range "
+                    + "while this agility skill is active.",
+                    CombatEffectMechanic.ReduceEnemyHitAtLongRange),
+                CurrentEntry(
+                    148,
+                    "橫江鎖",
+                    PracticeDirection.Direct,
+                    261,
+                    "Triggers a weapon counterattack after enough enemy "
+                    + "forward movement while active.",
+                    CombatEffectMechanic.CounterattackEnemyAdvance),
+                CurrentEntry(
+                    295,
+                    "即身成佛",
+                    PracticeDirection.Reverse,
+                    919,
+                    "Protects against non-vital critical injury and spends "
+                    + "defense true Qi to remove hindrance marks.",
+                    CombatEffectMechanic
+                        .PreventOwnCriticalInjuryOnDefense,
+                    CombatEffectMechanic.RemoveOwnHindranceMarks,
+                    CombatEffectMechanic
+                        .SpendDefenseTrueQiForHindranceMarkRemoval),
+                CurrentEntry(
+                    303,
+                    "鬼降大法",
+                    PracticeDirection.Reverse,
+                    927,
+                    "Reduces non-vital direct damage and conditionally "
+                    + "converts mind-loss marks to acupoints.",
+                    CombatEffectMechanic.ReduceOwnNonVitalDirectDamage,
+                    CombatEffectMechanic.ConvertOwnMindLossMarksToAcupoints),
+                CurrentEntry(
+                    2,
+                    "水火硬氣功",
+                    PracticeDirection.Direct,
+                    1739,
+                    "Reduces incoming direct damage while this defense is "
+                    + "active, with verified decay behavior.",
+                    CombatEffectMechanic.ReduceOwnDirectDamage),
+                CurrentEntry(
+                    289,
+                    "拿脈功",
+                    PracticeDirection.Direct,
+                    187,
+                    "A successful weapon counter applies enemy "
+                    + "stance-recovery pressure.",
+                    CombatEffectMechanic
+                        .ApplyEnemyStanceRecoveryPenaltyOnCounter),
+                CurrentEntry(
+                    267,
+                    "墨玉功",
+                    PracticeDirection.Direct,
+                    165,
+                    "Shortens the duration of the player's distraction "
+                    + "marks while equipped.",
+                    CombatEffectMechanic
+                        .ShortenOwnDistractionMarkDuration),
+                CurrentEntry(
+                    265,
+                    "冰清玉潔",
+                    PracticeDirection.Reverse,
+                    889,
+                    "Converts the verified charm input into increased own "
+                    + "mind defense while equipped.",
+                    CombatEffectMechanic.IncreaseOwnMindDefenseFromCharm),
+                CurrentEntry(
+                    280,
+                    "三部九候法",
+                    PracticeDirection.Reverse,
+                    904,
+                    "Increases avoidance and mind defense as distance "
+                    + "closes below the verified threshold.",
+                    CombatEffectMechanic.IncreaseOwnAvoidanceAtCloseRange),
+                CurrentEntry(
+                    252,
+                    "兵聞拙速",
+                    PracticeDirection.Direct,
+                    150,
+                    "Restores own mobility when enemy direct damage creates "
+                    + "a qualifying injury or fatal mark.",
+                    CombatEffectMechanic.RestoreOwnMobilityOnEnemyInjury),
+                CurrentEntry(
+                    624,
+                    "伏龍刀法",
+                    PracticeDirection.Reverse,
+                    1234,
+                    "Reduces enemy attack-skill power by achieved power "
+                    + "until combat ends.",
+                    CombatEffectMechanic.ReduceEnemyAttackSkillPower)
+            ]);
+
     public static CombatEffectCatalog Epic5TargetFamilies { get; } =
         new(
             GoldenGameDataVersion,
@@ -205,4 +384,20 @@ public static class VerifiedCombatEffectCatalogs
             + $"#Desc_{rawEffectId}_0",
             mechanics);
     }
+
+    private static CombatEffectCatalogEntry CurrentEntry(
+        int skillId,
+        string skillName,
+        PracticeDirection direction,
+        int rawEffectId,
+        string verifiedBehaviorSummary,
+        params CombatEffectMechanic[] mechanics) => new(
+        skillId,
+        skillName,
+        direction,
+        rawEffectId,
+        verifiedBehaviorSummary,
+        $"E8-F01-CURRENT-RUNTIME-BEHAVIOR#SKILL_{skillId}_"
+        + direction.ToString().ToUpperInvariant(),
+        mechanics.Order());
 }

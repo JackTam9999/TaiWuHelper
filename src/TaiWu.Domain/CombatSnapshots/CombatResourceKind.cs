@@ -4,5 +4,6 @@ public enum CombatResourceKind
 {
     Neili,
     Stance,
-    Breath
+    Breath,
+    DefenseTrueQi
 }

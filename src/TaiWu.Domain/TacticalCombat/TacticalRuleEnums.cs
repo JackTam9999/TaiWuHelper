@@ -17,7 +17,18 @@ public enum TacticalRulePurpose
     ResetResourcePressure,
     ConditionalMarkTransfer,
     DamageChannelChoice,
-    FinishWindowSupport
+    FinishWindowSupport,
+    WeaponAttackParry,
+    CastSpeedControl,
+    HitChanceControl,
+    MovementCounterattack,
+    CriticalInjuryProtection,
+    MindMarkConversion,
+    DirectDamageReduction,
+    CounterStancePressure,
+    MindDefenseIncrease,
+    CloseRangeAvoidance,
+    MobilitySustain
 }
 
 public enum TacticalRuleEvidenceScope
@@ -47,4 +58,15 @@ public enum TacticalRuleSetResolutionStatus
 {
     Resolved,
     UnsupportedGameDataVersion
+}
+
+public enum TacticalRoleUseKind
+{
+    EquippedPassive,
+    ActiveAttack,
+    ActiveDefense,
+    ActiveAgility,
+    PersistentState,
+    SwitchOnlyBackup,
+    OpeningUse
 }

@@ -41,6 +41,7 @@ public sealed record TacticalCandidateRoleProjection
         Identity = rule.Identity;
         Purpose = rule.Purpose;
         Timing = rule.Timing;
+        UseKinds = rule.UseKinds;
         SkillId = rule.SkillId;
         Direction = rule.Direction;
         RawEffectId = rule.RawEffectId;
@@ -60,6 +61,8 @@ public sealed record TacticalCandidateRoleProjection
     public TacticalRulePurpose Purpose { get; }
 
     public TacticalTransitionTiming Timing { get; }
+
+    public ImmutableArray<TacticalRoleUseKind> UseKinds { get; }
 
     public int SkillId { get; }
 
@@ -82,6 +85,7 @@ public sealed record TacticalCandidateRoleProjection
         Identity.StableKey,
         TacticalCombatText.EnumKey(Purpose),
         TacticalCombatText.EnumKey(Timing),
+        string.Join("||", UseKinds.Select(TacticalCombatText.EnumKey)),
         SkillId.ToString(CultureInfo.InvariantCulture),
         TacticalCombatText.EnumKey(Direction),
         RawEffectId.ToString(CultureInfo.InvariantCulture),
@@ -153,6 +157,9 @@ public sealed class TacticalCandidateDiscoveryEntry
 
         var expectedDecision = AdmissionState switch
         {
+            _ when SupportState
+                == TacticalCandidateSupportState.IrrelevantSkill =>
+                    TacticalCandidateDecision.Irrelevant,
             TacticalCandidateAdmissionState.Admitted =>
                 TacticalCandidateDecision.Admitted,
             TacticalCandidateAdmissionState.Infeasible =>

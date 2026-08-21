@@ -12,6 +12,7 @@ public enum TacticalCandidateAdmissionState
 public enum TacticalCandidateSupportState
 {
     VerifiedRole,
+    IrrelevantSkill,
     UnsupportedEffect,
     UnsupportedGameDataVersion
 }

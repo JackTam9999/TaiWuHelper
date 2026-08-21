@@ -232,7 +232,9 @@ public sealed class TacticalLoadoutSearchTests
         var result = Search(fixture);
 
         Assert.Equal(0, result.Coverage.AdmittedCount);
-        Assert.Equal(2, result.Coverage.UnsupportedCount);
+        Assert.Equal(0, result.Coverage.UnsupportedCount);
+        Assert.Equal(2, result.Coverage.IrrelevantCount);
+        Assert.Equal(2, result.PrunedCandidates.Length);
         Assert.Equal(1, result.Coverage.ExploredCombinationCount);
         Assert.Equal(TacticalSearchTerminator.None, result.Coverage.FirstTerminator);
         Assert.True(result.IsComplete);

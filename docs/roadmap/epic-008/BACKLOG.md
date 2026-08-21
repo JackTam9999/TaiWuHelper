@@ -869,9 +869,8 @@ rule is authorized for current recommendations.
 - Static identity, cost, timing-value, effect-ID, requirement, bilingual-text,
   player membership, direction, breakthrough, and source-precedence facts are
   captured. All 19 runtime behavior chains and five overlapping historical
-  production roles are independently compared; production support remains
-  withheld until E8-F03 completes the typed-role gate; E8-F02 has completed
-  the exact-target gate.
+  production roles are independently compared; E8-F02 has completed the
+  exact-target gate and E8-F03 has completed the typed-role gate.
 
 ### E8-F02 — Model the exact later magic-sound target and encounter phase
 
@@ -919,7 +918,7 @@ target/phase profile whose important mechanics are independently evidenced.
 
 ### E8-F03 — Expand current-version typed tactical-role coverage
 
-**Status:** Planned
+**Status:** Complete
 
 **Priority:** P0
 
@@ -942,21 +941,39 @@ when their current-version semantics and execution requirements are reverified.
 
 #### Acceptance criteria
 
-- [ ] Every accepted role binds exact skill ID, practice direction, raw effect
+- [x] Every accepted role binds exact skill ID, practice direction, raw effect
       ID, supported GameData version, timing, purpose, requirements,
       interactions, evidence, and limitations.
-- [ ] Unsupported directions, neutral direction, unfinished breakthrough,
+- [x] Unsupported directions, neutral direction, unfinished breakthrough,
       missing book-page evidence, and inner-power backlash remain hard gates.
-- [ ] Roles distinguish equipped passive, active attack, active defense, active
+- [x] Roles distinguish equipped passive, active attack, active defense, active
       agility, persistent state, switch-only backup, and one-time opening use.
-- [ ] Reverse-practice casts that can remove a Reverse `604` self-lock layer
+- [x] Reverse-practice casts that can remove a Reverse `604` self-lock layer
       receive an explicit recovery role only after their cast is executable.
-- [ ] Weapon, trick, release, distance, true-Qi, stance, breath, and other
+- [x] Weapon, trick, release, distance, true-Qi, stance, breath, and other
       requirements stay typed; unknown requirements never become satisfied.
-- [ ] Raw descriptions remain display evidence and never generate or broaden a
+- [x] Raw descriptions remain display evidence and never generate or broaden a
       tactical role automatically.
-- [ ] The complete learned-skill atlas reports admitted, infeasible,
+- [x] The complete learned-skill atlas reports admitted, infeasible,
       irrelevant, and unsupported outcomes for the expanded role set.
+
+#### Evidence
+
+- [E8-F03 current tactical role atlas](../../scenarios/E8-F03-current-tactical-role-atlas.md).
+- [E8-F03 sanitized metadata](../../scenarios/evidence/E8-F03-current-tactical-role-metadata.json).
+- `CurrentTacticalRoleRuleSetTests`: 6 passed, 0 failed; exact fingerprint,
+  19 roles, 21 transitions, mechanics, use kinds, recovery gates and version
+  fallback are pinned.
+- `CurrentTacticalCombatEvidenceIntegrationTests`: 1 new guarded F03 check
+  passed against the current save and installed runtime with every guarded
+  source unchanged.
+- Release build: 0 warnings and 0 errors; full suite: 1,621 total, 1,598
+  passed, 0 failed, and 23 expected guarded-local skips.
+- The learned atlas demonstrated admitted, infeasible, irrelevant and
+  unsupported outcomes. No Reverse `604` recovery role was admitted without
+  live weapon-trick/resource confirmation.
+- Current-screen capacities `6/10/7/9/4` override disk capacities
+  `6/9/6/10/5`; unobserved used-slot totals remain unavailable.
 
 ### E8-F04 — Project a complete current and proposed execution context
 

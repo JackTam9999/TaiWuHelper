@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "E8-F03",
+  "observationDate": "2026-08-21",
+  "status": "complete",
+  "runtimeGameDataProductVersion": "1.0.0+3918df411fc7c67fdc7f0094ca8619eacfe9da20",
+  "ruleSet": {
+    "semanticVersion": "1.0.0",
+    "fingerprint": "64051C1234CECDFDCE070134FDA0380826154D16C1F171B52B6F7FE1C64ECD5D",
+    "transitionCount": 21,
+    "roleCount": 19,
+    "historicalResetIncluded": false
+  },
+  "roleGroups": {
+    "suppression": [604],
+    "reverseLockRecovery": [599, 602, 616, 686],
+    "agilityAndControl": [134, 147, 148, 150, 151],
+    "activeDefense": [2, 289, 295, 303],
+    "equippedSupport": [252, 265, 267, 280],
+    "openingAlternative": [624]
+  },
+  "typedUseKinds": [
+    "equipped-passive",
+    "active-attack",
+    "active-defense",
+    "active-agility",
+    "persistent-state",
+    "switch-only-backup",
+    "opening-use"
+  ],
+  "hardRequirementKinds": [
+    "practice-direction",
+    "breakthrough",
+    "raw-effect",
+    "weapon-subtype",
+    "usable-tricks",
+    "distance",
+    "defense-true-qi",
+    "stance",
+    "breath",
+    "active-role",
+    "equipped-passive",
+    "inner-power-backlash"
+  ],
+  "learnedAtlasOutcomesVerified": [
+    "admitted",
+    "infeasible",
+    "irrelevant",
+    "unsupported"
+  ],
+  "currentScreen": {
+    "categoryCapacities": [6, 10, 7, 9, 4],
+    "supersedesDiskCapacities": [6, 9, 6, 10, 5],
+    "usedSlotTotalsCaptured": false
+  },
+  "guardedVerification": {
+    "focusedRuleUnitPassed": 6,
+    "focusedCurrentCostRegressionPassed": 1,
+    "focusedIntegrationPassed": 1,
+    "focusedFailed": 0,
+    "allGuardedFilesUnchanged": true,
+    "recoveryRolesAdmittedWithoutLiveRequirements": 0
+  },
+  "repository": {
+    "containsSaveContent": false,
+    "containsSavePath": false,
+    "containsSaveHash": false,
+    "containsCharacterIdentifier": false,
+    "containsLocalizedTargetName": false,
+    "containsGameBinaryContent": false,
+    "containsCompleteRawDescription": false,
+    "containsScreenshot": false
+  }
+}

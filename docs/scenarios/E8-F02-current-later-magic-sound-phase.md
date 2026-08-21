@@ -118,8 +118,8 @@ modified.
 
 ## Downstream boundary
 
-E8-F02 authorizes the exact target facts and transitions only. It does not yet
-authorize the player's full current-version tactical role set or prove that a
-Reverse `604` recovery package is executable. E8-F03 must promote only the
-necessary F01 behavior contracts into typed roles; E8-F04 must then provide
-the remaining weapon, trick, distance, resource, backlash and capacity facts.
+E8-F02 authorizes the exact target facts and transitions only. E8-F03 has since
+promoted the necessary F01 behavior contracts into exact typed roles, but it
+does not prove that a Reverse `604` recovery package is executable. E8-F04 must
+provide the remaining live weapon, trick, distance, resource, backlash and
+active-role facts.

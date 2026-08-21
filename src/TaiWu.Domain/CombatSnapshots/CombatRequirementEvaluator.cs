@@ -43,6 +43,9 @@ public static class CombatRequirementEvaluator
                 $"Weapon type {value.WeaponTypeId} is not unlocked."),
             SkillActivationRequirement value =>
                 EvaluateSkillActivation(value, context),
+            ManualConfirmationRequirement value => Unknown(
+                value,
+                $"Manual confirmation is required: {value.Code}."),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(requirement),
                 requirement.GetType(),

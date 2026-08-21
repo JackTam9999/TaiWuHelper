@@ -19,7 +19,8 @@ public sealed class TacticalSkillRoleRule
         IEnumerable<TacticalRuleEvidenceRequirement> evidenceRequirements,
         string limitationIdentity,
         IEnumerable<TacticalEvidenceReference> evidence,
-        CombatCounterRule? sharedCounter = null)
+        CombatCounterRule? sharedCounter = null,
+        IEnumerable<TacticalRoleUseKind>? useKinds = null)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
         SemanticVersion = semanticVersion
@@ -66,6 +67,18 @@ public sealed class TacticalSkillRoleRule
             "role-rule evidence",
             nameof(evidence));
         SharedCounter = sharedCounter;
+        var uses = (useKinds ?? InferUseKinds(timing, sharedCounter))
+            .ToImmutableArray();
+        if (uses.IsEmpty
+            || uses.Any(item => !Enum.IsDefined(item))
+            || uses.Distinct().Count() != uses.Length)
+        {
+            throw new ArgumentException(
+                "A tactical role requires unique defined use kinds.",
+                nameof(useKinds));
+        }
+
+        UseKinds = [.. uses.Order()];
         if (Transitions.IsEmpty
             || EvidenceRequirements.IsEmpty
             || Evidence.IsEmpty)
@@ -106,6 +119,8 @@ public sealed class TacticalSkillRoleRule
 
     public CombatCounterRule? SharedCounter { get; }
 
+    public ImmutableArray<TacticalRoleUseKind> UseKinds { get; }
+
     public int SkillId => Effect.SkillId;
 
     public CombatSnapshots.PracticeDirection Direction => Effect.Direction;
@@ -124,6 +139,7 @@ public sealed class TacticalSkillRoleRule
         RawEffectId,
         LimitationIdentity,
         SharedCounter?.Code ?? "NONE",
+        string.Join("||", UseKinds.Select(TacticalCombatText.EnumKey)),
         string.Join("||", SupportedGameDataVersions),
         string.Join("||", RequiredMechanics.Select(
             TacticalCombatText.EnumKey)),
@@ -131,6 +147,47 @@ public sealed class TacticalSkillRoleRule
         string.Join("||", Transitions.Select(item => item.StableKey)),
         string.Join("||", EvidenceRequirements.Select(item => item.StableKey)),
         string.Join("||", Evidence.Select(item => item.StableKey)));
+
+    private static IEnumerable<TacticalRoleUseKind> InferUseKinds(
+        TacticalTransitionTiming timing,
+        CombatCounterRule? sharedCounter)
+    {
+        if (sharedCounter is not null)
+        {
+            return sharedCounter.ActivationTiming switch
+            {
+                CombatCounterActivationTiming.CombatStartPassive =>
+                    [TacticalRoleUseKind.OpeningUse,
+                        TacticalRoleUseKind.PersistentState],
+                CombatCounterActivationTiming.EquippedPassive =>
+                    [TacticalRoleUseKind.EquippedPassive],
+                CombatCounterActivationTiming.ActiveAttack =>
+                    [TacticalRoleUseKind.ActiveAttack],
+                CombatCounterActivationTiming.ActiveDefense =>
+                    [TacticalRoleUseKind.ActiveDefense],
+                CombatCounterActivationTiming.ActiveAgility =>
+                    [TacticalRoleUseKind.ActiveAgility],
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(sharedCounter))
+            };
+        }
+
+        return timing switch
+        {
+            TacticalTransitionTiming.BeforeCombat =>
+                [TacticalRoleUseKind.EquippedPassive],
+            TacticalTransitionTiming.CombatStart
+                or TacticalTransitionTiming.BeforeFirstUse =>
+                    [TacticalRoleUseKind.OpeningUse],
+            TacticalTransitionTiming.DuringCast
+                or TacticalTransitionTiming.AfterCast
+                or TacticalTransitionTiming.AfterManualAction =>
+                    [TacticalRoleUseKind.ActiveAttack],
+            TacticalTransitionTiming.OnObservedState =>
+                [TacticalRoleUseKind.PersistentState],
+            _ => throw new ArgumentOutOfRangeException(nameof(timing))
+        };
+    }
 
     private void ValidateIdentityAndPurpose()
     {
@@ -149,8 +206,20 @@ public sealed class TacticalSkillRoleRule
                 or TacticalRulePurpose.HindranceMarkRemoval
                 or TacticalRulePurpose.EnemyAttackPowerReduction
                 or TacticalRulePurpose.ResetResourcePressure
-                or TacticalRulePurpose.ConditionalMarkTransfer =>
+                or TacticalRulePurpose.ConditionalMarkTransfer
+                or TacticalRulePurpose.WeaponAttackParry
+                or TacticalRulePurpose.HitChanceControl
+                or TacticalRulePurpose.CriticalInjuryProtection
+                or TacticalRulePurpose.MindMarkConversion
+                or TacticalRulePurpose.DirectDamageReduction
+                or TacticalRulePurpose.MindDefenseIncrease
+                or TacticalRulePurpose.CloseRangeAvoidance
+                or TacticalRulePurpose.MobilitySustain =>
                     TacticalRoleKind.Mitigation,
+            TacticalRulePurpose.CastSpeedControl
+                or TacticalRulePurpose.MovementCounterattack
+                or TacticalRulePurpose.CounterStancePressure =>
+                    TacticalRoleKind.Interrupt,
             _ => throw new ArgumentException(
                 "This tactical purpose is not an approved skill-role purpose.",
                 nameof(Purpose))

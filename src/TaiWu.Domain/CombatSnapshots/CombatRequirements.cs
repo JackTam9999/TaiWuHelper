@@ -214,3 +214,27 @@ public sealed class SkillActivationRequirement : CombatRequirement
 
     public SkillActivationState RequiredState { get; }
 }
+
+public sealed class ManualConfirmationRequirement : CombatRequirement
+{
+    public ManualConfirmationRequirement(
+        string code,
+        CombatRequirementCriticality criticality,
+        string evidenceReference)
+        : base(criticality, evidenceReference)
+    {
+        if (string.IsNullOrWhiteSpace(code)
+            || code.Any(character => !char.IsAsciiLetterUpper(character)
+                && !char.IsDigit(character)
+                && character != '_'))
+        {
+            throw new ArgumentException(
+                "A manual requirement needs an uppercase stable code.",
+                nameof(code));
+        }
+
+        Code = code.Trim();
+    }
+
+    public string Code { get; }
+}
