@@ -27,19 +27,23 @@ internal static class TacticalExecutionContextProjection
         CombatSnapshot snapshot,
         TacticalExecutionContextReadRequest request,
         TacticalCombatRuleResolution resolution,
-        CancellationToken cancellationToken,
-        TacticalExecutionProposal? proposal = null)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(resolution);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var context = TacticalExecutionContextProjector.Project(
-            snapshot,
-            resolution,
-            proposal ?? request.Proposal,
-            cancellationToken);
+        var context = request.Proposal is null
+            ? TacticalExecutionContextProjector.ProjectCurrentLoadout(
+                snapshot,
+                resolution,
+                cancellationToken)
+            : TacticalExecutionContextProjector.Project(
+                snapshot,
+                resolution,
+                request.Proposal,
+                cancellationToken);
         var latestObservationAtUtc = snapshot.FieldSources
             .Where(item => item.Source
                 == SnapshotDataSource.CurrentScreenObservation)

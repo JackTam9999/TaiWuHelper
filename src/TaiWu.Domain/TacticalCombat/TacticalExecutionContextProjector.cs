@@ -16,7 +16,29 @@ public static class TacticalExecutionContextProjector
         CombatSnapshot snapshot,
         TacticalCombatRuleResolution ruleResolution,
         TacticalExecutionProposal? proposal = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) => ProjectCore(
+            snapshot,
+            ruleResolution,
+            proposal,
+            useCurrentLoadoutBaseline: false,
+            cancellationToken);
+
+    public static TacticalExecutionContext ProjectCurrentLoadout(
+        CombatSnapshot snapshot,
+        TacticalCombatRuleResolution ruleResolution,
+        CancellationToken cancellationToken = default) => ProjectCore(
+            snapshot,
+            ruleResolution,
+            proposal: null,
+            useCurrentLoadoutBaseline: true,
+            cancellationToken);
+
+    private static TacticalExecutionContext ProjectCore(
+        CombatSnapshot snapshot,
+        TacticalCombatRuleResolution ruleResolution,
+        TacticalExecutionProposal? proposal,
+        bool useCurrentLoadoutBaseline,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(ruleResolution);
@@ -27,10 +49,9 @@ public static class TacticalExecutionContextProjector
             snapshot.FieldSources,
             cancellationToken);
         var current = ProjectCurrent(snapshot, cancellationToken);
-        var proposed = ProjectProposed(
-            current,
-            proposal,
-            cancellationToken);
+        var proposed = useCurrentLoadoutBaseline
+            ? CurrentLoadoutBaseline(current)
+            : ProjectProposed(current, proposal, cancellationToken);
         var resolvedRules = ProjectRules(ruleResolution, cancellationToken);
         return new TacticalExecutionContext(
             snapshot.Metadata.SaveSha256,
@@ -42,6 +63,24 @@ public static class TacticalExecutionContextProjector
             current,
             proposed);
     }
+
+    private static ProposedTacticalExecutionFacts CurrentLoadoutBaseline(
+        CurrentTacticalExecutionFacts current) => new(
+        current.EquippedWeaponTypeIds,
+        current.UnlockedWeaponTypeIds,
+        current.UsableCombatStyleIds,
+        current.Distance,
+        current.Stance,
+        current.Breath,
+        current.Resources,
+        current.ActiveDefenseSkillId,
+        current.ActiveAgilitySkillId,
+        current.InnerPower,
+        current.SlotBudgets,
+        current.UniversalSlotAllocation,
+        current.LegendaryCostSlots,
+        current.LegendaryCostAssignments,
+        current.EquippedSkillIds);
 
     private static CurrentTacticalExecutionFacts ProjectCurrent(
         CombatSnapshot snapshot,

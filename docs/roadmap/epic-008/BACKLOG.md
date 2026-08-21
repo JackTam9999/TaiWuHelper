@@ -727,7 +727,7 @@ search, scoring, plan, source, performance, and presentation contracts.
 
 ### E8-013 — Validate the golden tactical plan and close Epic 8
 
-**Status:** Planned
+**Status:** In progress
 
 **Priority:** P1
 
@@ -741,44 +741,56 @@ product-owner completion decision.
 
 #### Acceptance criteria
 
-- [ ] The representative target and player facts match the E8-000 evidence
+- [x] The representative target and player facts match the E8-000 evidence
       without exposing proprietary identities, machine paths, or raw content.
-- [ ] The plan suppresses or mitigates every E8-000-required core transition
+- [x] The plan suppresses or mitigates every E8-000-required core transition
       using only exact verified skill roles.
-- [ ] The mark and resonance path retains its supported mitigation and explicit
+- [x] The mark and resonance path retains its supported mitigation and explicit
       unresolved gaps.
-- [ ] The selected suppression counter's verified execution cost has a feasible
+- [x] The selected suppression counter's verified execution cost has a feasible
       recovery step or an honest fallback branch.
-- [ ] Inner-power backlash, unavailable directions, mastery, breakthrough,
+- [x] Inner-power backlash, unavailable directions, mastery, breakthrough,
       weapon/style, active-role, and resource constraints remain hard gates.
-- [ ] The displayed effective costs, category capacities, universal-slot
+- [x] The displayed effective costs, category capacities, universal-slot
       allocation, and manual changes exactly match the accepted loadout.
-- [ ] A supported finish path uses typed evidence, or the plan is visibly
+- [x] A supported finish path uses typed evidence, or the plan is visibly
       fallback-only with no invented damage claim.
-- [ ] Candidate and search coverage diagnostics explain every active bound and
+- [x] Candidate and search coverage diagnostics explain every active bound and
       make no optimality claim after truncation.
-- [ ] Safe, Balanced, and Aggressive differences remain understandable and do
+- [x] Safe, Balanced, and Aggressive differences remain understandable and do
       not change feasibility facts.
-- [ ] English and Traditional Chinese wide/narrow states expose the same
+- [x] English and Traditional Chinese wide/narrow states expose the same
       conditions, actions, purposes, evidence, gaps, and information-only
       boundary.
-- [ ] Complete, partial, unsupported, no-candidate, truncated, cancelled,
+- [x] Complete, partial, unsupported, no-candidate, truncated, cancelled,
       fallback-only, observation-replaced, and failure states are reviewed with
       synthetic data.
-- [ ] Repeated runs retain stable semantic results and source fingerprints;
+- [x] Repeated runs retain stable semantic results and source fingerprints;
       capture time and elapsed diagnostics remain honest metadata.
-- [ ] All inspected save, GameData, language, and catalogue source hashes and
+- [x] All inspected save, GameData, language, and catalogue source hashes and
       timestamps remain unchanged.
-- [ ] Additional targets, broader skill roles, persistence, outcome learning,
+- [x] Additional targets, broader skill roles, persistence, outcome learning,
       screenshots, simulation, probabilities, and game control remain explicit
       future work.
 - [ ] Independent Epic 8 closure review is complete and every actionable
       finding is corrected and reverified.
 - [ ] The product owner records the Epic 8 completion decision.
 
-#### Planned evidence
+#### Evidence in progress
 
-- `docs/reviews/E8-013-manual-verification.md`.
+- [E8-013 representative verification](../../reviews/E8-013-manual-verification.md).
+- Latest focused refactor audit: 99 tactical Domain, 27 tactical Application,
+  and 36 tactical API/Presentation tests passed; all 6 tactical architecture
+  tests passed.
+- Self-review centralized shared rule/context projection, preserved unavailable
+  facts in the current-loadout baseline, added typed plan-step skill identity,
+  and scoped candidate pagination to the full semantic result identity. This
+  does not replace the pending independent closure review.
+- Immutable helper-catalogue audit: 8 of 8 representative records present;
+  database hash, length, and timestamp unchanged.
+- Both guarded tactical integrations passed against a stable current save; the
+  seven-source probe and execution-context dependency guard retained every
+  inspected save, GameData, and language hash and timestamp unchanged.
 - Completion decision in `EPIC.md` and the roadmap index.
 
 ## Future work outside Epic 8

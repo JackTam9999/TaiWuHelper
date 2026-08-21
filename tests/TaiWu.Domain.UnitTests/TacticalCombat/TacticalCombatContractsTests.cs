@@ -103,6 +103,50 @@ public sealed class TacticalCombatContractsTests
     }
 
     [Fact]
+    public void A_typed_step_skill_change_changes_the_fingerprint()
+    {
+        var parts = Fixture.CreateParts();
+        var original = Fixture.CreatePlan(parts);
+        var responseStage = parts.Stages.Single(item =>
+            item.Stage == TacticalPlanStage.TargetStateResponse);
+        var responseStep = Assert.Single(responseStage.Steps);
+        var changedStep = new TacticalPlanStep(
+            responseStep.Identity,
+            responseStep.Stage,
+            responseStep.Order,
+            responseStep.BranchKind,
+            responseStep.ObservedFacts,
+            responseStep.Requirements,
+            responseStep.Transitions,
+            skillId: 604,
+            responseStep.ManualActionIdentity,
+            responseStep.ExpectedPurposeIdentity,
+            responseStep.LimitationIdentity,
+            responseStep.Branches,
+            responseStep.Evidence);
+        var changedStage = new TacticalPlanStageDefinition(
+            responseStage.Stage,
+            responseStage.State,
+            responseStage.LimitationIdentity,
+            [changedStep],
+            responseStage.Evidence);
+        var changed = Fixture.CreatePlan(parts with
+        {
+            Stages =
+            [
+                .. parts.Stages.Select(item =>
+                    item.Stage == TacticalPlanStage.TargetStateResponse
+                        ? changedStage
+                        : item)
+            ]
+        });
+
+        Assert.Null(responseStep.SkillId);
+        Assert.Equal(604, changedStep.SkillId);
+        Assert.NotEqual(original.Fingerprint, changed.Fingerprint);
+    }
+
+    [Fact]
     public void Fact_states_preserve_available_incomplete_unsupported_and_conflict()
     {
         var evidence = Fixture.Evidence();
@@ -645,6 +689,7 @@ public sealed class TacticalCombatContractsTests
                 [parts.CastFact.Identity],
                 [parts.SatisfiedDirection],
                 [transition],
+                skillId: null,
                 $"ACTION_{code}",
                 $"PURPOSE_{code}",
                 "HISTORICAL_VERSION_ONLY",

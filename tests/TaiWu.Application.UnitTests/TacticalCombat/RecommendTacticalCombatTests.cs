@@ -121,6 +121,61 @@ public sealed class RecommendTacticalCombatTests
     }
 
     [Fact]
+    public async Task Missing_proposal_uses_one_current_loadout_baseline()
+    {
+        var fixture = Fixture();
+        var original = fixture.Request.SearchRequest;
+        var originalContext = original.ContextRequest;
+        var contextRequest = new TacticalExecutionContextReadRequest(
+            originalContext.SnapshotRequest,
+            originalContext.TargetGoalCodes,
+            originalContext.Evidence,
+            proposal: null);
+        var searchRequest = new TacticalLoadoutSearchReadRequest(
+            contextRequest,
+            original.Bounds,
+            original.DiscoveryLimits,
+            original.IrrelevanceProofs,
+            original.DominanceProofs);
+        var request = new TacticalCombatRecommendationRequest(
+            fixture.Request.PlayerCharacterId,
+            fixture.Request.Policy,
+            searchRequest,
+            fixture.Request.LayeringProofs,
+            fixture.Request.TriggerObservations,
+            fixture.Request.FinishProofs);
+        var contextReader = Substitute.For<ICombatSnapshotReader>();
+        contextReader.ReadAsync(
+                fixture.SnapshotRequest,
+                Arg.Any<CancellationToken>())
+            .Returns(fixture.Snapshot);
+        var token = TestContext.Current.CancellationToken;
+
+        var recommendation = await fixture.Subject.ExecuteAsync(
+            request,
+            token);
+        var context = await new ReadTacticalExecutionContext(contextReader)
+            .ExecuteAsync(contextRequest, token);
+
+        Assert.Equal(
+            TacticalCombatRecommendationStatus.Success,
+            recommendation.Status);
+        Assert.Equal(
+            context.Context.SemanticFingerprint,
+            recommendation.Context!.Context.SemanticFingerprint);
+        Assert.Equal(
+            context.Context.Proposed.EquippedWeaponTypeIds.Value,
+            recommendation.Context.Context.Proposed.EquippedWeaponTypeIds.Value);
+        Assert.True(context.Context.Proposed.SlotBudgets.IsAvailable);
+        Assert.False(
+            context.Context.Proposed.UnlockedWeaponTypeIds.IsAvailable);
+        Assert.False(context.Context.Proposed.Resources.IsAvailable);
+        Assert.Equal(
+            TacticalContextOrigin.SaveSnapshot,
+            context.Context.Proposed.EquippedWeaponTypeIds.Origin);
+    }
+
+    [Fact]
     public async Task Repeated_and_shuffled_requests_retain_every_semantic_identity()
     {
         var fixture = Fixture();

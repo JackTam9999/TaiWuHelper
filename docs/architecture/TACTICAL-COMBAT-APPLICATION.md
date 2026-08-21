@@ -40,6 +40,12 @@ comparison, rule, context, discovery, search, scoring, and compilation work.
 Application tests assert every successful count is exactly one and verify one
 reader call.
 
+When a caller does not supply an explicit proposal, context projection uses
+the captured current loadout as the proposed baseline. It copies only facts
+that the snapshot actually captured; unavailable unlocked skills, resources,
+active roles, or other facts remain unavailable instead of becoming known
+empty values. Explicit proposals continue to use their submitted values.
+
 ## Typed outcomes
 
 The result status separates expected absence or incompatibility from faults:

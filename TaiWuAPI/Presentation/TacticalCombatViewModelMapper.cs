@@ -1,4 +1,3 @@
-using System.Globalization;
 using TaiWu.Application.TacticalCombat;
 using TaiWu.Domain.CombatRecommendations;
 using TaiWu.Domain.CombatSnapshots;
@@ -208,9 +207,8 @@ public static class TacticalCombatViewModelMapper
         TacticalPlanStepResponse step,
         IReadOnlyDictionary<int, string> skillNames)
     {
-        var skillId = ExtractSkillId(step.ManualActionIdentity);
-        var name = skillId.HasValue && skillNames.TryGetValue(
-            skillId.Value,
+        var name = step.SkillId.HasValue && skillNames.TryGetValue(
+            step.SkillId.Value,
             out var value)
                 ? value
                 : null;
@@ -603,20 +601,5 @@ public static class TacticalCombatViewModelMapper
                 : new BilingualText(
                     "Broad verified-rule scope",
                     "廣泛的已驗證規則範圍"));
-
-    private static int? ExtractSkillId(string identity)
-    {
-        foreach (var token in identity.Split('_').Reverse())
-        {
-            if (int.TryParse(token, NumberStyles.None,
-                    CultureInfo.InvariantCulture, out var value)
-                && value > 0)
-            {
-                return value;
-            }
-        }
-
-        return null;
-    }
 
 }

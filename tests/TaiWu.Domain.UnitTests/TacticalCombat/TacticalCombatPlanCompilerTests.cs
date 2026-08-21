@@ -92,9 +92,7 @@ public sealed class TacticalCombatPlanCompilerTests
         Assert.Equal([1, 2, 3], recovery.Steps.Select(item => item.Order));
         Assert.Equal(
             [604, 611, 624],
-            recovery.Steps.Select(item => int.Parse(
-                item.ManualActionIdentity.Split('_').Last(),
-                System.Globalization.CultureInfo.InvariantCulture))
+            recovery.Steps.Select(item => item.SkillId!.Value)
                 .Order());
         Assert.All(recovery.Steps, item => Assert.Equal(
             "SYNTHETIC_RECOVERY",
@@ -143,6 +141,12 @@ public sealed class TacticalCombatPlanCompilerTests
         Assert.Equal(
             compiled.PreparationChecks.Length,
             Stage(compiled, TacticalPlanStage.Preparation).Steps.Length);
+        Assert.All(
+            Stage(compiled, TacticalPlanStage.Preparation).Steps,
+            step => Assert.Equal(
+                compiled.PreparationChecks.Single(check =>
+                    step.Identity.Code == $"STEP_{check.Identity}").SkillId,
+                step.SkillId));
     }
 
     [Fact]

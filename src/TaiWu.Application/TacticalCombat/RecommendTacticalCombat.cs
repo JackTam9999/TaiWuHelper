@@ -1,7 +1,6 @@
 using TaiWu.Application.CombatRecommendations;
 using TaiWu.Application.CombatSnapshots;
 using TaiWu.Application.LoadoutComparisons;
-using TaiWu.Domain.CombatSnapshots;
 using TaiWu.Domain.TacticalCombat;
 
 namespace TaiWu.Application.TacticalCombat;
@@ -74,8 +73,7 @@ public sealed class RecommendTacticalCombat(
                 snapshot,
                 contextRequest,
                 resolution,
-                cancellationToken,
-                contextRequest.Proposal ?? DefaultProposal(snapshot));
+                cancellationToken);
             var context = contextRead.Context;
 
             if (!resolution.IsResolved)
@@ -275,36 +273,6 @@ public sealed class RecommendTacticalCombat(
                 plan,
                 identity);
         }
-    }
-
-    private static TacticalExecutionProposal DefaultProposal(
-        CombatSnapshot snapshot)
-    {
-        var equippedSkills = Enum.GetValues<SkillCategory>()
-            .SelectMany(category =>
-                snapshot.Player.EquippedSkills.Get(category))
-            .Order()
-            .ToArray();
-        var equippedWeaponTypes = snapshot.Player.Equipment
-            .Where(item => item.Kind.IsAvailable
-                && item.Kind.Value == EquipmentKind.Weapon
-                && item.ItemSubtype.IsAvailable)
-            .Select(item => item.ItemSubtype.Value)
-            .Distinct()
-            .Order()
-            .ToArray();
-        return new TacticalExecutionProposal(
-            new CombatRequirementContext(
-                equippedWeaponTypes,
-                trickCounts: [],
-                SnapshotValue<int>.Unavailable(
-                    "Current combat distance was not supplied."),
-                resources: [],
-                unlockedWeaponTypeIds: [],
-                equippedSkills),
-            snapshot.Player.SlotBudgets,
-            snapshot.Player.GenericSlotAllocation,
-            legendaryCostAssignments: null);
     }
 
     private static bool HasPartialEvidence(

@@ -19,6 +19,10 @@ The presentation boundary consists of:
 - `TacticalCombatPlan.razor`, which renders status, the ordered plan, gaps,
   search accounting, scores, candidate decisions, and evidence.
 
+Plan-step skill names are resolved from the typed nullable skill identifier on
+the response contract. Presentation never parses manual-action identity text
+to recover mechanics; steps without a skill identifier remain generic.
+
 ## Coherent result lifecycle
 
 The page retains one complete tactical presentation result. Target, policy,

@@ -371,6 +371,7 @@ public sealed record TacticalPlanStepResponse(
     IReadOnlyList<string> ObservedFacts,
     IReadOnlyList<TacticalRequirementEvaluationResponse> Requirements,
     IReadOnlyList<string> Transitions,
+    int? SkillId,
     string ManualActionIdentity,
     string ExpectedPurposeIdentity,
     string LimitationIdentity,

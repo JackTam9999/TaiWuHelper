@@ -87,6 +87,34 @@ public sealed class TacticalExecutionContextTests
     }
 
     [Fact]
+    public void Current_loadout_baseline_copies_only_captured_facts()
+    {
+        var snapshot = Snapshot();
+        var result = TacticalExecutionContextProjector.ProjectCurrentLoadout(
+            snapshot,
+            Resolution(),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([42], result.Proposed.EquippedWeaponTypeIds.Value);
+        Assert.Equal([604], result.Proposed.EquippedSkillIds.Value);
+        Assert.Same(
+            result.Current.SlotBudgets,
+            result.Proposed.SlotBudgets);
+        Assert.Same(
+            result.Current.UniversalSlotAllocation,
+            result.Proposed.UniversalSlotAllocation);
+        Assert.Same(
+            result.Current.LegendaryCostAssignments,
+            result.Proposed.LegendaryCostAssignments);
+        Assert.False(result.Proposed.UnlockedWeaponTypeIds.IsAvailable);
+        Assert.False(result.Proposed.Resources.IsAvailable);
+        Assert.False(result.Proposed.ActiveDefenseSkillId.IsAvailable);
+        Assert.Equal(
+            TacticalContextOrigin.SaveSnapshot,
+            result.Proposed.EquippedWeaponTypeIds.Origin);
+    }
+
+    [Fact]
     public void Capture_times_do_not_change_semantic_or_observation_revision()
     {
         var first = Project(Snapshot(

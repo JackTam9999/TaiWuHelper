@@ -508,6 +508,7 @@ public static class TacticalCombatResponseMapper
                     [.. step.ObservedFacts.Select(Fact)],
                     [.. step.Requirements.Select(Map)],
                     [.. step.Transitions.Select(identity => identity.Code)],
+                    step.SkillId,
                     step.ManualActionIdentity,
                     step.ExpectedPurposeIdentity,
                     step.LimitationIdentity,

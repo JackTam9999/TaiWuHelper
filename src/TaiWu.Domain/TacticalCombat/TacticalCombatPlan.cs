@@ -49,6 +49,7 @@ public sealed class TacticalPlanStep
         IEnumerable<TacticalFactIdentity> observedFacts,
         IEnumerable<TacticalRequirementEvaluation> requirements,
         IEnumerable<TacticalTransitionIdentity> transitions,
+        int? skillId,
         string manualActionIdentity,
         string expectedPurposeIdentity,
         string limitationIdentity,
@@ -79,6 +80,12 @@ public sealed class TacticalPlanStep
             item => item.StableKey,
             "step transition",
             nameof(transitions));
+        if (skillId is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(skillId));
+        }
+
+        SkillId = skillId;
         ManualActionIdentity = TacticalCombatText.Code(
             manualActionIdentity,
             nameof(manualActionIdentity));
@@ -122,6 +129,8 @@ public sealed class TacticalPlanStep
 
     public ImmutableArray<TacticalTransitionIdentity> Transitions { get; }
 
+    public int? SkillId { get; }
+
     public string ManualActionIdentity { get; }
 
     public string ExpectedPurposeIdentity { get; }
@@ -139,6 +148,7 @@ public sealed class TacticalPlanStep
         TacticalCombatText.EnumKey(Stage),
         Order.ToString(CultureInfo.InvariantCulture),
         TacticalCombatText.EnumKey(BranchKind),
+        SkillId?.ToString(CultureInfo.InvariantCulture) ?? "NONE",
         ManualActionIdentity,
         ExpectedPurposeIdentity,
         LimitationIdentity,
@@ -594,7 +604,7 @@ public sealed class TacticalCombatPlan
     private string CreateFingerprint()
     {
         var canonical = new StringBuilder()
-            .Append("TACTICAL_COMBAT_PLAN_V1\n")
+            .Append("TACTICAL_COMBAT_PLAN_V2\n")
             .Append(GameDataVersion).Append('\n')
             .Append(RuleVersion).Append('\n')
             .Append("SEARCH|").Append(SearchCoverage.SemanticKey).Append('\n');

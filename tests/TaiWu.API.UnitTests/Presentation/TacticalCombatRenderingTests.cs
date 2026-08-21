@@ -336,6 +336,72 @@ public sealed partial class TacticalCombatRenderingTests
     }
 
     [Fact]
+    public void Mapper_uses_typed_step_skill_instead_of_numeric_action_tokens()
+    {
+        var evidence = new TacticalEvidenceResponse(
+            TacticalEvidenceSourceKind.VerifiedRule,
+            "evidence:typed-step",
+            "historical-version",
+            "1.0.0",
+            "EXACT_TARGET");
+        var response = EmptyResponse() with
+        {
+            Plan = new TacticalPlanResponse(
+                new string('A', 64),
+                "historical-version",
+                "1.0.0",
+                TacticalFinishDisposition.FallbackOnly,
+                Facts: [],
+                Requirements: [],
+                Transitions: [],
+                Roles: [],
+                Stages:
+                [
+                    new TacticalPlanStageResponse(
+                        TacticalPlanStage.Preparation,
+                        TacticalPlanStageState.Supported,
+                        "PREPARATION_LIMITATION",
+                        [
+                            new TacticalPlanStepResponse(
+                                "STEP_TYPED_SKILL",
+                                1,
+                                TacticalStepBranchKind.Primary,
+                                ["FACT_TYPED_SKILL"],
+                                Requirements: [],
+                                ["TRANSITION_TYPED_SKILL"],
+                                SkillId: 604,
+                                ManualActionIdentity: "ACTION_VERSION_9999",
+                                ExpectedPurposeIdentity: "PURPOSE",
+                                LimitationIdentity: "LIMITATION",
+                                [new TacticalPlanBranchResponse(
+                                    "COMPLETE",
+                                    TacticalBranchOutcome.Stop,
+                                    TargetStep: null)],
+                                [evidence])
+                        ],
+                        [evidence])
+                ],
+                PreparationChecks: [],
+                SharedEvidence: [evidence])
+        };
+
+        var model = TacticalCombatViewModelMapper.Map(
+            response,
+            "Selected target",
+            RecommendationPolicy.Balanced,
+            new Dictionary<int, string>
+            {
+                [604] = "Typed skill name",
+                [9999] = "Numeric-token decoy"
+            });
+        var action = Assert.Single(Assert.Single(model.Stages).Steps)
+            .ManualAction.English;
+
+        Assert.Contains("Typed skill name", action);
+        Assert.DoesNotContain("Numeric-token decoy", action);
+    }
+
+    [Fact]
     public void Mapper_groups_every_candidate_decision_and_uses_skill_names()
     {
         var candidates = Enum.GetValues<TacticalCandidateDecision>()
